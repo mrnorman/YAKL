@@ -14,4 +14,11 @@ The Launcher is the main class of YAKL, and it is templated on two unsigned inte
 
 [] \_YAKL (...) {...}, and when using CUDA, the --expt-extended-lambda must be used with nvcc.
 
-For exmaples of how to use YAKL, see the .cpp example files.
+The core operation for an Nvidia GPU parallelFor is as follows:
+
+yakl::Launcher<yakl::targetCUDA> launcher;
+launcher.parallelFor( [Number of threads] , [Functor to run] , [Parameters to pass to the functor...] );
+
+This will, in turn, call the functor for each thread, passing the index first, and then the parameters passed to parallelFor.
+
+For exmaples of how to use YAKL, see the .cpp example files. 
