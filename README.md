@@ -18,7 +18,8 @@ and when using CUDA, the `--expt-extended-lambda` must be used with `nvcc`. This
 Currently, all functors must be of type `void`. The core operation for an Nvidia GPU parallelFor is as follows:
 ```
 yakl::Launcher launcher(yakl::targetCUDA);
-launcher.parallelFor( [Number of threads] , [Functor to run] , [Parameters to pass to the functor...] );
+launcher.parallelFor( [Number of threads] , [Functor to run] , [Parameters to pass to functor...] );
+launcher.synchronizeSelf();
 ```
 This will, in turn, call the functor for each thread, passing the index first, and then the parameters passed to parallelFor.
 
