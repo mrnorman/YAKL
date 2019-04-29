@@ -9,7 +9,7 @@ YAKL is a minimally invasive library intended to allow a user to define kernels 
 
 The user is expected to provide computation in the form of a kernel that acts on a single index in one dimension (already flattened / collapsed in the case of multiple dimensions). This kernel is expressed as a C++ functor and passed to a launcher. All data should be passed by parameter, and the function is expected to have a void return. A C++11 parameter pack approach is used to implement this in practice, which avoids the need for meta-templating or using custom data structures.
 
-The Launcher is the main class of YAKL, and it is templated on two unsigned integers: (1) type of launcher [CPU, GPU, etc.], and (2) length of the vector [number of threads per block in CUDA]. All functors / `operator()` definitions must use the `_YAKL` decorator, which inserts the approapriate decorations for CUDA when needed. Lambdas must be defined as:
+The Launcher is the main class of YAKL, and it is constructed from two unsigned integers: (1) type of launcher [CPU, GPU, etc.], and (2) length of the vector [number of threads per block in CUDA]. All functors / `operator()` definitions must use the `_YAKL` decorator, which inserts the approapriate decorations for CUDA when needed. Lambdas must be defined as:
 ```
 [] _YAKL (...) {...}
 ```
@@ -22,4 +22,6 @@ launcher.parallelFor( [Number of threads] , [Functor to run] , [Parameters to pa
 ```
 This will, in turn, call the functor for each thread, passing the index first, and then the parameters passed to parallelFor.
 
-For exmaples of how to use YAKL, see the `*.cpp` example files. 
+For exmaples of how to use YAKL, see the `*.cpp` example files.
+
+Each Launcher instance implicitly runs in its own CUDA stream for the CUDA target, and you can synchronize on the stream with `.synchronizeSelf()` or globally for the entire device with `.synchronizeGlobal()`.
