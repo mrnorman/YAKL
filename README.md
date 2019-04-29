@@ -1,5 +1,4 @@
 # YAKL: Yet Another Kernel Launcher
-A minimal overhead C++ kernel launcher for performance portability
 
 YAKL is a minimally invasive library intended to allow a user to define kernels in the form of functors (possibly lambdas) without having to marry themselves to a specific data type. This library provides:
 
