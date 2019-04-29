@@ -16,7 +16,7 @@ The Launcher is the main class of YAKL, and it is templated on two unsigned inte
 ```
 and when using CUDA, the `--expt-extended-lambda` must be used with `nvcc`. This library expects all parameters to be passed by parameter rather than captured. If you want to capture instead, you do so at your own risk.
 
-The core operation for an Nvidia GPU parallelFor is as follows:
+Currently, all functors must be of type `void`. The core operation for an Nvidia GPU parallelFor is as follows:
 ```
 yakl::Launcher<yakl::targetCUDA> launcher;
 launcher.parallelFor( [Number of threads] , [Functor to run] , [Parameters to pass to the functor...] );
