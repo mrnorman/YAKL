@@ -12,15 +12,32 @@ public:
 };
 
 
-class partialSumKernelClass {
+class atomicsKernelCUDAClass : public yakl::Atomics<yakl::targetCUDA> {
 public:
-  _YAKL void operator() (ulong gInd, Array<float> &a, Array<float> &b) {
+  _YAKL void operator() (ulong gInd, Array<float> &a, float &sum, float &min, float &max) {
     unsigned int nx = 128;
     unsigned int ny = 128;
     unsigned int nz = 16;
     unsigned int i, j, k;
     yakl::unpackIndices(gInd,nz,ny,nx,k,j,i);
-    b(k) += a(k,j,i);
+    atomAdd(sum,a(k,j,i));
+    // atomMin(min,a(k,j,i));
+    // atomMax(max,a(k,j,i));
+  }
+};
+
+
+class atomicsKernelCPUSerialClass : public yakl::Atomics<yakl::targetCPUSerial> {
+public:
+  _YAKL void operator() (ulong gInd, Array<float> &a, float &sum, float &min, float &max) {
+    unsigned int nx = 128;
+    unsigned int ny = 128;
+    unsigned int nz = 16;
+    unsigned int i, j, k;
+    yakl::unpackIndices(gInd,nz,ny,nx,k,j,i);
+    atomAdd(sum,a(k,j,i));
+    // atomMin(min,a(k,j,i));
+    // atomMax(max,a(k,j,i));
   }
 };
 
@@ -60,25 +77,50 @@ void testSimpleSum(yakl::Launcher &launcher) {
   }
 }
 
-void testMultidimPartialSum(yakl::Launcher &launcher) {
+void testAtomicsCUDA(yakl::Launcher &launcher) {
   int const nx = 128;
   int const ny = 128;
   int const nz = 16;
-  Array<float> a, b;
+  Array<float> a;
+  float sum, max, min;
   a.setup(nz,ny,nx);
-  b.setup(nz);
   for (int k=0; k<nz; k++) {
     for (int j=0; j<ny; j++) {
       for (int i=0; i<nx; i++) {
-        a(k,j,i) = 10 + k*ny*nx + j*nx + i;
+        a(k,j,i) = k*ny*nx + j*nx + i;
       }
     }
-    b(k) = 0;
   }
-  partialSumKernelClass partialSumKernel;
-  launcher.parallelFor( nx*ny*nz , partialSumKernel , a , b );
+  sum = 0;
+  max = -1.e30;
+  min = 1.e30;
+  atomicsKernelCUDAClass atomicsKernel;
+  launcher.parallelFor( nx*ny*nz , atomicsKernel , a , sum, max, min );
   launcher.synchronizeSelf();
-  std::cout << b;
+  std::cout << sum << " " << max << " " << min;
+}
+
+void testAtomicsCPUSerial(yakl::Launcher &launcher) {
+  int const nx = 128;
+  int const ny = 128;
+  int const nz = 16;
+  Array<float> a;
+  float sum, max, min;
+  a.setup(nz,ny,nx);
+  for (int k=0; k<nz; k++) {
+    for (int j=0; j<ny; j++) {
+      for (int i=0; i<nx; i++) {
+        a(k,j,i) = k*ny*nx + j*nx + i;
+      }
+    }
+  }
+  sum = 0;
+  max = -1.e30;
+  min = 1.e30;
+  atomicsKernelCPUSerialClass atomicsKernel;
+  launcher.parallelFor( nx*ny*nz , atomicsKernel , a , sum, max, min );
+  launcher.synchronizeSelf();
+  std::cout << sum << " " << max << " " << min;
 }
 
 
@@ -96,7 +138,7 @@ int main() {
 
   testLambdaSimple(launcher); 
   testSimpleSum(launcher); 
-  testMultidimPartialSum(launcher);
+  testAtomicsCUDA(launcher);
 
   std::cout << "\n";
 
@@ -110,7 +152,7 @@ int main() {
 
   testLambdaSimple(launcher); 
   testSimpleSum(launcher); 
-  testMultidimPartialSum(launcher);
+  testAtomicsCPUSerial(launcher);
 
   std::cout << "\n";
 

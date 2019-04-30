@@ -3,6 +3,7 @@
 #define __YAKL_H_
 
 #include <iostream>
+#include <algorithm>
 
 #ifdef __NVCC__
   #define _YAKL __host__ __device__
@@ -211,6 +212,39 @@ namespace yakl {
   };
 
 
+  template <uint target> class Atomics {
+  public:
+    template <class FP> inline _YAKL void atomAdd(FP &x, FP const val) {
+      if (target == targetCUDA) {
+        #ifdef __NVCC__
+          atomicAdd(&x,val);
+        #endif
+      } else if (target == targetCPUSerial) {
+        x += val;
+      }
+    }
+
+    // template <class FP> inline _YAKL void atomMin(FP &a, FP const b) {
+    //   if (target == targetCUDA) {
+    //     #ifdef __NVCC__
+    //       atomicMin(&a,b);
+    //     #endif
+    //   } else if (target == targetCPUSerial) {
+    //     a = std::min(a,b);
+    //   }
+    // }
+
+    // template <class FP> inline _YAKL void atomMax(FP &a, FP const b) {
+    //   if (target == targetCUDA) {
+    //     #ifdef __NVCC__
+    //       atomicMax(&a,b);
+    //     #endif
+    //   } else if (target == targetCPUSerial) {
+    //     a = std::max(a,b);
+    //   }
+    // }
+
+  };
 
 
 }
