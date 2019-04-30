@@ -213,8 +213,50 @@ namespace yakl {
 
 
   template <uint target> class Atomics {
+  protected:
+    #ifdef __NVCC__
+      __device__ __forceinline__ void atomicMin(float *address , float value) {
+        int oldval, newval, readback;
+        oldval = __float_as_int(*address);
+        newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
+        while ( ( readback = atomicCAS( (int *) address , oldval , newval ) ) != oldval ) {
+          oldval = readback;
+          newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
+        }
+      }
+
+      __device__ __forceinline__ void atomicMin(double *address , double value) {
+        unsigned long long oldval, newval, readback;
+        oldval = __double_as_longlong(*address);
+        newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
+        while ( ( readback = atomicCAS( (unsigned long long *) address , oldval , newval ) ) != oldval ) {
+          oldval = readback;
+          newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
+        }
+      }
+
+      __device__ __forceinline__ void atomicMax(float *address , float value) {
+        int oldval, newval, readback;
+        oldval = __float_as_int(*address);
+        newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
+        while ( ( readback = atomicCAS( (int *) address , oldval , newval ) ) != oldval ) {
+          oldval = readback;
+          newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
+        }
+      }
+
+      __device__ __forceinline__ void atomicMax(double *address , double value) {
+        unsigned long long oldval, newval, readback;
+        oldval = __double_as_longlong(*address);
+        newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
+        while ( ( readback = atomicCAS( (unsigned long long *) address , oldval , newval ) ) != oldval ) {
+          oldval = readback;
+          newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
+        }
+      }
+    #endif
   public:
-    template <class FP> inline _YAKL void atomAdd(FP &x, FP const val) {
+    template <class FP> inline _YAKL void addAtomic(FP &x, FP const val) {
       if (target == targetCUDA) {
         #ifdef __NVCC__
           atomicAdd(&x,val);
@@ -224,25 +266,25 @@ namespace yakl {
       }
     }
 
-    // template <class FP> inline _YAKL void atomMin(FP &a, FP const b) {
-    //   if (target == targetCUDA) {
-    //     #ifdef __NVCC__
-    //       atomicMin(&a,b);
-    //     #endif
-    //   } else if (target == targetCPUSerial) {
-    //     a = std::min(a,b);
-    //   }
-    // }
+    template <class FP> inline _YAKL void minAtomic(FP &a, FP const b) {
+      if (target == targetCUDA) {
+        #ifdef __NVCC__
+          atomicMin(&a,b);
+        #endif
+      } else if (target == targetCPUSerial) {
+        a = a < b ? a : b;
+      }
+    }
 
-    // template <class FP> inline _YAKL void atomMax(FP &a, FP const b) {
-    //   if (target == targetCUDA) {
-    //     #ifdef __NVCC__
-    //       atomicMax(&a,b);
-    //     #endif
-    //   } else if (target == targetCPUSerial) {
-    //     a = std::max(a,b);
-    //   }
-    // }
+    template <class FP> inline _YAKL void maxAtomic(FP &a, FP const b) {
+      if (target == targetCUDA) {
+        #ifdef __NVCC__
+          atomicMax(&a,b);
+        #endif
+      } else if (target == targetCPUSerial) {
+        a = a > b ? a : b;
+      }
+    }
 
   };
 
