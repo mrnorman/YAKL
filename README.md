@@ -1,4 +1,4 @@
-# YAKL: Yet Another Kernel Launcher
+# YAKL: Yet Another Kernel Launcher [Under Development!]
 
 YAKL is a minimally invasive library intended to allow a user to define kernels in the form of functors (possibly lambdas) without having to marry themselves to a specific data type. This library provides:
 
