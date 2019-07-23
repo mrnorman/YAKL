@@ -103,190 +103,110 @@ namespace yakl {
   uint const targetCPUSerial = 2;
 
 
-  class Launcher {
-    protected:
-      uint target;
-      uint vectorSize;
+  template <class F, class... Args> inline void parallelForCPU(ulong const nIter, F &f, Args&&... args) {
+    for (ulong i=0; i<nIter; i++) {
+      f( i , args... );
+    }
+  }
+
+
+  template <class F, class... Args> inline void parallelFor(ulong const nIter, F &f, Args&&... args) {
+    if        (target == targetCUDA) {
       #ifdef __NVCC__
-      cudaStream_t myStream;
+        parallelForCUDA <<< (uint) nIter/vectorSize+1 , vectorSize , 0 , myStream >>> ( nIter , f , args... );
+      #else
+        std::cerr << "ERROR: "<< __FILE__ << ":" << __LINE__ << "\n";
+        std::cerr << "Attempting to launch CUDA without nvcc\n";
       #endif
+    } else if (target == targetCPUSerial ) {
+      parallelForCPU( nIter , f , args... );
+    }
+  }
 
-      template <class F, class... Args> inline void parallelForCPU(ulong const nIter, F &f, Args&&... args) {
-        for (ulong i=0; i<nIter; i++) {
-          f( i , args... );
-        }
-      }
-
-    public:
-
-
-      Launcher() {
-        target = 0;
-        vectorSize = 0;
-        Launcher(targetCPUSerial,128);
-      }
-
-      Launcher(uint targetIn) {
-        target = 0;
-        vectorSize = 0;
-        Launcher(target,128);
-      }
-
-      Launcher(uint targetIn, uint vectorSizeIn) {
-        target = 0;
-        vectorSize = 0;
-        init(targetIn,vectorSizeIn);
-      }
-
-      ~Launcher() {
-        finalize();
-      }
-
-      void init(uint targetIn=targetCPUSerial, uint vectorSizeIn=128) {
-        finalize();
-        target = targetIn;
-        vectorSize = vectorSizeIn;
-        if (target == targetCUDA) {
-          #ifdef __NVCC__
-            // Always create a CUDA stream upon instantiation
-            cudaStreamCreate(&myStream);
-          #endif
-        }
-      }
-
-      void finalize() {
-        if (target == targetCUDA && target > 0) {
-          #ifdef __NVCC__
-            // Always destroy a CUDA stream upon finalize
-            cudaStreamDestroy(myStream);
-          #endif
-        }
-        target = 0;
-        vectorSize = 0;
-      }
-
-      template <class F, class... Args> inline void parallelFor(ulong const nIter, F &f, Args&&... args) {
-        if        (target == targetCUDA) {
-          #ifdef __NVCC__
-            parallelForCUDA <<< (uint) nIter/vectorSize+1 , vectorSize , 0 , myStream >>> ( nIter , f , args... );
-          #else
-            std::cerr << "ERROR: "<< __FILE__ << ":" << __LINE__ << "\n";
-            std::cerr << "Attempting to launch CUDA without nvcc\n";
-          #endif
-        } else if (target == targetCPUSerial ) {
-          parallelForCPU( nIter , f , args... );
-        }
-      }
-
-      template <class F, class... Args> inline void parallelFor(ulong const nIter, F const &f, Args&&... args) {
-        if        (target == targetCUDA) {
-          #ifdef __NVCC__
-            parallelForCUDA <<< (uint) nIter/vectorSize+1 , vectorSize , 0 , myStream >>> ( nIter , f , args... );
-          #else
-            std::cerr << "ERROR: "<< __FILE__ << ":" << __LINE__ << "\n";
-            std::cerr << "Attempting to launch CUDA without nvcc\n";
-          #endif
-        } else if (target == targetCPUSerial ) {
-          parallelForCPU( nIter , f , args... );
-        }
-      }
-
-      void synchronizeSelf() {
-        if        (target == targetCUDA) {
-        #ifdef __NVCC__
-          cudaStreamSynchronize(myStream);
-        #endif
-        } else if (target == targetCPUSerial ) {
-        }
-      }
-
-      void synchronizeGlobal() {
-        if        (target == targetCUDA) {
-        #ifdef __NVCC__
-          cudaDeviceSynchronize();
-        #endif
-        } else if (target == targetCPUSerial ) {
-        }
-      }
-
-  };
+  template <class F, class... Args> inline void parallelFor(ulong const nIter, F const &f, Args&&... args) {
+    if        (target == targetCUDA) {
+      #ifdef __NVCC__
+        parallelForCUDA <<< (uint) nIter/vectorSize+1 , vectorSize , 0 , myStream >>> ( nIter , f , args... );
+      #else
+        std::cerr << "ERROR: "<< __FILE__ << ":" << __LINE__ << "\n";
+        std::cerr << "Attempting to launch CUDA without nvcc\n";
+      #endif
+    } else if (target == targetCPUSerial ) {
+      parallelForCPU( nIter , f , args... );
+    }
+  }
 
 
-  template <uint target> class Atomics {
-  protected:
-    #ifdef __NVCC__
-      __device__ __forceinline__ void atomicMin(float *address , float value) {
-        int oldval, newval, readback;
-        oldval = __float_as_int(*address);
+  #ifdef __NVCC__
+    __device__ __forceinline__ void atomicMin(float *address , float value) {
+      int oldval, newval, readback;
+      oldval = __float_as_int(*address);
+      newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
+      while ( ( readback = atomicCAS( (int *) address , oldval , newval ) ) != oldval ) {
+        oldval = readback;
         newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
-        while ( ( readback = atomicCAS( (int *) address , oldval , newval ) ) != oldval ) {
-          oldval = readback;
-          newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
-        }
       }
+    }
 
-      __device__ __forceinline__ void atomicMin(double *address , double value) {
-        unsigned long long oldval, newval, readback;
-        oldval = __double_as_longlong(*address);
+    __device__ __forceinline__ void atomicMin(double *address , double value) {
+      unsigned long long oldval, newval, readback;
+      oldval = __double_as_longlong(*address);
+      newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
+      while ( ( readback = atomicCAS( (unsigned long long *) address , oldval , newval ) ) != oldval ) {
+        oldval = readback;
         newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
-        while ( ( readback = atomicCAS( (unsigned long long *) address , oldval , newval ) ) != oldval ) {
-          oldval = readback;
-          newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
-        }
       }
+    }
 
-      __device__ __forceinline__ void atomicMax(float *address , float value) {
-        int oldval, newval, readback;
-        oldval = __float_as_int(*address);
+    __device__ __forceinline__ void atomicMax(float *address , float value) {
+      int oldval, newval, readback;
+      oldval = __float_as_int(*address);
+      newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
+      while ( ( readback = atomicCAS( (int *) address , oldval , newval ) ) != oldval ) {
+        oldval = readback;
         newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
-        while ( ( readback = atomicCAS( (int *) address , oldval , newval ) ) != oldval ) {
-          oldval = readback;
-          newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
-        }
       }
+    }
 
-      __device__ __forceinline__ void atomicMax(double *address , double value) {
-        unsigned long long oldval, newval, readback;
-        oldval = __double_as_longlong(*address);
+    __device__ __forceinline__ void atomicMax(double *address , double value) {
+      unsigned long long oldval, newval, readback;
+      oldval = __double_as_longlong(*address);
+      newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
+      while ( ( readback = atomicCAS( (unsigned long long *) address , oldval , newval ) ) != oldval ) {
+        oldval = readback;
         newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
-        while ( ( readback = atomicCAS( (unsigned long long *) address , oldval , newval ) ) != oldval ) {
-          oldval = readback;
-          newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
-        }
-      }
-    #endif
-  public:
-    template <class FP> inline _YAKL void addAtomic(FP &x, FP const val) {
-      if (target == targetCUDA) {
-        #ifdef __NVCC__
-          atomicAdd(&x,val);
-        #endif
-      } else if (target == targetCPUSerial) {
-        x += val;
       }
     }
-
-    template <class FP> inline _YAKL void minAtomic(FP &a, FP const b) {
-      if (target == targetCUDA) {
-        #ifdef __NVCC__
-          atomicMin(&a,b);
-        #endif
-      } else if (target == targetCPUSerial) {
-        a = a < b ? a : b;
-      }
+  #endif
+  template <class FP> inline _YAKL void addAtomic(FP &x, FP const val) {
+    if (target == targetCUDA) {
+      #ifdef __NVCC__
+        atomicAdd(&x,val);
+      #endif
+    } else if (target == targetCPUSerial) {
+      x += val;
     }
+  }
 
-    template <class FP> inline _YAKL void maxAtomic(FP &a, FP const b) {
-      if (target == targetCUDA) {
-        #ifdef __NVCC__
-          atomicMax(&a,b);
-        #endif
-      } else if (target == targetCPUSerial) {
-        a = a > b ? a : b;
-      }
+  template <class FP> inline _YAKL void minAtomic(FP &a, FP const b) {
+    if (target == targetCUDA) {
+      #ifdef __NVCC__
+        atomicMin(&a,b);
+      #endif
+    } else if (target == targetCPUSerial) {
+      a = a < b ? a : b;
     }
+  }
 
-  };
+  template <class FP> inline _YAKL void maxAtomic(FP &a, FP const b) {
+    if (target == targetCUDA) {
+      #ifdef __NVCC__
+        atomicMax(&a,b);
+      #endif
+    } else if (target == targetCPUSerial) {
+      a = a > b ? a : b;
+    }
+  }
 
 
 }
