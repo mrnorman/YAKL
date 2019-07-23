@@ -14,6 +14,15 @@
 
 namespace yakl {
 
+  
+  int vectorSize = 128;
+
+
+  void init(int vectorSize_in) {
+    vectorSize = vectorSize_in;
+  }
+
+
   typedef unsigned long ulong;
   typedef unsigned int  uint;
 
@@ -88,52 +97,32 @@ namespace yakl {
   }
 
 
-  // These unfotunately cannot live inside classes in CUDA :-/
+
   #ifdef __NVCC__
-  template <class F, class... Args> __global__ void parallelForCUDA(ulong const nIter, F &f, Args&&... args) {
-    ulong i = blockIdx.x*blockDim.x + threadIdx.x;
-    if (i < nIter) {
-      f( i , args... );
+    template <class F> __global__ void cudaKernel(ulong const nIter, F f) {
+      ulong i = blockIdx.x*blockDim.x + threadIdx.x;
+      if (i < nIter) {
+        f( i );
+      }
     }
-  }
   #endif
 
 
-  uint const targetCUDA      = 1;
-  uint const targetCPUSerial = 2;
-
-
-  template <class F, class... Args> inline void parallelForCPU(ulong const nIter, F &f, Args&&... args) {
-    for (ulong i=0; i<nIter; i++) {
-      f( i , args... );
-    }
+  template <class F> void parallel_for( int const nIter , F f ) {
+    #ifdef __NVCC__
+      cudaKernel <<< (uint) nIter/vectorSize+1 , vectorSize >>> ( nIter , f );
+    #else
+      for (int i=0; i<nIter; i++) {
+        f(i);
+      }
+    #endif
   }
 
 
-  template <class F, class... Args> inline void parallelFor(ulong const nIter, F &f, Args&&... args) {
-    if        (target == targetCUDA) {
-      #ifdef __NVCC__
-        parallelForCUDA <<< (uint) nIter/vectorSize+1 , vectorSize , 0 , myStream >>> ( nIter , f , args... );
-      #else
-        std::cerr << "ERROR: "<< __FILE__ << ":" << __LINE__ << "\n";
-        std::cerr << "Attempting to launch CUDA without nvcc\n";
-      #endif
-    } else if (target == targetCPUSerial ) {
-      parallelForCPU( nIter , f , args... );
-    }
-  }
-
-  template <class F, class... Args> inline void parallelFor(ulong const nIter, F const &f, Args&&... args) {
-    if        (target == targetCUDA) {
-      #ifdef __NVCC__
-        parallelForCUDA <<< (uint) nIter/vectorSize+1 , vectorSize , 0 , myStream >>> ( nIter , f , args... );
-      #else
-        std::cerr << "ERROR: "<< __FILE__ << ":" << __LINE__ << "\n";
-        std::cerr << "Attempting to launch CUDA without nvcc\n";
-      #endif
-    } else if (target == targetCPUSerial ) {
-      parallelForCPU( nIter , f , args... );
-    }
+  void fence() {
+    #ifdef __NVCC__
+      cudaDeviceSynchronize();
+    #endif
   }
 
 
@@ -179,35 +168,28 @@ namespace yakl {
     }
   #endif
   template <class FP> inline _YAKL void addAtomic(FP &x, FP const val) {
-    if (target == targetCUDA) {
-      #ifdef __NVCC__
-        atomicAdd(&x,val);
-      #endif
-    } else if (target == targetCPUSerial) {
+    #ifdef __NVCC__
+      atomicAdd(&x,val);
+    #else
       x += val;
-    }
+    #endif
   }
 
   template <class FP> inline _YAKL void minAtomic(FP &a, FP const b) {
-    if (target == targetCUDA) {
-      #ifdef __NVCC__
-        atomicMin(&a,b);
-      #endif
-    } else if (target == targetCPUSerial) {
+    #ifdef __NVCC__
+      atomicMin(&a,b);
+    #else
       a = a < b ? a : b;
-    }
+    #endif
   }
 
   template <class FP> inline _YAKL void maxAtomic(FP &a, FP const b) {
-    if (target == targetCUDA) {
-      #ifdef __NVCC__
-        atomicMax(&a,b);
-      #endif
-    } else if (target == targetCPUSerial) {
+    #ifdef __NVCC__
+      atomicMax(&a,b);
+    #else
       a = a > b ? a : b;
-    }
+    #endif
   }
-
 
 }
 
