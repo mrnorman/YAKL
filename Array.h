@@ -35,7 +35,7 @@ template <class T> class Array {
 
   long  offsets [MAXDIMS];
   ulong dimSizes[MAXDIMS];
-  T     * __restrict data;
+  T     * data;
   int   ndims;
   ulong totElems;
   Array<T> *orig;
