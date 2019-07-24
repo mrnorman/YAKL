@@ -1,29 +1,13 @@
 # YAKL: Yet Another Kernel Launcher
 # Still Under Development
 
-YAKL is a minimally invasive library intended to allow a user to define kernels in the form of functors (possibly lambdas) without having to marry themselves to a specific data type. This library provides:
+YAKL is designed to be similar to Kokkos but significantly simplified. While any datatype can be used with the kernel launcher, there are some important constaints on the objects used. CUDA lambdas requires all captures to be by value because the pointers to CPU data structures would be invalid on the GPU. Therefore, all assignments need to perform a shallow copy of the object, preserving the pointer to the underlying data. The Array.h class can serve as an example for how to do this with constructors, move and copy constructors, and operator= overloading. 
 
-* Various launchers such as parallel_for or reduce_[operation], which can run on GPUs using CUDA or CPUs (serial or threaded), and potentially other architectures if they are added
-* Wrappers for atomic accesses and synchronization
-* Utility functions to extract multi-dimensional indices from a pool of flattened indices
-* An optional multi-dimensional array class that uses CUDA Managed Memory if `__NVCC__` is defined. Users do not need to use this in order to use the launchers. These are completely orthogonal options.
+There is a lot of development left to do, but this serves as a basic prototype for now. Currently, the code automatically switches between CPU and CUDA based on whether nvcc is used as the compiler or not. To run the test on the GPU and CPU, use:
 
-The user is expected to provide computation in the form of a kernel that acts on a single index in one dimension (already flattened / collapsed in the case of multiple dimensions). This kernel is expressed as a C++ functor and passed to a launcher. All data should be passed by parameter, and the function is expected to have a void return. A C++11 parameter pack approach is used to implement this in practice, which avoids the need for meta-templating or using custom data structures.
-
-The Launcher is the main class of YAKL, and it is constructed from two unsigned integers: (1) type of launcher [CPU, GPU, etc.], and (2) length of the vector [number of threads per block in CUDA]. All functors / `operator()` definitions must use the `_YAKL` decorator, which inserts the approapriate decorations for CUDA when needed. Lambdas must be defined as:
 ```
-[] _YAKL (...) {...}
-```
-and when using CUDA, the `--expt-extended-lambda` must be used with `nvcc`. This library expects all parameters to be passed by parameter rather than captured. If you want to capture instead, you do so at your own risk.
+nvcc --expt-extended-lambda -x cu simpltest.cpp && cuda-memcheck ./a.out
 
-Currently, all functors must be of type `void`. The core operation for an Nvidia GPU parallelFor is as follows:
+g++ simpltest.cpp && valgrind ./a.out
 ```
-yakl::Launcher launcher(yakl::targetCUDA);
-launcher.parallelFor( [Number of threads] , [Functor to run] , [Parameters to pass to functor...] );
-launcher.synchronizeSelf();
-```
-This will, in turn, call the functor for each thread, passing the index first, and then the parameters passed to parallelFor.
 
-For exmaples of how to use YAKL, see the `*.cpp` example files.
-
-Each Launcher instance implicitly runs in its own CUDA stream for the CUDA target, and you can synchronize on the stream with `.synchronizeSelf()` or globally for the entire device with `.synchronizeGlobal()`.
