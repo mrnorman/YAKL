@@ -24,8 +24,6 @@
 Multi-dimensional array with functor indexing up to eight dimensions.
 */
 
-#define MAXDIMS 8
-
 typedef unsigned long ulong;
 
 
@@ -33,8 +31,8 @@ template <class T> class Array {
 
   public :
 
-  long  offsets [MAXDIMS];
-  ulong dimSizes[MAXDIMS];
+  long  offsets [8];
+  ulong dimSizes[8];
   T     * data;
   int   ndims;
   ulong totElems;
@@ -48,7 +46,7 @@ template <class T> class Array {
     data = nullptr;
     ndims = 0;
     totElems = 0;
-    for (int i=0; i<MAXDIMS; i++) {
+    for (int i=0; i<8; i++) {
       dimSizes[i] = 0;
       offsets [i] = 0;
     }
@@ -74,67 +72,35 @@ template <class T> class Array {
   //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
   Array(char const * label, ulong const d1) {
     nullify();
-    orig = this;
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-    setup(d1);
+    setup(label,d1);
   }
   Array(char const * label, ulong const d1, ulong const d2) {
     nullify();
-    orig = this;
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-    setup(d1,d2);
+    setup(label,d1,d2);
   }
   Array(char const * label, ulong const d1, ulong const d2, ulong const d3) {
     nullify();
-    orig = this;
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-    setup(d1,d2,d3);
+    setup(label,d1,d2,d3);
   }
   Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4) {
     nullify();
-    orig = this;
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-    setup(d1,d2,d3,d4);
+    setup(label,d1,d2,d3,d4);
   }
   Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5) {
     nullify();
-    orig = this;
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-    setup(d1,d2,d3,d4,d5);
+    setup(label,d1,d2,d3,d4,d5);
   }
   Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6) {
     nullify();
-    orig = this;
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-    setup(d1,d2,d3,d4,d5,d6);
+    setup(label,d1,d2,d3,d4,d5,d6);
   }
   Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7) {
     nullify();
-    orig = this;
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-    setup(d1,d2,d3,d4,d5,d6,d7);
+    setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
   Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7, ulong const d8) {
     nullify();
-    orig = this;
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-    setup(d1,d2,d3,d4,d5,d6,d7,d8);
+    setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
   }
 
 
@@ -145,7 +111,7 @@ template <class T> class Array {
       offsets [i] = rhs.offsets [i];
       dimSizes[i] = rhs.dimSizes[i];
     }
-    #ifdef ARRRAY_DEBUG
+    #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
     data = rhs.data;
@@ -160,7 +126,7 @@ template <class T> class Array {
       offsets [i] = rhs.offsets [i];
       dimSizes[i] = rhs.dimSizes[i];
     }
-    #ifdef ARRRAY_DEBUG
+    #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
     data = rhs.data;
@@ -178,7 +144,7 @@ template <class T> class Array {
       offsets [i] = rhs.offsets [i];
       dimSizes[i] = rhs.dimSizes[i];
     }
-    #ifdef ARRRAY_DEBUG
+    #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
     data = rhs.data;
@@ -205,42 +171,42 @@ template <class T> class Array {
   /* SETUP FUNCTIONS
   Initialize the array with the given dimensions
   */
-  inline void setup(ulong const d1) {
+  inline void setup(char const * label, ulong const d1) {
     ulong tmp[1];
     tmp[0] = d1;
-    setup_arr((ulong) 1,tmp);
+    setup_arr(label, (ulong) 1,tmp);
   }
-  inline void setup(ulong const d1, ulong const d2) {
+  inline void setup(char const * label, ulong const d1, ulong const d2) {
     ulong tmp[2];
     tmp[0] = d1;
     tmp[1] = d2;
-    setup_arr((ulong) 2,tmp);
+    setup_arr(label, (ulong) 2,tmp);
   }
-  inline void setup(ulong const d1, ulong const d2, ulong const d3) {
+  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3) {
     ulong tmp[3];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
-    setup_arr((ulong) 3,tmp);
+    setup_arr(label, (ulong) 3,tmp);
   }
-  inline void setup(ulong const d1, ulong const d2, ulong const d3, ulong const d4) {
+  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4) {
     ulong tmp[4];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
-    setup_arr((ulong) 4,tmp);
+    setup_arr(label, (ulong) 4,tmp);
   }
-  inline void setup(ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5) {
+  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5) {
     ulong tmp[5];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
     tmp[4] = d5;
-    setup_arr((ulong) 5,tmp);
+    setup_arr(label, (ulong) 5,tmp);
   }
-  inline void setup(ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6) {
+  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6) {
     ulong tmp[6];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -248,9 +214,9 @@ template <class T> class Array {
     tmp[3] = d4;
     tmp[4] = d5;
     tmp[5] = d6;
-    setup_arr((ulong) 6,tmp);
+    setup_arr(label, (ulong) 6,tmp);
   }
-  inline void setup(ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7) {
+  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7) {
     ulong tmp[7];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -259,10 +225,10 @@ template <class T> class Array {
     tmp[4] = d5;
     tmp[5] = d6;
     tmp[6] = d7;
-    setup_arr((ulong) 7,tmp);
+    setup_arr(label, (ulong) 7,tmp);
   }
-  inline void setup(ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7, ulong const d8) {
-    ulong tmp[MAXDIMS];
+  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7, ulong const d8) {
+    ulong tmp[8];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
@@ -271,9 +237,14 @@ template <class T> class Array {
     tmp[5] = d6;
     tmp[6] = d7;
     tmp[7] = d8;
-    setup_arr((ulong) 8,tmp);
+    setup_arr(label, (ulong) 8,tmp);
   }
-  inline void setup_arr(ulong const ndims, ulong const dimSizes[]) {
+  inline void setup_arr(char const * label, ulong const ndims, ulong const dimSizes[]) {
+    orig = this;
+    #ifdef ARRAY_DEBUG
+      myname = std::string(label);
+    #endif
+
     // If a buffer exists, destroy it and start over. Don't call setup_arr on a copied object, or bad things may happen
     if ( data != nullptr && orig == this) {
       deallocate();
@@ -305,7 +276,7 @@ template <class T> class Array {
 
   inline void deallocate() {
     #ifdef __NVCC__
-      cudaFree(data);
+      cudaFree(data); nullify();
     #else
       delete[] data; nullify();
     #endif
@@ -460,7 +431,7 @@ template <class T> class Array {
       offsets [i] = rhs.offsets [i];
       dimSizes[i] = rhs.dimSizes[i];
     }
-    #ifdef ARRRAY_DEBUG
+    #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
     data = rhs.data;
