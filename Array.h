@@ -116,7 +116,7 @@ template <class T> class Array {
     #endif
     data = rhs.data;
     refCount = rhs.refCount;
-    *refCount++;
+    (*refCount)++;
   }
 
 
@@ -136,7 +136,7 @@ template <class T> class Array {
     #endif
     data = rhs.data;
     refCount = rhs.refCount;
-    *refCount++;
+    (*refCount)++;
 
     return *this;
   }
@@ -301,7 +301,7 @@ template <class T> class Array {
 
   inline void deallocate() {
     if (refCount != nullptr) {
-      *refCount--;
+      (*refCount)--;
 
       if (*refCount == 0) {
         delete refCount;
