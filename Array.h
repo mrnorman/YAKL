@@ -103,6 +103,7 @@ template <class T> class Array {
   }
 
 
+  /* COPY CONSTRUCTORS / FUNCTIONS */
   Array(Array const &rhs) {
     nullify();
     ndims = rhs.ndims;
@@ -142,6 +143,7 @@ template <class T> class Array {
   }
 
 
+  /* MOVE CONSTRUCTORS */
   Array(Array &&rhs) {
     nullify();
     ndims = rhs.ndims;
