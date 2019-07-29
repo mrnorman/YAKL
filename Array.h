@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <time.h>
 #include <math.h>
+#include "stdlib.h"
 
 #ifdef ARRAY_DEBUG
 #include <stdexcept>
@@ -24,40 +25,37 @@
 Multi-dimensional array with functor indexing up to eight dimensions.
 */
 
-typedef unsigned long ulong;
-
-
 template <class T> class Array {
 
   public :
 
-  long  offsets [8];
-  ulong dimSizes[8];
-  T     * data;
-  int   ndims;
-  ulong totElems;
-  int   *refCount;
+  long   offsets  [8];
+  size_t dimension[8];
+  T      * myData;
+  int    rank;
+  size_t totElems;
+  int    *refCount;
   #ifdef ARRAY_DEBUG
     std::string myname;
   #endif
 
 
   inline void nullify() {
-    data = nullptr;
+    myData   = nullptr;
     refCount = nullptr;
-    ndims = 0;
+    rank = 0;
     totElems = 0;
     for (int i=0; i<8; i++) {
-      dimSizes[i] = 0;
-      offsets [i] = 0;
+      dimension[i] = 0;
+      offsets  [i] = 0;
     }
   }
 
   /* CONSTRUCTORS
   You can declare the array empty or with many dimensions
-  Always nullify before beginning so that data == nullptr upon init. This allows the
-  setup() functions to keep from deallocating data upon initialization, since
-  you don't know what "data" will be when the object is created.
+  Always nullify before beginning so that myData == nullptr upon init. This allows the
+  setup() functions to keep from deallocating myData upon initialization, since
+  you don't know what "myData" will be when the object is created.
   */
   Array() {
     nullify();
@@ -69,35 +67,35 @@ template <class T> class Array {
     #endif
   }
   //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
-  Array(char const * label, ulong const d1) {
+  Array(char const * label, size_t const d1) {
     nullify();
     setup(label,d1);
   }
-  Array(char const * label, ulong const d1, ulong const d2) {
+  Array(char const * label, size_t const d1, size_t const d2) {
     nullify();
     setup(label,d1,d2);
   }
-  Array(char const * label, ulong const d1, ulong const d2, ulong const d3) {
+  Array(char const * label, size_t const d1, size_t const d2, size_t const d3) {
     nullify();
     setup(label,d1,d2,d3);
   }
-  Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4) {
+  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
     nullify();
     setup(label,d1,d2,d3,d4);
   }
-  Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5) {
+  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
     nullify();
     setup(label,d1,d2,d3,d4,d5);
   }
-  Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6) {
+  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
     nullify();
     setup(label,d1,d2,d3,d4,d5,d6);
   }
-  Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7) {
+  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
     nullify();
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
-  Array(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7, ulong const d8) {
+  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
     nullify();
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
   }
@@ -106,16 +104,16 @@ template <class T> class Array {
   /* COPY CONSTRUCTORS / FUNCTIONS */
   Array(Array const &rhs) {
     nullify();
-    ndims = rhs.ndims;
+    rank     = rhs.rank;
     totElems = rhs.totElems;
-    for (int i=0; i<ndims; i++) {
-      offsets [i] = rhs.offsets [i];
-      dimSizes[i] = rhs.dimSizes[i];
+    for (int i=0; i<rank; i++) {
+      offsets  [i] = rhs.offsets  [i];
+      dimension[i] = rhs.dimension[i];
     }
     #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
-    data = rhs.data;
+    myData   = rhs.myData;
     refCount = rhs.refCount;
     (*refCount)++;
   }
@@ -126,16 +124,16 @@ template <class T> class Array {
       return *this;
     }
     deallocate();
-    ndims = rhs.ndims;
+    rank     = rhs.rank;
     totElems = rhs.totElems;
-    for (int i=0; i<ndims; i++) {
-      offsets [i] = rhs.offsets [i];
-      dimSizes[i] = rhs.dimSizes[i];
+    for (int i=0; i<rank; i++) {
+      offsets  [i] = rhs.offsets  [i];
+      dimension[i] = rhs.dimension[i];
     }
     #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
-    data = rhs.data;
+    myData   = rhs.myData;
     refCount = rhs.refCount;
     (*refCount)++;
 
@@ -146,19 +144,19 @@ template <class T> class Array {
   /* MOVE CONSTRUCTORS */
   Array(Array &&rhs) {
     nullify();
-    ndims = rhs.ndims;
+    rank     = rhs.rank;
     totElems = rhs.totElems;
-    for (int i=0; i<ndims; i++) {
-      offsets [i] = rhs.offsets [i];
-      dimSizes[i] = rhs.dimSizes[i];
+    for (int i=0; i<rank; i++) {
+      offsets  [i] = rhs.offsets  [i];
+      dimension[i] = rhs.dimension[i];
     }
     #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
-    data     = rhs.data;
+    myData   = rhs.myData;
     refCount = rhs.refCount;
 
-    rhs.data     = nullptr;
+    rhs.myData   = nullptr;
     rhs.refCount = nullptr;
   }
 
@@ -168,19 +166,19 @@ template <class T> class Array {
       return *this;
     }
     deallocate();
-    ndims = rhs.ndims;
+    rank     = rhs.rank;
     totElems = rhs.totElems;
-    for (int i=0; i<ndims; i++) {
-      offsets [i] = rhs.offsets [i];
-      dimSizes[i] = rhs.dimSizes[i];
+    for (int i=0; i<rank; i++) {
+      offsets  [i] = rhs.offsets  [i];
+      dimension[i] = rhs.dimension[i];
     }
     #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
-    data     = rhs.data;
+    myData   = rhs.myData;
     refCount = rhs.refCount;
 
-    rhs.data     = nullptr;
+    rhs.myData   = nullptr;
     rhs.refCount = nullptr;
 
     return *this;
@@ -191,7 +189,7 @@ template <class T> class Array {
   Make sure the internal arrays are allocated before freeing them
   */
   ~Array() {
-    // Only deallocate data if it's not nullptr
+    // Only deallocate myData if it's not nullptr
     deallocate();
   }
 
@@ -199,53 +197,53 @@ template <class T> class Array {
   /* SETUP FUNCTIONS
   Initialize the array with the given dimensions
   */
-  inline void setup(char const * label, ulong const d1) {
-    ulong tmp[1];
+  inline void setup(char const * label, size_t const d1) {
+    size_t tmp[1];
     tmp[0] = d1;
-    setup_arr(label, (ulong) 1,tmp);
+    setup_arr(label, (size_t) 1,tmp);
   }
-  inline void setup(char const * label, ulong const d1, ulong const d2) {
-    ulong tmp[2];
+  inline void setup(char const * label, size_t const d1, size_t const d2) {
+    size_t tmp[2];
     tmp[0] = d1;
     tmp[1] = d2;
-    setup_arr(label, (ulong) 2,tmp);
+    setup_arr(label, (size_t) 2,tmp);
   }
-  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3) {
-    ulong tmp[3];
+  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3) {
+    size_t tmp[3];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
-    setup_arr(label, (ulong) 3,tmp);
+    setup_arr(label, (size_t) 3,tmp);
   }
-  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4) {
-    ulong tmp[4];
+  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
+    size_t tmp[4];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
-    setup_arr(label, (ulong) 4,tmp);
+    setup_arr(label, (size_t) 4,tmp);
   }
-  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5) {
-    ulong tmp[5];
+  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
+    size_t tmp[5];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
     tmp[4] = d5;
-    setup_arr(label, (ulong) 5,tmp);
+    setup_arr(label, (size_t) 5,tmp);
   }
-  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6) {
-    ulong tmp[6];
+  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
+    size_t tmp[6];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
     tmp[4] = d5;
     tmp[5] = d6;
-    setup_arr(label, (ulong) 6,tmp);
+    setup_arr(label, (size_t) 6,tmp);
   }
-  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7) {
-    ulong tmp[7];
+  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
+    size_t tmp[7];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
@@ -253,10 +251,10 @@ template <class T> class Array {
     tmp[4] = d5;
     tmp[5] = d6;
     tmp[6] = d7;
-    setup_arr(label, (ulong) 7,tmp);
+    setup_arr(label, (size_t) 7,tmp);
   }
-  inline void setup(char const * label, ulong const d1, ulong const d2, ulong const d3, ulong const d4, ulong const d5, ulong const d6, ulong const d7, ulong const d8) {
-    ulong tmp[8];
+  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
+    size_t tmp[8];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
@@ -265,9 +263,9 @@ template <class T> class Array {
     tmp[5] = d6;
     tmp[6] = d7;
     tmp[7] = d8;
-    setup_arr(label, (ulong) 8,tmp);
+    setup_arr(label, (size_t) 8,tmp);
   }
-  inline void setup_arr(char const * label, ulong const ndims, ulong const dimSizes[]) {
+  inline void setup_arr(char const * label, size_t const rank, size_t const dimension[]) {
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
     #endif
@@ -276,15 +274,15 @@ template <class T> class Array {
     deallocate();
 
     // Setup this Array with the given number of dimensions and dimension sizes
-    this->ndims = ndims;
+    this->rank = rank;
     totElems = 1;
-    for (ulong i=0; i<ndims; i++) {
-      this->dimSizes[i] = dimSizes[i];
-      totElems *= this->dimSizes[i];
+    for (size_t i=0; i<rank; i++) {
+      this->dimension[i] = dimension[i];
+      totElems *= this->dimension[i];
     }
-    offsets[ndims-1] = 1;
-    for (int i=ndims-2; i>=0; i--) {
-      offsets[i] = offsets[i+1] * dimSizes[i+1];
+    offsets[rank-1] = 1;
+    for (int i=rank-2; i>=0; i--) {
+      offsets[i] = offsets[i+1] * dimension[i+1];
     }
     allocate();
   }
@@ -294,9 +292,9 @@ template <class T> class Array {
     refCount = new int;
     *refCount = 1;
     #ifdef __NVCC__
-      cudaMallocManaged(&data,totElems*sizeof(T));
+      cudaMallocManaged(&myData,totElems*sizeof(T));
     #else
-      data = new T[totElems];
+      myData = new T[totElems];
     #endif
   }
 
@@ -308,9 +306,9 @@ template <class T> class Array {
       if (*refCount == 0) {
         delete refCount;
         #ifdef __NVCC__
-          cudaFree(data);
+          cudaFree(myData);
         #else
-          delete[] data;
+          delete[] myData;
         #endif
       }
 
@@ -322,105 +320,105 @@ template <class T> class Array {
   /* ARRAY INDEXERS (FORTRAN index ordering)
   Return the element at the given index (either read-only or read-write)
   */
-  inline _HOSTDEV T &operator()(ulong const i0) const {
+  inline _HOSTDEV T &operator()(size_t const i0) const {
     #ifdef ARRAY_DEBUG
-      this->check_dims(1,ndims,__FILE__,__LINE__);
-      this->check_index(0,i0,0,dimSizes[0]-1,__FILE__,__LINE__);
+      this->check_dims(1,rank,__FILE__,__LINE__);
+      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
     #endif
-    ulong ind = i0;
-    return data[ind];
+    size_t ind = i0;
+    return myData[ind];
   }
-  inline _HOSTDEV T &operator()(ulong const i0, ulong const i1) const {
+  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1) const {
     #ifdef ARRAY_DEBUG
-      this->check_dims(2,ndims,__FILE__,__LINE__);
-      this->check_index(0,i0,0,dimSizes[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimSizes[1]-1,__FILE__,__LINE__);
+      this->check_dims(2,rank,__FILE__,__LINE__);
+      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
+      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
     #endif
-    ulong ind = i0*offsets[0] + i1;
-    return data[ind];
+    size_t ind = i0*offsets[0] + i1;
+    return myData[ind];
   }
-  inline _HOSTDEV T &operator()(ulong const i0, ulong const i1, ulong const i2) const {
+  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2) const {
     #ifdef ARRAY_DEBUG
-      this->check_dims(3,ndims,__FILE__,__LINE__);
-      this->check_index(0,i0,0,dimSizes[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimSizes[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimSizes[2]-1,__FILE__,__LINE__);
+      this->check_dims(3,rank,__FILE__,__LINE__);
+      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
+      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
+      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
     #endif
-    ulong ind = i0*offsets[0] + i1*offsets[1] + i2;
-    return data[ind];
+    size_t ind = i0*offsets[0] + i1*offsets[1] + i2;
+    return myData[ind];
   }
-  inline _HOSTDEV T &operator()(ulong const i0, ulong const i1, ulong const i2, ulong const i3) const {
+  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3) const {
     #ifdef ARRAY_DEBUG
-      this->check_dims(4,ndims,__FILE__,__LINE__);
-      this->check_index(0,i0,0,dimSizes[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimSizes[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimSizes[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimSizes[3]-1,__FILE__,__LINE__);
+      this->check_dims(4,rank,__FILE__,__LINE__);
+      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
+      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
+      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
+      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
     #endif
-    ulong ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3;
-    return data[ind];
+    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3;
+    return myData[ind];
   }
-  inline _HOSTDEV T &operator()(ulong const i0, ulong const i1, ulong const i2, ulong const i3, ulong const i4) const {
+  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4) const {
     #ifdef ARRAY_DEBUG
-      this->check_dims(5,ndims,__FILE__,__LINE__);
-      this->check_index(0,i0,0,dimSizes[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimSizes[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimSizes[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimSizes[3]-1,__FILE__,__LINE__);
-      this->check_index(4,i4,0,dimSizes[4]-1,__FILE__,__LINE__);
+      this->check_dims(5,rank,__FILE__,__LINE__);
+      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
+      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
+      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
+      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
+      this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
     #endif
-    ulong ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4;
-    return data[ind];
+    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4;
+    return myData[ind];
   }
-  inline _HOSTDEV T &operator()(ulong const i0, ulong const i1, ulong const i2, ulong const i3, ulong const i4, ulong const i5) const {
+  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5) const {
     #ifdef ARRAY_DEBUG
-      this->check_dims(6,ndims,__FILE__,__LINE__);
-      this->check_index(0,i0,0,dimSizes[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimSizes[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimSizes[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimSizes[3]-1,__FILE__,__LINE__);
-      this->check_index(4,i4,0,dimSizes[4]-1,__FILE__,__LINE__);
-      this->check_index(5,i5,0,dimSizes[5]-1,__FILE__,__LINE__);
+      this->check_dims(6,rank,__FILE__,__LINE__);
+      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
+      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
+      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
+      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
+      this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
+      this->check_index(5,i5,0,dimension[5]-1,__FILE__,__LINE__);
     #endif
-    ulong ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5;
-    return data[ind];
+    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5;
+    return myData[ind];
   }
-  inline _HOSTDEV T &operator()(ulong const i0, ulong const i1, ulong const i2, ulong const i3, ulong const i4, ulong const i5, ulong const i6) const {
+  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6) const {
     #ifdef ARRAY_DEBUG
-      this->check_dims(7,ndims,__FILE__,__LINE__);
-      this->check_index(0,i0,0,dimSizes[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimSizes[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimSizes[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimSizes[3]-1,__FILE__,__LINE__);
-      this->check_index(4,i4,0,dimSizes[4]-1,__FILE__,__LINE__);
-      this->check_index(5,i5,0,dimSizes[5]-1,__FILE__,__LINE__);
-      this->check_index(6,i6,0,dimSizes[6]-1,__FILE__,__LINE__);
+      this->check_dims(7,rank,__FILE__,__LINE__);
+      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
+      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
+      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
+      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
+      this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
+      this->check_index(5,i5,0,dimension[5]-1,__FILE__,__LINE__);
+      this->check_index(6,i6,0,dimension[6]-1,__FILE__,__LINE__);
     #endif
-    ulong ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6;
-    return data[ind];
+    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6;
+    return myData[ind];
   }
-  inline _HOSTDEV T &operator()(ulong const i0, ulong const i1, ulong const i2, ulong const i3, ulong const i4, ulong const i5, ulong const i6, ulong const i7) const {
+  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6, size_t const i7) const {
     #ifdef ARRAY_DEBUG
-      this->check_dims(8,ndims,__FILE__,__LINE__);
-      this->check_index(0,i0,0,dimSizes[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimSizes[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimSizes[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimSizes[3]-1,__FILE__,__LINE__);
-      this->check_index(4,i4,0,dimSizes[4]-1,__FILE__,__LINE__);
-      this->check_index(5,i5,0,dimSizes[5]-1,__FILE__,__LINE__);
-      this->check_index(6,i6,0,dimSizes[6]-1,__FILE__,__LINE__);
-      this->check_index(7,i7,0,dimSizes[7]-1,__FILE__,__LINE__);
+      this->check_dims(8,rank,__FILE__,__LINE__);
+      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
+      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
+      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
+      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
+      this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
+      this->check_index(5,i5,0,dimension[5]-1,__FILE__,__LINE__);
+      this->check_index(6,i6,0,dimension[6]-1,__FILE__,__LINE__);
+      this->check_index(7,i7,0,dimension[7]-1,__FILE__,__LINE__);
     #endif
-    ulong ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6*offsets[6] + i7;
-    return data[ind];
+    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6*offsets[6] + i7;
+    return myData[ind];
   }
 
-  inline _HOSTDEV void check_dims(int const ndims_called, int const ndims_actual, char const *file, int const line) const {
+  inline _HOSTDEV void check_dims(int const rank_called, int const rank_actual, char const *file, int const line) const {
     #ifdef ARRAY_DEBUG
-    if (ndims_called != ndims_actual) {
+    if (rank_called != rank_actual) {
       std::stringstream ss;
       ss << "For Array labeled: " << myname << "\n";
-      ss << "Using " << ndims_called << " dimensions to index an Array with " << ndims_actual << " dimensions\n";
+      ss << "Using " << rank_called << " dimensions to index an Array with " << rank_actual << " dimensions\n";
       ss << "File, Line: " << file << ", " << line << "\n";
       throw std::out_of_range(ss.str());
     }
@@ -431,7 +429,7 @@ template <class T> class Array {
     if (ind < lb || ind > ub) {
       std::stringstream ss;
       ss << "For Array labeled: " << myname << "\n";
-      ss << "Index " << dim << " of " << this->ndims << " out of bounds\n";
+      ss << "Index " << dim << " of " << this->rank << " out of bounds\n";
       ss << "File, Line: " << file << ", " << line << "\n";
       ss << "Index: " << ind << ". Bounds: (" << lb << "," << ub << ")\n";
       throw std::out_of_range(ss.str());
@@ -442,8 +440,8 @@ template <class T> class Array {
 
   inline _HOSTDEV T sum() const {
     T sum = 0.;
-    for (ulong i=0; i < totElems; i++) {
-      sum += data[i];
+    for (size_t i=0; i < totElems; i++) {
+      sum += myData[i];
     }
     return sum;
   }
@@ -452,50 +450,72 @@ template <class T> class Array {
   /* OPERATOR=
   Allow the user to set the entire Array to a single value */
   template <class I> inline _HOSTDEV void operator=(I const rhs) {
-    for (ulong i=0; i < totElems; i++) {
-      data[i] = rhs;
+    for (size_t i=0; i < totElems; i++) {
+      myData[i] = rhs;
     }
   }
-  /* Copy an array of values into this Array's data */
+  /* Copy an array of values into this Array's myData */
   template <class I> inline _HOSTDEV void operator=(I const *rhs) {
-    for (ulong i=0; i<totElems; i++) {
-      data[i] = rhs[i];
+    for (size_t i=0; i<totElems; i++) {
+      myData[i] = rhs[i];
     }
   }
 
+
   /* COMPARISON */
-  inline _HOSTDEV int dimsMatch(ulong const ndims, ulong const dimSizes[]) const {
-    if (this->ndims != ndims) {
+  inline _HOSTDEV int dimsMatch(size_t const rank, size_t const dimension[]) const {
+    if (this->rank != rank) {
       return -1;
     }
-    for (int i=0; i<ndims; i++) {
-      if (this->dimSizes[i] != dimSizes[i]) {
+    for (int i=0; i<rank; i++) {
+      if (this->dimension[i] != dimension[i]) {
         return -1;
       }
     }
     return 0;
   }
 
+
   /* ACCESSORS */
-  inline _HOSTDEV int get_ndims() const {
-    return ndims;
+  inline _HOSTDEV int get_rank() const {
+    return rank;
   }
-  inline _HOSTDEV ulong get_totElems() const {
+  inline _HOSTDEV size_t get_totElems() const {
     return totElems;
   }
-  inline _HOSTDEV ulong const *get_dimSizes() const {
-    return dimSizes;
+  inline _HOSTDEV size_t const *get_dimensions() const {
+    return dimension;
+  }
+  inline _HOSTDEV T *data() const {
+    return myData;
   }
   inline _HOSTDEV T *get_data() const {
-    return data;
+    return myData;
+  }
+  inline _HOSTDEV size_t extent( int const dim ) const {
+    return dimension[dim];
+  }
+  inline _HOSTDEV int extent_int( int const dim ) const {
+    return (int) dimension[dim];
   }
 
+  inline int span_is_contiguous() const {
+    return 1;
+  }
+  inline int use_count() const {
+    return *refCount;
+  }
+  const char* label() const {
+    return myname.c_str();
+  }
+
+
   /* INFORM */
-  inline void print_ndims() const {
+  inline void print_rank() const {
     #ifdef ARRAY_DEBUG
       std::cout << "For Array labeled: " << myname << "\n";
     #endif
-    std::cout << "Number of Dimensions: " << ndims << "\n";
+    std::cout << "Number of Dimensions: " << rank << "\n";
   }
   inline void print_totElems() const {
     #ifdef ARRAY_DEBUG
@@ -503,13 +523,13 @@ template <class T> class Array {
     #endif
     std::cout << "Total Number of Elements: " << totElems << "\n";
   }
-  inline void print_dimSizes() const {
+  inline void print_dimensions() const {
     #ifdef ARRAY_DEBUG
       std::cout << "For Array labeled: " << myname << "\n";
     #endif
     std::cout << "Dimension Sizes: ";
-    for (int i=0; i<ndims; i++) {
-      std::cout << dimSizes[i] << ", ";
+    for (int i=0; i<rank; i++) {
+      std::cout << dimension[i] << ", ";
     }
     std::cout << "\n";
   }
@@ -517,27 +537,28 @@ template <class T> class Array {
     #ifdef ARRAY_DEBUG
       std::cout << "For Array labeled: " << myname << "\n";
     #endif
-    if (ndims == 1) {
-      for (ulong i=0; i<dimSizes[0]; i++) {
+    if (rank == 1) {
+      for (size_t i=0; i<dimension[0]; i++) {
         std::cout << std::setw(12) << (*this)(i) << "\n";
       }
-    } else if (ndims == 2) {
-      for (ulong j=0; j<dimSizes[0]; j++) {
-        for (ulong i=0; i<dimSizes[1]; i++) {
+    } else if (rank == 2) {
+      for (size_t j=0; j<dimension[0]; j++) {
+        for (size_t i=0; i<dimension[1]; i++) {
           std::cout << std::setw(12) << (*this)(i,j) << " ";
         }
         std::cout << "\n";
       }
-    } else if (ndims == 0) {
+    } else if (rank == 0) {
       std::cout << "Empty Array\n\n";
     } else {
-      for (ulong i=0; i<totElems; i++) {
-        std::cout << std::setw(12) << data[i] << " ";
+      for (size_t i=0; i<totElems; i++) {
+        std::cout << std::setw(12) << myData[i] << " ";
       }
       std::cout << "\n";
     }
     std::cout << "\n";
   }
+
 
   /* OPERATOR<<
   Print the array. If it's 2-D, print a pretty looking matrix */
@@ -545,35 +566,36 @@ template <class T> class Array {
     #ifdef ARRAY_DEBUG
       os << "For Array labeled: " << v.myname << "\n";
     #endif
-    os << "Number of Dimensions: " << v.ndims << "\n";
+    os << "Number of Dimensions: " << v.rank << "\n";
     os << "Total Number of Elements: " << v.totElems << "\n";
     os << "Dimension Sizes: ";
-    for (int i=0; i<v.ndims; i++) {
-      os << v.dimSizes[i] << ", ";
+    for (int i=0; i<v.rank; i++) {
+      os << v.dimension[i] << ", ";
     }
     os << "\n";
-    if (v.ndims == 1) {
-      for (ulong i=0; i<v.dimSizes[0]; i++) {
+    if (v.rank == 1) {
+      for (size_t i=0; i<v.dimension[0]; i++) {
         os << std::setw(12) << v(i) << "\n";
       }
-    } else if (v.ndims == 2) {
-      for (ulong j=0; j<v.dimSizes[1]; j++) {
-        for (ulong i=0; i<v.dimSizes[0]; i++) {
+    } else if (v.rank == 2) {
+      for (size_t j=0; j<v.dimension[1]; j++) {
+        for (size_t i=0; i<v.dimension[0]; i++) {
           os << std::setw(12) << v(i,j) << " ";
         }
         os << "\n";
       }
-    } else if (v.ndims == 0) {
+    } else if (v.rank == 0) {
       os << "Empty Array\n\n";
     } else {
-      for (ulong i=0; i<v.totElems; i++) {
-        os << v.data[i] << " ";
+      for (size_t i=0; i<v.totElems; i++) {
+        os << v.myData[i] << " ";
       }
       os << "\n";
     }
     os << "\n";
     return os;
   }
+
 
 };
 

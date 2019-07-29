@@ -7,7 +7,7 @@
 int main() {
   int n = 1024*1024;
   Array<float> a, b, c;
-  c.print_ndims();
+  c.print_rank();
   a = Array<float>("a",n);
   b = Array<float>("b",n);
   c = Array<float>("c",n);
@@ -16,7 +16,7 @@ int main() {
   yakl::parallel_for( n , [=] _HOSTDEV (int i) { c(i) = a(i) + b(i); } );
   yakl::fence();
   std::cout << c.sum() / 1024 / 1024 << "\n";
-  c.print_ndims();
+  c.print_rank();
 
   a.setup("Anew",n);
   b.setup("Bnew",n);
@@ -26,9 +26,12 @@ int main() {
   yakl::parallel_for( n , [=] _HOSTDEV (int i) { c(i) = a(i) + b(i); } );
   yakl::fence();
   std::cout << c.sum() / 1024 / 1024 << "\n";
-  c.print_ndims();
+  c.print_rank();
 
   b = c;
   std::cout << b.sum() / 1024 / 1024 << "\n";
-  std::cout << c.get_ndims();
+  std::cout << c.get_rank() << "\n";
+  std::cout << "Extent: " << c.extent(0) << std::endl;
+
+  std::cout << c.dimension << std::endl;
 }
