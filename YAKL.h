@@ -110,7 +110,7 @@ namespace yakl {
 
   template <class F> void parallel_for( int const nIter , F f ) {
     #ifdef __NVCC__
-      cudaKernel <<< (uint) nIter/vectorSize+1 , vectorSize >>> ( nIter , f );
+      cudaKernel <<< (uint) (nIter-1)/vectorSize+1 , vectorSize >>> ( nIter , f );
     #else
       for (int i=0; i<nIter; i++) {
         f(i);

@@ -15,4 +15,5 @@ int main() {
   yakl::parallel_for( n , [=] _HOSTDEV (int i) { c(i) = a(i) + b(i); } );
   yakl::fence();
   std::cout << c.sum() / 1024 / 1024 << "\n";
+  std::cout << "DEBUG: 1" << std::endl;
 }

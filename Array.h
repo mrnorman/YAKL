@@ -36,7 +36,7 @@ template <class T> class Array {
   T     * data;
   int   ndims;
   ulong totElems;
-  Array<T> *orig;
+  int   *refCount;
   #ifdef ARRAY_DEBUG
     std::string myname;
   #endif
@@ -44,6 +44,7 @@ template <class T> class Array {
 
   inline void nullify() {
     data = nullptr;
+    refCount = nullptr;
     ndims = 0;
     totElems = 0;
     for (int i=0; i<8; i++) {
@@ -60,11 +61,9 @@ template <class T> class Array {
   */
   Array() {
     nullify();
-    orig = this;
   }
   Array(char const * label) {
     nullify();
-    orig = this;
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
     #endif
@@ -105,6 +104,7 @@ template <class T> class Array {
 
 
   Array(Array const &rhs) {
+    nullify();
     ndims = rhs.ndims;
     totElems = rhs.totElems;
     for (int i=0; i<ndims; i++) {
@@ -115,11 +115,35 @@ template <class T> class Array {
       myname = rhs.myname;
     #endif
     data = rhs.data;
-    orig = rhs.orig;
+    refCount = rhs.refCount;
+    *refCount++;
+  }
+
+
+  inline Array & operator=(Array const &rhs) {
+    if (this == &rhs) {
+      return *this;
+    }
+    deallocate();
+    ndims = rhs.ndims;
+    totElems = rhs.totElems;
+    for (int i=0; i<ndims; i++) {
+      offsets [i] = rhs.offsets [i];
+      dimSizes[i] = rhs.dimSizes[i];
+    }
+    #ifdef ARRAY_DEBUG
+      myname = rhs.myname;
+    #endif
+    data = rhs.data;
+    refCount = rhs.refCount;
+    *refCount++;
+
+    return *this;
   }
 
 
   Array(Array &&rhs) {
+    nullify();
     ndims = rhs.ndims;
     totElems = rhs.totElems;
     for (int i=0; i<ndims; i++) {
@@ -129,15 +153,19 @@ template <class T> class Array {
     #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
-    data = rhs.data;
-    orig = this;
+    data     = rhs.data;
+    refCount = rhs.refCount;
 
-    rhs.data = nullptr;
-    rhs.orig = this;
+    rhs.data     = nullptr;
+    rhs.refCount = nullptr;
   }
 
 
   Array& operator=(Array &&rhs) {
+    if (this == &rhs) {
+      return *this;
+    }
+    deallocate();
     ndims = rhs.ndims;
     totElems = rhs.totElems;
     for (int i=0; i<ndims; i++) {
@@ -147,11 +175,11 @@ template <class T> class Array {
     #ifdef ARRAY_DEBUG
       myname = rhs.myname;
     #endif
-    data = rhs.data;
-    orig = this;
+    data     = rhs.data;
+    refCount = rhs.refCount;
 
-    rhs.data = nullptr;
-    rhs.orig = this;
+    rhs.data     = nullptr;
+    rhs.refCount = nullptr;
 
     return *this;
   }
@@ -162,9 +190,7 @@ template <class T> class Array {
   */
   ~Array() {
     // Only deallocate data if it's not nullptr
-    if (data != nullptr && orig == this) {
-      deallocate();
-    }
+    deallocate();
   }
 
 
@@ -240,15 +266,12 @@ template <class T> class Array {
     setup_arr(label, (ulong) 8,tmp);
   }
   inline void setup_arr(char const * label, ulong const ndims, ulong const dimSizes[]) {
-    orig = this;
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
     #endif
 
     // If a buffer exists, destroy it and start over. Don't call setup_arr on a copied object, or bad things may happen
-    if ( data != nullptr && orig == this) {
-      deallocate();
-    }
+    deallocate();
 
     // Setup this Array with the given number of dimensions and dimension sizes
     this->ndims = ndims;
@@ -266,6 +289,8 @@ template <class T> class Array {
 
 
   inline void allocate() {
+    refCount = new int;
+    *refCount = 1;
     #ifdef __NVCC__
       cudaMallocManaged(&data,totElems*sizeof(T));
     #else
@@ -275,11 +300,20 @@ template <class T> class Array {
 
 
   inline void deallocate() {
-    #ifdef __NVCC__
-      cudaFree(data); nullify();
-    #else
-      delete[] data; nullify();
-    #endif
+    if (refCount != nullptr) {
+      *refCount--;
+
+      if (*refCount == 0) {
+        delete refCount;
+        #ifdef __NVCC__
+          cudaFree(data);
+        #else
+          delete[] data;
+        #endif
+      }
+
+      nullify();
+    }
   }
 
 
@@ -419,24 +453,6 @@ template <class T> class Array {
     for (ulong i=0; i < totElems; i++) {
       data[i] = rhs;
     }
-  }
-  /* Copy another Array's data to this one */
-  inline _HOSTDEV Array & operator=(Array const &rhs) {
-    if (data != nullptr) {
-      deallocate();
-    }
-    ndims = rhs.ndims;
-    totElems = rhs.totElems;
-    for (int i=0; i<ndims; i++) {
-      offsets [i] = rhs.offsets [i];
-      dimSizes[i] = rhs.dimSizes[i];
-    }
-    #ifdef ARRAY_DEBUG
-      myname = rhs.myname;
-    #endif
-    data = rhs.data;
-    orig = rhs.orig;
-    return *this;
   }
   /* Copy an array of values into this Array's data */
   template <class I> inline _HOSTDEV void operator=(I const *rhs) {
