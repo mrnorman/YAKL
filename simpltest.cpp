@@ -33,5 +33,5 @@ int main() {
   std::cout << c.get_rank() << "\n";
   std::cout << "Extent: " << c.extent(0) << std::endl;
 
-  std::cout << c.dimension << std::endl;
+  std::cout << c.dimension[0] << std::endl;
 }

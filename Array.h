@@ -29,18 +29,19 @@ template <class T> class Array {
 
   public :
 
-  long   offsets  [8];
-  size_t dimension[8];
-  T      * myData;
-  int    rank;
-  size_t totElems;
-  int    *refCount;
+  size_t offsets  [8];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
+  size_t dimension[8];  // Sizes of the 8 possible dimensions
+  T      * myData;      // Pointer to the flattened internal data
+  int    rank;          // Number of dimensions
+  size_t totElems;      // Total number of elements in this Array
+  int    * refCount;    // Pointer shared by multiple copies of this Array to keep track of allcation / free
   #ifdef ARRAY_DEBUG
-    std::string myname;
+    std::string myname; // Label for debug printing. Only stored if debugging is turned on
   #endif
 
 
-  inline void nullify() {
+  // Start off all constructors making sure the pointers are null
+  inline _HOSTDEV void nullify() {
     myData   = nullptr;
     refCount = nullptr;
     rank = 0;
@@ -52,15 +53,16 @@ template <class T> class Array {
   }
 
   /* CONSTRUCTORS
-  You can declare the array empty or with many dimensions
+  You can declare the array empty or with up to 8 dimensions
+  Like kokkos, you need to give a label for the array for debug printing
   Always nullify before beginning so that myData == nullptr upon init. This allows the
   setup() functions to keep from deallocating myData upon initialization, since
   you don't know what "myData" will be when the object is created.
   */
-  Array() {
+  _HOSTDEV Array() {
     nullify();
   }
-  Array(char const * label) {
+  _HOSTDEV Array(char const * label) {
     nullify();
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
@@ -101,8 +103,11 @@ template <class T> class Array {
   }
 
 
-  /* COPY CONSTRUCTORS / FUNCTIONS */
-  Array(Array const &rhs) {
+  /*
+  COPY CONSTRUCTORS / FUNCTIONS
+  This shares the pointers with another Array and increments the refCounter
+  */
+  _HOSTDEV Array(Array const &rhs) {
     nullify();
     rank     = rhs.rank;
     totElems = rhs.totElems;
@@ -141,8 +146,11 @@ template <class T> class Array {
   }
 
 
-  /* MOVE CONSTRUCTORS */
-  Array(Array &&rhs) {
+  /*
+  MOVE CONSTRUCTORS
+  This straight up steals the pointers form the rhs and sets them to null.
+  */
+  _HOSTDEV Array(Array &&rhs) {
     nullify();
     rank     = rhs.rank;
     totElems = rhs.totElems;
@@ -185,11 +193,11 @@ template <class T> class Array {
   }
 
 
-  /* DESTRUCTOR
-  Make sure the internal arrays are allocated before freeing them
+  /*
+  DESTRUCTOR
+  Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
   ~Array() {
-    // Only deallocate myData if it's not nullptr
     deallocate();
   }
 
@@ -270,7 +278,6 @@ template <class T> class Array {
       myname = std::string(label);
     #endif
 
-    // If a buffer exists, destroy it and start over. Don't call setup_arr on a copied object, or bad things may happen
     deallocate();
 
     // Setup this Array with the given number of dimensions and dimension sizes
@@ -305,14 +312,15 @@ template <class T> class Array {
 
       if (*refCount == 0) {
         delete refCount;
+        refCount = nullptr;
         #ifdef __NVCC__
           cudaFree(myData);
         #else
           delete[] myData;
         #endif
+        myData = nullptr;
       }
 
-      nullify();
     }
   }
 
@@ -413,7 +421,7 @@ template <class T> class Array {
     return myData[ind];
   }
 
-  inline _HOSTDEV void check_dims(int const rank_called, int const rank_actual, char const *file, int const line) const {
+  inline void check_dims(int const rank_called, int const rank_actual, char const *file, int const line) const {
     #ifdef ARRAY_DEBUG
     if (rank_called != rank_actual) {
       std::stringstream ss;
@@ -424,7 +432,7 @@ template <class T> class Array {
     }
     #endif
   }
-  inline _HOSTDEV void check_index(int const dim, long const ind, long const lb, long const ub, char const *file, int const line) const {
+  inline void check_index(int const dim, long const ind, long const lb, long const ub, char const *file, int const line) const {
     #ifdef ARRAY_DEBUG
     if (ind < lb || ind > ub) {
       std::stringstream ss;
@@ -449,30 +457,16 @@ template <class T> class Array {
 
   /* OPERATOR=
   Allow the user to set the entire Array to a single value */
-  template <class I> inline _HOSTDEV void operator=(I const rhs) {
+  template <class I> inline _HOSTDEV void operator=(I const rhs) const {
     for (size_t i=0; i < totElems; i++) {
       myData[i] = rhs;
     }
   }
   /* Copy an array of values into this Array's myData */
-  template <class I> inline _HOSTDEV void operator=(I const *rhs) {
+  template <class I> inline _HOSTDEV void operator=(I const *rhs) const {
     for (size_t i=0; i<totElems; i++) {
       myData[i] = rhs[i];
     }
-  }
-
-
-  /* COMPARISON */
-  inline _HOSTDEV int dimsMatch(size_t const rank, size_t const dimension[]) const {
-    if (this->rank != rank) {
-      return -1;
-    }
-    for (int i=0; i<rank; i++) {
-      if (this->dimension[i] != dimension[i]) {
-        return -1;
-      }
-    }
-    return 0;
   }
 
 
@@ -499,15 +493,17 @@ template <class T> class Array {
     return (int) dimension[dim];
   }
 
-  inline int span_is_contiguous() const {
+  inline _HOSTDEV int span_is_contiguous() const {
     return 1;
   }
-  inline int use_count() const {
+  inline _HOSTDEV int use_count() const {
     return *refCount;
   }
-  const char* label() const {
-    return myname.c_str();
-  }
+  #ifdef ARRAY_DEBUG
+    const char* label() const {
+      return myname.c_str();
+    }
+  #endif
 
 
   /* INFORM */
