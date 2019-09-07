@@ -13,7 +13,7 @@ int main() {
   c = Array<float>("c",n);
   a = 2;
   b = 3;
-  yakl::parallel_for( n , [=] _HOSTDEV (int i) { c(i) = a(i) + b(i); } );
+  yakl::parallel_for( n , YAKL_LAMBDA (int i) { c(i) = a(i) + b(i); } );
   yakl::fence();
   std::cout << c.sum() / 1024 / 1024 << "\n";
   c.print_rank();
@@ -23,7 +23,7 @@ int main() {
   c.setup("Cnew",n);
   a = 2;
   b = 3;
-  yakl::parallel_for( n , [=] _HOSTDEV (int i) { c(i) = a(i) + b(i); } );
+  yakl::parallel_for( n , YAKL_LAMBDA (int i) { c(i) = a(i) + b(i); } );
   yakl::fence();
   std::cout << c.sum() / 1024 / 1024 << "\n";
   c.print_rank();
