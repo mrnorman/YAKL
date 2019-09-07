@@ -197,7 +197,7 @@ template <class T> class Array {
   DESTRUCTOR
   Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
-  ~Array() {
+  _HOSTDEV ~Array() {
     deallocate();
   }
 
