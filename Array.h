@@ -14,18 +14,27 @@
 #include <string>
 #endif
 
-#ifdef __NVCC__
+#ifdef __USE_CUDA__
 #define _HOSTDEV __host__ __device__
+#elif defined(__USE_HIP__)
+#define _HOSTDEV __host__ __device__
+#include "hip/hip_runtime.h"
 #else
 #define _HOSTDEV 
 #endif
+
+namespace yakl {
+
+
+int const memDevice = 1;
+int const memHost   = 2;
 
 
 /* Array<T>
 Multi-dimensional array with functor indexing up to eight dimensions.
 */
 
-template <class T> class Array {
+template <class T, int myMem> class Array {
 
   public :
 
@@ -41,7 +50,7 @@ template <class T> class Array {
 
 
   // Start off all constructors making sure the pointers are null
-  inline _HOSTDEV void nullify() {
+  _HOSTDEV inline void nullify() {
     myData   = nullptr;
     refCount = nullptr;
     rank = 0;
@@ -298,11 +307,15 @@ template <class T> class Array {
   inline void allocate() {
     refCount = new int;
     *refCount = 1;
-    #ifdef __NVCC__
-      cudaMallocManaged(&myData,totElems*sizeof(T));
-    #else
+    if (myMem == memDevice) {
+      #ifdef __USE_CUDA__
+        cudaMalloc(&myData,totElems*sizeof(T));
+      #elif defined(__USE_HIP__)
+        hipMalloc(&myData,totElems*sizeof(T));
+      #endif
+    } else {
       myData = new T[totElems];
-    #endif
+    }
   }
 
 
@@ -313,11 +326,15 @@ template <class T> class Array {
       if (*refCount == 0) {
         delete refCount;
         refCount = nullptr;
-        #ifdef __NVCC__
-          cudaFree(myData);
-        #else
+        if (myMem == memDevice) {
+          #ifdef __USE_CUDA__
+            cudaFree(myData);
+          #elif defined(__USE_HIP__)
+            hipFree(myData);
+          #endif
+        } else {
           delete[] myData;
-        #endif
+        }
         myData = nullptr;
       }
 
@@ -421,6 +438,7 @@ template <class T> class Array {
     return myData[ind];
   }
 
+
   inline void check_dims(int const rank_called, int const rank_actual, char const *file, int const line) const {
     #ifdef ARRAY_DEBUG
     if (rank_called != rank_actual) {
@@ -455,17 +473,92 @@ template <class T> class Array {
   }
 
 
-  /* OPERATOR=
-  Allow the user to set the entire Array to a single value */
-  template <class I> inline _HOSTDEV void operator=(I const rhs) const {
-    for (size_t i=0; i < totElems; i++) {
-      myData[i] = rhs;
+  inline Array<T,memHost> createHostCopy() {
+    Array<T,memHost> ret;
+    #ifdef ARRAY_DEBUG
+      ret.setup_arr( myname.c_str() , rank , dimension );
+    #else
+      ret.setup_arr( ""             , rank , dimension );
+    #endif
+    if (myMem == memHost) {
+      for (int i=0; i<totElems; i++) {
+        ret.myData[i] = myData[i];
+      }
+    } else {
+      #ifdef __USE_CUDA__
+        cudaMemcpy(ret.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost);
+        cudaDeviceSynchronize();
+      #elif defined(__USE_HIP__)
+        hipMemcpy(ret.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost);
+        hipDeviceSynchronize();
+      #endif
+    }
+    return ret;
+  }
+
+
+  inline Array<T,memDevice> createDeviceCopy() {
+    Array<T,memDevice> ret;
+    #ifdef ARRAY_DEBUG
+      ret.setup_arr( myname.c_str() , rank , dimension );
+    #else
+      ret.setup_arr( ""             , rank , dimension );
+    #endif
+    if (myMem == memHost) {
+      #ifdef __USE_CUDA__
+        cudaMemcpy(ret.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice);
+        cudaDeviceSynchronize();
+      #elif defined(__USE_HIP__)
+        hipMemcpy(ret.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice);
+        hipDeviceSynchronize();
+      #endif
+    } else {
+      #ifdef __USE_CUDA__
+        cudaMemcpy(ret.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice);
+        cudaDeviceSynchronize();
+      #elif defined(__USE_HIP__)
+        hipMemcpy(ret.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice);
+        hipDeviceSynchronize();
+      #endif
+    }
+    return ret;
+  }
+
+
+  inline void copyToHost(Array<T,memHost> lhs) {
+    if (myMem == memHost) {
+      for (int i=0; i<totElems; i++) {
+        lhs.myData[i] = myData[i];
+      }
+    } else {
+      #ifdef __USE_CUDA__
+        cudaMemcpy(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost);
+        cudaDeviceSynchronize();
+      #elif defined(__USE_HIP__)
+        hipMemcpy(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost);
+        hipDeviceSynchronize();
+      #endif
     }
   }
-  /* Copy an array of values into this Array's myData */
-  template <class I> inline _HOSTDEV void operator=(I const *rhs) const {
-    for (size_t i=0; i<totElems; i++) {
-      myData[i] = rhs[i];
+
+
+  inline void copyToDevice(Array<T,memDevice> lhs) {
+    if (myMem == memHost) {
+      #ifdef __USE_CUDA__
+        cudaMemcpy(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice);
+        cudaDeviceSynchronize();
+      #elif defined(__USE_HIP__)
+        hipMemcpy(lhs.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice);
+        hipDeviceSynchronize();
+      #endif
+    } else {
+      #ifdef __USE_CUDA__
+        cudaMemcpy(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice);
+        cudaDeviceSynchronize();
+      #elif defined(__USE_HIP__)
+        hipMemcpy(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice);
+        hipDeviceSynchronize();
+      #endif
     }
   }
 
@@ -594,5 +687,7 @@ template <class T> class Array {
 
 
 };
+
+}
 
 #endif
