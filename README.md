@@ -106,4 +106,11 @@ template<class T> void copyToHost(Array<T,memHost> lhs);
 template<class T> void copyToDevice(Array<T,memDevice> lhs);
 ```
 
+## Future Work
+
+Plans for the future include:
+* Adding OpenCL and OpenMP backends
+* Adding atomic functions
+* Adding parallel reduce and parallel scan operations using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs.
+* Improving the documentation of YAKL
 
