@@ -3,7 +3,7 @@
 
 YAKL is designed to be similar to Kokkos but significantly simplified to make it easier to add new hardware backends quickly. The YAKL kernel launcher, `parallel_for`, will work on any object that can be validly accessed in GPU memory. This includes objects that were allocated in GPU memory and objects that use a shallow copy with a data pointer in GPU memory (like the YAKL Array class or the Kokkos View class).
 
-## Usage Example
+## Simple Code Sample
 
 The following loop would be ported to general accelerators with YAKL as follows:
 
@@ -86,5 +86,24 @@ You currently have three choices for a device backend: HIP, CUDA, and serial CPU
 | Nvidia GPU    |`-D__USE_CUDA__`| 
 | CPU Serial    | no flag        | 
 
+To turn on array bounds checking, add `-DARRAY_DEBUG` to your compiler flags.
+
+## Handling Two Memory Spaces
+
+The intent of YAKL is to mirror copies of the `Array` class between two distinct memory spaces: Host (i.e., main memory) and Device (e.g., GPU memory). There are currently four member functions of the `Array` class to help with data movement:
+
+```C++
+// Create a copy of this Array class in Host Memory, and pass that copy back as a return value.
+template<class T> Array<T,yakl::memHost> createHostCopy();
+
+// Create a copy of this Array class in Device Memory, and pass that copy back as a return value.
+template<class T> Array<T,yakl::memDevice> createDeviceCopy();
+
+// Copy the data from this Array pointer to the Host Array's pointer (Host Array must already exist)
+template<class T> void copyToHost(Array<T,memHost> lhs);
+
+// Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
+template<class T> void copyToDevice(Array<T,memDevice> lhs);
+```
 
 
