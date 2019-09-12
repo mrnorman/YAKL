@@ -65,7 +65,7 @@ std::cout << state2.createHostCopy();
 If you want to use the YAKL Array class, you'll need to `#include "Array.h"`, and if you want to use the YAKL launchers, you'll need to `#include YAKL.h`. Preface functions you want to run on the accelerator with `YAKL_INLINE`, and preface lambdas you're passing to YAKL launchers with `YAKL_LAMBDA` (which does a capture by value for CUDA and HIP backends for Nvidia and AMD hardware, respectively). The `parallel_for` launcher is used as follows:
 
 ```C++
-yakl::parallel_for( int nThreads , FunctorType f );
+yakl::parallel_for( int nThreads , FunctorType &f );
 ```
 
 And the index unpacking utility for tightly nested loops is:
@@ -74,7 +74,9 @@ And the index unpacking utility for tightly nested loops is:
 yakl::unpackIndices(int globalIndex, int dimSize1, [int dimSize2, ...], int index1, [int index2, ...])
 ```
 
-The `Array` class is set up to handle two different memories: Host and Device, and you can seen an example of how to use these above as well as in the [awflCloud](https://github.com/mrnorman/awflCloud) codebase.
+The `Array` class is set up to handle two different memories: Host and Device, and you can seen an example of how to use these above as well as in the [awflCloud](https://github.com/mrnorman/awflCloud) codebase. Also, it uses C-style index ordering with no padding between elements.
+
+Be sure to use `yakl::init()` at the beginning of the program and `yakl::finalize()` at the end.
 
 ## Compiling with YAKL
 
