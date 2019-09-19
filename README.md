@@ -130,6 +130,10 @@ yakl::ParallelMin<real,yakl::memDevice> pmin( nx*ny*nz );
 pmin.deviceReduce( dt3d.data() , dtDev );
 ```
 
+## Asynchronicity
+
+All YAKL calls are asynchronously launched in the "default" CUDA or HIP stream when run on the device. Array `deep_copy` calls also do the same. With the exception of the reduction `operator()`, you'll need to call `yakl::fence()` if you want to wait on the device operation to complete.
+
 ## Future Work
 
 Plans for the future include:
