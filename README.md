@@ -102,10 +102,32 @@ template<class T> Array<T,yakl::memHost> createHostCopy();
 template<class T> Array<T,yakl::memDevice> createDeviceCopy();
 
 // Copy the data from this Array pointer to the Host Array's pointer (Host Array must already exist)
-template<class T> void copyToHost(Array<T,memHost> lhs);
+template<class T> void deep_copy(Array<T,memHost> lhs);
 
 // Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
-template<class T> void copyToDevice(Array<T,memDevice> lhs);
+template<class T> void deep_copy(Array<T,memDevice> lhs);
+```
+
+## Array Reductions
+
+YAKL provides efficient array reductions using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size and type (`template <class T>`) of the array that will be reduced, and the constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using `T operator()(T *data)`, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below:
+
+```C++
+Array<real> dt3d;
+// Fill dt3d
+yakl::ParallelMin<real> pmin( nx*ny*nz );
+dt = pmin( dt3d.data() );
+```
+
+If you want to avoid copying the result back to the host, you can run the `T *deviceReduce(T *data)` member function as follows:
+
+```C++
+Array<real> dt3d;
+T *dtDev;
+// Allocate dtDev on device
+// Fill dt3d
+yakl::ParallelMin<real> pmin( nx*ny*nz );
+dt = pmin.deviceReduce( dt3d.data() );
 ```
 
 ## Future Work
@@ -113,6 +135,5 @@ template<class T> void copyToDevice(Array<T,memDevice> lhs);
 Plans for the future include:
 * Adding [OpenCL](https://www.khronos.org/opencl/) and [OpenMP](https://www.openmp.org/) backends
 * Adding atomic functions for min, max, and sum
-* Adding parallel reduce and parallel scan operations using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs
 * Improving the documentation of YAKL
 
