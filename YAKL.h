@@ -217,6 +217,9 @@ namespace yakl {
         hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
         return rslt;
       }
+      void deviceReduce(T *data, T *devP) {
+        hipcub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems ); // Compute the reduction
+      }
     };
     template <class T> class ParallelMax {
       void   *tmp;   // Temporary storage
@@ -243,6 +246,9 @@ namespace yakl {
         hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
         return rslt;
       }
+      void deviceReduce(T *data, T *devP) {
+        hipcub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems ); // Compute the reduction
+      }
     };
     template <class T> class ParallelSum {
       void   *tmp;   // Temporary storage
@@ -268,6 +274,9 @@ namespace yakl {
         hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
         hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
         return rslt;
+      }
+      void deviceReduce(T *data, T *devP) {
+        hipcub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems ); // Compute the reduction
       }
     };
   #elif definted(__USE_CUDA__)
@@ -296,6 +305,9 @@ namespace yakl {
         cudaMemcpy(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost);       // Copy result to host
         return rslt;
       }
+      void deviceReduce(T *data, T *devP) {
+        cub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems ); // Compute the reduction
+      }
     };
     template <class T> class ParallelMax {
       void   *tmp;   // Temporary storage
@@ -321,6 +333,9 @@ namespace yakl {
         cub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
         cudaMemcpy(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost);       // Copy result to host
         return rslt;
+      }
+      void deviceReduce(T *data, T *devP) {
+        cub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems ); // Compute the reduction
       }
     };
     template <class T> class ParallelSum {
@@ -348,6 +363,9 @@ namespace yakl {
         cudaMemcpy(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost);       // Copy result to host
         return rslt;
       }
+      void deviceReduce(T *data, T *devP) {
+        cub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems ); // Compute the reduction
+      }
     };
   #else
     template <class T> class ParallelMin {
@@ -365,6 +383,12 @@ namespace yakl {
         }
         return rslt;
       }
+      void deviceReduce(T *data, T *rslt) {
+        *(rslt) = data[0];
+        for (int i=1; i<nItems; i++) {
+          *(rslt) = data[i] < *(rslt) ? data[i] : rslt;
+        }
+      }
     };
     template <class T> class ParallelMax {
       int    nItems; // Number of items in the array that will be reduced
@@ -381,6 +405,12 @@ namespace yakl {
         }
         return rslt;
       }
+      void deviceReduce(T *data, T *rslt) {
+        *(rslt) = data[0];
+        for (int i=1; i<nItems; i++) {
+          *(rslt) = data[i] > *(rslt) ? data[i] : rslt;
+        }
+      }
     };
     template <class T> class ParallelSum {
       int    nItems; // Number of items in the array that will be reduced
@@ -396,6 +426,12 @@ namespace yakl {
           rslt += data[i];
         }
         return rslt;
+      }
+      void deviceReduce(T *data, T *rslt) {
+        *(rslt) = data[0];
+        for (int i=1; i<nItems; i++) {
+          *(rslt) += data[i];
+        }
       }
     };
   #endif
