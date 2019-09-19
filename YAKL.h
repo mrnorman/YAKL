@@ -12,6 +12,7 @@
   #define YAKL_LAMBDA [=] __host__ __device__
   #define YAKL_INLINE __host__ __device__
   #include "hip/hip_runtime.h"
+  #include <hipcub/hipcub.hpp>
 #else
   #define YAKL_LAMBDA [=]
   #define YAKL_INLINE 
@@ -30,6 +31,13 @@ namespace yakl {
     vectorSize = vectorSize_in;
     #if defined(__USE_CUDA__)
       cudaMalloc(&functorBuffer,functorBufSize);
+    #endif
+    #if defined(__USE_HIP__)
+      int id;
+      hipGetDevice(&id);
+      hipDeviceProp_t props;
+      hipGetDeviceProperties(&props,id);
+      std::cout << props.name << std::endl;
     #endif
   }
 
@@ -172,6 +180,99 @@ namespace yakl {
   template <class F> void parallel_for( char const * str , int const nIter , F const &f ) {
     parallel_for( nIter , f );
   }
+
+
+  template <class T> void parallel_min( int const nItems , T *data , T &rslt ) {
+    void   *tmp = NULL;             // Temporary storage
+    size_t nTmp = 0;                // Size of temporary storage
+    T *rsltP;                       // Device pointer for reduction result
+    hipFree(rsltP);                 // Free the result pointer
+    hipFree(tmp);                   // Free the temporary storage
+  }
+
+
+  template <class T> class ParallelMin {
+    void   *tmp;   // Temporary storage
+    size_t nTmp;   // Size of temporary storage
+    int    nItems; // Number of items in the array that will be reduced
+    T      *rsltP; // Device pointer for reduction result
+    public:
+    ParallelMin(int const nItems) {
+      tmp  = NULL;
+      nTmp = 0;
+      hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+      // Get the amount of temporary storage needed (call with NULL storage pointer)
+      hipcub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
+      hipMalloc(&tmp, nTmp);       // Allocate temporary storage
+      this->nItems = nItems;
+    }
+    ~ParallelMin() {
+      hipFree(rsltP);
+      hipFree(tmp);
+    }
+    T operator() (T *data) {
+      T rslt;
+      hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
+      hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
+      return rslt;
+    }
+  };
+
+
+  template <class T> class ParallelMax {
+    void   *tmp;   // Temporary storage
+    size_t nTmp;   // Size of temporary storage
+    int    nItems; // Number of items in the array that will be reduced
+    T      *rsltP; // Device pointer for reduction result
+    public:
+    ParallelMax(int const nItems) {
+      tmp  = NULL;
+      nTmp = 0;
+      hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+      // Get the amount of temporary storage needed (call with NULL storage pointer)
+      hipcub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
+      hipMalloc(&tmp, nTmp);       // Allocate temporary storage
+      this->nItems = nItems;
+    }
+    ~ParallelMax() {
+      hipFree(rsltP);
+      hipFree(tmp);
+    }
+    T operator() (T *data) {
+      T rslt;
+      hipcub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
+      hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
+      return rslt;
+    }
+  };
+
+
+  template <class T> class ParallelSum {
+    void   *tmp;   // Temporary storage
+    size_t nTmp;   // Size of temporary storage
+    int    nItems; // Number of items in the array that will be reduced
+    T      *rsltP; // Device pointer for reduction result
+    public:
+    ParallelSum(int const nItems) {
+      tmp  = NULL;
+      nTmp = 0;
+      hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+      // Get the amount of temporary storage needed (call with NULL storage pointer)
+      hipcub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
+      hipMalloc(&tmp, nTmp);       // Allocate temporary storage
+      this->nItems = nItems;
+    }
+    ~ParallelSum() {
+      hipFree(rsltP);
+      hipFree(tmp);
+    }
+    T operator() (T *data) {
+      T rslt;
+      hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
+      hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
+      return rslt;
+    }
+  };
 
 
   void fence() {
