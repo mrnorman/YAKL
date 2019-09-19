@@ -60,8 +60,8 @@ inline void applyTendencies(realArr &state2, real const c0, realArr const &state
                                ct * dom.dt * tend(l,k,j,i);
   }); 
 }
-yakl::ParallelSum<real,yakl::memDevice> pmin( numState*dom.nx*dom.ny*dom.nz );
-real tot = pmin( state2.data() );
+yakl::ParallelSum<real,yakl::memDevice> psum( numState*dom.nx*dom.ny*dom.nz );
+real tot = psum( state2.data() );
 std::cout << state2.createHostCopy();
 std::cout << tot << std::endl;
 ```
