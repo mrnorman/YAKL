@@ -17,6 +17,7 @@ inline void applyTendencies(realArr &state2, real const c0, realArr const &state
                                              real const c1, realArr const &state1,
                                              real const ct, realArr const &tend,
                                              Domain const &dom) {
+  real tot = 0;
   for (int l=0; l<numState; l++) {
     for (int k=0; k<dom.nz; k++) {
       for (int j=0; j<dom.ny; j++) {
@@ -24,12 +25,14 @@ inline void applyTendencies(realArr &state2, real const c0, realArr const &state
           state2(l,hs+k,hs+j,hs+i) = c0 * state0(l,hs+k,hs+j,hs+i) +
                                      c1 * state1(l,hs+k,hs+j,hs+i) +
                                      ct * dom.dt * tend(l,k,j,i);
+          tot += state2(l,hs+k,hs+j,hs+i);
         }
       }
     }
   }
 }
 std::cout << state2;
+std::cout << tot << std::endl;
 ```
 
 will become:
@@ -57,7 +60,10 @@ inline void applyTendencies(realArr &state2, real const c0, realArr const &state
                                ct * dom.dt * tend(l,k,j,i);
   }); 
 }
+yakl::ParallelSum<real,yakl::memDevice> pmin( numState*dom.nx*dom.ny*dom.nz );
+real tot = pmin( state2.data() );
 std::cout << state2.createHostCopy();
+std::cout << tot << std::endl;
 ```
 
 ## Using YAKL
