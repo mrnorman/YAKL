@@ -191,88 +191,214 @@ namespace yakl {
   }
 
 
-  template <class T> class ParallelMin {
-    void   *tmp;   // Temporary storage
-    size_t nTmp;   // Size of temporary storage
-    int    nItems; // Number of items in the array that will be reduced
-    T      *rsltP; // Device pointer for reduction result
-    public:
-    ParallelMin(int const nItems) {
-      tmp  = NULL;
-      nTmp = 0;
-      hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
-      // Get the amount of temporary storage needed (call with NULL storage pointer)
-      hipcub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
-      hipMalloc(&tmp, nTmp);       // Allocate temporary storage
-      this->nItems = nItems;
-    }
-    ~ParallelMin() {
-      hipFree(rsltP);
-      hipFree(tmp);
-    }
-    T operator() (T *data) {
-      T rslt;
-      hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
-      hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
-      return rslt;
-    }
-  };
-
-
-  template <class T> class ParallelMax {
-    void   *tmp;   // Temporary storage
-    size_t nTmp;   // Size of temporary storage
-    int    nItems; // Number of items in the array that will be reduced
-    T      *rsltP; // Device pointer for reduction result
-    public:
-    ParallelMax(int const nItems) {
-      tmp  = NULL;
-      nTmp = 0;
-      hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
-      // Get the amount of temporary storage needed (call with NULL storage pointer)
-      hipcub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
-      hipMalloc(&tmp, nTmp);       // Allocate temporary storage
-      this->nItems = nItems;
-    }
-    ~ParallelMax() {
-      hipFree(rsltP);
-      hipFree(tmp);
-    }
-    T operator() (T *data) {
-      T rslt;
-      hipcub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
-      hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
-      return rslt;
-    }
-  };
-
-
-  template <class T> class ParallelSum {
-    void   *tmp;   // Temporary storage
-    size_t nTmp;   // Size of temporary storage
-    int    nItems; // Number of items in the array that will be reduced
-    T      *rsltP; // Device pointer for reduction result
-    public:
-    ParallelSum(int const nItems) {
-      tmp  = NULL;
-      nTmp = 0;
-      hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
-      // Get the amount of temporary storage needed (call with NULL storage pointer)
-      hipcub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
-      hipMalloc(&tmp, nTmp);       // Allocate temporary storage
-      this->nItems = nItems;
-    }
-    ~ParallelSum() {
-      hipFree(rsltP);
-      hipFree(tmp);
-    }
-    T operator() (T *data) {
-      T rslt;
-      hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
-      hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
-      return rslt;
-    }
-  };
+  #ifdef __USE_HIP__
+    template <class T> class ParallelMin {
+      void   *tmp;   // Temporary storage
+      size_t nTmp;   // Size of temporary storage
+      int    nItems; // Number of items in the array that will be reduced
+      T      *rsltP; // Device pointer for reduction result
+      public:
+      ParallelMin(int const nItems) {
+        tmp  = NULL;
+        nTmp = 0;
+        hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        // Get the amount of temporary storage needed (call with NULL storage pointer)
+        hipcub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
+        hipMalloc(&tmp, nTmp);       // Allocate temporary storage
+        this->nItems = nItems;
+      }
+      ~ParallelMin() {
+        hipFree(rsltP);
+        hipFree(tmp);
+      }
+      T operator() (T *data) {
+        T rslt;
+        hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
+        hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
+        return rslt;
+      }
+    };
+    template <class T> class ParallelMax {
+      void   *tmp;   // Temporary storage
+      size_t nTmp;   // Size of temporary storage
+      int    nItems; // Number of items in the array that will be reduced
+      T      *rsltP; // Device pointer for reduction result
+      public:
+      ParallelMax(int const nItems) {
+        tmp  = NULL;
+        nTmp = 0;
+        hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        // Get the amount of temporary storage needed (call with NULL storage pointer)
+        hipcub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
+        hipMalloc(&tmp, nTmp);       // Allocate temporary storage
+        this->nItems = nItems;
+      }
+      ~ParallelMax() {
+        hipFree(rsltP);
+        hipFree(tmp);
+      }
+      T operator() (T *data) {
+        T rslt;
+        hipcub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
+        hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
+        return rslt;
+      }
+    };
+    template <class T> class ParallelSum {
+      void   *tmp;   // Temporary storage
+      size_t nTmp;   // Size of temporary storage
+      int    nItems; // Number of items in the array that will be reduced
+      T      *rsltP; // Device pointer for reduction result
+      public:
+      ParallelSum(int const nItems) {
+        tmp  = NULL;
+        nTmp = 0;
+        hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        // Get the amount of temporary storage needed (call with NULL storage pointer)
+        hipcub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
+        hipMalloc(&tmp, nTmp);       // Allocate temporary storage
+        this->nItems = nItems;
+      }
+      ~ParallelSum() {
+        hipFree(rsltP);
+        hipFree(tmp);
+      }
+      T operator() (T *data) {
+        T rslt;
+        hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
+        hipMemcpy(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost);       // Copy result to host
+        return rslt;
+      }
+    };
+  #elif definted(__USE_CUDA__)
+    template <class T> class ParallelMin {
+      void   *tmp;   // Temporary storage
+      size_t nTmp;   // Size of temporary storage
+      int    nItems; // Number of items in the array that will be reduced
+      T      *rsltP; // Device pointer for reduction result
+      public:
+      ParallelMin(int const nItems) {
+        tmp  = NULL;
+        nTmp = 0;
+        cudaMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        // Get the amount of temporary storage needed (call with NULL storage pointer)
+        cub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
+        cudaMalloc(&tmp, nTmp);       // Allocate temporary storage
+        this->nItems = nItems;
+      }
+      ~ParallelMin() {
+        cudaFree(rsltP);
+        cudaFree(tmp);
+      }
+      T operator() (T *data) {
+        T rslt;
+        cub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
+        cudaMemcpy(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost);       // Copy result to host
+        return rslt;
+      }
+    };
+    template <class T> class ParallelMax {
+      void   *tmp;   // Temporary storage
+      size_t nTmp;   // Size of temporary storage
+      int    nItems; // Number of items in the array that will be reduced
+      T      *rsltP; // Device pointer for reduction result
+      public:
+      ParallelMax(int const nItems) {
+        tmp  = NULL;
+        nTmp = 0;
+        cudaMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        // Get the amount of temporary storage needed (call with NULL storage pointer)
+        cub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
+        cudaMalloc(&tmp, nTmp);       // Allocate temporary storage
+        this->nItems = nItems;
+      }
+      ~ParallelMax() {
+        cudaFree(rsltP);
+        cudaFree(tmp);
+      }
+      T operator() (T *data) {
+        T rslt;
+        cub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
+        cudaMemcpy(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost);       // Copy result to host
+        return rslt;
+      }
+    };
+    template <class T> class ParallelSum {
+      void   *tmp;   // Temporary storage
+      size_t nTmp;   // Size of temporary storage
+      int    nItems; // Number of items in the array that will be reduced
+      T      *rsltP; // Device pointer for reduction result
+      public:
+      ParallelSum(int const nItems) {
+        tmp  = NULL;
+        nTmp = 0;
+        cudaMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        // Get the amount of temporary storage needed (call with NULL storage pointer)
+        cub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
+        cudaMalloc(&tmp, nTmp);       // Allocate temporary storage
+        this->nItems = nItems;
+      }
+      ~ParallelSum() {
+        cudaFree(rsltP);
+        cudaFree(tmp);
+      }
+      T operator() (T *data) {
+        T rslt;
+        cub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems ); // Compute the reduction
+        cudaMemcpy(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost);       // Copy result to host
+        return rslt;
+      }
+    };
+  #else
+    template <class T> class ParallelMin {
+      int    nItems; // Number of items in the array that will be reduced
+      public:
+      ParallelMin(int const nItems) {
+        this->nItems = nItems;
+      }
+      ~ParallelMin() {
+      }
+      T operator() (T *data) {
+        T rslt = data[0];
+        for (int i=1; i<nItems; i++) {
+          rslt = data[i] < rslt ? data[i] : rslt;
+        }
+        return rslt;
+      }
+    };
+    template <class T> class ParallelMax {
+      int    nItems; // Number of items in the array that will be reduced
+      public:
+      ParallelMax(int const nItems) {
+        this->nItems = nItems;
+      }
+      ~ParallelMax() {
+      }
+      T operator() (T *data) {
+        T rslt = data[0];
+        for (int i=1; i<nItems; i++) {
+          rslt = data[i] > rslt ? data[i] : rslt;
+        }
+        return rslt;
+      }
+    };
+    template <class T> class ParallelSum {
+      int    nItems; // Number of items in the array that will be reduced
+      public:
+      ParallelSum(int const nItems) {
+        this->nItems = nItems;
+      }
+      ~ParallelSum() {
+      }
+      T operator() (T *data) {
+        T rslt = data[0];
+        for (int i=1; i<nItems; i++) {
+          rslt += data[i];
+        }
+        return rslt;
+      }
+    };
+  #endif
 
 
   void fence() {
