@@ -7,6 +7,7 @@
 #include <time.h>
 #include <math.h>
 #include "stdlib.h"
+#include "YAKL.h"
 
 #ifdef ARRAY_DEBUG
 #include <stdexcept>
@@ -14,20 +15,7 @@
 #include <string>
 #endif
 
-#ifdef __USE_CUDA__
-#define _HOSTDEV __host__ __device__
-#elif defined(__USE_HIP__)
-#define _HOSTDEV __host__ __device__
-#include "hip/hip_runtime.h"
-#else
-#define _HOSTDEV 
-#endif
-
 namespace yakl {
-
-
-int const memDevice = 1;
-int const memHost   = 2;
 
 
 /* Array<T>
@@ -50,7 +38,7 @@ template <class T, int myMem> class Array {
 
 
   // Start off all constructors making sure the pointers are null
-  _HOSTDEV inline void nullify() {
+  YAKL_INLINE void nullify() {
     myData   = nullptr;
     refCount = nullptr;
     rank = 0;
@@ -68,10 +56,10 @@ template <class T, int myMem> class Array {
   setup() functions to keep from deallocating myData upon initialization, since
   you don't know what "myData" will be when the object is created.
   */
-  _HOSTDEV Array() {
+  YAKL_INLINE Array() {
     nullify();
   }
-  _HOSTDEV Array(char const * label) {
+  YAKL_INLINE Array(char const * label) {
     nullify();
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
@@ -116,7 +104,7 @@ template <class T, int myMem> class Array {
   COPY CONSTRUCTORS / FUNCTIONS
   This shares the pointers with another Array and increments the refCounter
   */
-  _HOSTDEV Array(Array const &rhs) {
+  YAKL_INLINE Array(Array const &rhs) {
     nullify();
     rank     = rhs.rank;
     totElems = rhs.totElems;
@@ -133,7 +121,7 @@ template <class T, int myMem> class Array {
   }
 
 
-  inline Array & operator=(Array const &rhs) {
+  Array & operator=(Array const &rhs) {
     if (this == &rhs) {
       return *this;
     }
@@ -159,7 +147,7 @@ template <class T, int myMem> class Array {
   MOVE CONSTRUCTORS
   This straight up steals the pointers form the rhs and sets them to null.
   */
-  _HOSTDEV Array(Array &&rhs) {
+  YAKL_INLINE Array(Array &&rhs) {
     nullify();
     rank     = rhs.rank;
     totElems = rhs.totElems;
@@ -206,7 +194,7 @@ template <class T, int myMem> class Array {
   DESTRUCTOR
   Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
-  _HOSTDEV ~Array() {
+  YAKL_INLINE ~Array() {
     deallocate();
   }
 
@@ -345,7 +333,7 @@ template <class T, int myMem> class Array {
   /* ARRAY INDEXERS (FORTRAN index ordering)
   Return the element at the given index (either read-only or read-write)
   */
-  inline _HOSTDEV T &operator()(size_t const i0) const {
+  YAKL_INLINE T &operator()(size_t const i0) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(1,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -353,7 +341,7 @@ template <class T, int myMem> class Array {
     size_t ind = i0;
     return myData[ind];
   }
-  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1) const {
+  YAKL_INLINE T &operator()(size_t const i0, size_t const i1) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(2,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -362,7 +350,7 @@ template <class T, int myMem> class Array {
     size_t ind = i0*offsets[0] + i1;
     return myData[ind];
   }
-  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2) const {
+  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(3,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -372,7 +360,7 @@ template <class T, int myMem> class Array {
     size_t ind = i0*offsets[0] + i1*offsets[1] + i2;
     return myData[ind];
   }
-  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3) const {
+  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(4,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -383,7 +371,7 @@ template <class T, int myMem> class Array {
     size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3;
     return myData[ind];
   }
-  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4) const {
+  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(5,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -395,7 +383,7 @@ template <class T, int myMem> class Array {
     size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4;
     return myData[ind];
   }
-  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5) const {
+  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(6,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -408,7 +396,7 @@ template <class T, int myMem> class Array {
     size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5;
     return myData[ind];
   }
-  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6) const {
+  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(7,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -422,7 +410,7 @@ template <class T, int myMem> class Array {
     size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6;
     return myData[ind];
   }
-  inline _HOSTDEV T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6, size_t const i7) const {
+  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6, size_t const i7) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(8,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -464,7 +452,7 @@ template <class T, int myMem> class Array {
   }
 
 
-  inline _HOSTDEV T sum() const {
+  YAKL_INLINE T sum() const {
     T sum = 0.;
     for (size_t i=0; i < totElems; i++) {
       sum += myData[i];
@@ -486,10 +474,10 @@ template <class T, int myMem> class Array {
       }
     } else {
       #ifdef __USE_CUDA__
-        cudaMemcpy(ret.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost);
+        cudaMemcpyAsync(ret.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost,0);
         cudaDeviceSynchronize();
       #elif defined(__USE_HIP__)
-        hipMemcpy(ret.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost);
+        hipMemcpyAsync(ret.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost,0);
         hipDeviceSynchronize();
       #endif
     }
@@ -506,18 +494,18 @@ template <class T, int myMem> class Array {
     #endif
     if (myMem == memHost) {
       #ifdef __USE_CUDA__
-        cudaMemcpy(ret.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(ret.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice,0);
         cudaDeviceSynchronize();
       #elif defined(__USE_HIP__)
-        hipMemcpy(ret.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice);
+        hipMemcpyAsync(ret.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice,0);
         hipDeviceSynchronize();
       #endif
     } else {
       #ifdef __USE_CUDA__
-        cudaMemcpy(ret.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice);
+        cudaMemcpyAsync(ret.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice,0);
         cudaDeviceSynchronize();
       #elif defined(__USE_HIP__)
-        hipMemcpy(ret.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice);
+        hipMemcpyAsync(ret.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice,0);
         hipDeviceSynchronize();
       #endif
     }
@@ -532,11 +520,9 @@ template <class T, int myMem> class Array {
       }
     } else {
       #ifdef __USE_CUDA__
-        cudaMemcpy(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost);
-        cudaDeviceSynchronize();
+        cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost,0);
       #elif defined(__USE_HIP__)
-        hipMemcpy(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost);
-        hipDeviceSynchronize();
+        hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost,0);
       #endif
     }
   }
@@ -545,51 +531,47 @@ template <class T, int myMem> class Array {
   inline void deep_copy(Array<T,memDevice> lhs) {
     if (myMem == memHost) {
       #ifdef __USE_CUDA__
-        cudaMemcpy(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice);
-        cudaDeviceSynchronize();
+        cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice,0);
       #elif defined(__USE_HIP__)
-        hipMemcpy(lhs.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice);
-        hipDeviceSynchronize();
+        hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice,0);
       #endif
     } else {
       #ifdef __USE_CUDA__
-        cudaMemcpy(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice);
-        cudaDeviceSynchronize();
+        cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice,0);
       #elif defined(__USE_HIP__)
-        hipMemcpy(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice);
-        hipDeviceSynchronize();
+        hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice,0);
       #endif
     }
   }
 
 
   /* ACCESSORS */
-  inline _HOSTDEV int get_rank() const {
+  YAKL_INLINE int get_rank() const {
     return rank;
   }
-  inline _HOSTDEV size_t get_totElems() const {
+  YAKL_INLINE size_t get_totElems() const {
     return totElems;
   }
-  inline _HOSTDEV size_t const *get_dimensions() const {
+  YAKL_INLINE size_t const *get_dimensions() const {
     return dimension;
   }
-  inline _HOSTDEV T *data() const {
+  YAKL_INLINE T *data() const {
     return myData;
   }
-  inline _HOSTDEV T *get_data() const {
+  YAKL_INLINE T *get_data() const {
     return myData;
   }
-  inline _HOSTDEV size_t extent( int const dim ) const {
+  YAKL_INLINE size_t extent( int const dim ) const {
     return dimension[dim];
   }
-  inline _HOSTDEV int extent_int( int const dim ) const {
+  YAKL_INLINE int extent_int( int const dim ) const {
     return (int) dimension[dim];
   }
 
-  inline _HOSTDEV int span_is_contiguous() const {
+  YAKL_INLINE int span_is_contiguous() const {
     return 1;
   }
-  inline _HOSTDEV int use_count() const {
+  YAKL_INLINE int use_count() const {
     return *refCount;
   }
   #ifdef ARRAY_DEBUG
