@@ -8,6 +8,7 @@
 #ifdef __USE_CUDA__
   #define YAKL_LAMBDA [=] __host__ __device__
   #define YAKL_INLINE __host__ __device__
+  #include <cub/cub.cuh>
 #elif defined(__USE_HIP__)
   #define YAKL_LAMBDA [=] __host__ __device__
   #define YAKL_INLINE __host__ __device__
@@ -290,7 +291,7 @@ namespace yakl {
         hipcub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
       }
     };
-  #elif definted(__USE_CUDA__)
+  #elif defined(__USE_CUDA__)
     template <class T> class ParallelMin<T,memDevice> {
       void   *tmp;   // Temporary storage
       size_t nTmp;   // Size of temporary storage
