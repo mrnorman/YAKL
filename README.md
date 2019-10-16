@@ -151,3 +151,9 @@ Plans for the future include:
 * Adding atomic functions for min, max, and sum
 * Improving the documentation and testing of YAKL
 
+## Software Dependencies
+* For Nvidia GPUs, you'll need to clone [CUB](https://nvlabs.github.io/cub/)
+* For AMD GPUs, you'll need to clone:
+  * [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB)
+  * [rocPIRM](https://github.com/ROCmSoftwarePlatform/rocPRIM)
+
