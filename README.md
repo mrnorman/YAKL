@@ -3,6 +3,8 @@
 
 YAKL is designed to be similar to Kokkos but significantly simplified to make it easier to add new hardware backends quickly. The YAKL kernel launcher, `parallel_for`, will work on any object that can be validly accessed in GPU memory. This includes objects that were allocated in GPU memory and objects that use a shallow copy with a data pointer in GPU memory (like the YAKL Array class or the Kokkos View class).
 
+Keep in mind this is still very much a work in progress and is ultimately just a stopgap to easily test new architectures until they are fully implemented in the more mature, feature-rich, and performant portability implementations.
+
 ## Simple Code Sample
 
 The following loop would be ported to general accelerators with YAKL as follows:
@@ -145,5 +147,5 @@ All YAKL calls are asynchronously launched in the "default" CUDA or HIP stream w
 Plans for the future include:
 * Adding [OpenCL](https://www.khronos.org/opencl/) and [OpenMP](https://www.openmp.org/) backends
 * Adding atomic functions for min, max, and sum
-* Improving the documentation of YAKL
+* Improving the documentation and testing of YAKL
 
