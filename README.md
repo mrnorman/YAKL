@@ -110,10 +110,10 @@ template<class T> Array<T,yakl::memHost> createHostCopy();
 template<class T> Array<T,yakl::memDevice> createDeviceCopy();
 
 // Copy the data from this Array pointer to the Host Array's pointer (Host Array must already exist)
-template<class T> void deep_copy(Array<T,memHost> lhs);
+template<class T> void deep_copy_to(Array<T,memHost> lhs);
 
 // Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
-template<class T> void deep_copy(Array<T,memDevice> lhs);
+template<class T> void deep_copy_to(Array<T,memDevice> lhs);
 ```
 
 I plan to change this to something closer to Kokkos's syntax at some point because it's odd to have the lhs be effectively on the rhs like I have it currently.
@@ -142,7 +142,7 @@ pmin.deviceReduce( dt3d.data() , dtDev );
 
 ## Asynchronicity
 
-All YAKL calls are asynchronously launched in the "default" CUDA or HIP stream when run on the device. Array `deep_copy` calls also do the same. With the exception of the reduction `operator()`, you'll need to call `yakl::fence()` if you want to wait on the device operation to complete.
+All YAKL calls are asynchronously launched in the "default" CUDA or HIP stream when run on the device. Array `deep_copy_to` calls also do the same. With the exception of the reduction `operator()`, you'll need to call `yakl::fence()` if you want to wait on the device operation to complete.
 
 ## Future Work
 
