@@ -513,7 +513,7 @@ template <class T, int myMem> class Array {
   }
 
 
-  inline void deep_copy(Array<T,memHost> lhs) {
+  inline void deep_copy_to(Array<T,memHost> lhs) {
     if (myMem == memHost) {
       for (int i=0; i<totElems; i++) {
         lhs.myData[i] = myData[i];
@@ -528,7 +528,7 @@ template <class T, int myMem> class Array {
   }
 
 
-  inline void deep_copy(Array<T,memDevice> lhs) {
+  inline void deep_copy_to(Array<T,memDevice> lhs) {
     if (myMem == memHost) {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice,0);
