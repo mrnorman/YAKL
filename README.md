@@ -151,6 +151,7 @@ Plans for the future include:
 * Improving the documentation and testing of YAKL
 
 ## Software Dependencies
+All of these are included as submodules in this repo:
 * For Nvidia GPUs, you'll need to clone [CUB](https://nvlabs.github.io/cub/)
 * For AMD GPUs, you'll need to clone:
   * [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB)
