@@ -54,9 +54,7 @@ inline void applyTendencies(realArr &state2, real const c0, realArr const &state
   //   for (int k=0; k<dom.nz; k++) {
   //     for (int j=0; j<dom.ny; j++) {
   //       for (int i=0; i<dom.nx; i++) {
-  yakl::parallel_for( numState*dom.nz*dom.ny*dom.nx , YAKL_LAMBDA (int iGlob) {
-    int l, k, j, i;
-    yakl::unpackIndices(iGlob,numState,dom.nz,dom.ny,dom.nx,l,k,j,i);
+  yakl::parallel_for( numState , dom.nz , dom.ny , dom.nx , YAKL_LAMBDA (int l, int k, int j, int i) {
     state2(l,hs+k,hs+j,hs+i) = c0 * state0(l,hs+k,hs+j,hs+i) +
                                c1 * state1(l,hs+k,hs+j,hs+i) +
                                ct * dom.dt * tend(l,k,j,i);
@@ -73,13 +71,12 @@ std::cout << tot << std::endl;
 If you want to use the YAKL Array class, you'll need to `#include "Array.h"`, and if you want to use the YAKL launchers, you'll need to `#include YAKL.h`. Preface functions you want to run on the accelerator with `YAKL_INLINE`, and preface lambdas you're passing to YAKL launchers with `YAKL_LAMBDA` (which does a capture by value for CUDA and HIP backends for Nvidia and AMD hardware, respectively). The `parallel_for` launcher is used as follows:
 
 ```C++
+// for (int i=0; i<nThreads; i++) {
 yakl::parallel_for( int nThreads , FunctorType &f );
-```
 
-And the index unpacking utility for tightly nested loops is:
-
-```C++
-yakl::unpackIndices(int globalIndex, int dimSize1, [int dimSize2, ...], int index1, [int index2, ...])
+// for (int i1=0; i1<n1; i1++) {
+//   for (int i2=0; i2<n2; i2++) {
+yakl::parallel_for( int n1 , int n2 , ... , YAKL_LAMBDA (int i1 , int i2);
 ```
 
 The `Array` class is set up to handle two different memories: Host and Device, and you can seen an example of how to use these above as well as in the [awflCloud](https://github.com/mrnorman/awflCloud) codebase. Also, it uses C-style index ordering with no padding between elements.
@@ -97,6 +94,8 @@ You currently have three choices for a device backend: HIP, CUDA, and serial CPU
 | CPU Serial    | no flag        | 
 
 To turn on array bounds checking, add `-DARRAY_DEBUG` to your compiler flags.
+
+In your compile line, you'll need to include the YAKL source directory in your `CXX_FLAGS` (e.g., `-I $YAKL_ROOT`). Also, you need to add `$YAKL_ROOT/YAKL.cpp` to your list of source files and its corresponding object file to your list of object files.
 
 ## Handling Two Memory Spaces
 
