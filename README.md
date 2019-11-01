@@ -13,11 +13,12 @@ Limitations & differences compared to other portability frameworks:
 * Currently no "sub-array" capabilities, but it is coming soon.
 * For arrays of compile-time-known size, you have to use the `SArray` (Static Array) class.
 * There are probably some corner cases the Array class does not support that are of interest to developers.
+* Unmanaged Arrays are not supported yet.
 
 Benefits compared to other portability frameworks:
-* It already works on AMD, and adding new backends is very simple.
+* It already works on AMD, and adding new backends is simple.
 * Movement between CPU and GPU is simple and easy in the `Array` class.
-* The `parallel_for` syntax for multi-dimensional arrays is nicer than most existing frameworks.
+* The `parallel_for` syntax for multiple tightly nested loops is simple and clear.
   * `yakl::parallel_for(dim1, dim2, YAKL_LAMBDA (int i1, int i2) {...} );`
 
 ## Simple Code Sample
