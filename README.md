@@ -6,22 +6,21 @@ YAKL is designed to be similar to Kokkos but significantly simplified to make it
 Keep in mind this is still a work in progress.
 
 Limitations & differences compared to other portability frameworks:
-* Tightly nested loops are always "collapsed" into a single level of parallelism. Multiple levels of parallelism are not supported (and are arguably not as portable anyway).
+* Tightly nested loops are always "collapsed" into a single level of parallelism. Multiple levels of parallelism are not supported.
 * Only one data layout is supported by the `Array` class: contiguous with the right-most index varying the fastest.
-  * This makes it easier to interoperate with other libraries and reduces the complexity in development.
+  * This makes it easier to interoperate with other libraries
 * Data memory space is simplified to "host" (i.e., CPU) and "device" (i.e., GPU).
 * Currently no "sub-array" capabilities, but it is coming soon.
-* For arrays of compile-time-known size, you have to use the `SArray` (Static Array) class.
-* There are probably some corner cases the Array class does not support that are of interest to developers.
+* For arrays of compile-time-known size, you have to use a separate `SArray` (Static Array) class.
 * Unmanaged Arrays are not supported yet.
 
 Benefits compared to other portability frameworks:
-* It already works on AMD, and adding new backends is simple.
-* Movement between CPU and GPU is simple and easy in the `Array` class.
-* The `parallel_for` syntax for multiple tightly nested loops is simple and clear.
+* It works on AMD, and adding new backends is simple.
+* Movement between CPU and GPU is simple.
+* The `parallel_for` syntax for multiple tightly nested loops is clean
   * `yakl::parallel_for(dim1, dim2, YAKL_LAMBDA (int i1, int i2) {...} );`
 
-## Simple Code Sample
+## Code Sample
 
 The following loop would be ported to general accelerators with YAKL as follows:
 
