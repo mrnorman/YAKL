@@ -1,0 +1,141 @@
+\hypertarget{YAKL_8h}{}\section{/home/temp/\+Y\+A\+K\+L/\+Y\+A\+KL.h File Reference}
+\label{YAKL_8h}\index{/home/temp/\+Y\+A\+K\+L/\+Y\+A\+K\+L.\+h@{/home/temp/\+Y\+A\+K\+L/\+Y\+A\+K\+L.\+h}}
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$algorithm$>$}\newline
+Include dependency graph for Y\+A\+K\+L.\+h\+:
+% FIG 0
+This graph shows which files directly or indirectly include this file\+:
+% FIG 1
+\subsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classyakl_1_1ParallelMin}{yakl\+::\+Parallel\+Min$<$ T, my\+Mem $>$}
+\item 
+class \hyperlink{classyakl_1_1ParallelMax}{yakl\+::\+Parallel\+Max$<$ T, my\+Mem $>$}
+\item 
+class \hyperlink{classyakl_1_1ParallelSum}{yakl\+::\+Parallel\+Sum$<$ T, my\+Mem $>$}
+\item 
+class \hyperlink{classyakl_1_1ParallelMin_3_01T_00_01memDevice_01_4}{yakl\+::\+Parallel\+Min$<$ T, mem\+Device $>$}
+\item 
+class \hyperlink{classyakl_1_1ParallelMax_3_01T_00_01memDevice_01_4}{yakl\+::\+Parallel\+Max$<$ T, mem\+Device $>$}
+\item 
+class \hyperlink{classyakl_1_1ParallelSum_3_01T_00_01memDevice_01_4}{yakl\+::\+Parallel\+Sum$<$ T, mem\+Device $>$}
+\item 
+class \hyperlink{classyakl_1_1ParallelMin_3_01T_00_01memHost_01_4}{yakl\+::\+Parallel\+Min$<$ T, mem\+Host $>$}
+\item 
+class \hyperlink{classyakl_1_1ParallelMax_3_01T_00_01memHost_01_4}{yakl\+::\+Parallel\+Max$<$ T, mem\+Host $>$}
+\item 
+class \hyperlink{classyakl_1_1ParallelSum_3_01T_00_01memHost_01_4}{yakl\+::\+Parallel\+Sum$<$ T, mem\+Host $>$}
+\end{DoxyCompactItemize}
+\subsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+ \hyperlink{namespaceyakl}{yakl}
+\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{YAKL_8h_af085ba3fa0c920e495675e86a53f7bbb}{Y\+A\+K\+L\+\_\+\+L\+A\+M\+B\+DA}~\mbox{[}\&\mbox{]}
+\item 
+\#define \hyperlink{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE}~inline
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef unsigned int \hyperlink{namespaceyakl_ad77ef6d92b742f4415930d8a33321ac7}{yakl\+::uint}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{namespaceyakl_a5debd8fe5fff4f37c06e55648d138e0c}{yakl\+::fence} ()
+\item 
+void \hyperlink{namespaceyakl_afac5fb2f9440a6d7ee378941d8d58daa}{yakl\+::init} (int vector\+Size\+\_\+in=128)
+\item 
+void \hyperlink{namespaceyakl_ab42370df4914644cfd129ff6037c5c9f}{yakl\+::finalize} ()
+\item 
+\hyperlink{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE} void \hyperlink{namespaceyakl_ae5d52efb6b604b973e2459a72db868e7}{yakl\+::unpack\+Indices} (int i\+Glob, int n1, int n2, int \&i1, int \&i2)
+\item 
+\hyperlink{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE} void \hyperlink{namespaceyakl_a3c5dabe0c0c280c2944067d241196bcc}{yakl\+::unpack\+Indices} (int i\+Glob, int n1, int n2, int n3, int \&i1, int \&i2, int \&i3)
+\item 
+\hyperlink{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE} void \hyperlink{namespaceyakl_ab40f47e063e6955cb494c8da1a7beb6e}{yakl\+::unpack\+Indices} (int i\+Glob, int n1, int n2, int n3, int n4, int \&i1, int \&i2, int \&i3, int \&i4)
+\item 
+\hyperlink{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE} void \hyperlink{namespaceyakl_a030f82c405c0c5cc61833a5839a2398d}{yakl\+::unpack\+Indices} (int i\+Glob, int n1, int n2, int n3, int n4, int n5, int \&i1, int \&i2, int \&i3, int \&i4, int \&i5)
+\item 
+\hyperlink{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE} void \hyperlink{namespaceyakl_ad0b25c0576e27b7e385b4bc404cdff49}{yakl\+::unpack\+Indices} (int i\+Glob, int n1, int n2, int n3, int n4, int n5, int n6, int \&i1, int \&i2, int \&i3, int \&i4, int \&i5, int \&i6)
+\item 
+\hyperlink{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE} void \hyperlink{namespaceyakl_a78dd2733fbd48eea6665c74f133efd15}{yakl\+::unpack\+Indices} (int i\+Glob, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int \&i1, int \&i2, int \&i3, int \&i4, int \&i5, int \&i6, int \&i7)
+\item 
+\hyperlink{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE} void \hyperlink{namespaceyakl_a9ce8fa30c4c61c1789dbda70c72f22e9}{yakl\+::unpack\+Indices} (int i\+Glob, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int \&i1, int \&i2, int \&i3, int \&i4, int \&i5, int \&i6, int \&i7, int \&i8)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_abcbee87ad306ddf8ab2ee17caeae2e8b}{yakl\+::parallel\+\_\+for\+\_\+cpu\+\_\+serial} (int n1, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_ad1f450cd63948c723accbf00e3ec3e3e}{yakl\+::parallel\+\_\+for\+\_\+cpu\+\_\+serial} (int n1, int n2, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a52c05cdadf373916fc16188650052ab2}{yakl\+::parallel\+\_\+for\+\_\+cpu\+\_\+serial} (int n1, int n2, int n3, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_afb83cdb289bc069d1ffc218cd38e992b}{yakl\+::parallel\+\_\+for\+\_\+cpu\+\_\+serial} (int n1, int n2, int n3, int n4, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a668fe7b1f8e77dfd281e82ae9cad46ca}{yakl\+::parallel\+\_\+for\+\_\+cpu\+\_\+serial} (int n1, int n2, int n3, int n4, int n5, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a2e3777e8985e3fee7e10693611429bf7}{yakl\+::parallel\+\_\+for\+\_\+cpu\+\_\+serial} (int n1, int n2, int n3, int n4, int n5, int n6, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_aa76038bc159013bfaed3a8eceac9590f}{yakl\+::parallel\+\_\+for\+\_\+cpu\+\_\+serial} (int n1, int n2, int n3, int n4, int n5, int n6, int n7, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a9e5308eeaac62f3347a095109c023360}{yakl\+::parallel\+\_\+for\+\_\+cpu\+\_\+serial} (int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a37fd33412c5c3aedf957694af5e6f56b}{yakl\+::parallel\+\_\+for} (int n1, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a9e476f666e8754ca35761e178cc0da8f}{yakl\+::parallel\+\_\+for} (int n1, int n2, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_ac86865a80e72eeb5bd8491d73e6e3bd6}{yakl\+::parallel\+\_\+for} (int n1, int n2, int n3, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a17a0fe52b5f35cc9d16a7d057b304b81}{yakl\+::parallel\+\_\+for} (int n1, int n2, int n3, int n4, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a96e9f12fb9431492fd92e518c540fe81}{yakl\+::parallel\+\_\+for} (int n1, int n2, int n3, int n4, int n5, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a9475cbfb86a88937c4b6a4cf253467f4}{yakl\+::parallel\+\_\+for} (int n1, int n2, int n3, int n4, int n5, int n6, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a02a1ee8a10a92728d6d9a39a1aa5e2ff}{yakl\+::parallel\+\_\+for} (int n1, int n2, int n3, int n4, int n5, int n6, int n7, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a8fb891e89ae5a57cc11fb82a7b327025}{yakl\+::parallel\+\_\+for} (int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_ad29eaf71e4867503e62bd44e3ed0d10a}{yakl\+::parallel\+\_\+for} (char const $\ast$str, int n1, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a33ca6c48b3eabba7ae05942764b29d89}{yakl\+::parallel\+\_\+for} (char const $\ast$str, int n1, int n2, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a5070d09cae3de942302799314b43dbc4}{yakl\+::parallel\+\_\+for} (char const $\ast$str, int n1, int n2, int n3, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a88376089821b56aa4d7ddabf6dfcbe51}{yakl\+::parallel\+\_\+for} (char const $\ast$str, int n1, int n2, int n3, int n4, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_ab83fda59ab02bb8c21be357843e79bf6}{yakl\+::parallel\+\_\+for} (char const $\ast$str, int n1, int n2, int n3, int n4, int n5, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a2632b4726d73fe995e7cd7c287881379}{yakl\+::parallel\+\_\+for} (char const $\ast$str, int n1, int n2, int n3, int n4, int n5, int n6, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_af826c667f5b2fbb643adb2c410cc1ef1}{yakl\+::parallel\+\_\+for} (char const $\ast$str, int n1, int n2, int n3, int n4, int n5, int n6, int n7, F const \&f)
+\item 
+{\footnotesize template$<$class F $>$ }\\void \hyperlink{namespaceyakl_a682ed571a33d1b0f00e6edbc2e1e7329}{yakl\+::parallel\+\_\+for} (char const $\ast$str, int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, F const \&f)
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+int constexpr \hyperlink{namespaceyakl_ac3c32aec58c61e7f870081477ceee883}{yakl\+::mem\+Device} = 1
+\item 
+int constexpr \hyperlink{namespaceyakl_aae8a8c910fec7cef7db68c9658c16405}{yakl\+::mem\+Host} = 2
+\item 
+int constexpr \hyperlink{namespaceyakl_a01bfd5e27f299747a137fd7f60c2bc17}{yakl\+::functor\+Buf\+Size} = 1024$\ast$128
+\end{DoxyCompactItemize}
+
+
+\subsection{Macro Definition Documentation}
+\mbox{\Hypertarget{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}\label{YAKL_8h_aa0dd629ffce6d564b19e9313fb91a5ad}} 
+\index{Y\+A\+K\+L.\+h@{Y\+A\+K\+L.\+h}!Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE@{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE}}
+\index{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE@{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE}!Y\+A\+K\+L.\+h@{Y\+A\+K\+L.\+h}}
+\subsubsection{\texorpdfstring{Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE}{YAKL\_INLINE}}
+{\footnotesize\ttfamily \#define Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE~inline}
+
+\mbox{\Hypertarget{YAKL_8h_af085ba3fa0c920e495675e86a53f7bbb}\label{YAKL_8h_af085ba3fa0c920e495675e86a53f7bbb}} 
+\index{Y\+A\+K\+L.\+h@{Y\+A\+K\+L.\+h}!Y\+A\+K\+L\+\_\+\+L\+A\+M\+B\+DA@{Y\+A\+K\+L\+\_\+\+L\+A\+M\+B\+DA}}
+\index{Y\+A\+K\+L\+\_\+\+L\+A\+M\+B\+DA@{Y\+A\+K\+L\+\_\+\+L\+A\+M\+B\+DA}!Y\+A\+K\+L.\+h@{Y\+A\+K\+L.\+h}}
+\subsubsection{\texorpdfstring{Y\+A\+K\+L\+\_\+\+L\+A\+M\+B\+DA}{YAKL\_LAMBDA}}
+{\footnotesize\ttfamily \#define Y\+A\+K\+L\+\_\+\+L\+A\+M\+B\+DA~\mbox{[}\&\mbox{]}}
+

@@ -1,0 +1,189 @@
+\subsection*{A Minimally Invasive C++ Performance Portability Library}
+
+Y\+A\+KL is designed to be similar to Kokkos but significantly simplified to make it easier to add new hardware backends quickly. The Y\+A\+KL kernel launcher, {\ttfamily parallel\+\_\+for}, will work on any object that can be validly accessed in G\+PU memory. This includes objects that were allocated in G\+PU memory and objects that use a shallow copy with a data pointer in G\+PU memory (like the Y\+A\+KL Array class or the Kokkos View class).
+
+Keep in mind this is still very much a work in progress and is ultimately just a stopgap to easily test new architectures until they are fully implemented in the more mature, feature-\/rich, and performant portability implementations.
+
+\subsection*{Simple Code Sample}
+
+The following loop would be ported to general accelerators with Y\+A\+KL as follows\+:
+
+
+\begin{DoxyCode}
+\{C++\}
+#include "Array.h"
+#include "YAKL.h"
+#include <iostream>
+typedef float real;
+typedef yakl::Array<real,yakl::memHost> realArr;
+inline void applyTendencies(realArr &state2, real const c0, realArr const &state0,
+                                             real const c1, realArr const &state1,
+                                             real const ct, realArr const &tend,
+                                             Domain const &dom) \{
+  real tot = 0;
+  for (int l=0; l<numState; l++) \{
+    for (int k=0; k<dom.nz; k++) \{
+      for (int j=0; j<dom.ny; j++) \{
+        for (int i=0; i<dom.nx; i++) \{
+          state2(l,hs+k,hs+j,hs+i) = c0 * state0(l,hs+k,hs+j,hs+i) +
+                                     c1 * state1(l,hs+k,hs+j,hs+i) +
+                                     ct * dom.dt * tend(l,k,j,i);
+          tot += state2(l,hs+k,hs+j,hs+i);
+        \}
+      \}
+    \}
+  \}
+\}
+std::cout << state2;
+std::cout << tot << std::endl;
+\end{DoxyCode}
+
+
+will become\+:
+
+
+\begin{DoxyCode}
+\{C++\}
+#include "Array.h"
+#include "YAKL.h"
+#include <iostream>
+typedef float real;
+typedef yakl::Array<real,yakl::memDevice> realArr;
+inline void applyTendencies(realArr &state2, real const c0, realArr const &state0,
+                                             real const c1, realArr const &state1,
+                                             real const ct, realArr const &tend,
+                                             Domain const &dom) \{
+  // for (int l=0; l<numState; l++) \{
+  //   for (int k=0; k<dom.nz; k++) \{
+  //     for (int j=0; j<dom.ny; j++) \{
+  //       for (int i=0; i<dom.nx; i++) \{
+  yakl::parallel\_for( numState , dom.nz , dom.ny , dom.nx , YAKL\_LAMBDA (int l, int k, int j, int i) \{
+    state2(l,hs+k,hs+j,hs+i) = c0 * state0(l,hs+k,hs+j,hs+i) +
+                               c1 * state1(l,hs+k,hs+j,hs+i) +
+                               ct * dom.dt * tend(l,k,j,i);
+  \}); 
+\}
+yakl::ParallelSum<real,yakl::memDevice> psum( numState*dom.nx*dom.ny*dom.nz );
+real tot = psum( state2.data() );
+std::cout << state2.createHostCopy();
+std::cout << tot << std::endl;
+\end{DoxyCode}
+
+
+\subsection*{Using Y\+A\+KL}
+
+If you want to use the Y\+A\+KL Array class, you\textquotesingle{}ll need to {\ttfamily \#include \char`\"{}\+Array.\+h\char`\"{}}, and if you want to use the Y\+A\+KL launchers, you\textquotesingle{}ll need to {\ttfamily \#include \hyperlink{YAKL_8h}{Y\+A\+K\+L.\+h}}. Preface functions you want to run on the accelerator with {\ttfamily Y\+A\+K\+L\+\_\+\+I\+N\+L\+I\+NE}, and preface lambdas you\textquotesingle{}re passing to Y\+A\+KL launchers with {\ttfamily Y\+A\+K\+L\+\_\+\+L\+A\+M\+B\+DA} (which does a capture by value for C\+U\+DA and H\+IP backends for Nvidia and A\+MD hardware, respectively). The {\ttfamily parallel\+\_\+for} launcher is used as follows\+:
+
+
+\begin{DoxyCode}
+\{C++\}
+// for (int i=0; i<nThreads; i++) \{
+yakl::parallel\_for( int nThreads , FunctorType &f );
+
+// for (int i1=0; i1<n1; i1++) \{
+//   for (int i2=0; i2<n2; i2++) \{
+yakl::parallel\_for( int n1 , int n2 , ... , YAKL\_LAMBDA (int i1 , int i2);
+\end{DoxyCode}
+
+
+The {\ttfamily Array} class is set up to handle two different memories\+: Host and Device, and you can seen an example of how to use these above as well as in the \href{https://github.com/mrnorman/awflCloud}{\tt awfl\+Cloud} codebase. Also, it uses C-\/style index ordering with no padding between elements.
+
+Be sure to use {\ttfamily \hyperlink{namespaceyakl_afac5fb2f9440a6d7ee378941d8d58daa}{yakl\+::init()}} at the beginning of the program and {\ttfamily \hyperlink{namespaceyakl_ab42370df4914644cfd129ff6037c5c9f}{yakl\+::finalize()}} at the end.
+
+\subsection*{Compiling with Y\+A\+KL}
+
+You currently have three choices for a device backend\+: H\+IP, C\+U\+DA, and serial C\+PU. To use different hardware backends, add the following C\+PP defines in your code. You may only use one.
+
+\tabulinesep=1mm
+\begin{longtabu} spread 0pt [c]{*{2}{|X[-1]}|}
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Hardware }&\textbf{ C\+PP Flag  }\\\cline{1-2}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Hardware }&\textbf{ C\+PP Flag  }\\\cline{1-2}
+\endhead
+A\+MD G\+PU &{\ttfamily -\/\+D\+\_\+\+\_\+\+U\+S\+E\+\_\+\+H\+I\+P\+\_\+\+\_\+} \\\cline{1-2}
+Nvidia G\+PU &{\ttfamily -\/\+D\+\_\+\+\_\+\+U\+S\+E\+\_\+\+C\+U\+D\+A\+\_\+\+\_\+} \\\cline{1-2}
+C\+PU Serial &no flag \\\cline{1-2}
+\end{longtabu}
+To turn on array bounds checking, add {\ttfamily -\/\+D\+A\+R\+R\+A\+Y\+\_\+\+D\+E\+B\+UG} to your compiler flags.
+
+In your compile line, you\textquotesingle{}ll need to include the Y\+A\+KL source directory in your {\ttfamily C\+X\+X\+\_\+\+F\+L\+A\+GS} (e.\+g., {\ttfamily -\/I \$\+Y\+A\+K\+L\+\_\+\+R\+O\+OT}). Also, you need to add {\ttfamily \$\+Y\+A\+K\+L\+\_\+\+R\+O\+OT/\+Y\+A\+KL.cpp} to your list of source files and its corresponding object file to your list of object files.
+
+\subsection*{Handling Two Memory Spaces}
+
+The intent of Y\+A\+KL is to mirror copies of the {\ttfamily Array} class between two distinct memory spaces\+: Host (i.\+e., main memory) and Device (e.\+g., G\+PU memory). There are currently four member functions of the {\ttfamily Array} class to help with data movement\+:
+
+
+\begin{DoxyCode}
+\{C++\}
+// Create a copy of this Array class in Host Memory, and pass that copy back as a return value.
+template<class T> Array<T,yakl::memHost> createHostCopy();
+
+// Create a copy of this Array class in Device Memory, and pass that copy back as a return value.
+template<class T> Array<T,yakl::memDevice> createDeviceCopy();
+
+// Copy the data from this Array pointer to the Host Array's pointer (Host Array must already exist)
+template<class T> void deep\_copy\_to(Array<T,memHost> lhs);
+
+// Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
+template<class T> void deep\_copy\_to(Array<T,memDevice> lhs);
+\end{DoxyCode}
+
+
+I plan to change this to something closer to Kokkos\textquotesingle{}s syntax at some point because it\textquotesingle{}s odd to have the lhs be effectively on the rhs like I have it currently.
+
+\subsection*{Array Reductions}
+
+Y\+A\+KL provides efficient min, max, and sum array reductions using \href{https://nvlabs.github.io/cub/}{\tt C\+UB} and \href{https://github.com/ROCmSoftwarePlatform/hipCUB}{\tt hip\+C\+UB} for Nvidia and A\+MD G\+P\+Us. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size (number of elements to reduce), type ({\ttfamily template $<$class T$>$}) of the array that will be reduced, and the memory space (via template parameter, {\ttfamily \hyperlink{namespaceyakl_aae8a8c910fec7cef7db68c9658c16405}{yakl\+::mem\+Host}} or {\ttfamily \hyperlink{namespaceyakl_ac3c32aec58c61e7f870081477ceee883}{yakl\+::mem\+Device}}) of the array to be reduced. The constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using {\ttfamily T operator()(\+T $\ast$data)}, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below\+:
+
+
+\begin{DoxyCode}
+\{C++\}
+Array<real> dt3d;
+// Fill dt3d
+yakl::ParallelMin<real,yakl::memDevice> pmin( nx*ny*nz );
+dt = pmin( dt3d.data() );
+\end{DoxyCode}
+
+
+If you want to avoid copying the result back to the host, you can run the {\ttfamily void device\+Reduce(\+T $\ast$data, T $\ast$rslt)} member function, where the {\ttfamily rslt} pointer is allocated in device memory. An example is below\+:
+
+
+\begin{DoxyCode}
+\{C++\}
+Array<real> dt3d;
+T *dtDev;
+// Allocate dtDev on device
+// Fill dt3d
+yakl::ParallelMin<real,yakl::memDevice> pmin( nx*ny*nz );
+pmin.deviceReduce( dt3d.data() , dtDev );
+\end{DoxyCode}
+
+
+\subsection*{Asynchronicity}
+
+All Y\+A\+KL calls are asynchronously launched in the \char`\"{}default\char`\"{} C\+U\+DA or H\+IP stream when run on the device. Array {\ttfamily deep\+\_\+copy\+\_\+to} calls also do the same. With the exception of the reduction {\ttfamily operator()}, you\textquotesingle{}ll need to call {\ttfamily \hyperlink{namespaceyakl_a5debd8fe5fff4f37c06e55648d138e0c}{yakl\+::fence()}} if you want to wait on the device operation to complete.
+
+\subsection*{Future Work}
+
+Plans for the future include\+:
+\begin{DoxyItemize}
+\item Adding \href{https://www.khronos.org/opencl/}{\tt Open\+CL} and \href{https://www.openmp.org/}{\tt Open\+MP} backends
+\item Adding atomic functions for min, max, and sum
+\item Improving the documentation and testing of Y\+A\+KL
+\end{DoxyItemize}
+
+\subsection*{Software Dependencies}
+
+All of these are included as submodules in this repo\+:
+\begin{DoxyItemize}
+\item For Nvidia G\+P\+Us, you\textquotesingle{}ll need to clone \href{https://nvlabs.github.io/cub/}{\tt C\+UB}
+\item For A\+MD G\+P\+Us, you\textquotesingle{}ll need to clone\+:
+\begin{DoxyItemize}
+\item \href{https://github.com/ROCmSoftwarePlatform/hipCUB}{\tt hip\+C\+UB}
+\item \href{https://github.com/ROCmSoftwarePlatform/rocPRIM}{\tt roc\+P\+I\+RM} 
+\end{DoxyItemize}
+\end{DoxyItemize}
