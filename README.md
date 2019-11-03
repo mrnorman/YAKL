@@ -1,5 +1,5 @@
 # YAKL: Yet Another Kernel Launcher
-## A Minimally Invasive C++ Performance Portability Library
+## A Simple C++ Kernel Launcher for Performance Portability
 
 YAKL is designed to be similar to Kokkos but significantly simplified to make it easier to add new hardware backends quickly. The YAKL kernel launcher, `parallel_for`, will work on any object that can be validly accessed in GPU memory. This includes objects that were allocated in GPU memory and objects that use a shallow copy with a data pointer in GPU memory (like the YAKL Array class or the Kokkos View class). The two classes, `Array`, `SArray`, and the `yakl` kernel launchers can all be used more or less independently.
 
