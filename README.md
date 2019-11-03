@@ -12,12 +12,13 @@ Limitations & differences compared to other portability frameworks:
 * Data memory space is simplified to "host" (i.e., CPU) and "device" (i.e., GPU).
 * Currently no "sub-array" capabilities, but it is coming soon.
 * For arrays of compile-time-known size, you have to use a separate `SArray` (Static Array) class.
+  * `SArray`s are meant for small arrays on the stack, while `Array`s are meant to be larger and on the heap.
 * Unmanaged Arrays are not supported yet.
 
 Benefits compared to other portability frameworks:
 * It works on AMD, and adding new backends is simple.
 * Movement between CPU and GPU is simple.
-* The `parallel_for` syntax for multiple tightly nested loops is clean
+* The `parallel_for` syntax for multiple tightly nested loops is clean:
   * `yakl::parallel_for(dim1, dim2, YAKL_LAMBDA (int i1, int i2) {...} );`
 
 ## Code Sample
