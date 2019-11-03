@@ -1,11 +1,27 @@
 # YAKL: Yet Another Kernel Launcher
 ## A Minimally Invasive C++ Performance Portability Library
 
-YAKL is designed to be similar to Kokkos but significantly simplified to make it easier to add new hardware backends quickly. The YAKL kernel launcher, `parallel_for`, will work on any object that can be validly accessed in GPU memory. This includes objects that were allocated in GPU memory and objects that use a shallow copy with a data pointer in GPU memory (like the YAKL Array class or the Kokkos View class).
+YAKL is designed to be similar to Kokkos but significantly simplified to make it easier to add new hardware backends quickly. The YAKL kernel launcher, `parallel_for`, will work on any object that can be validly accessed in GPU memory. This includes objects that were allocated in GPU memory and objects that use a shallow copy with a data pointer in GPU memory (like the YAKL Array class or the Kokkos View class). The two classes, `Array`, `SArray`, and the `yakl` kernel launchers can all be used more or less independently.
 
-Keep in mind this is still very much a work in progress and is ultimately just a stopgap to easily test new architectures until they are fully implemented in the more mature, feature-rich, and performant portability implementations.
+Keep in mind this is still a work in progress.
 
-## Simple Code Sample
+Limitations & differences compared to other portability frameworks:
+* Tightly nested loops are always "collapsed" into a single level of parallelism. Multiple levels of parallelism are not supported.
+* Only one data layout is supported by the `Array` class: contiguous with the right-most index varying the fastest.
+  * This makes it easier to interoperate with other libraries
+* Data memory space is simplified to "host" (i.e., CPU) and "device" (i.e., GPU).
+* Currently no "sub-array" capabilities, but it is coming soon.
+* For arrays of compile-time-known size, you have to use a separate `SArray` (Static Array) class.
+  * `SArray`s are meant for small arrays on the stack, while `Array`s are meant to be larger and on the heap.
+* Unmanaged Arrays are not supported yet.
+
+Benefits compared to other portability frameworks:
+* It works on AMD, and adding new backends is simple.
+* Movement between CPU and GPU is simple.
+* The `parallel_for` syntax for multiple tightly nested loops is clean:
+  * `yakl::parallel_for(dim1, dim2, YAKL_LAMBDA (int i1, int i2) {...} );`
+
+## Code Sample
 
 The following loop would be ported to general accelerators with YAKL as follows:
 
@@ -76,7 +92,8 @@ yakl::parallel_for( int nThreads , FunctorType &f );
 
 // for (int i1=0; i1<n1; i1++) {
 //   for (int i2=0; i2<n2; i2++) {
-yakl::parallel_for( int n1 , int n2 , ... , YAKL_LAMBDA (int i1 , int i2);
+//     for (int i3=0; i3<n3; i3++) {
+yakl::parallel_for( int n1 , int n2 , int n3 , YAKL_LAMBDA (int i1 , int i2, int i3) {...} );
 ```
 
 The `Array` class is set up to handle two different memories: Host and Device, and you can seen an example of how to use these above as well as in the [awflCloud](https://github.com/mrnorman/awflCloud) codebase. Also, it uses C-style index ordering with no padding between elements.
@@ -114,8 +131,6 @@ template<class T> void deep_copy_to(Array<T,memHost> lhs);
 // Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
 template<class T> void deep_copy_to(Array<T,memDevice> lhs);
 ```
-
-I plan to change this to something closer to Kokkos's syntax at some point because it's odd to have the lhs be effectively on the rhs like I have it currently.
 
 ## Array Reductions
 
