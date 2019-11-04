@@ -137,20 +137,20 @@ template<class T> void deep_copy_to(Array<T,memDevice> lhs);
 YAKL provides efficient min, max, and sum array reductions using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size (number of elements to reduce), type (`template <class T>`) of the array that will be reduced, and the memory space (via template parameter, `yakl::memHost` or `yakl::memDevice`) of the array to be reduced. The constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using `T operator()(T *data)`, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below:
 
 ```C++
-Array<real> dt3d;
+Array<float> dt3d;
 // Fill dt3d
-yakl::ParallelMin<real,yakl::memDevice> pmin( nx*ny*nz );
+yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
 dt = pmin( dt3d.data() );
 ```
 
 If you want to avoid copying the result back to the host, you can run the `void deviceReduce(T *data, T *rslt)` member function, where the `rslt` pointer is allocated in device memory. An example is below:
 
 ```C++
-Array<real> dt3d;
-T *dtDev;
+Array<float> dt3d;
+float *dtDev;
 // Allocate dtDev on device
 // Fill dt3d
-yakl::ParallelMin<real,yakl::memDevice> pmin( nx*ny*nz );
+yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
 pmin.deviceReduce( dt3d.data() , dtDev );
 ```
 
