@@ -3,7 +3,7 @@
 
 YAKL is designed to be similar to Kokkos but significantly simplified to make it easier to add new hardware backends quickly. The YAKL kernel launcher, `parallel_for`, will work on any object that can be validly accessed in GPU memory. This includes objects that were allocated in GPU memory and objects that use a shallow copy with a data pointer in GPU memory (like the YAKL Array class or the Kokkos View class). The two classes, `Array`, `SArray`, and the `yakl` kernel launchers can all be used more or less independently.
 
-Keep in mind this is still a work in progress.
+Keep in mind this is still a work in progress. It is not as capable or mature as the more mainstream C++ portability frameworks.
 
 Limitations & differences compared to other portability frameworks:
 * Tightly nested loops are always "collapsed" into a single level of parallelism. Multiple levels of parallelism are not supported.
