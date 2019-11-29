@@ -1,5 +1,5 @@
 
-file(GLOB SRC *.cpp *.h)
+file(GLOB SRC *.cpp)
 
 add_library(yakl STATIC ${SRC})
 
