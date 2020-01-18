@@ -32,6 +32,7 @@ template <class T, int myMem> class Array {
   int    rank;          // Number of dimensions
   size_t totElems;      // Total number of elements in this Array
   int    * refCount;    // Pointer shared by multiple copies of this Array to keep track of allcation / free
+  int    owned;         // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef ARRAY_DEBUG
     std::string myname; // Label for debug printing. Only stored if debugging is turned on
   #endif
@@ -65,38 +66,103 @@ template <class T, int myMem> class Array {
       myname = std::string(label);
     #endif
   }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Owned constructors
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
   //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
   Array(char const * label, size_t const d1) {
     nullify();
+    owned = 1;
     setup(label,d1);
   }
   Array(char const * label, size_t const d1, size_t const d2) {
     nullify();
+    owned = 1;
     setup(label,d1,d2);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3) {
     nullify();
+    owned = 1;
     setup(label,d1,d2,d3);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
     nullify();
+    owned = 1;
     setup(label,d1,d2,d3,d4);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
     nullify();
+    owned = 1;
     setup(label,d1,d2,d3,d4,d5);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
     nullify();
+    owned = 1;
     setup(label,d1,d2,d3,d4,d5,d6);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
     nullify();
+    owned = 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
     nullify();
+    owned = 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Non-owned constructors
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
+  Array(char const * label, T * data, size_t const d1) {
+    nullify();
+    owned = 0;
+    setup(label,d1);
+    myData = data;
+  }
+  Array(char const * label, T * data, size_t const d1, size_t const d2) {
+    nullify();
+    owned = 0;
+    setup(label,d1,d2);
+    myData = data;
+  }
+  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3) {
+    nullify();
+    owned = 0;
+    setup(label,d1,d2,d3);
+    myData = data;
+  }
+  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
+    nullify();
+    owned = 0;
+    setup(label,d1,d2,d3,d4);
+    myData = data;
+  }
+  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
+    nullify();
+    owned = 0;
+    setup(label,d1,d2,d3,d4,d5);
+    myData = data;
+  }
+  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
+    nullify();
+    owned = 0;
+    setup(label,d1,d2,d3,d4,d5,d6);
+    myData = data;
+  }
+  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
+    nullify();
+    owned = 0;
+    setup(label,d1,d2,d3,d4,d5,d6,d7);
+    myData = data;
+  }
+  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
+    nullify();
+    owned = 0;
+    setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
+    myData = data;
   }
 
 
@@ -293,44 +359,48 @@ template <class T, int myMem> class Array {
 
 
   inline void allocate() {
-    refCount = new int;
-    *refCount = 1;
-    if (myMem == memDevice) {
-      #ifdef __USE_CUDA__
-        #ifdef __MANAGED__
-          cudaMallocManaged(&myData,totElems*sizeof(T));
-          cudaMemPrefetchAsync(myData,totElems*sizeof(T),0);
-        #else
-          cudaMalloc(&myData,totElems*sizeof(T));
+    if (owned) {
+      refCount = new int;
+      *refCount = 1;
+      if (myMem == memDevice) {
+        #ifdef __USE_CUDA__
+          #ifdef __MANAGED__
+            cudaMallocManaged(&myData,totElems*sizeof(T));
+            cudaMemPrefetchAsync(myData,totElems*sizeof(T),0);
+          #else
+            cudaMalloc(&myData,totElems*sizeof(T));
+          #endif
+        #elif defined(__USE_HIP__)
+          hipMalloc(&myData,totElems*sizeof(T));
         #endif
-      #elif defined(__USE_HIP__)
-        hipMalloc(&myData,totElems*sizeof(T));
-      #endif
-    } else {
-      myData = new T[totElems];
+      } else {
+        myData = new T[totElems];
+      }
     }
   }
 
 
   inline void deallocate() {
-    if (refCount != nullptr) {
-      (*refCount)--;
+    if (owned) {
+      if (refCount != nullptr) {
+        (*refCount)--;
 
-      if (*refCount == 0) {
-        delete refCount;
-        refCount = nullptr;
-        if (myMem == memDevice) {
-          #ifdef __USE_CUDA__
-            cudaFree(myData);
-          #elif defined(__USE_HIP__)
-            hipFree(myData);
-          #endif
-        } else {
-          delete[] myData;
+        if (*refCount == 0) {
+          delete refCount;
+          refCount = nullptr;
+          if (myMem == memDevice) {
+            #ifdef __USE_CUDA__
+              cudaFree(myData);
+            #elif defined(__USE_HIP__)
+              hipFree(myData);
+            #endif
+          } else {
+            delete[] myData;
+          }
+          myData = nullptr;
         }
-        myData = nullptr;
-      }
 
+      }
     }
   }
 
