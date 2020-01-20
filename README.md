@@ -1,5 +1,5 @@
 # YAKL: Yet Another Kernel Launcher
-## A Simple C++ Kernel Launcher for Performance Portability
+## A Minimal C++ Kernel Launcher for Performance Portability
 
 YAKL is designed to be similar to Kokkos but significantly simplified to make it easier to add new hardware backends quickly. The YAKL kernel launcher, `parallel_for`, will work on any object that can be validly accessed in GPU memory. This includes objects that were allocated in GPU memory and objects that use a shallow copy with a data pointer in GPU memory (like the YAKL Array class or the Kokkos View class). The two classes, `Array`, `SArray`, and the `yakl` kernel launchers can all be used more or less independently.
 
@@ -70,7 +70,10 @@ inline void applyTendencies(realArr &state2, real const c0, realArr const &state
   //   for (int k=0; k<dom.nz; k++) {
   //     for (int j=0; j<dom.ny; j++) {
   //       for (int i=0; i<dom.nx; i++) {
-  yakl::parallel_for( numState , dom.nz , dom.ny , dom.nx , YAKL_LAMBDA (int l, int k, int j, int i) {
+  yakl::parallel_for( numState*dom.nz*dom.ny*dom.nx , YAKL_LAMBDA (int iGlob) {
+    int l, k, j, i;
+    yakl:unpackIndices( iGlob , numState,dom.nz,dom.ny,dom.nx , l,k,j,i );
+    
     state2(l,hs+k,hs+j,hs+i) = c0 * state0(l,hs+k,hs+j,hs+i) +
                                c1 * state1(l,hs+k,hs+j,hs+i) +
                                ct * dom.dt * tend(l,k,j,i);
@@ -97,6 +100,16 @@ yakl::parallel_for( int n1 , int n2 , int n3 , YAKL_LAMBDA (int i1 , int i2, int
 ```
 
 The `Array` class is set up to handle two different memories: Host and Device, and you can seen an example of how to use these above as well as in the [awflCloud](https://github.com/mrnorman/awflCloud) codebase. Also, it uses C-style index ordering with no padding between elements.
+
+The `Array` class can be owned or non-owned. The constructors are:
+
+```C++
+# Owned
+yakl::Array<T type,int memSpace>(char const *label, int dim1, [int dim2, ...]);
+
+# Non-Owned
+yakl::Array<T type,int memSpace>(char const *label, T *ptr, int dim1, [int dim2, ...]);
+```
 
 Be sure to use `yakl::init()` at the beginning of the program and `yakl::finalize()` at the end.
 
