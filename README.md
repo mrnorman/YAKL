@@ -104,10 +104,10 @@ The `Array` class is set up to handle two different memories: Host and Device, a
 The `Array` class can be owned or non-owned. The constructors are:
 
 ```C++
-# Owned
+# Owned (Allocated, reference counted, and deallocated by YAKL)
 yakl::Array<T type,int memSpace>(char const *label, int dim1, [int dim2, ...]);
 
-# Non-Owned
+# Non-Owned (NOT allocated, reference counted, or deallocated)
 yakl::Array<T type,int memSpace>(char const *label, T *ptr, int dim1, [int dim2, ...]);
 ```
 
