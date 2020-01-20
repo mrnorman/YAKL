@@ -132,70 +132,6 @@ namespace yakl {
         f( i );
       }
     }
-    template <class F> __global__ void cudaKernelVal(int n1, int n2, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2;
-      if (i < nTot) {
-        int i1, i2;
-        unpackIndices( i , n1 , n2 , i1 , i2 );
-        f( i1 , i2 );
-      }
-    }
-    template <class F> __global__ void cudaKernelVal(int n1, int n2, int n3, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3;
-      if (i < nTot) {
-        int i1, i2, i3;
-        unpackIndices( i , n1 , n2 , n3 , i1 , i2 , i3 );
-        f( i1 , i2 , i3 );
-      }
-    }
-    template <class F> __global__ void cudaKernelVal(int n1, int n2, int n3, int n4, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4;
-      if (i < nTot) {
-        int i1, i2, i3, i4;
-        unpackIndices( i , n1 , n2 , n3 , n4 , i1 , i2 , i3 , i4 );
-        f( i1 , i2 , i3 , i4 );
-      }
-    }
-    template <class F> __global__ void cudaKernelVal(int n1, int n2, int n3, int n4, int n5, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , i1 , i2 , i3 , i4 , i5 );
-        f( i1 , i2 , i3 , i4 , i5 );
-      }
-    }
-    template <class F> __global__ void cudaKernelVal(int n1, int n2, int n3, int n4, int n5, int n6, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5*n6;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5, i6;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , i1 , i2 , i3 , i4 , i5 , i6 );
-        f( i1 , i2 , i3 , i4 , i5 , i6 );
-      }
-    }
-    template <class F> __global__ void cudaKernelVal(int n1, int n2, int n3, int n4, int n5, int n6, int n7, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5, i6, i7;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , n7 , i1 , i2 , i3 , i4 , i5 , i6 , i7 );
-        f( i1 , i2 , i3 , i4 , i5 , i6 , i7 );
-      }
-    }
-    template <class F> __global__ void cudaKernelVal(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7*n8;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5, i6, i7, i8;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , i1 , i2 , i3 , i4 , i5 , i6 , i7 , i8 );
-        f( i1 , i2 , i3 , i4 , i5 , i6 , i7 , i8 );
-      }
-    }
-
 
     template <class F> __global__ void cudaKernelRef(int n1, F const &f) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -203,150 +139,15 @@ namespace yakl {
         f( i );
       }
     }
-    template <class F> __global__ void cudaKernelRef(int n1, int n2, F const &f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2;
-      if (i < nTot) {
-        int i1, i2;
-        unpackIndices( i , n1 , n2 , i1 , i2 );
-        f( i1 , i2 );
-      }
-    }
-    template <class F> __global__ void cudaKernelRef(int n1, int n2, int n3, F const &f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3;
-      if (i < nTot) {
-        int i1, i2, i3;
-        unpackIndices( i , n1 , n2 , n3 , i1 , i2 , i3 );
-        f( i1 , i2 , i3 );
-      }
-    }
-    template <class F> __global__ void cudaKernelRef(int n1, int n2, int n3, int n4, F const &f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4;
-      if (i < nTot) {
-        int i1, i2, i3, i4;
-        unpackIndices( i , n1 , n2 , n3 , n4 , i1 , i2 , i3 , i4 );
-        f( i1 , i2 , i3 , i4 );
-      }
-    }
-    template <class F> __global__ void cudaKernelRef(int n1, int n2, int n3, int n4, int n5, F const &f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , i1 , i2 , i3 , i4 , i5 );
-        f( i1 , i2 , i3 , i4 , i5 );
-      }
-    }
-    template <class F> __global__ void cudaKernelRef(int n1, int n2, int n3, int n4, int n5, int n6, F const &f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5*n6;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5, i6;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , i1 , i2 , i3 , i4 , i5 , i6 );
-        f( i1 , i2 , i3 , i4 , i5 , i6 );
-      }
-    }
-    template <class F> __global__ void cudaKernelRef(int n1, int n2, int n3, int n4, int n5, int n6, int n7, F const &f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5, i6, i7;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , n7 , i1 , i2 , i3 , i4 , i5 , i6 , i7 );
-        f( i1 , i2 , i3 , i4 , i5 , i6 , i7 );
-      }
-    }
-    template <class F> __global__ void cudaKernelRef(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, F const &f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7*n8;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5, i6, i7, i8;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , i1 , i2 , i3 , i4 , i5 , i6 , i7 , i8 );
-        f( i1 , i2 , i3 , i4 , i5 , i6 , i7 , i8 );
-      }
-    }
-
 
     template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , F const &f ) {
       cudaKernelVal <<< (uint) (n1-1)/vectorSize+1 , vectorSize >>> ( n1 , f );
     }
-    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , F const &f ) {
-      size_t nTot = n1*n2;
-      cudaKernelVal <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , f );
-    }
-    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , F const &f ) {
-      size_t nTot = n1*n2*n3;
-      cudaKernelVal <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , f );
-    }
-    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4;
-      cudaKernelVal <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , f );
-    }
-    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , int n5 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4*n5;
-      cudaKernelVal <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , n5 , f );
-    }
-    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4*n5*n6;
-      cudaKernelVal <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , n5 , n6 , f );
-    }
-    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7;
-      cudaKernelVal <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , n5 , n6 , n7 , f );
-    }
-    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , int n8 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7*n8;
-      cudaKernelVal <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , f );
-    }
-
 
     template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , F const &f ) {
       F *fp = (F *) functorBuffer;
       cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
       cudaKernelRef <<< (uint) (n1-1)/vectorSize+1 , vectorSize >>> ( n1 , *fp );
-    }
-    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , F const &f ) {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-      size_t nTot = n1*n2;
-      cudaKernelRef <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , *fp );
-    }
-    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , F const &f ) {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-      size_t nTot = n1*n2*n3;
-      cudaKernelRef <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , *fp );
-    }
-    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , F const &f ) {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-      size_t nTot = n1*n2*n3*n4;
-      cudaKernelRef <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , *fp );
-    }
-    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , int n5 , F const &f ) {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-      size_t nTot = n1*n2*n3*n4*n5;
-      cudaKernelRef <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , n5 , *fp );
-    }
-    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , F const &f ) {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-      size_t nTot = n1*n2*n3*n4*n5*n6;
-      cudaKernelRef <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , n5 , n6 , *fp );
-    }
-    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , F const &f ) {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7;
-      cudaKernelRef <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , n5 , n6 , n7 , *fp );
-    }
-    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , int n8 , F const &f ) {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7*n8;
-      cudaKernelRef <<< (uint) (nTot-1)/vectorSize+1 , vectorSize >>> ( n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , *fp );
     }
   #endif
 
@@ -358,101 +159,9 @@ namespace yakl {
         f( i );
       }
     }
-    template <class F> __global__ void hipKernel(int n1, int n2, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2;
-      if (i < nTot) {
-        int i1, i2;
-        unpackIndices( i , n1 , n2 , i1 , i2 );
-        f( i1 , i2 );
-      }
-    }
-    template <class F> __global__ void hipKernel(int n1, int n2, int n3, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3;
-      if (i < nTot) {
-        int i1, i2, i3;
-        unpackIndices( i , n1 , n2 , n3 , i1 , i2 , i3 );
-        f( i1 , i2 , i3 );
-      }
-    }
-    template <class F> __global__ void hipKernel(int n1, int n2, int n3, int n4, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4;
-      if (i < nTot) {
-        int i1, i2, i3, i4;
-        unpackIndices( i , n1 , n2 , n3 , n4 , i1 , i2 , i3 , i4 );
-        f( i1 , i2 , i3 , i4 );
-      }
-    }
-    template <class F> __global__ void hipKernel(int n1, int n2, int n3, int n4, int n5, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , i1 , i2 , i3 , i4 , i5 );
-        f( i1 , i2 , i3 , i4 , i5 );
-      }
-    }
-    template <class F> __global__ void hipKernel(int n1, int n2, int n3, int n4, int n5, int n6, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5*n6;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5, i6;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , i1 , i2 , i3 , i4 , i5 , i6 );
-        f( i1 , i2 , i3 , i4 , i5 , i6 );
-      }
-    }
-    template <class F> __global__ void hipKernel(int n1, int n2, int n3, int n4, int n5, int n6, int n7, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5, i6, i7;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , n7 , i1 , i2 , i3 , i4 , i5 , i6 , i7 );
-        f( i1 , i2 , i3 , i4 , i5 , i6 , i7 );
-      }
-    }
-    template <class F> __global__ void hipKernel(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, F f) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7*n8;
-      if (i < nTot) {
-        int i1, i2, i3, i4, i5, i6, i7, i8;
-        unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , i1 , i2 , i3 , i4 , i5 , i6 , i7 , i8 );
-        f( i1 , i2 , i3 , i4 , i5 , i6 , i7 , i8 );
-      }
-    }
-
 
     template<class F> inline void parallel_for_hip( int n1 , F const &f ) {
       hipLaunchKernelGGL( hipKernel , dim3((n1-1)/vectorSize+1) , dim3(vectorSize) , (std::uint32_t) 0 , (hipStream_t) 0 , n1 , f );
-    }
-    template<class F> inline void parallel_for_hip( int n1 , int n2 , F const &f ) {
-      size_t nTot = n1*n2;
-      hipLaunchKernelGGL( hipKernel , dim3((nTot-1)/vectorSize+1) , dim3(vectorSize) , (std::uint32_t) 0 , (hipStream_t) 0 , n1 , n2 , f );
-    }
-    template<class F> inline void parallel_for_hip( int n1 , int n2 , int n3 , F const &f ) {
-      size_t nTot = n1*n2*n3;
-      hipLaunchKernelGGL( hipKernel , dim3((nTot-1)/vectorSize+1) , dim3(vectorSize) , (std::uint32_t) 0 , (hipStream_t) 0 , n1 , n2 , n3 , f );
-    }
-    template<class F> inline void parallel_for_hip( int n1 , int n2 , int n3 , int n4 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4;
-      hipLaunchKernelGGL( hipKernel , dim3((nTot-1)/vectorSize+1) , dim3(vectorSize) , (std::uint32_t) 0 , (hipStream_t) 0 , n1 , n2 , n3 , n4 , f );
-    }
-    template<class F> inline void parallel_for_hip( int n1 , int n2 , int n3 , int n4 , int n5 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4*n5;
-      hipLaunchKernelGGL( hipKernel , dim3((nTot-1)/vectorSize+1) , dim3(vectorSize) , (std::uint32_t) 0 , (hipStream_t) 0 , n1 , n2 , n3 , n4 , n5 , f );
-    }
-    template<class F> inline void parallel_for_hip( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4*n5*n6;
-      hipLaunchKernelGGL( hipKernel , dim3((nTot-1)/vectorSize+1) , dim3(vectorSize) , (std::uint32_t) 0 , (hipStream_t) 0 , n1 , n2 , n3 , n4 , n5 , n6 , f );
-    }
-    template<class F> inline void parallel_for_hip( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7;
-      hipLaunchKernelGGL( hipKernel , dim3((nTot-1)/vectorSize+1) , dim3(vectorSize) , (std::uint32_t) 0 , (hipStream_t) 0 , n1 , n2 , n3 , n4 , n5 , n6 , n7 , f );
-    }
-    template<class F> inline void parallel_for_hip( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , int n8 , F const &f ) {
-      size_t nTot = n1*n2*n3*n4*n5*n6*n7*n8;
-      hipLaunchKernelGGL( hipKernel , dim3((nTot-1)/vectorSize+1) , dim3(vectorSize) , (std::uint32_t) 0 , (hipStream_t) 0 , n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , f );
     }
   #endif
 
@@ -463,63 +172,6 @@ namespace yakl {
       f(i);
     }
   }
-  template <class F> inline void parallel_for_cpu_serial( int n1 , int n2 , F const &f ) {
-    size_t nTot = n1*n2;
-    for (int i=0; i<nTot; i++) {
-      int i1, i2;
-      unpackIndices( i , n1 , n2 , i1 , i2 );
-      f(i1,i2);
-    }
-  }
-  template <class F> inline void parallel_for_cpu_serial( int n1 , int n2 , int n3 , F const &f ) {
-    size_t nTot = n1*n2*n3;
-    for (int i=0; i<nTot; i++) {
-      int i1, i2, i3;
-      unpackIndices( i , n1 , n2 , n3 , i1 , i2 , i3 );
-      f(i1,i2,i3);
-    }
-  }
-  template <class F> inline void parallel_for_cpu_serial( int n1 , int n2 , int n3 , int n4 , F const &f ) {
-    size_t nTot = n1*n2*n3*n4;
-    for (int i=0; i<nTot; i++) {
-      int i1, i2, i3, i4;
-      unpackIndices( i , n1 , n2 , n3 , n4 , i1 , i2 , i3 , i4 );
-      f(i1,i2,i3,i4);
-    }
-  }
-  template <class F> inline void parallel_for_cpu_serial( int n1 , int n2 , int n3 , int n4 , int n5 , F const &f ) {
-    size_t nTot = n1*n2*n3*n4*n5;
-    for (int i=0; i<nTot; i++) {
-      int i1, i2, i3, i4, i5;
-      unpackIndices( i , n1 , n2 , n3 , n4 , n5 , i1 , i2 , i3 , i4 , i5 );
-      f(i1,i2,i3,i4,i5);
-    }
-  }
-  template <class F> inline void parallel_for_cpu_serial( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , F const &f ) {
-    size_t nTot = n1*n2*n3*n4*n5*n6;
-    for (int i=0; i<nTot; i++) {
-      int i1, i2, i3, i4, i5, i6;
-      unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , i1 , i2 , i3 , i4 , i5 , i6 );
-      f(i1,i2,i3,i4,i5,i6);
-    }
-  }
-  template <class F> inline void parallel_for_cpu_serial( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , F const &f ) {
-    size_t nTot = n1*n2*n3*n4*n5*n6*n7;
-    for (int i=0; i<nTot; i++) {
-      int i1, i2, i3, i4, i5, i6, i7;
-      unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , n7 , i1 , i2 , i3 , i4 , i5 , i6 , i7 );
-      f(i1,i2,i3,i4,i5,i6,i7);
-    }
-  }
-  template <class F> inline void parallel_for_cpu_serial( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , int n8, F const &f ) {
-    size_t nTot = n1*n2*n3*n4*n5*n6*n7*n8;
-    for (int i=0; i<nTot; i++) {
-      int i1, i2, i3, i4, i5, i6, i7, i8;
-      unpackIndices( i , n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8, i1 , i2 , i3 , i4 , i5 , i6 , i7 , i8 );
-      f(i1,i2,i3,i4,i5,i6,i7,i8);
-    }
-  }
-
 
 
   template <class F> inline void parallel_for( int n1 , F const &f ) {
@@ -531,97 +183,11 @@ namespace yakl {
       parallel_for_cpu_serial( n1 , f );
     #endif
   }
-  template <class F> inline void parallel_for( int n1 , int n2 , F const &f ) {
-    #ifdef __USE_CUDA__
-      parallel_for_cuda( n1 , n2 , f );
-    #elif defined(__USE_HIP__)
-      parallel_for_hip( n1 , n2 , f );
-    #else
-      parallel_for_cpu_serial( n1 , n2 , f );
-    #endif
-  }
-  template <class F> inline void parallel_for( int n1 , int n2 , int n3 , F const &f ) {
-    #ifdef __USE_CUDA__
-      parallel_for_cuda( n1 , n2 , n3 , f );
-    #elif defined(__USE_HIP__)
-      parallel_for_hip( n1 , n2 , n3 , f );
-    #else
-      parallel_for_cpu_serial( n1 , n2 , n3 , f );
-    #endif
-  }
-  template <class F> inline void parallel_for( int n1 , int n2 , int n3 , int n4 , F const &f ) {
-    #ifdef __USE_CUDA__
-      parallel_for_cuda( n1 , n2 , n3 , n4 , f );
-    #elif defined(__USE_HIP__)
-      parallel_for_hip( n1 , n2 , n3 , n4 , f );
-    #else
-      parallel_for_cpu_serial( n1 , n2 , n3 , n4 , f );
-    #endif
-  }
-  template <class F> inline void parallel_for( int n1 , int n2 , int n3 , int n4 , int n5 , F const &f ) {
-    #ifdef __USE_CUDA__
-      parallel_for_cuda( n1 , n2 , n3 , n4 , n5 , f );
-    #elif defined(__USE_HIP__)
-      parallel_for_hip( n1 , n2 , n3 , n4 , n5 , f );
-    #else
-      parallel_for_cpu_serial( n1 , n2 , n3 , n4 , n5 , f );
-    #endif
-  }
-  template <class F> inline void parallel_for( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , F const &f ) {
-    #ifdef __USE_CUDA__
-      parallel_for_cuda( n1 , n2 , n3 , n4 , n5 , n6 , f );
-    #elif defined(__USE_HIP__)
-      parallel_for_hip( n1 , n2 , n3 , n4 , n5 , n6 , f );
-    #else
-      parallel_for_cpu_serial( n1 , n2 , n3 , n4 , n5 , n6 , f );
-    #endif
-  }
-  template <class F> inline void parallel_for( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , F const &f ) {
-    #ifdef __USE_CUDA__
-      parallel_for_cuda( n1 , n2 , n3 , n4 , n5 , n6 , n7 , f );
-    #elif defined(__USE_HIP__)
-      parallel_for_hip( n1 , n2 , n3 , n4 , n5 , n6 , n7 , f );
-    #else
-      parallel_for_cpu_serial( n1 , n2 , n3 , n4 , n5 , n6 , n7 , f );
-    #endif
-  }
-  template <class F> inline void parallel_for( int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , int n8 , F const &f ) {
-    #ifdef __USE_CUDA__
-      parallel_for_cuda( n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , f );
-    #elif defined(__USE_HIP__)
-      parallel_for_hip( n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , f );
-    #else
-      parallel_for_cpu_serial( n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , f );
-    #endif
-  }
-
 
 
   template <class F> inline void parallel_for( char const * str , int n1 , F const &f ) {
     parallel_for( n1 , f );
   }
-  template <class F> inline void parallel_for( char const * str , int n1 , int n2 , F const &f ) {
-    parallel_for( n1 , n2 , f );
-  }
-  template <class F> inline void parallel_for( char const * str , int n1 , int n2 , int n3 , F const &f ) {
-    parallel_for( n1 , n2 , n3 , f );
-  }
-  template <class F> inline void parallel_for( char const * str , int n1 , int n2 , int n3 , int n4 , F const &f ) {
-    parallel_for( n1 , n2 , n3 , n4 , f );
-  }
-  template <class F> inline void parallel_for( char const * str , int n1 , int n2 , int n3 , int n4 , int n5 , F const &f ) {
-    parallel_for( n1 , n2 , n3 , n4 , n5 , f );
-  }
-  template <class F> inline void parallel_for( char const * str , int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , F const &f ) {
-    parallel_for( n1 , n2 , n3 , n4 , n5 , n6 , f );
-  }
-  template <class F> inline void parallel_for( char const * str , int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , F const &f ) {
-    parallel_for( n1 , n2 , n3 , n4 , n5 , n6 , n7 , f );
-  }
-  template <class F> inline void parallel_for( char const * str , int n1 , int n2 , int n3 , int n4 , int n5 , int n6 , int n7 , int n8 , F const &f ) {
-    parallel_for( n1 , n2 , n3 , n4 , n5 , n6 , n7 , n8 , f );
-  }
-
 
 
   template <class T, int myMem> class ParallelMin;
