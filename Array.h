@@ -59,9 +59,11 @@ template <class T, int myMem> class Array {
   */
   YAKL_INLINE Array() {
     nullify();
+    owned = 1;
   }
   YAKL_INLINE Array(char const * label) {
     nullify();
+    owned = 1;
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
     #endif
