@@ -20,13 +20,13 @@ namespace yakl {
 
 // Fortran binding
 extern "C" void* gatorAllocate( size_t bytes ) {
-  return yakl::pool.allocate( bytes );
+  return yakl::yaklAllocDevice( bytes );
 }
 
 
 // Fortran binding
 extern "C" void gatorDeallocate( void *ptr ) {
-  yakl::pool.free( ptr );
+  yakl::yaklFreeDevice( ptr );
 }
 
 

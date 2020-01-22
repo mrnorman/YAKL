@@ -174,6 +174,7 @@ template <class T, int myMem> class Array {
   */
   Array(Array const &rhs) {
     nullify();
+    owned    = rhs.owned;
     rank     = rhs.rank;
     totElems = rhs.totElems;
     for (int i=0; i<rank; i++) {
@@ -185,7 +186,7 @@ template <class T, int myMem> class Array {
     #endif
     myData   = rhs.myData;
     refCount = rhs.refCount;
-    (*refCount)++;
+    if (owned) { (*refCount)++; }
   }
 
 
@@ -193,6 +194,7 @@ template <class T, int myMem> class Array {
     if (this == &rhs) {
       return *this;
     }
+    owned    = rhs.owned;
     deallocate();
     rank     = rhs.rank;
     totElems = rhs.totElems;
@@ -205,7 +207,7 @@ template <class T, int myMem> class Array {
     #endif
     myData   = rhs.myData;
     refCount = rhs.refCount;
-    (*refCount)++;
+    if (owned) { (*refCount)++; }
 
     return *this;
   }
@@ -217,6 +219,7 @@ template <class T, int myMem> class Array {
   */
   Array(Array &&rhs) {
     nullify();
+    owned    = rhs.owned;
     rank     = rhs.rank;
     totElems = rhs.totElems;
     for (int i=0; i<rank; i++) {
@@ -238,6 +241,7 @@ template <class T, int myMem> class Array {
     if (this == &rhs) {
       return *this;
     }
+    owned    = rhs.owned;
     deallocate();
     rank     = rhs.rank;
     totElems = rhs.totElems;
@@ -627,7 +631,11 @@ template <class T, int myMem> class Array {
     return 1;
   }
   YAKL_INLINE int use_count() const {
-    return *refCount;
+    if (owned) {
+      return *refCount;
+    } else {
+      return -1;
+    }
   }
   #ifdef ARRAY_DEBUG
     const char* label() const {

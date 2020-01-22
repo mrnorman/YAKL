@@ -75,11 +75,24 @@ namespace yakl {
 
     #if   defined(__USE_CUDA__)
       #if defined (__MANAGED__)
-        alloc   = [] ( size_t bytes ) -> void* { void *ptr; cudaMallocManaged(&ptr,bytes); cudaMemPrefetchAsync(ptr,bytes,0); return ptr; };
-        dealloc = [] ( void *ptr    )          { cudaFree(ptr); };
+        alloc   = [] ( size_t bytes ) -> void* {
+          void *ptr;
+          cudaMallocManaged(&ptr,bytes);
+          cudaMemPrefetchAsync(ptr,bytes,0);
+          return ptr;
+        };
+        dealloc = [] ( void *ptr    ) {
+          cudaFree(ptr);
+        };
       #else
-        alloc   = [] ( size_t bytes ) -> void* { void *ptr; cudaMalloc(&ptr,bytes); return ptr; };
-        dealloc = [] ( void *ptr    )          { cudaFree(ptr); };
+        alloc   = [] ( size_t bytes ) -> void* {
+          void *ptr;
+          cudaMalloc(&ptr,bytes);
+          return ptr;
+        };
+        dealloc = [] ( void *ptr    ) {
+          cudaFree(ptr);
+        };
       #endif
     #elif defined(__USE_HIP__)
       #if defined (__MANAGED__)
@@ -104,6 +117,7 @@ namespace yakl {
       yaklFreeDevice  = [] (void *ptr)              { pool.free( ptr );              };
 
     } else { // poolBytes < 0
+      std::cout << "Not using the YAKL Pool Allocator" << std::endl;
 
       yaklAllocDevice = alloc;
       yaklFreeDevice  = dealloc;
@@ -123,6 +137,10 @@ namespace yakl {
       hipDeviceProp_t props;
       hipGetDeviceProperties(&props,id);
       std::cout << props.name << std::endl;
+    #endif
+
+    #if defined(__AUTO_FENCE__)
+      std::cout << "WARNING: Automatically inserting fence() after every parallel_for" << std::endl;
     #endif
 
   } // 
@@ -255,6 +273,10 @@ namespace yakl {
       parallel_for_hip ( n1 , f , vectorSize );
     #else
       parallel_for_cpu_serial( n1 , f );
+    #endif
+
+    #if defined(__AUTO_FENCE__)
+      fence();
     #endif
   }
 
