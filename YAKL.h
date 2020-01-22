@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include "BuddyAllocator.h"
 
 #ifdef __USE_CUDA__
   #define YAKL_LAMBDA [=] __host__ __device__
@@ -19,19 +20,42 @@
   #define YAKL_INLINE inline
 #endif
 
+#ifdef _OPENMP45
+#include <omp.h>
+#endif
+
+#ifdef _OPENACC
+#include "openacc.h"
+#endif
+
 
 namespace yakl {
 
-  typedef unsigned int  uint;
-
+  // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
+
+
+  // Size of the buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
   int constexpr functorBufSize = 1024*128;
+  // Buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
   extern void *functorBuffer;
-  extern int vectorSize;
+
+
+  // Pool allocator object
+  extern BuddyAllocator pool;
+
+  // YAKL allocator and deallocator
+  extern std::function<void *( size_t )> yaklAllocDevice;
+  extern std::function<void ( void * )>  yaklFreeDevice;
+
+  // YAKL allocator and deallocator
+  extern std::function<void *( size_t )> yaklAllocHost;
+  extern std::function<void ( void * )>  yaklFreeHost;
 
 
 
+  // Block the CPU code until the device code and data transfers are all completed
   inline void fence() {
     #ifdef __USE_CUDA__
       cudaDeviceSynchronize();
@@ -43,11 +67,56 @@ namespace yakl {
 
 
 
-  inline void init(int vectorSize_in=128) {
-    vectorSize = vectorSize_in;
+  // Initialize the YAKL framework
+  inline void init( size_t poolBytes = 0 ) {
+
+    std::function<void *( size_t )> alloc;
+    std::function<void( void * )>   dealloc;
+
+    #if   defined(__USE_CUDA__)
+      #if defined (__MANAGED__)
+        alloc   = [] ( size_t bytes ) -> void* { void *ptr; cudaMallocManaged(&ptr,bytes); cudaMemPrefetchAsync(ptr,bytes,0); return ptr; };
+        dealloc = [] ( void *ptr    )          { cudaFree(ptr); };
+      #else
+        alloc   = [] ( size_t bytes ) -> void* { void *ptr; cudaMalloc(&ptr,bytes); return ptr; };
+        dealloc = [] ( void *ptr    )          { cudaFree(ptr); };
+      #endif
+    #elif defined(__USE_HIP__)
+      #if defined (__MANAGED__)
+        alloc   = [] ( size_t bytes ) -> void* { void *ptr; hipMallocHost(&ptr,bytes); return ptr; };
+        dealloc = [] ( void *ptr    )          { hipFree(ptr); };
+      #else
+        alloc   = [] ( size_t bytes ) -> void* { void *ptr; hipMalloc(&ptr,bytes); return ptr; };
+        dealloc = [] ( void *ptr    )          { hipFree(ptr); };
+      #endif
+    #else
+      alloc   = ::malloc;
+      dealloc = ::free;
+    #endif
+
+    // If bytes are specified, then initialize a pool allocator
+    if ( poolBytes > 0 ) {
+      std::cout << "Initializing the YAKL Pool Allocator with " << poolBytes << " bytes" << std::endl;
+
+      pool = BuddyAllocator( poolBytes , 1024 , alloc , dealloc );
+
+      yaklAllocDevice = [] (size_t bytes) -> void * { return pool.allocate( bytes ); };
+      yaklFreeDevice  = [] (void *ptr)              { pool.free( ptr );              };
+
+    } else { // poolBytes < 0
+
+      yaklAllocDevice = alloc;
+      yaklFreeDevice  = dealloc;
+
+    } // poolBytes
+
+    yaklAllocHost = ::malloc;
+    yaklFreeHost  = ::free;
+
     #if defined(__USE_CUDA__)
       cudaMalloc(&functorBuffer,functorBufSize);
     #endif
+
     #if defined(__USE_HIP__)
       int id;
       hipGetDevice(&id);
@@ -55,11 +124,13 @@ namespace yakl {
       hipGetDeviceProperties(&props,id);
       std::cout << props.name << std::endl;
     #endif
-  }
+
+  } // 
 
 
 
   inline void finalize() {
+    pool = BuddyAllocator();
     #if defined(__USE_CUDA__)
       cudaFree(functorBuffer);
     #endif
@@ -125,42 +196,44 @@ namespace yakl {
   }
 
 
+
   #ifdef __USE_CUDA__
-    template <class F> __global__ void cudaKernelVal(int n1, F f) {
+    template <class F> __global__ void cudaKernelVal( int n1 , F f ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
       if (i < n1) {
         f( i );
       }
     }
 
-    template <class F> __global__ void cudaKernelRef(int n1, F const &f) {
+    template <class F> __global__ void cudaKernelRef( int n1 , F const &f ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
       if (i < n1) {
         f( i );
       }
     }
 
-    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , F const &f ) {
-      cudaKernelVal <<< (uint) (n1-1)/vectorSize+1 , vectorSize >>> ( n1 , f );
+    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> inline void parallel_for_cuda( int n1 , F const &f , int vectorSize = 128 ) {
+      cudaKernelVal <<< (unsigned int) (n1-1)/vectorSize+1 , vectorSize >>> ( n1 , f );
     }
 
-    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , F const &f ) {
+    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> inline void parallel_for_cuda( int n1 , F const &f , int vectorSize = 128 ) {
       F *fp = (F *) functorBuffer;
       cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-      cudaKernelRef <<< (uint) (n1-1)/vectorSize+1 , vectorSize >>> ( n1 , *fp );
+      cudaKernelRef <<< (unsigned int) (n1-1)/vectorSize+1 , vectorSize >>> ( n1 , *fp );
     }
   #endif
 
 
+
   #ifdef __USE_HIP__
-    template <class F> __global__ void hipKernel(int n1, F f) {
+    template <class F> __global__ void hipKernel( int n1 , F f ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
       if (i < n1) {
         f( i );
       }
     }
 
-    template<class F> inline void parallel_for_hip( int n1 , F const &f ) {
+    template<class F> inline void parallel_for_hip( int n1 , F const &f , int vectorSize = 128 ) {
       hipLaunchKernelGGL( hipKernel , dim3((n1-1)/vectorSize+1) , dim3(vectorSize) , (std::uint32_t) 0 , (hipStream_t) 0 , n1 , f );
     }
   #endif
@@ -174,26 +247,31 @@ namespace yakl {
   }
 
 
-  template <class F> inline void parallel_for( int n1 , F const &f ) {
+
+  template <class F> inline void parallel_for( int n1 , F const &f , int vectorSize = 128 ) {
     #ifdef __USE_CUDA__
-      parallel_for_cuda( n1 , f );
+      parallel_for_cuda( n1 , f , vectorSize );
     #elif defined(__USE_HIP__)
-      parallel_for_hip( n1 , f );
+      parallel_for_hip ( n1 , f , vectorSize );
     #else
       parallel_for_cpu_serial( n1 , f );
     #endif
   }
 
 
-  template <class F> inline void parallel_for( char const * str , int n1 , F const &f ) {
-    parallel_for( n1 , f );
+
+  template <class F> inline void parallel_for( char const * str , int n1 , F const &f , int vectorSize = 128 ) {
+    parallel_for( n1 , f , vectorSize );
   }
+
 
 
   template <class T, int myMem> class ParallelMin;
   template <class T, int myMem> class ParallelMax;
   template <class T, int myMem> class ParallelSum;
+
   #ifdef __USE_HIP__
+
     template <class T> class ParallelMin<T,memDevice> {
       void   *tmp;   // Temporary storage
       size_t nTmp;   // Size of temporary storage
@@ -229,6 +307,7 @@ namespace yakl {
         hipcub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
       }
     };
+
     template <class T> class ParallelMax<T,memDevice> {
       void   *tmp;   // Temporary storage
       size_t nTmp;   // Size of temporary storage
@@ -264,6 +343,7 @@ namespace yakl {
         hipcub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
       }
     };
+
     template <class T> class ParallelSum<T,memDevice> {
       void   *tmp;   // Temporary storage
       size_t nTmp;   // Size of temporary storage
@@ -299,7 +379,9 @@ namespace yakl {
         hipcub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
       }
     };
+
   #elif defined(__USE_CUDA__)
+
     template <class T> class ParallelMin<T,memDevice> {
       void   *tmp;   // Temporary storage
       size_t nTmp;   // Size of temporary storage
@@ -335,6 +417,7 @@ namespace yakl {
         cub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
       }
     };
+
     template <class T> class ParallelMax<T,memDevice> {
       void   *tmp;   // Temporary storage
       size_t nTmp;   // Size of temporary storage
@@ -370,6 +453,7 @@ namespace yakl {
         cub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
       }
     };
+
     template <class T> class ParallelSum<T,memDevice> {
       void   *tmp;   // Temporary storage
       size_t nTmp;   // Size of temporary storage
@@ -405,7 +489,9 @@ namespace yakl {
         cub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
       }
     };
+
   #else
+
     template <class T> class ParallelMin<T,memDevice> {
       int    nItems; // Number of items in the array that will be reduced
       public:
@@ -430,6 +516,7 @@ namespace yakl {
         }
       }
     };
+
     template <class T> class ParallelMax<T,memDevice> {
       int    nItems; // Number of items in the array that will be reduced
       public:
@@ -454,6 +541,7 @@ namespace yakl {
         }
       }
     };
+
     template <class T> class ParallelSum<T,memDevice> {
       int    nItems; // Number of items in the array that will be reduced
       public:
@@ -478,7 +566,9 @@ namespace yakl {
         }
       }
     };
+
   #endif
+
   template <class T> class ParallelMin<T,memHost> {
     int    nItems; // Number of items in the array that will be reduced
     public:
@@ -503,6 +593,7 @@ namespace yakl {
       }
     }
   };
+
   template <class T> class ParallelMax<T,memHost> {
     int    nItems; // Number of items in the array that will be reduced
     public:
@@ -527,6 +618,7 @@ namespace yakl {
       }
     }
   };
+
   template <class T> class ParallelSum<T,memHost> {
     int    nItems; // Number of items in the array that will be reduced
     public:

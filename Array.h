@@ -57,11 +57,11 @@ template <class T, int myMem> class Array {
   setup() functions to keep from deallocating myData upon initialization, since
   you don't know what "myData" will be when the object is created.
   */
-  YAKL_INLINE Array() {
+  Array() {
     nullify();
     owned = 1;
   }
-  YAKL_INLINE Array(char const * label) {
+  Array(char const * label) {
     nullify();
     owned = 1;
     #ifdef ARRAY_DEBUG
@@ -172,7 +172,7 @@ template <class T, int myMem> class Array {
   COPY CONSTRUCTORS / FUNCTIONS
   This shares the pointers with another Array and increments the refCounter
   */
-  YAKL_INLINE Array(Array const &rhs) {
+  Array(Array const &rhs) {
     nullify();
     rank     = rhs.rank;
     totElems = rhs.totElems;
@@ -215,7 +215,7 @@ template <class T, int myMem> class Array {
   MOVE CONSTRUCTORS
   This straight up steals the pointers form the rhs and sets them to null.
   */
-  YAKL_INLINE Array(Array &&rhs) {
+  Array(Array &&rhs) {
     nullify();
     rank     = rhs.rank;
     totElems = rhs.totElems;
@@ -262,7 +262,7 @@ template <class T, int myMem> class Array {
   DESTRUCTOR
   Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
-  YAKL_INLINE ~Array() {
+  ~Array() {
     deallocate();
   }
 
@@ -365,18 +365,9 @@ template <class T, int myMem> class Array {
       refCount = new int;
       *refCount = 1;
       if (myMem == memDevice) {
-        #ifdef __USE_CUDA__
-          #ifdef __MANAGED__
-            cudaMallocManaged(&myData,totElems*sizeof(T));
-            cudaMemPrefetchAsync(myData,totElems*sizeof(T),0);
-          #else
-            cudaMalloc(&myData,totElems*sizeof(T));
-          #endif
-        #elif defined(__USE_HIP__)
-          hipMalloc(&myData,totElems*sizeof(T));
-        #endif
+        myData = (T *) yaklAllocDevice( totElems*sizeof(T) );
       } else {
-        myData = new T[totElems];
+        myData = (T *) yaklAllocHost  ( totElems*sizeof(T) );
       }
     }
   }
@@ -391,13 +382,9 @@ template <class T, int myMem> class Array {
           delete refCount;
           refCount = nullptr;
           if (myMem == memDevice) {
-            #ifdef __USE_CUDA__
-              cudaFree(myData);
-            #elif defined(__USE_HIP__)
-              hipFree(myData);
-            #endif
+            yaklFreeDevice(myData);
           } else {
-            delete[] myData;
+            yaklFreeHost  (myData);
           }
           myData = nullptr;
         }
@@ -526,15 +513,6 @@ template <class T, int myMem> class Array {
       throw std::out_of_range(ss.str());
     }
     #endif
-  }
-
-
-  YAKL_INLINE T sum() const {
-    T sum = 0.;
-    for (size_t i=0; i < totElems; i++) {
-      sum += myData[i];
-    }
-    return sum;
   }
 
 
