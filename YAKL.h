@@ -7,7 +7,7 @@
 #include "BuddyAllocator.h"
 
 #ifdef __USE_CUDA__
-  #define YAKL_LAMBDA [=] __host__ __device__
+  #define YAKL_LAMBDA [=] __device__
   #define YAKL_INLINE inline __host__ __device__
   #include <cub/cub.cuh>
 #elif defined(__USE_HIP__)
@@ -305,16 +305,16 @@ namespace yakl {
       ~ParallelMin() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         hipcub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
-        hipMalloc(&tmp, nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
         if (tmp != NULL) {
-          hipFree(rsltP);
-          hipFree(tmp);
+          yaklFreeDevice(rsltP);
+          yaklFreeDevice(tmp);
         }
         tmp = NULL;
       }
@@ -341,16 +341,16 @@ namespace yakl {
       ~ParallelMax() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         hipcub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
-        hipMalloc(&tmp, nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
         if (tmp != NULL) {
-          hipFree(rsltP);
-          hipFree(tmp);
+          yaklFreeDevice(rsltP);
+          yaklFreeDevice(tmp);
         }
         tmp = NULL;
       }
@@ -377,16 +377,16 @@ namespace yakl {
       ~ParallelSum() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        hipMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         hipcub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
-        hipMalloc(&tmp, nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
         if (tmp != NULL) {
-          hipFree(rsltP);
-          hipFree(tmp);
+          yaklFreeDevice(rsltP);
+          yaklFreeDevice(tmp);
         }
         tmp = NULL;
       }
@@ -415,16 +415,16 @@ namespace yakl {
       ~ParallelMin() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        cudaMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         cub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
-        cudaMalloc(&tmp, nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
         if (tmp != NULL) {
-          cudaFree(rsltP);
-          cudaFree(tmp);
+          yaklFreeDevice(rsltP);
+          yaklFreeDevice(tmp);
         }
         tmp = NULL;
       }
@@ -451,16 +451,16 @@ namespace yakl {
       ~ParallelMax() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        cudaMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         cub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
-        cudaMalloc(&tmp, nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
         if (tmp != NULL) {
-          cudaFree(rsltP);
-          cudaFree(tmp);
+          yaklFreeDevice(rsltP);
+          yaklFreeDevice(tmp);
         }
         tmp = NULL;
       }
@@ -487,16 +487,16 @@ namespace yakl {
       ~ParallelSum() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        cudaMalloc(&rsltP,sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         cub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
-        cudaMalloc(&tmp, nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
         if (tmp != NULL) {
-          cudaFree(rsltP);
-          cudaFree(tmp);
+          yaklFreeDevice(rsltP);
+          yaklFreeDevice(tmp);
         }
         tmp = NULL;
       }
@@ -668,72 +668,161 @@ namespace yakl {
 
 
 
-  /*
+  
   #ifdef __USE_CUDA__
-    __device__ __forceinline__ void atomicMin(float *address , float value) {
+    __device__ __forceinline__ void atomicMin(float &update , float value) {
       int oldval, newval, readback;
-      oldval = __float_as_int(*address);
+      oldval = __float_as_int(update);
       newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
-      while ( ( readback = atomicCAS( (int *) address , oldval , newval ) ) != oldval ) {
+      while ( ( readback = atomicCAS( (int *) &update , oldval , newval ) ) != oldval ) {
         oldval = readback;
         newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
       }
     }
 
-    __device__ __forceinline__ void atomicMin(double *address , double value) {
+    __device__ __forceinline__ void atomicMin(double &update , double value) {
       unsigned long long oldval, newval, readback;
-      oldval = __double_as_longlong(*address);
+      oldval = __double_as_longlong(update);
       newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
-      while ( ( readback = atomicCAS( (unsigned long long *) address , oldval , newval ) ) != oldval ) {
+      while ( ( readback = atomicCAS( (unsigned long long *) &update , oldval , newval ) ) != oldval ) {
         oldval = readback;
         newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
       }
     }
 
-    __device__ __forceinline__ void atomicMax(float *address , float value) {
+    __device__ __forceinline__ void atomicMax(float &update , float value) {
       int oldval, newval, readback;
-      oldval = __float_as_int(*address);
+      oldval = __float_as_int(update);
       newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
-      while ( ( readback = atomicCAS( (int *) address , oldval , newval ) ) != oldval ) {
+      while ( ( readback = atomicCAS( (int *) &update , oldval , newval ) ) != oldval ) {
         oldval = readback;
         newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
       }
     }
 
-    __device__ __forceinline__ void atomicMax(double *address , double value) {
+    __device__ __forceinline__ void atomicMax(double &update , double value) {
       unsigned long long oldval, newval, readback;
-      oldval = __double_as_longlong(*address);
+      oldval = __double_as_longlong(update);
       newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
-      while ( ( readback = atomicCAS( (unsigned long long *) address , oldval , newval ) ) != oldval ) {
+      while ( ( readback = atomicCAS( (unsigned long long *) &update , oldval , newval ) ) != oldval ) {
         oldval = readback;
         newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
       }
     }
+    ////////////////////////////////////////////////////////////
+    // CUDA has HW atomics for atomicAdd in float, double, int, unsigned int, and unsigned long long int
+    ////////////////////////////////////////////////////////////
+    __device__ __forceinline__ void atomicAdd(float &update , double value) {
+      ::atomicAdd( &update , value );
+    }
+    __device__ __forceinline__ void atomicAdd(double &update , double value) {
+      ::atomicAdd( &update , value );
+    }
+    __device__ __forceinline__ void atomicAdd(int &update , int value) {
+      ::atomicAdd( &update , value );
+    }
+    __device__ __forceinline__ void atomicAdd(unsigned int &update , unsigned int value) {
+      ::atomicAdd( &update , value );
+    }
+    __device__ __forceinline__ void atomicAdd(unsigned long long int &update , unsigned long long int value) {
+      ::atomicAdd( &update , value );
+    }
+
+    ////////////////////////////////////////////////////////////
+    // CUDA has HW atomics for atomicMin int, unsigned int, and unsigned long long int
+    ////////////////////////////////////////////////////////////
+    __device__ __forceinline__ void atomicMin(int &update , int value) {
+      ::atomicMin( &update , value );
+    }
+    __device__ __forceinline__ void atomicMin(unsigned int &update , unsigned int value) {
+      ::atomicMin( &update , value );
+    }
+    __device__ __forceinline__ void atomicMin(unsigned long long int &update , unsigned long long int value) {
+      ::atomicMin( &update , value );
+    }
+
+    ////////////////////////////////////////////////////////////
+    // CUDA has HW atomics for atomicMax int, unsigned int, and unsigned long long int
+    ////////////////////////////////////////////////////////////
+    __device__ __forceinline__ void atomicMax(int &update , int value) {
+      ::atomicMax( &update , value );
+    }
+    __device__ __forceinline__ void atomicMax(unsigned int &update , unsigned int value) {
+      ::atomicMax( &update , value );
+    }
+    __device__ __forceinline__ void atomicMax(unsigned long long int &update , unsigned long long int value) {
+      ::atomicMax( &update , value );
+    }
   #endif
-  template <class FP> YAKL_INLINE void addAtomic(FP &x, FP const val) {
-    #ifdef __USE_CUDA__
-      atomicAdd(&x,val);
-    #else
-      x += val;
-    #endif
-  }
 
-  template <class FP> YAKL_INLINE void minAtomic(FP &a, FP const b) {
-    #ifdef __USE_CUDA__
-      atomicMin(&a,b);
-    #else
-      a = a < b ? a : b;
-    #endif
-  }
+  #ifdef __USE_HIP__
+    __device__ __forceinline__ void atomicMin(float &update , float value) {
+      int oldval, newval, readback;
+      oldval = __float_as_int(update);
+      newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
+      while ( ( readback = atomicCAS( (int *) &update , oldval , newval ) ) != oldval ) {
+        oldval = readback;
+        newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
+      }
+    }
 
-  template <class FP> YAKL_INLINE void maxAtomic(FP &a, FP const b) {
-    #ifdef __USE_CUDA__
-      atomicMax(&a,b);
-    #else
-      a = a > b ? a : b;
-    #endif
-  }
-  */
+    __device__ __forceinline__ void atomicMin(double &update , double value) {
+      unsigned long long oldval, newval, readback;
+      oldval = __double_as_longlong(update);
+      newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
+      while ( ( readback = atomicCAS( (unsigned long long *) &update , oldval , newval ) ) != oldval ) {
+        oldval = readback;
+        newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
+      }
+    }
+
+    __device__ __forceinline__ void atomicMax(float &update , float value) {
+      int oldval, newval, readback;
+      oldval = __float_as_int(update);
+      newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
+      while ( ( readback = atomicCAS( (int *) &update , oldval , newval ) ) != oldval ) {
+        oldval = readback;
+        newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
+      }
+    }
+
+    __device__ __forceinline__ void atomicMax(double &update , double value) {
+      unsigned long long oldval, newval, readback;
+      oldval = __double_as_longlong(update);
+      newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
+      while ( ( readback = atomicCAS( (unsigned long long *) &update , oldval , newval ) ) != oldval ) {
+        oldval = readback;
+        newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
+      }
+    }
+    //////////////////////////////////////////////////////////////////////
+    // HIP has HW atomicAdd for float, but not for double
+    // Software atomicAdd in double is probably going to be slow as hell
+    //////////////////////////////////////////////////////////////////////
+    __device__ __forceinline__ void atomicAdd(float &update , double value) {
+      atomicAdd( &update , value );
+    }
+    __device__ __forceinline__ void atomicAdd(double &update , double value) {
+      unsigned long long oldval, newval, readback;
+      oldval = __double_as_longlong(update);
+      newval = __double_as_longlong( __longlong_as_double(oldval) + value );
+      while ( ( readback = atomicCAS( (unsigned long long *) &update , oldval , newval ) ) != oldval ) {
+        oldval = readback;
+        newval = __double_as_longlong( __longlong_as_double(oldval) + value );
+      }
+    }
+  #else
+    template <class T> inline void atomicAdd(T &update, T value) {
+      update += value;
+    }
+    template <class T> inline void atomicMin(T &update, T value) {
+      update = update < value ? update : value;
+    }
+    template <class T> inline void atomicMax(T &update, T value) {
+      update = update > value ? update : value;
+    }
+  #endif
+  
 
 }
 
