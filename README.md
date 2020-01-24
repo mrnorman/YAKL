@@ -234,8 +234,8 @@ real, pointer, contiguous :: var2(:,:,:)
 call gator_allocate( var1 , (/ ubnd_x-lbnd_x+1 , ubnd_y-lbnd_y+1 , ubnd_z-lbnd_z+1 /) , (/-1,-1,-1/) )
 call gator_allocate( var2 , (/nx,ny,nz/) )
 ...
-deallocate(var1)
-deallocate(var2)
+call gator_deallocate(var1)
+call gator_deallocate(var2)
 ```
 
 Note that YAKL **does** support non-1 lower bounds in Fortran in `gator_allocate()`. The first set of indices specify the total extents of each dimension. The second set of indices specify the lower bounds of each dimension in case they aren't the default 1 lower bounds of Fortran. 
@@ -289,7 +289,7 @@ int offset_z = 1-lbnd_z;
 extern "C" void wrap_arrays(float *var1_p, float *var2_p) {
   // These create un-owned YAKL Arrays using existing allocations from Fortran
   var1 = real3d( "var1" , var1_p , dimz , dimy , dimx );
-  var2 = real3d( "var1" , var1_p , nz   , ny   , nx   );
+  var2 = real3d( "var2" , var2_p , nz   , ny   , nx   );
 }
 ```
 
@@ -323,6 +323,9 @@ yakl::parallel_for( nzm*ny*nx*ncrms , YAKL_LAMBDA (int iGlob) {
   yakl::atomicMax( arrSmall(k,icrm) , arrLarge(k,j,i,icrm) );
 });
 ```
+
+**As a general rule, if you ever see anything on the right-hand-side of an `=` with fewer indices than you have surrounding loops, then you're going to have a race condition that requires either an atomic access or a reduction.**
+
 ### Reductions (Min, Max, and Sum)
 
 YAKL provides efficient min, max, and sum array reductions using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size (number of elements to reduce), type (`template <class T>`) of the array that will be reduced, and the memory space (via template parameter, `yakl::memHost` or `yakl::memDevice`) of the array to be reduced. The constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using `T operator()(T *data)`, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below:
