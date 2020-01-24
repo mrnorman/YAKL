@@ -3,7 +3,7 @@
 
 **This is still a work in progress**
 
-YAKL is composed of the following:
+With less than 3K lines of code, YAKL provides the following:
 
 * An optional pool allocator based on Mark Berrill's `BuddyAllocator` class for device data
   * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
@@ -284,37 +284,31 @@ Finally, the `var2` array will be indexed from indices `0` to `nx-1`, `0` to `ny
 
 When Fortran data is passed by parameter, you can use the un-owned `Array` constructors inside the C++ functions following the same ideas regarding non-standard Fortran lower bounds.
 
-## Compiling with YAKL
+### Atomics
 
-You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
-
-| Hardware      | CPP Flag       | 
-| --------------|----------------| 
-| AMD GPU       |`-D__USE_HIP__` | 
-| Nvidia GPU    |`-D__USE_CUDA__`| 
-| CPU Serial    | neither of the above two | 
-
-To turn on array bounds checking, add `-DARRAY_DEBUG` to your compiler flags. **Beware** that this only works on host code, so do not specify `-DARRAY_DEBUG` and CUDA or HIP flags at the same time.
-
-## Handling Two Memory Spaces
-
-The intent of YAKL is to mirror copies of the `Array` class between two distinct memory spaces: Host (i.e., main memory) and Device (e.g., GPU memory). There are currently four member functions of the `Array` class to help with data movement:
+When you need atomic operations in YAKL, you can use the `atomicAdd`, `atomicMin`, and `atomicMax` routines. The most common use-case for atomics is some form of partial reduction over some of the indices of an array but not all. For example:
 
 ```C++
-// Create a copy of this Array class in Host Memory, and pass that copy back as a return value.
-template<class T> Array<T,yakl::memHost> createHostCopy();
+yakl::Array<real,memDevice> :: arrLarge("arrLarge",nz,ny,nx,ncrm);
+yakl::Array<real,memDevice> :: arrSmall("arrLarge",nz,ncrm);
 
-// Create a copy of this Array class in Device Memory, and pass that copy back as a return value.
-template<class T> Array<T,yakl::memDevice> createDeviceCopy();
+...
 
-// Copy the data from this Array pointer to the Host Array's pointer (Host Array must already exist)
-template<class T> void deep_copy_to(Array<T,memHost> lhs);
+// for (int k=0; k<nzm; k++) {
+//   for (int j=0; j<ny; j++) {
+//     for (int i=0; i<nx; i++) {
+//       for (int icrm=0; icrm<ncrms; icrm++) {
+yakl::parallel_for( nzm*ny*nx*ncrms , YAKL_LAMBDA (int iGlob) {
+  int k, j, i, icrm;
+  yakl::unpackIndices( iGlob , nzm,ny,nx,ncrms , k,j,i,icrm );
 
-// Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
-template<class T> void deep_copy_to(Array<T,memDevice> lhs);
+  // The operation below is a race condition in parallel. It needs an atomicMax
+  // arrSmall(k,icrm) = max( arrSmall(k,icrm) , arrLarge(k,j,i,icrm) );
+  
+  yakl::atomicMax( arrSmall(k,icrm) , arrLarge(k,j,i,icrm) );
+});
 ```
-
-## Array Reductions
+### Reductions (Min, Max, and Sum)
 
 YAKL provides efficient min, max, and sum array reductions using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size (number of elements to reduce), type (`template <class T>`) of the array that will be reduced, and the memory space (via template parameter, `yakl::memHost` or `yakl::memDevice`) of the array to be reduced. The constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using `T operator()(T *data)`, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below:
 
@@ -336,6 +330,36 @@ yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
 pmin.deviceReduce( dt3d.data() , dtDev );
 ```
 
+## Compiling with YAKL
+
+You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
+
+| Hardware      | CPP Flag       | 
+| --------------|----------------| 
+| AMD GPU       |`-D__USE_HIP__` | 
+| Nvidia GPU    |`-D__USE_CUDA__`| 
+| CPU Serial    | neither of the above two | 
+
+To turn on array bounds checking, add `-DARRAY_DEBUG` to your compiler flags. **Beware** that this only works on host code, so do not specify `-DARRAY_DEBUG` and CUDA or HIP flags at the same time.
+
+## Moving Data Between Two Memory Spaces
+
+The intent of YAKL is to mirror copies of the `Array` class between two distinct memory spaces: Host (i.e., main memory) and Device (e.g., GPU memory). There are currently four member functions of the `Array` class to help with data movement:
+
+```C++
+// Create a copy of this Array class in Host Memory, and pass that copy back as a return value.
+template<class T> Array<T,yakl::memHost> createHostCopy();
+
+// Create a copy of this Array class in Device Memory, and pass that copy back as a return value.
+template<class T> Array<T,yakl::memDevice> createDeviceCopy();
+
+// Copy the data from this Array pointer to the Host Array's pointer (Host Array must already exist)
+template<class T> void deep_copy_to(Array<T,memHost> lhs);
+
+// Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
+template<class T> void deep_copy_to(Array<T,memDevice> lhs);
+```
+
 ## Asynchronicity
 
 All YAKL calls are asynchronously launched in the "default" CUDA or HIP stream when run on the device. Array `deep_copy_to` calls also do the same. With the exception of the reduction `operator()`, you'll need to call `yakl::fence()` if you want to wait on the device operation to complete.
@@ -344,7 +368,6 @@ All YAKL calls are asynchronously launched in the "default" CUDA or HIP stream w
 
 Plans for the future include:
 * Adding [OpenCL](https://www.khronos.org/opencl/) and [OpenMP](https://www.openmp.org/) backends
-* Adding atomic functions for min, max, and sum
 * Improving the documentation and testing of YAKL
 
 ## Software Dependencies
