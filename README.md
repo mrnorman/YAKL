@@ -16,14 +16,14 @@
 
 With less than 3K lines of code, YAKL provides the following:
 
-* An optional pool allocator based on Mark Berrill's `BuddyAllocator` class for device data
+* **Pool Allocator**: An optional pool allocator based on Mark Berrill's `BuddyAllocator` class for device data
   * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
   * CUDA Managed memory also calls `cudaMemPrefetchAsync` on the entire pool
   * If the pool allocator is not used, YAKL still maintains internal host and device allocators with the afforementioned options
-* Fortran bindings for the YAKL internal / pool device allocators
+* **Fortran Bindings**: Fortran bindings for the YAKL internal / pool device allocators
   * For `real(4)`, `real(8)`, `int(4)`, `int(8)`, and `logical` arrays up to seven dimensions
   * Using Fortran bindings for Managed memory makes porting from Fortran to C++ on the GPU significantly easier
-* An `Array` class for allocated multi-dimensional array data
+* **Multi-Dimensional Arrays**: An `Array` class for allocated multi-dimensional array data
   * Only one memory layout is supported for simplicity: contiguous with the right-most index varying the fastest
     * This makes library interoperability more straightforward
   * Up to eight dimensions are supported
@@ -34,21 +34,21 @@ With less than 3K lines of code, YAKL provides the following:
   * `Array`s are by default "owned" (allocated, reference counted, and deallocated), but there are "non-owned" constructors that can wrap existing data
   * There are no sub-array capabilities as of yet
   * Supports array index debugging to throw an error when indices are out of bounds
-* An `SArray` class for static arrays to be placed on the stack
+* **Multi-Dimensional Arrays On The Stack**: An `SArray` class for static arrays to be placed on the stack
   * This makes it easy to create low-overhead local arrays in kernels
   * Supports up to four dimensions, the sizes of which are template parameters
   * Supports array index debugging to throw an error when indices are out of bounds
-* `parallel_for` launchers
+* **Kernel Launchers**: `parallel_for` launchers
   * Similar syntax as the Kokkos `parallel_for`
   * Only supports one level of parallelism for simplicity, so your loops need to be collapsed
   * Multiple tightly-nested loops are supported through the `yakl::unpackIndices(...)` utility function, which splits a single index into multiple indices for you.
   * Supports CUDA, CPU serial, and HIP backends at the moment
   * `parallel_for` launches on the device are by default asynchronous in the CUDA and HIP default streams
   * There is an automatic `fence()` option specified at compile time with `-D__AUTO_FENCE__` to insert fences after every `parallel_for` launch
-* Atomic instructions
+* **Atomics**: Atomic instructions
   * `atomicAdd`, `atomicMin`, and `atomicMax` are supported for 4- and 8-byte integers and reals
   * Whenever possible, hardwhare atomics are used, and software atomics using `atomicCAS` and real-to-integer conversions in the CUDA and HIP backends
-* Parallel reductions using the Nvidia `cub` and AMD `hipCUB` (wrapper to `rocPRIM`) libraries
+* **Reductions**: Parallel reductions using the Nvidia `cub` and AMD `hipCUB` (wrapper to `rocPRIM`) libraries
   * Temporary data for a GPU device reduction is allocated with YAKL's internal device allocators and owned by a class for your convenience. It is automatically deallocated when the class falls out of scope.
   * The user can create a class object and then reuse it to avoid multiple allocations during runtime
   * If the pool allocator is turned on, allocations are fast either way
