@@ -43,6 +43,7 @@ With less than 3K lines of code, YAKL provides the following:
   * This makes it easy to create low-overhead local arrays in kernels
   * Supports up to four dimensions, the sizes of which are template parameters
   * Supports array index debugging to throw an error when indices are out of bounds
+  * Because `SArray` objects are inherently on the stack, they have no templated memory space specifiers
 * **Kernel Launchers**: `parallel_for` launchers
   * Similar syntax as the Kokkos `parallel_for`
   * Only supports one level of parallelism for simplicity, so your loops need to be collapsed
@@ -128,7 +129,7 @@ std::cout << tot << std::endl;
 
 If you want to use the YAKL `Array` or `SArray` classes, you'll need to `#include "Array.h"` or `#include "SArray.h"`. If you want to use the YAKL launchers, atomics, allocators, or reductions you'll need to `#include YAKL.h`.
 
-Be sure to use `yakl::init()` at the beginning of the program and `yakl::finalize()` at the end.
+Be sure to use `yakl::init(...)` at the beginning of the program and `yakl::finalize()` at the end. If you do not call these functions, you will get errors during runtime for all `Array`s, `SArray`s, and device reductions. You may get errors for CUDA `parallel_for`s.
 
 ### `parallel_for`
 
@@ -168,18 +169,20 @@ To declare local data on the stack inside a kernel, you'll use the `SArray` clas
 
 ```C++
 typedef float real;
-Array<real,memDevice> state("state",nx+2*hs);
-Array<real,memDevice> coefs("coefs",nx,ord);
+yakl::Array<real,memDevice> state("state",nx+2*hs);
+yakl::Array<real,memDevice> coefs("coefs",nx,ord);
 ...
 YAKL_INLINE void recon( SArray<real,ord> const &stencil , 
                         SArray<real,ord> &coefs ) { ... }
 yakl::parallel_for( nx , YAKL_LAMBDA (int i) {
-  SArray<real,ord> stencil, coefs;
+  yakl::SArray<real,ord> stencil, coefs;
   for (int ii=0; ii<ord; ii++) { stencil(ii) = state(i+ii); }
   recon(stencil,coefs);
   for (int ii=0; ii<ord; ii++) { coefs(i,ii) = coefs(ii); }
 });
 ```
+
+Note that `SArray` objects are inherently placed on the stack of whatever context they are declared in. Because of this, it doesn't make sense to allow a templated memory specifier (i.e., `yakl::memHost` or `yakl::memDevice`). If used in a CUDA kernel, `SArray` objects will be placed onto the kernel stack frame. if used in CPU functions, they will be placed in the CPU function's stack.
 
 ### Managed Memory
 
