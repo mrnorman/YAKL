@@ -358,7 +358,11 @@ You currently have three choices for a device backend: HIP, CUDA, and serial CPU
 | Nvidia GPU    |`-D__USE_CUDA__`| 
 | CPU Serial    | neither of the above two | 
 
-To turn on array bounds checking, add `-DARRAY_DEBUG` to your compiler flags. **Beware** that this only works on host code, so do not specify `-DARRAY_DEBUG` and CUDA or HIP flags at the same time.
+Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array` and `SArray` objections. **Beware** that this only works on host code at the moment, so do not pass `-DARRAY_DEBUG` at the same time as passing `-D__USE_CUDA__` or `-D__USE_HIP__`.
+
+Pasing `-D__MANAGED__` will trigger `cudaMallocManaged()` in tandem with `-D__USE_CUDA__` and `hipMallocHost()` in tandem with `-D__USE_HIP__`.
+
+Passing `-D__AUTO_FENCE__` will automatically insert a `yakl::fence()` after every `yakl::parallel_for` launch. 
 
 ## Moving Data Between Two Memory Spaces
 
