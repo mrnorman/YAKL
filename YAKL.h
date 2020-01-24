@@ -79,6 +79,12 @@ namespace yakl {
           void *ptr;
           cudaMallocManaged(&ptr,bytes);
           cudaMemPrefetchAsync(ptr,bytes,0);
+          #ifdef _OPENMP45
+            omp_target_associate_ptr(ptr,ptr,bytes,0,0);
+          #endif
+          #ifdef _OPENACC
+            acc_map_data(ptr,ptr,bytes);
+          #endif
           return ptr;
         };
         dealloc = [] ( void *ptr    ) {

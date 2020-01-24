@@ -18,6 +18,21 @@ namespace yakl {
 }
 
 
+extern "C" void gatorInit() {
+  yakl::init();
+}
+
+
+extern "C" void gatorInitPool( size_t bytes ) {
+  yakl::init( bytes );
+}
+
+
+extern "C" void gatorFinalize( size_t bytes ) {
+  yakl::finalize();
+}
+
+
 // Fortran binding
 extern "C" void* gatorAllocate( size_t bytes ) {
   return yakl::yaklAllocDevice( bytes );

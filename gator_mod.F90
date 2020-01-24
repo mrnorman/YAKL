@@ -10,14 +10,23 @@ module gator_mod
   logical    :: lg
 
   interface
+    subroutine gator_init() bind(C, name="gatorInit")
+    end subroutine gator_init
+
+    subroutine gator_init( bytes ) bind(C, name="gatorInitPool")
+      use iso_c_binding
+      integer(c_size_t), value :: bytes
+    end subroutine gator_init
+
+    subroutine gator_finalize() bind(C, name="gatorFinalize")
+    end subroutine gator_finalize
+
     function gator_allocate_c( bytes ) result(ptr) bind(C, name="gatorAllocate")
       use iso_c_binding
       type(c_ptr)              :: ptr
       integer(c_size_t), value :: bytes
     end function gator_allocate_c
-  end interface
 
-  interface
     subroutine gator_deallocate_c( ptr ) bind(C, name="gatorDeallocate")
       use iso_c_binding
       type(c_ptr)      , value :: ptr
