@@ -721,9 +721,21 @@ namespace yakl {
     __device__ __forceinline__ void atomicAdd(float &update , double value) {
       ::atomicAdd( &update , value );
     }
-    __device__ __forceinline__ void atomicAdd(double &update , double value) {
-      ::atomicAdd( &update , value );
-    }
+    #if __CUDA_ARCH__ >= 600
+      __device__ __forceinline__ void atomicAdd(double &update , double value) {
+        ::atomicAdd( &update , value );
+      }
+    #else
+      __device__ __forceinline__ void atomicAdd(double &update , double value) {
+        unsigned long long oldval, newval, readback;
+        oldval = __double_as_longlong(update);
+        newval = __double_as_longlong( __longlong_as_double(oldval) + value );
+        while ( ( readback = atomicCAS( (unsigned long long *) &update , oldval , newval ) ) != oldval ) {
+          oldval = readback;
+          newval = __double_as_longlong( __longlong_as_double(oldval) + value );
+        }
+      }
+    #endif
     __device__ __forceinline__ void atomicAdd(int &update , int value) {
       ::atomicAdd( &update , value );
     }
