@@ -28,6 +28,10 @@ With less than 3K lines of code, YAKL provides the following:
 * **Fortran Bindings**: Fortran bindings for the YAKL internal / pool device allocators
   * For `real(4)`, `real(8)`, `int(4)`, `int(8)`, and `logical` arrays up to seven dimensions
   * Using Fortran bindings for Managed memory makes porting from Fortran to C++ on the GPU significantly easier
+  * You can call `gator_init(bytes)` from `gator_mod` to initialize YAKL's pool allocator or just `gator_init()` to initialize YAKL's allocators without the pool.
+  * Call `gator_finalize()` to deallocate YAKL's runtime pool and other miscellaneous data
+  * When you specify `-D__MANAGED__ -D__USE_CUDA__`, all `gator_allocate(...)` calls will not only use CUDA Managed Memory but will also map that data in OpenACC and OpenMP offload runtimes so that the data will be left alone in the offload runtimes and left for the CUDA runtime to manage instead.
+    * With OpenACC, this happens automatically, but with OpenMP offload, you need to also specify `-D_OPEMP45`
 * **Multi-Dimensional Arrays**: An `Array` class for allocated multi-dimensional array data
   * Only one memory layout is supported for simplicity: contiguous with the right-most index varying the fastest
     * This makes library interoperability more straightforward
