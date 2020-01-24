@@ -14,6 +14,10 @@
 
 ## Overview
 
+The YAKL API is similar to Kokkos in many ways. It is simplified in many ways to make adding multiple hardware backends easier. Yet, YAKL's increased simplicity allows it to do some things that some other frameworks cannot such as provide Fortran interoperability, lighter weight exposure of atomics, handling of host-to-device and device-to-host transfers, and easier interoperability with external libraries such as MPI and I/O libraries. 
+
+YAKL currently has backends for CPUs, Nvidia GPUs, and AMD GPUs.
+
 With less than 3K lines of code, YAKL provides the following:
 
 * **Pool Allocator**: An optional pool allocator based on Mark Berrill's `BuddyAllocator` class for device data
@@ -54,10 +58,6 @@ With less than 3K lines of code, YAKL provides the following:
   * If the pool allocator is turned on, allocations are fast either way
   * The `operator(T *data)` function defaults to copying the result of the reduction to a host scalar value
   * The user can also use the `deviceReduce(T *data)` function to store the result into a device scalar location
-
-The YAKL API is similar to Kokkos. It is simplified in many ways to make adding multiple hardware backends easier. Yet, YAKL's increased simplicity allows it to do some things that some other frameworks cannot such as provide Fortran interoperability, lighter weight exposure of atomics, handling of host-to-device and device-to-host transfers, and easier interoperability with external libraries such as MPI and I/O libraries. 
-
-YAKL currently has backends for CPUs, Nvidia GPUs, and AMD GPUs.
 
 ## Code Sample
 
