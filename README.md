@@ -154,6 +154,11 @@ yakl::parallel_for( ny*nx , YAKL_LAMBDA (int iGlob) {
   
   // Loop body goes here
 });
+
+// for (int i=0; i<nx; i++) {
+yakl::parallel_for( nx , YAKL_LAMBDA (int i) {
+  // Loop body goes here
+});
 ```
 
 The `parallel_for` launcher is useful for every type of loop except for prefix sums and reductions. You can embed atomics in `parallel_for` as you'll see a few sections down.
