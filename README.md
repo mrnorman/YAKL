@@ -60,6 +60,8 @@ With less than 3K lines of code, YAKL provides the following:
   * If the pool allocator is turned on, allocations are fast either way
   * The `operator(T *data)` function defaults to copying the result of the reduction to a host scalar value
   * The user can also use the `deviceReduce(T *data)` function to store the result into a device scalar location
+* **Synchronization**
+  * The `yakl::fence()` operation forces the host code to wait for all device code to complete
 
 ## Code Sample
 
