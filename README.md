@@ -411,6 +411,10 @@ YAKL's `YAKL_LAMBDA` is similar to the Kokkos `KOKKOS_LAMBDA`, but there are imp
 * In CUDA, YAKL specifies `#define YAKL_LAMBDA [=] __device__`, whereas Kokkos specifies `#define KOKKOS_LAMBDA [=] __host__ __device__`. YAKL differs here because of issues with calling atomics, which are only `__device__` functions in the hardware supported API.
 * On the host, YAKL specifies `#define YAKL_LAMBDA [&]`, wherease Kokkos specifies `#define KOKKOS_LAMBDA [=]`. This means that on the CPU, YAKL lambdas can capture by reference, but Kokkos lambdas cannot.
 
+YAKL's build system in CMake simply takes the C++ files and tells CMake to compile them as if they were CUDA. You don't need to change the C++ compiler.
+
+The Kokkos build system is more invasive and complex, requiring you to change the `CMAKE_CXX_COMPILER` for all files in the project to use the `nvcc_wrapper` shipped with the Kokkos repo, and compiling different source files depending upon CMake options you pass before adding the library. Theoretically, a CMake system using the Kokkos build requirements should handle the YAKL source files, but you probably can't use YAKL's normal CMake library. Integrating YAKL into a larger project should be very simple because YAKL's C++ interface only has two source files: `BuddyAllocator.cpp` and `YAKL.cpp`, and its Fortran interface only has one: `gator_mod.F90`.
+
 ## Compiling with YAKL
 
 You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
