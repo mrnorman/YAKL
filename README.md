@@ -417,6 +417,21 @@ The Kokkos build system is more invasive and complex, requiring you to change th
 
 ## Compiling with YAKL
 
+### CMake
+
+To use YAKL in another CMake project, simply insert
+
+```cmake
+add_subdirectory(/path/to/yakl  path/to/build/directory)
+include_directories(/path/to/yakl)
+```
+
+To compile YAKL for a device target, you'll need to specify `-DARCH="CUDA"` or `-DARCH="HIP"` for Nvidia and AMD GPUs, respectively. If you don't specify either of these, then YAKL will compile for the CPU in serial. 
+
+You can further specify `-DCUDA_FLAGS="__MANAGED__ -arch sm_70"` or other flags if you wish. if you omit these flags, YAKL will compile without Managed Memory and without a specific GPU target. You can specify `-DHIP_FLAGS="..."` to pass in more options to AMD's `hipcc` compiler.
+
+### Traditional Makefile
+
 You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
 
 | Hardware      | CPP Flag       | 
