@@ -3,6 +3,8 @@
 
 **This is still a work in progress**
 
+YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laboratory.
+
 * [Overview](#overview)
 * [Code Sample](#code-sample)
 * [Using YAKL](#using-yakl)
@@ -178,6 +180,12 @@ yakl::Array<T type,int memSpace>(char const *label, int dim1, [int dim2, ...]);
 yakl::Array<T type,int memSpace>(char const *label, T *ptr, int dim1, [int dim2, ...]);
 ```
 
+Data is accessed in an `Array` object via the `(ind1[,ind2,...])` operator with the right-most index varying the fastest.
+
+YAKL `Array` objects use shallow copies in the move and copy constructors. To copy the data from one `Array` to another, use the `Array::deep_copy_to(Array &destination)` member function. This will copy data between different memory spaces (e.g., `cudaMemcpy(...)`) for you depending on the memory spaces of the `Array` objects.
+
+To create a host copy of an `Array`, use `Array::createHostCopy()`, and to create a device copy, use `Array::createDeviceCopy()`.
+
 ### `SArray` (and `YAKL_INLINE`)
 
 To declare local data on the stack inside a kernel, you'll use the `SArray` class. For instance:
@@ -196,6 +204,8 @@ yakl::parallel_for( nx , YAKL_LAMBDA (int i) {
   for (int ii=0; ii<ord; ii++) { coefs(i,ii) = coefs(ii); }
 });
 ```
+
+Data is accessed in an `SArray` object via the `(ind1[,ind2,...])` operator with the right-most index varying the fastest.
 
 Note that `SArray` objects are inherently placed on the stack of whatever context they are declared in. Because of this, it doesn't make sense to allow a templated memory specifier (i.e., `yakl::memHost` or `yakl::memDevice`). If used in a CUDA kernel, `SArray` objects will be placed onto the kernel stack frame. if used in CPU functions, they will be placed in the CPU function's stack.
 
