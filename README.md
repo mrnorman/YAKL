@@ -324,7 +324,7 @@ yakl::parallel_for( nzm*ny*nx*ncrms , YAKL_LAMBDA (int iGlob) {
 });
 ```
 
-**As a general rule, if you ever see anything on the right-hand-side of an `=` with fewer indices than you have surrounding loops, then you're going to have a race condition that requires either an atomic access or a reduction.**
+**As a rule, if you ever see anything on the left-hand-side of an `=` with fewer indices than you have surrounding loops, then you're definitely going to have a race condition that requires either an atomic access or a reduction.**
 
 ### Reductions (Min, Max, and Sum)
 
