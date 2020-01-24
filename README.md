@@ -195,8 +195,8 @@ You can initialize a pool allocator by initializing YAKL with a parameter for th
 **Beware**: The pool size must be large enough because YAKL does not support multiples pools or resizing the existing pool.
 
 ```C++
-  typedef float real
-  yakl::init( nz*ny*nx*100*sizeof(real) )
+  typedef float real;
+  yakl::init( nz*ny*nx*100*sizeof(real) );
 ```
 
 To disable the pool allocator, simply call `yakl::init()` without any parameters.
@@ -287,7 +287,7 @@ int offset_y = 1-lbnd_y;
 int offset_z = 1-lbnd_z;
 
 extern "C" void wrap_arrays(float *var1_p, float *var2_p) {
-  // These create un-owned YAKL Arrays using existing allocations
+  // These create un-owned YAKL Arrays using existing allocations from Fortran
   var1 = real3d( "var1" , var1_p , dimz , dimy , dimx );
   var2 = real3d( "var1" , var1_p , nz   , ny   , nx   );
 }
