@@ -428,7 +428,9 @@ include_directories(/path/to/yakl)
 
 To compile YAKL for a device target, you'll need to specify `-DARCH="CUDA"` or `-DARCH="HIP"` for Nvidia and AMD GPUs, respectively. If you don't specify either of these, then YAKL will compile for the CPU in serial. 
 
-You can further specify `-DCUDA_FLAGS="__MANAGED__ -arch sm_70"` or other flags if you wish. if you omit these flags, YAKL will compile without Managed Memory and without a specific GPU target. You can specify `-DHIP_FLAGS="..."` to pass in more options to AMD's `hipcc` compiler.
+You can further specify `-DCUDA_FLAGS="__MANAGED__ -arch sm_70"` or other flags if you wish. if you omit these flags, YAKL will compile without Managed Memory and without a specific GPU target. If you use double precision `atomicAdd`, and you're using a modern Nvidia GPU, you will want to specify `-arch` to ensure good performance.
+
+You can specify `-DHIP_FLAGS="..."` to pass in more options to AMD's `hipcc` compiler.
 
 ### Traditional Makefile
 
