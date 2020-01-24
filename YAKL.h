@@ -130,8 +130,8 @@ namespace yakl {
 
     } // poolBytes
 
-    yaklAllocHost = ::malloc;
-    yaklFreeHost  = ::free;
+    yaklAllocHost = [] (size_t bytes) -> void * { return malloc(bytes); };
+    yaklFreeHost  = [] (void *ptr) { free(ptr); };
 
     #if defined(__USE_CUDA__)
       cudaMalloc(&functorBuffer,functorBufSize);
@@ -817,8 +817,14 @@ namespace yakl {
     // HIP has HW atomicAdd for float, but not for double
     // Software atomicAdd in double is probably going to be slow as hell
     //////////////////////////////////////////////////////////////////////
-    __device__ __forceinline__ void atomicAdd(float &update , double value) {
-      atomicAdd( &update , value );
+    __device__ __forceinline__ void atomicAdd(float &update , float value) {
+      int oldval, newval, readback;
+      oldval = __float_as_int(update);
+      newval = __float_as_int( __int_as_float(oldval) + value );
+      while ( ( readback = atomicCAS( (int *) &update , oldval , newval ) ) != oldval ) {
+        oldval = readback;
+        newval = __float_as_int( __int_as_float(oldval) + value );
+      }
     }
     __device__ __forceinline__ void atomicAdd(double &update , double value) {
       unsigned long long oldval, newval, readback;

@@ -7,6 +7,7 @@ set(YAKL_F90_SOURCE gator_mod.F90             )
 set(YAKL_F90_SOURCE gator_mod.F90 PARENT_SCOPE)
 
 if ("${ARCH}" STREQUAL "CUDA")
+  enable_language(CUDA)
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES LANGUAGE CUDA)
   set(YAKL_CXX_FLAGS "-D__USE_CUDA__ --expt-extended-lambda ${CUDA_FLAGS}"             )
   set(YAKL_CXX_FLAGS "-D__USE_CUDA__ --expt-extended-lambda ${CUDA_FLAGS}" PARENT_SCOPE)
