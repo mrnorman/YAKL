@@ -401,6 +401,10 @@ You can use Kokkos View data in YAKL's reductions via the `View::data()` pointer
 
 You can use YAKL atomic functions inside Kokkos `parallel_for` launchers. 
 
+You can use YAKL `SArray` objects inside Kokkos `parallel_for` launchers.
+
+YAKL and Kokkos `fence()` operations are pretty much equivalent and can be used in either framework.
+
 ## Compiling with YAKL
 
 You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
