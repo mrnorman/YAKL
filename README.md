@@ -187,6 +187,24 @@ YAKL `Array` objects use shallow copies in the move and copy constructors. To co
 
 To create a host copy of an `Array`, use `Array::createHostCopy()`, and to create a device copy, use `Array::createDeviceCopy()`.
 
+### Moving Data Between Two Memory Spaces
+
+The intent of YAKL is to mirror copies of the `Array` class between two distinct memory spaces: Host (i.e., main memory) and Device (e.g., GPU memory). There are currently four member functions of the `Array` class to help with data movement:
+
+```C++
+// Create a copy of this Array class in Host Memory, and pass that copy back as a return value.
+template<class T> Array<T,yakl::memHost> createHostCopy();
+
+// Create a copy of this Array class in Device Memory, and pass that copy back as a return value.
+template<class T> Array<T,yakl::memDevice> createDeviceCopy();
+
+// Copy the data from this Array pointer to the Host Array's pointer (Host Array must already exist)
+template<class T> void deep_copy_to(Array<T,memHost> lhs);
+
+// Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
+template<class T> void deep_copy_to(Array<T,memDevice> lhs);
+```
+
 ### `SArray` (and `YAKL_INLINE`)
 
 To declare local data on the stack inside a kernel, you'll use the `SArray` class. For instance:
@@ -454,29 +472,9 @@ Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array` and `SArr
 
 Pasing `-D__MANAGED__` will trigger `cudaMallocManaged()` in tandem with `-D__USE_CUDA__` and `hipMallocHost()` in tandem with `-D__USE_HIP__`.
 
-Passing `-D__AUTO_FENCE__` will automatically insert a `yakl::fence()` after every `yakl::parallel_for` launch. 
+Passing `-D__AUTO_FENCE__` will automatically insert a `yakl::fence()` after every `yakl::parallel_for` launch.
 
-## Moving Data Between Two Memory Spaces
-
-The intent of YAKL is to mirror copies of the `Array` class between two distinct memory spaces: Host (i.e., main memory) and Device (e.g., GPU memory). There are currently four member functions of the `Array` class to help with data movement:
-
-```C++
-// Create a copy of this Array class in Host Memory, and pass that copy back as a return value.
-template<class T> Array<T,yakl::memHost> createHostCopy();
-
-// Create a copy of this Array class in Device Memory, and pass that copy back as a return value.
-template<class T> Array<T,yakl::memDevice> createDeviceCopy();
-
-// Copy the data from this Array pointer to the Host Array's pointer (Host Array must already exist)
-template<class T> void deep_copy_to(Array<T,memHost> lhs);
-
-// Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
-template<class T> void deep_copy_to(Array<T,memDevice> lhs);
-```
-
-## Asynchronicity
-
-All YAKL calls are asynchronously launched in the "default" CUDA or HIP stream when run on the device. Array `deep_copy_to` calls also do the same. With the exception of the reduction `operator()`, you'll need to call `yakl::fence()` if you want to wait on the device operation to complete.
+You will have to explicitly pass `-I/path/to/cub` if you specify `-D__USE_CUDA__`  and  `-I/path/to/hipCUB -I/path/to/rocPRIM` if you specify `-D__USE_HIP__`.
 
 ## Future Work
 
