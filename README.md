@@ -458,7 +458,7 @@ All YAKL calls are asynchronously launched in the "default" CUDA or HIP stream w
 Plans for the future include:
 * Add [OpenCL](https://www.khronos.org/opencl/) and [OpenMP](https://www.openmp.org/) backends
 * Improve the documentation and testing of YAKL
-* Add prefix sums in a similar manner as the reductions suign cub and hipCUB
+* Improve YAKL's CMake build system to be more generic
 
 ## Software Dependencies
 All of these are included as submodules in this repo:
