@@ -386,7 +386,7 @@ YAKL can interoperate with Kokkos in a number of ways. The YAKL `Array` is equiv
 
 * `Array<T,memHost>` with neither `-D__USE_CUDA__` nor `-D__USE_HIP__`
   * This can be compatible with any dimension of Kokkos `View` in `HostSpace` with `LayoutRight` such as `View<T*,LayoutRight,HostSpace>` or `View<real****,LayoutRight,HostSpace>`
-  * YAKL does not need to template on the dimension, which simplifies things. But it complicates compatibility with Kokkos `View` objects somewhat.
+  * YAKL does not need to template on the number of dimensions, which simplifies things. But it complicates compatibility with Kokkos `View` objects somewhat.
   * A good practice is to try to `typedef` YAKL `Array` objects to `real1d`, `real2d`, etc. and to try to keep those correct to the actual data being used. If you do this, you can easily map it to a Kokkos `View` of the correct dimension later, and you will get compile-time or run-time errors if you didn't do the dimensionality correctly.
 * `Array<T,memDevice>` with `-D__USE_CUDA__`
   * This is compatible with any dimension of Kokkos `View<T*,LayoutRight,CudaSpace>`
