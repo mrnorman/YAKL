@@ -405,6 +405,12 @@ You can use YAKL `SArray` objects inside Kokkos `parallel_for` launchers.
 
 YAKL and Kokkos `fence()` operations are pretty much equivalent and can be used in either framework.
 
+YAKL's `YAKL_INLINE` is equivalent to Kokkos's `KOKKOS_INLINE_FUNCTION`.
+
+YAKL's `YAKL_LAMBDA` is similar to the Kokkos `KOKKOS_LAMBDA`, but there are important differences:
+* In CUDA, YAKL specifies `#define YAKL_LAMBDA [=] __device__`, whereas Kokkos specifies `#define KOKKOS_LAMBDA [=] __host__ __device__`. YAKL differs here because of issues with calling atomics, which are only `__device__` functions in the hardware supported API.
+* On the host, YAKL specifies `#define YAKL_LAMBDA [&]`, wherease Kokkos specifies `#define KOKKOS_LAMBDA [=]`. This means that on the CPU, YAKL lambdas can capture by reference, but Kokkos lambdas cannot.
+
 ## Compiling with YAKL
 
 You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
