@@ -446,7 +446,7 @@ The Kokkos build system is more invasive and complex, requiring you to change th
 
 ### CMake
 
-To use YAKL in another CMake project, simply insert
+To use YAKL in another CMake project, insert the following into your CMakeLists.txt
 
 ```cmake
 add_subdirectory(/path/to/yakl  path/to/build/directory)
@@ -465,7 +465,18 @@ If you specify `-DARCH="CUDA"`, then you **must** specify `-DYAKL_CUB_HOME=/path
 
 If you specify `-DARCH="HIP"`, then you **must** specify `-DYAKL_HIPCUB_HOME=/path/to/hipCUB -DYAKL_ROCPRIM_HOME=/path/to/rocPRIM`
 
-After running the `add_subdirectory()` command, YAKL will export four variables into parent scope for you to use: `${YAKL_CXX_SOURCE}`, `${YAKL_F90_SOURCE}`, `${YAKL_SOURCE}`, and `${YAKL_CXX_FLAGS}`. The C++ flags are given to you since it's almost certain you'll need to compile C++ source files that link in YAKL headers, and these will needs those flags. Also, the source files are given to you in case you want to compile YAKL is a different way yourself, for instance, in case the YAKL `CMakeLists.txt` isn't playing nicely with your own CMake build system for some reason.
+After running the `add_subdirectory()` command, YAKL will export four variables into parent scope for you to use: `${YAKL_CXX_SOURCE}`, `${YAKL_F90_SOURCE}`, `${YAKL_SOURCE}`, and `${YAKL_CXX_FLAGS}`. The C++ flags are given to you since it's almost certain you'll need to compile C++ source files that link in YAKL headers, and these will needs those flags.
+
+You can compile C++ files that use YAKL header files with the following:
+
+```cmake
+set_source_files_properties(whatever.cpp PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
+if ("${ARCH}" STREQUALS "CUDA")
+  set_source_files_properties(whatever.cpp PROPERTIES LANGUAGE CUDA)
+endif()
+```
+
+Also, the YAKL source files are given to you in case you want to compile YAKL is a different way yourself, for instance, if the YAKL `CMakeLists.txt` isn't playing nicely with your own CMake build system for some reason.
 
 ### Traditional Makefile
 

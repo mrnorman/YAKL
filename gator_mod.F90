@@ -9,15 +9,17 @@ module gator_mod
   real(8)    :: r8
   logical    :: lg
 
-  interface
-    subroutine gator_init() bind(C, name="gatorInit")
-    end subroutine gator_init
+  interface gator_init
+    subroutine gator_init_noargs() bind(C, name="gatorInit")
+    end subroutine gator_init_noargs
 
-    subroutine gator_init( bytes ) bind(C, name="gatorInitPool")
+    subroutine gator_init_pool( bytes ) bind(C, name="gatorInitPool")
       use iso_c_binding
       integer(c_size_t), value :: bytes
-    end subroutine gator_init
+    end subroutine gator_init_pool
+  end interface gator_init
 
+  interface
     subroutine gator_finalize() bind(C, name="gatorFinalize")
     end subroutine gator_finalize
 
