@@ -1,9 +1,0 @@
-[submodule "cub"]
-	path = cub
-	url = https://github.com/NVlabs/cub.git
-[submodule "hipCUB"]
-	path = hipCUB
-	url = https://github.com/ROCmSoftwarePlatform/hipCUB.git
-[submodule "rocPRIM"]
-	path = rocPRIM
-	url = https://github.com/ROCmSoftwarePlatform/rocPRIM.git
