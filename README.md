@@ -1,5 +1,5 @@
 # YAKL: Yet Another Kernel Launcher
-## A Minimal C++ Kernel Launcher for Performance Portability
+## A C++ Kernel Launcher for Performance Portability
 
 **This is still a work in progress**
 
