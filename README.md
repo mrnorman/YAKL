@@ -25,7 +25,7 @@ YAKL is composed of the following:
   * Supports array index debugging to throw an error when indices are out of bounds
 * An `SArray` class for static arrays to be placed on the stack
   * This makes it easy to create low-overhead local arrays in kernels
-  * Supports up to four dimensions, all of which must be known at compile time
+  * Supports up to four dimensions, the sizes of which are template parameters
   * Supports array index debugging to throw an error when indices are out of bounds
 * `parallel_for` launchers
   * Similar syntax as the Kokkos `parallel_for`
