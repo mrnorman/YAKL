@@ -44,7 +44,7 @@ YAKL is composed of the following:
   * The `operator(T *data)` function defaults to copying the result of the reduction to a host scalar value
   * The user can also use the `deviceReduce(T *data)` function to store the result into a device scalar location
 
-The YAKL API is similar to Kokkos. It is simplified in many ways to make adding multiple hardware backends easier. Yet, YAKL's increased simplicity allows it to do some things other frameworks cannot such as provide Fortran interoperability, lighter weight exposure of atomics, abstract host-to-device and device-to-host transfers for you, and more easily interoperate with external libraries such as MPI and I/O libraries. 
+The YAKL API is similar to Kokkos. It is simplified in many ways to make adding multiple hardware backends easier. Yet, YAKL's increased simplicity allows it to do some things other frameworks cannot such as provide Fortran interoperability, lighter weight exposure of atomics, handling of host-to-device and device-to-host transfers, and easier interoperability with external libraries such as MPI and I/O libraries. 
 
 YAKL currently has backends for CPUs, Nvidia GPUs, and AMD GPUs.
 
