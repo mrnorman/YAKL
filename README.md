@@ -156,6 +156,8 @@ yakl::parallel_for( ny*nx , YAKL_LAMBDA (int iGlob) {
 });
 ```
 
+The `parallel_for` launcher is useful for every type of loop except for prefix sums and reductions. You can embed atomics in `parallel_for` as you'll see a few sections down.
+
 ### `Array`
 
 The `Array` class is set up to handle two different memories: Host and Device, and you can seen an example of how to use these above as well as in the [miniWeather](https://github.com/mrnorman/miniWeather) codebase.
@@ -261,6 +263,8 @@ float *dtDev;
 yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
 pmin.deviceReduce( dt3d.data() , dtDev );
 ```
+
+As a rule, if you ever see a scalar on the left-hand and right-hand sides of an `=`, then it's a race condition in parallel that you will need to resolve by using a reduction.
 
 ### Fortran - C++ interoperability with YAKL: `gator_mod.F90`
 
@@ -401,8 +405,9 @@ All YAKL calls are asynchronously launched in the "default" CUDA or HIP stream w
 ## Future Work
 
 Plans for the future include:
-* Adding [OpenCL](https://www.khronos.org/opencl/) and [OpenMP](https://www.openmp.org/) backends
-* Improving the documentation and testing of YAKL
+* Add [OpenCL](https://www.khronos.org/opencl/) and [OpenMP](https://www.openmp.org/) backends
+* Improve the documentation and testing of YAKL
+* Add prefix sums in a similar manner as the reductions suign cub and hipCUB
 
 ## Software Dependencies
 All of these are included as submodules in this repo:
