@@ -9,8 +9,6 @@ YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laborato
 * [Code Sample](#code-sample)
 * [Using YAKL](#using-yakl)
 * [Compiling with YAKL](#compiling-with-yakl)
-* [Moving Data Between Two Memory Spaces](#moving-data-between-two-memory-spaces)
-* [Asynchronicity](#asynchronicity)
 * [Future Work](#future-work)
 * [Software Dependencies](#software-dependencies)
 
