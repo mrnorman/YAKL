@@ -24,6 +24,7 @@ With less than 3K lines of code, YAKL provides the following:
   * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
   * CUDA Managed memory also calls `cudaMemPrefetchAsync` on the entire pool
   * If the pool allocator is not used, YAKL still maintains internal host and device allocators with the afforementioned options
+  * Specify `-D__MANAGED__` to turn on `cudaMallocManaged` for Nvidia GPUs and `hipMallocHost` for AMD GPUs
 * **Fortran Bindings**: Fortran bindings for the YAKL internal / pool device allocators
   * For `real(4)`, `real(8)`, `int(4)`, `int(8)`, and `logical` arrays up to seven dimensions
   * Using Fortran bindings for Managed memory makes porting from Fortran to C++ on the GPU significantly easier
