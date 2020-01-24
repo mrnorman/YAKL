@@ -201,6 +201,59 @@ You can initialize a pool allocator by initializing YAKL with a parameter for th
 
 To disable the pool allocator, simply call `yakl::init()` without any parameters.
 
+### Synchronization
+
+Currently YAKL only supports asynchronicity through the default CUDA stream. To synchronize the host code with code running on a GPU device, use the `yakl::fence()` functions which no-ops in host code and calls `cudaDeviceSynchronize()` on Nvidia GPUs and `hipDeviceSynchronize()` on AMD GPUs.
+
+### Atomics
+
+When you need atomic operations in YAKL, you can use the `atomicAdd`, `atomicMin`, and `atomicMax` routines. The most common use-case for atomics is some form of partial reduction over some of the indices of an array but not all. For example:
+
+```C++
+yakl::Array<real,memDevice> :: arrLarge("arrLarge",nz,ny,nx,ncrm);
+yakl::Array<real,memDevice> :: arrSmall("arrLarge",nz,ncrm);
+
+...
+
+// for (int k=0; k<nzm; k++) {
+//   for (int j=0; j<ny; j++) {
+//     for (int i=0; i<nx; i++) {
+//       for (int icrm=0; icrm<ncrms; icrm++) {
+yakl::parallel_for( nzm*ny*nx*ncrms , YAKL_LAMBDA (int iGlob) {
+  int k, j, i, icrm;
+  yakl::unpackIndices( iGlob , nzm,ny,nx,ncrms , k,j,i,icrm );
+
+  // The operation below is a race condition in parallel. It needs an atomicMax
+  // arrSmall(k,icrm) = max( arrSmall(k,icrm) , arrLarge(k,j,i,icrm) );
+  
+  yakl::atomicMax( arrSmall(k,icrm) , arrLarge(k,j,i,icrm) );
+});
+```
+
+As a rule, if you ever see anything on the left-hand-side of an `=` with **fewer indices than you have surrounding loops**, then you're going to have a race condition that requires an atomic access.
+
+### Reductions (Min, Max, and Sum)
+
+YAKL provides efficient min, max, and sum array reductions using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size (number of elements to reduce), type (`template <class T>`) of the array that will be reduced, and the memory space (via template parameter, `yakl::memHost` or `yakl::memDevice`) of the array to be reduced. The constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using `T operator()(T *data)`, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below:
+
+```C++
+Array<float> dt3d;
+// Fill dt3d
+yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
+dt = pmin( dt3d.data() );
+```
+
+If you want to avoid copying the result back to the host, you can run the `void deviceReduce(T *data, T *rslt)` member function, where the `rslt` pointer is allocated in device memory. An example is below:
+
+```C++
+Array<float> dt3d;
+float *dtDev;
+// Allocate dtDev on device
+// Fill dt3d
+yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
+pmin.deviceReduce( dt3d.data() , dtDev );
+```
+
 ### Fortran - C++ interoperability with YAKL: `gator_mod.F90`
 
 We provide the `gator_mod` Fortran module to interface with YAKL's internal device allocator. To use it, you'll first need to make all "automatic" fortran arrays into `allocatable` arrays and explicitly allocat them:
@@ -298,55 +351,6 @@ Notice that the order of the dimensions is reversed in the C++ code. This is bec
 Finally, the `var2` array will be indexed from indices `0` to `nx-1`, `0` to `ny-1`, and `0` to `nz-1` in the C++ code in the x, y, and z dimensions, respectively. But since `var1` has non-standard Fortran lower bounds, you must add the `offset_x`, `offset_y`, and `offset_z` integers to the indexing in the x, y, and z dimensions, respectively, when indexing using zero-based loops like `var1`.
 
 When Fortran data is passed by parameter, you can use the un-owned `Array` constructors inside the C++ functions following the same ideas regarding non-standard Fortran lower bounds.
-
-### Atomics
-
-When you need atomic operations in YAKL, you can use the `atomicAdd`, `atomicMin`, and `atomicMax` routines. The most common use-case for atomics is some form of partial reduction over some of the indices of an array but not all. For example:
-
-```C++
-yakl::Array<real,memDevice> :: arrLarge("arrLarge",nz,ny,nx,ncrm);
-yakl::Array<real,memDevice> :: arrSmall("arrLarge",nz,ncrm);
-
-...
-
-// for (int k=0; k<nzm; k++) {
-//   for (int j=0; j<ny; j++) {
-//     for (int i=0; i<nx; i++) {
-//       for (int icrm=0; icrm<ncrms; icrm++) {
-yakl::parallel_for( nzm*ny*nx*ncrms , YAKL_LAMBDA (int iGlob) {
-  int k, j, i, icrm;
-  yakl::unpackIndices( iGlob , nzm,ny,nx,ncrms , k,j,i,icrm );
-
-  // The operation below is a race condition in parallel. It needs an atomicMax
-  // arrSmall(k,icrm) = max( arrSmall(k,icrm) , arrLarge(k,j,i,icrm) );
-  
-  yakl::atomicMax( arrSmall(k,icrm) , arrLarge(k,j,i,icrm) );
-});
-```
-
-As a rule, if you ever see anything on the left-hand-side of an `=` with **fewer indices than you have surrounding loops**, then you're going to have a race condition that requires an atomic access.
-
-### Reductions (Min, Max, and Sum)
-
-YAKL provides efficient min, max, and sum array reductions using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size (number of elements to reduce), type (`template <class T>`) of the array that will be reduced, and the memory space (via template parameter, `yakl::memHost` or `yakl::memDevice`) of the array to be reduced. The constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using `T operator()(T *data)`, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below:
-
-```C++
-Array<float> dt3d;
-// Fill dt3d
-yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
-dt = pmin( dt3d.data() );
-```
-
-If you want to avoid copying the result back to the host, you can run the `void deviceReduce(T *data, T *rslt)` member function, where the `rslt` pointer is allocated in device memory. An example is below:
-
-```C++
-Array<float> dt3d;
-float *dtDev;
-// Allocate dtDev on device
-// Fill dt3d
-yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
-pmin.deviceReduce( dt3d.data() , dtDev );
-```
 
 ## Compiling with YAKL
 
