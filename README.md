@@ -380,6 +380,27 @@ Finally, the `var2` array will be indexed from indices `0` to `nx-1`, `0` to `ny
 
 When Fortran data is passed by parameter, you can use the un-owned `Array` constructors inside the C++ functions following the same ideas regarding non-standard Fortran lower bounds.
 
+### Interoperating with Kokkos
+
+YAKL can interoperate with Kokkos in a number of ways. The YAKL `Array` is equivalent to the Kokkos `View` in the following mappings:
+
+* `Array<T,memHost>` with neither `-D__USE_CUDA__` nor `-D__USE_HIP__`
+  * This can be compatible with any dimension of Kokkos `View` in `HostSpace` with `LayoutRight` such as `View<T*,LayoutRight,HostSpace>` or `View<real****,LayoutRight,HostSpace>`
+  * YAKL does not need to template on the dimension, which simplifies things. But it complicates compatibility with Kokkos `View` objects somewhat.
+  * A good practice is to try to `typedef` YAKL `Array` objects to `real1d`, `real2d`, etc. and to try to keep those correct to the actual data being used. If you do this, you can easily map it to a Kokkos `View` of the correct dimension later, and you will get compile-time or run-time errors if you didn't do the dimensionality correctly.
+* `Array<T,memDevice>` with `-D__USE_CUDA__`
+  * This is compatible with any dimension of Kokkos `View<T*,LayoutRight,CudaSpace>`
+* `Array<T,memDevice>` with `-D__USE_CUDA__ -D__MANAGED__`
+  * This is compatible with any dimension of Kokkos `View<T*,LayoutRight,CudaUVMSpace>`
+
+Both Kokkos and YAKL have unmanaged / un-owned multi-dimensional arrays, so you can wrap equivalent types using the data pointer, which each expose via `Array::data()` and `View::data()`
+
+YAKL `parallel_for` launchers can use Kokkos `Views` without issue, and Kokkos `parallel_for` and `parallel_reduce` launchers can use YAKL `Array` objects without issue.
+
+You can use Kokkos View data in YAKL's reductions via the `View::data()` pointer so long as the Kokkos `View` is congiguous, which you can determine via the `View::span_is_contiguous()` member function. It's prefereable for performance that the Kokkos `View` also have the `LayoutRight` attribute as well.
+
+You can use YAKL atomic functions inside Kokkos `parallel_for` launchers. 
+
 ## Compiling with YAKL
 
 You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
