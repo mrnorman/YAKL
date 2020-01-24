@@ -70,10 +70,10 @@ The following loop would be ported to general accelerators with YAKL as follows:
 #include <iostream>
 typedef float real;
 typedef yakl::Array<real,yakl::memHost> realArr;
-inline void applyTendencies(realArr &state2, real const c0, realArr const &state0,
-                                             real const c1, realArr const &state1,
-                                             real const ct, realArr const &tend,
-                                             Domain const &dom) {
+void applyTendencies(realArr &state2, real const c0, realArr const &state0,
+                                      real const c1, realArr const &state1,
+                                      real const ct, realArr const &tend,
+                                      Domain const &dom) {
   real tot = 0;
   for (int l=0; l<numState; l++) {
     for (int k=0; k<dom.nz; k++) {
@@ -101,10 +101,10 @@ will become:
 #include <iostream>
 typedef float real;
 typedef yakl::Array<real,yakl::memDevice> realArr;
-inline void applyTendencies(realArr &state2, real const c0, realArr const &state0,
-                                             real const c1, realArr const &state1,
-                                             real const ct, realArr const &tend,
-                                             Domain const &dom) {
+void applyTendencies(realArr &state2, real const c0, realArr const &state0,
+                                      real const c1, realArr const &state1,
+                                      real const ct, realArr const &tend,
+                                      Domain const &dom) {
   // for (int l=0; l<numState; l++) {
   //   for (int k=0; k<dom.nz; k++) {
   //     for (int j=0; j<dom.ny; j++) {
