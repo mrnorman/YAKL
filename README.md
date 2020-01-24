@@ -59,6 +59,7 @@ With less than 3K lines of code, YAKL provides the following:
 * **Atomics**: Atomic instructions
   * `atomicAdd`, `atomicMin`, and `atomicMax` are supported for 4- and 8-byte integers and reals
   * Whenever possible, hardwhare atomics are used, and software atomics using `atomicCAS` and real-to-integer conversions in the CUDA and HIP backends
+  * Note this is a significant divergence from Kokkos, which specifies atomic accesses for entire arrays all of the time. With YAKL, you only perform atomic accesses when you need them at the development expense of having to explicitly use `atomic[Add|Min|Max]` in the kernel code yourself.
 * **Reductions**: Parallel reductions using the Nvidia `cub` and AMD `hipCUB` (wrapper to `rocPRIM`) libraries
   * Temporary data for a GPU device reduction is allocated with YAKL's internal device allocators and owned by a class for your convenience. It is automatically deallocated when the class falls out of scope.
   * The user can create a class object and then reuse it to avoid multiple allocations during runtime
