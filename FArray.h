@@ -792,6 +792,32 @@ template <class T, int myMem> class FArray {
   }
 
 
+  YAKL_INLINE FArray<T,myMem> subArray( std::vector<int> dims ) {
+    // Compute the number of dimensions for the 
+    int subRank=0;
+    while (subRank < 8 && dims[subRank] == -1) { subRank++; }
+
+    FArray<T,myMem> ret;
+    ret.rank = subRank;
+    ret.totElems = 1;
+    ret.owned = 0;
+    for (int i=0; i<subRank; i++) {
+      ret.dimension[i] = this->dimension[i];
+      ret.lbounds  [i] = this->lbounds  [i];
+      ret.totElems *= ret.dimension[i];
+    }
+    ret.offsets[0] = 1;
+    for (int i=1; i<ret.rank; i++) {
+      ret.offsets[i] = ret.offsets[i-1] * ret.dimension[i-1];
+    }
+    int subOffset = 0;
+    for (int i=this->rank-1; i>subRank-1; i--) {
+      subOffset += this->offsets[i]*dims[i];
+    }
+    ret.myData = this->myData[subOffset];
+  }
+
+
   inline FArray<T,memHost> createHostCopy() {
     FArray<T,memHost> ret;
     #ifdef ARRAY_DEBUG
