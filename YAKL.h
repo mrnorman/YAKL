@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <vector>
 #include "BuddyAllocator.h"
 
 #ifdef __USE_CUDA__
@@ -52,6 +53,15 @@ namespace yakl {
   // YAKL allocator and deallocator
   extern std::function<void *( size_t )> yaklAllocHost;
   extern std::function<void ( void * )>  yaklFreeHost;
+
+
+
+  template <int L, int U> class bnd {
+  public:
+    bnd() = delete;
+    static constexpr int l() { return L; }
+    static constexpr int u() { return U; }
+  };
 
 
 
