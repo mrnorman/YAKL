@@ -885,6 +885,13 @@ template <class T, int myMem> class FArray {
   }
 
 
+  inline T sum() {
+    T sum = 0;
+    for (int i=0; i<totElems; i++) { sum += myData[i]; }
+    return sum;
+  }
+
+
   /* ACCESSORS */
   YAKL_INLINE int get_rank() const {
     return rank;
