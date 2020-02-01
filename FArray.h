@@ -804,8 +804,6 @@ template <class T, int myMem> class FArray {
     int retNdims = 0;
     while (dims[retNdims] != NOSPEC) { retNdims++; }
 
-    std::cout << retNdims << " " << this->rank << "\n";
-
     // Make sure # slice parameters = the rank of this FArray
     if (retNdims != this->rank) {
       printf("ERROR: Number of slice parameters differs from the rank of this FArray object. Returning NULL\n");
@@ -820,7 +818,7 @@ template <class T, int myMem> class FArray {
       ret.lbounds  [subRank] = this->lbounds  [subRank];
       ret.offsets  [subRank] = this->offsets  [subRank];
       ret.totElems *= ret.dimension[subRank];
-      ret.rank = subRank;
+      ret.rank = subRank+1;
       subRank++;
     }
 
@@ -833,7 +831,7 @@ template <class T, int myMem> class FArray {
       }
       if ( (dims[i] < this->lbounds[i]) || (dims[i] > this->lbounds[i]+(int)this->dimension[i]-1) ) {
         printf("ERROR: The %dth dimension is out of bounds! Returning NULL\n",i+1);
-        std::cout << this->lbounds[i] << "<=" << dims[i] << "<=" << this->lbounds[i]+this->dimension[i]-1 << std::endl;
+        printf("%d <= %d <= %d\n",this->lbounds[i],dims[i],this->lbounds[i]+(int)this->dimension[i]-1);
         return NULL;
       }
       retOff += (dims[i]-lbounds[i])*offsets[i];
