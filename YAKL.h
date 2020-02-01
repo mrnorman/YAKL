@@ -5,6 +5,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <limits>
 #include "BuddyAllocator.h"
 
 #ifdef __USE_CUDA__
@@ -35,6 +36,9 @@ namespace yakl {
   // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
+
+  int constexpr COLON = std::numeric_limits<int>::min();
+  int constexpr NOSPEC = std::numeric_limits<int>::min()+1;
 
 
   // Size of the buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame

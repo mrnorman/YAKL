@@ -792,29 +792,55 @@ template <class T, int myMem> class FArray {
   }
 
 
-  YAKL_INLINE FArray<T,myMem> subArray( std::vector<int> dims ) {
-    // Compute the number of dimensions for the 
-    int subRank=0;
-    while (subRank < 8 && dims[subRank] == -1) { subRank++; }
-
+  YAKL_INLINE FArray<T,myMem> slice( int d0 , int d1=NOSPEC , int d2=NOSPEC , int d3=NOSPEC , int d4=NOSPEC , int d5=NOSPEC , int d6=NOSPEC , int d7=NOSPEC ) {
     FArray<T,myMem> ret;
-    ret.rank = subRank;
-    ret.totElems = 1;
     ret.owned = 0;
-    for (int i=0; i<subRank; i++) {
-      ret.dimension[i] = this->dimension[i];
-      ret.lbounds  [i] = this->lbounds  [i];
-      ret.totElems *= ret.dimension[i];
+
+    // Place dims in an array
+    int dims[8];
+    dims[0]=d0; dims[1]=d1; dims[2]=d2; dims[3]=d3; dims[4]=d4; dims[5]=d5; dims[6]=d6; dims[7]=d7;
+
+    // Find out how many parameters we have
+    int retNdims = 0;
+    while (dims[retNdims] != NOSPEC) { retNdims++; }
+
+    std::cout << retNdims << " " << this->rank << "\n";
+
+    // Make sure # slice parameters = the rank of this FArray
+    if (retNdims != this->rank) {
+      printf("ERROR: Number of slice parameters differs from the rank of this FArray object. Returning NULL\n");
+      return NULL;
     }
-    ret.offsets[0] = 1;
-    for (int i=1; i<ret.rank; i++) {
-      ret.offsets[i] = ret.offsets[i-1] * ret.dimension[i-1];
+
+    // Loop over valid parameters, and construct the array slice
+    ret.totElems = 1;
+    int subRank=0;
+    while (subRank < 8 && dims[subRank] == COLON) {
+      ret.dimension[subRank] = this->dimension[subRank];
+      ret.lbounds  [subRank] = this->lbounds  [subRank];
+      ret.offsets  [subRank] = this->offsets  [subRank];
+      ret.totElems *= ret.dimension[subRank];
+      ret.rank = subRank;
+      subRank++;
     }
-    int subOffset = 0;
-    for (int i=this->rank-1; i>subRank-1; i--) {
-      subOffset += this->offsets[i]*dims[i];
+
+    // Compute the offset for the array slice
+    int retOff = 0;
+    for (int i=this->rank-1; i>=subRank; i--) {
+      if (dims[i] == COLON) {
+        printf("ERROR: Non-contiguous slices are not supported! Returning NULL\n");
+        return NULL;
+      }
+      if ( (dims[i] < this->lbounds[i]) || (dims[i] > this->lbounds[i]+(int)this->dimension[i]-1) ) {
+        printf("ERROR: The %dth dimension is out of bounds! Returning NULL\n",i+1);
+        std::cout << this->lbounds[i] << "<=" << dims[i] << "<=" << this->lbounds[i]+this->dimension[i]-1 << std::endl;
+        return NULL;
+      }
+      retOff += (dims[i]-lbounds[i])*offsets[i];
     }
-    ret.myData = this->myData[subOffset];
+    ret.myData = &(this->myData[retOff]);
+
+    return ret;
   }
 
 
