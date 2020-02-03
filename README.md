@@ -567,6 +567,8 @@ You will have to explicitly pass `-I/path/to/cub` if you specify `-D__USE_CUDA__
 Plans for the future include:
 * Add a low-level backend for Intel accelerators when it become available
 * Improve the documentation, testing, and runtime error checking of YAKL
+* Improve the performance of the YAKL backends
+* Try to improve CPU code vectorization for host targets
 
 ## Software Dependencies
 * For Nvidia GPUs, you'll need to clone [CUB](https://nvlabs.github.io/cub/)
