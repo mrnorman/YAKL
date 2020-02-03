@@ -535,6 +535,8 @@ endif()
 
 Also, the YAKL source files are given to you in case you want to compile YAKL is a different way yourself, for instance, if the YAKL `CMakeLists.txt` isn't playing nicely with your own CMake build system for some reason.
 
+To compile with **HIP** for AMD GPUs, you need to use `hipcc` as the C++ compiler. For MPI codes, if you're using OpenMPI, you can also set `OMPI_CXX=hipcc` for simplicity, and OpenMPI will use `hipcc` under the hood with `mpic++`.
+
 ### Traditional Makefile
 
 You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
@@ -545,7 +547,7 @@ You currently have three choices for a device backend: HIP, CUDA, and serial CPU
 | Nvidia GPU    |`-D__USE_CUDA__`| 
 | CPU Serial    | neither of the above two | 
 
-Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array` and `SArray` objections. **Beware** that this only works on host code at the moment, so do not pass `-DARRAY_DEBUG` at the same time as passing `-D__USE_CUDA__` or `-D__USE_HIP__`.
+Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array`, `SArray`, `FArray`, and `FSArray` objects. **Beware** that this only works on host code at the moment, so do not pass `-DARRAY_DEBUG` at the same time as passing `-D__USE_CUDA__` or `-D__USE_HIP__`. The reason is that the CUDA and HIP runtimes do not currently support exception throwing.
 
 Pasing `-D__MANAGED__` will trigger `cudaMallocManaged()` in tandem with `-D__USE_CUDA__` and `hipMallocHost()` in tandem with `-D__USE_HIP__`.
 
@@ -556,9 +558,8 @@ You will have to explicitly pass `-I/path/to/cub` if you specify `-D__USE_CUDA__
 ## Future Work
 
 Plans for the future include:
-* Add [OpenCL](https://www.khronos.org/opencl/) and [OpenMP](https://www.openmp.org/) backends
-* Improve the documentation and testing of YAKL
-* Improve YAKL's CMake build system to be more generic
+* Add a low-level backend for Intel accelerators when it become available
+* Improve the documentation, testing, and runtime error checking of YAKL
 
 ## Software Dependencies
 * For Nvidia GPUs, you'll need to clone [CUB](https://nvlabs.github.io/cub/)
