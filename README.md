@@ -560,6 +560,8 @@ YAKL can interoperate with Kokkos in a number of ways. The YAKL `Array` is equiv
   * This is compatible with any dimension of Kokkos `View<T*,LayoutRight,CudaSpace>`
 * `Array<T,memDevice>` with `-D__USE_CUDA__ -D__MANAGED__`
   * This is compatible with any dimension of Kokkos `View<T*,LayoutRight,CudaUVMSpace>`
+  
+YAKL `FArray` objects are compatible with Kokkos `View` objects in the same way that `Array` objects are, except that the lower bounds will be changes to zero, and the order of indexing will be reversed.
 
 Both Kokkos and YAKL have unmanaged / un-owned multi-dimensional arrays, so you can wrap equivalent types using the data pointer, which each expose via `Array::data()` and `View::data()`
 
