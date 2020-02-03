@@ -19,6 +19,7 @@ YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laborato
   * [Reductions (Min, Max, and Sum)](#reductions-min-max-and-sum)
   * [Fortran - C++ Interoperability with YAKL: `gator_mod.F90`](#fortran---c-interoperability-with-yakl-gator_modf90)
   * [Interoperating with Kokkos](#interoperating-with-kokkos)
+  * [`FArray` and `FSArray` (Fortran Behavior in C++)](#farray-and-fsarray-fortran-behavior-in-c)
 * [Compiling with YAKL](#compiling-with-yakl)
 * [Future Work](#future-work)
 * [Software Dependencies](#software-dependencies)
@@ -445,6 +446,57 @@ YAKL's `YAKL_LAMBDA` is similar to the Kokkos `KOKKOS_LAMBDA`, but there are imp
 YAKL's build system in CMake simply takes the C++ files and tells CMake to compile them as if they were CUDA. You don't need to change the C++ compiler.
 
 The Kokkos build system is more invasive and complex, requiring you to change the `CMAKE_CXX_COMPILER` for all files in the project to use the `nvcc_wrapper` shipped with the Kokkos repo, and compiling different source files depending upon CMake options you pass before adding the library. Theoretically, a CMake system using the Kokkos build requirements should handle the YAKL source files, but you probably can't use YAKL's normal CMake library. Integrating YAKL into a larger project should be very simple because YAKL's C++ interface only has two source files: `BuddyAllocator.cpp` and `YAKL.cpp`, and its Fortran interface only has one: `gator_mod.F90`.
+
+## `FArray`, and `FSArray`, and Fortran-like `parallel_for` (Fortran Behavior in C++)
+
+YAKL also has the `FArray` and `FSArray` classes to make porting Fortran code to C++ simpler. It's time-consuming and error-prone to have to reorder the indices of every array to row-major and change all indexing to match C's always-zero lower bound. Also, Fortran allows array slicing and non-one lower bounds, which can make porting very tedious. Look-up tables and intermediate index arrays make this even harder.
+
+The `FArray` and `FSArray` classes allow any arbritrary lower bound, defaulting to one, and the left-most index always varies the fastest like in Fortran. You can create them as follows:
+
+**`FArray`**:
+* `FArray<float,yakl::memSpace> arr( "label" , int dim1 [, int dim2 , ...] )
+  * Equivalent to Fortran: `real, allocatable :: arr(:[,:,...]); allocate(arr(dim1[,dim2,...])`
+  * Creates an owned array
+* `FArray<float,yakl::memSpace> arr( "label" , float *data_p , int dim1 [, int dim2 , ...] )
+  * Same as before but non-owned (wraps an existing contiguous data pointer)
+* `FArray<double,yakl::memSpace> arr( "label" , {-1,52} [ , {0,43} , ...] )
+  * Equivalent to Fortran: `real(8), allocatable :: arr(:[,:,...]); allocate(arr(-1:52 [ , 0:43 , ...])`
+  * Lower and upper bounds are specified as integer pairs and accepted as `std::vector<int>` dummy variables
+* `FArray<double,yakl::memSpace> arr( "label" , double *data_p , {-1,52} [ , {0,43} , ...] )
+  * Same as before but non-owned (wraps an existing contiguous data pointer)
+* `FArray::slice(COLON,COLON,ind1,ind2)`
+  * Equivalent to Fortran array slicing: `arr(:,:,ind1,ind2)`
+  * Only works on simple, *contiguous* array slices with *entire dimensions* (not partial dimensions) sliced out
+  * E.g., `arr(0:5,4,7)`, though contiguous is not supported.
+  * If you want to **write** to the array slice passed to a function, you must save it as a temporary variable first and pass the temporary variable: E.g., `auto tmp = arr.slice(COLON,COLON,ind1,ind2);  myfunc(tmp);`
+  * If you're reading from the array slice, you can pass it directly inline.
+
+**`FSArray`**:
+* Must template on the lower and upper bounds to place it on the stack.
+* `FSArray<float,bnd<-hs,hs>> stencil;`
+  * Equivalent to the Fortran "automatic" array: `real :: stencil(-hs:hs)`
+  * Low-overhead, placed ont he stack
+  * You **must** specify two indices for each of up to four dimension in the template: the lower and upper bounds for that dimension
+
+**`parallel_for` (Fortran style)**:
+```C++
+yakl::parallel_for( Bounds({-1,30,3},{0,29}) , YAKL_LAMBDA ( int indices[] ) {
+  int j, i;
+  yakl::storeIndices( indices , j,i );
+  
+  // Loop body
+});
+```
+
+This is the parallel C++ equivalent of the following Fortran code:
+
+```fortran
+do j=-1,30,3
+  do i=0,29
+    ! Loop body
+  enddo
+enddo
+```
 
 ## Compiling with YAKL
 
