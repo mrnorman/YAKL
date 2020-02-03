@@ -18,7 +18,7 @@ YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laborato
   * [Synchronization](#synchronization)
   * [Atomics](#atomics)
   * [Reductions (Min, Max, and Sum)](#reductions-min-max-and-sum)
-  * [Fortran - C++ Interoperability with YAKL: `gator_mod.F90`](#fortran---c-interoperability-with-yakl-gator_modf90)
+  * [Fortran - C++ Interoperability with YAKL: `FArray` and `gator_mod.F90`](#fortran---c-interoperability-with-yakl-farray-and-gator_modf90)
   * [Interoperating with Kokkos](#interoperating-with-kokkos)
 * [Compiling with YAKL](#compiling-with-yakl)
 * [Future Work](#future-work)
