@@ -227,14 +227,20 @@ To declare local data on the stack inside a kernel, you'll use the `SArray` clas
 typedef float real;
 yakl::Array<real,memDevice> state("state",nx+2*hs);
 yakl::Array<real,memDevice> coefs("coefs",nx,ord);
+
 ...
+
 YAKL_INLINE void recon( SArray<real,ord> const &stencil , 
-                        SArray<real,ord> &coefs ) { ... }
+                        SArray<real,ord> &coefs ) {
+  ...
+}
+                        
 yakl::parallel_for( nx , YAKL_LAMBDA (int i) {
   yakl::SArray<real,ord> stencil, coefs;
   for (int ii=0; ii<ord; ii++) { stencil(ii) = state(i+ii); }
   recon(stencil,coefs);
   for (int ii=0; ii<ord; ii++) { coefs(i,ii) = coefs(ii); }
+  ...
 });
 ```
 
