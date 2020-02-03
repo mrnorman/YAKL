@@ -357,7 +357,8 @@ use gator_mod, only: gator_allocate, gator_deallocate
 real, pointer, contiguous :: var1(:,:,:)
 real, pointer, contiguous :: var2(:,:,:)
 ...
-call gator_allocate( var1 , (/ ubnd_x-lbnd_x+1 , ubnd_y-lbnd_y+1 , ubnd_z-lbnd_z+1 /) , (/-1,-1,-1/) )
+call gator_allocate( var1 , (/ ubnd_x-lbnd_x+1 , ubnd_y-lbnd_y+1 , ubnd_z-lbnd_z+1 /) , &
+                            (/ lbnd_x , lbnd_y , lbnd_z /) )
 call gator_allocate( var2 , (/nx,ny,nz/) )
 ...
 call gator_deallocate(var1)
