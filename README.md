@@ -65,7 +65,9 @@ With around 4K lines of code, YAKL provides the following:
 * **Fortran-style Multi-dimensional Arrays**: `FArray` and `FSArray` classes for allocated and stack Fortran-like arrays
   * Left-most index varies the fastest just like in Fortran
   * Arbitrary lower bounds that default to one
-  * `parallel_for` kernel launchers that take arbitrary loop bounds and strides like Fortran loops.
+  * `parallel_for` kernel launchers that take arbitrary loop bounds and strides like Fortran loops
+  * Contains a `slice()` function with `yakl::COLON` to allow simple contiguous Fortran-like array slices
+  * Removes the need to permute array indices and change indexing when porting Fortran codes to C++
 * **Kernel Launchers**: `parallel_for` launchers
   * Similar syntax as the Kokkos `parallel_for`
   * Only supports one level of parallelism for simplicity, so your loops need to be collapsed
