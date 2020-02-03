@@ -187,11 +187,11 @@ The `Array` class is set up to handle two different memories: Host and Device, a
 The `Array` class can be owned or non-owned. The constructors are:
 
 ```C++
-# Owned (Allocated, reference counted, and deallocated by YAKL)
+// Owned (Allocated, reference counted, and deallocated by YAKL)
 yakl::Array<T type,int memSpace>(char const *label, int dim1, [int dim2, ...]);
 
-# Non-Owned (NOT allocated, reference counted, or deallocated)
-# Use this to wrap existing contiguous data pointers (e.g., from Fortran)
+// Non-Owned (NOT allocated, reference counted, or deallocated)
+// Use this to wrap existing contiguous data pointers (e.g., from Fortran)
 yakl::Array<T type,int memSpace>(char const *label, T *ptr, int dim1, [int dim2, ...]);
 ```
 
