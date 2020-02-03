@@ -159,7 +159,7 @@ std::cout << tot << std::endl;
 
 ## Using YAKL
 
-If you want to use the YAKL `Array` or `SArray` classes, you'll need to `#include "Array.h"` or `#include "SArray.h"`. If you want to use the YAKL launchers, atomics, allocators, or reductions you'll need to `#include YAKL.h`.
+If you want to use the YAKL `Array`, `SArray`, `FArray`, or `FSArray` classes, you'll need to `#include "Array.h"`, `#include "SArray.h"`, `#include "FArray.h"`, or `#include "FSArray.h"`, respectively. If you want to use the YAKL launchers, atomics, allocators, or reductions you'll need to `#include "YAKL.h"`.
 
 Be sure to use `yakl::init(...)` at the beginning of the program and `yakl::finalize()` at the end. If you do not call these functions, you will get errors during runtime for all `Array`s, `SArray`s, and device reductions. You may get errors for CUDA `parallel_for`s.
 
