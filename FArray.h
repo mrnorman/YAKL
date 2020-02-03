@@ -24,7 +24,7 @@ Multi-dimensional array with functor indexing up to eight dimensions.
 Fortran version. Arbitrary lower bounds default to 1. Left index varies the fastest
 */
 
-template <class T, int myMem> class FArray {
+template <class T, int myMem=memDefault> class FArray {
 
   public :
 

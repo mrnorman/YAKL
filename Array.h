@@ -22,7 +22,7 @@ namespace yakl {
 Multi-dimensional array with functor indexing up to eight dimensions.
 */
 
-template <class T, int myMem> class Array {
+template <class T, int myMem=memDefault> class Array {
 
   public :
 
