@@ -61,6 +61,10 @@ With less than 3K lines of code, YAKL provides the following:
   * Supports up to four dimensions, the sizes of which are template parameters
   * Supports array index debugging to throw an error when indices are out of bounds
   * Because `SArray` objects are inherently on the stack, they have no templated memory space specifiers
+* **Fortran-style Multi-dimensional Arrays**: `FArray` and `FSArray` classes for allocated and stack Fortran-like arrays
+  * Left-most index varies the fastest just like in Fortran
+  * Arbitrary lower bounds that default to one
+  * `parallel_for` kernel launchers that take arbitrary loop bounds and strides like Fortran loops.
 * **Kernel Launchers**: `parallel_for` launchers
   * Similar syntax as the Kokkos `parallel_for`
   * Only supports one level of parallelism for simplicity, so your loops need to be collapsed
