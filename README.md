@@ -476,6 +476,7 @@ The `FArray` and `FSArray` classes allow any arbritrary lower bound, defaulting 
   * E.g., `arr(0:5,4,7)`, though contiguous is not supported
   * If you want to **write** to the array slice passed to a function, you must save it as a temporary variable first and pass the temporary variable: E.g., `auto tmp = arr.slice(COLON,COLON,ind1,ind2);  myfunc(tmp);`
   * If you're reading from the array slice, you can pass it directly inline
+  * `slice()` always produces non-owned FArrays of the same type in the same memory space wrapping a contiguous portion of the host `FArray`
 
 **`FSArray`**:
 * Must template on the lower and upper bounds to place it on the stack.
