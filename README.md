@@ -26,9 +26,14 @@ YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laborato
 
 ## Overview
 
-The YAKL API is similar to Kokkos in many ways. It is simplified in many ways to make adding multiple hardware backends easier. Yet, YAKL's increased simplicity allows it to do some things that some other frameworks cannot such as provide Fortran interoperability, lighter weight exposure of atomics, handling of host-to-device and device-to-host transfers, and easier interoperability with external libraries such as MPI and I/O libraries. 
+The YAKL API is similar to Kokkos in many ways. It is simplified in many ways to make adding multiple hardware backends easier. Yet, YAKL's increased simplicity allows it to do some things that some other frameworks cannot such as providing:
+* Fortran interoperability
+* Fortran-like multi-dimensional arrays that negate the need to permute dimensions and change indexing strategies
+* Lighter weight exposure of atomics
+* Handling of host-to-device and device-to-host transfers
+* Easier interoperability with external libraries such as MPI and I/O libraries
 
-YAKL currently has backends for CPUs, Nvidia GPUs, and AMD GPUs.
+YAKL currently has backends for CPUs (serial), Nvidia GPUs, and AMD GPUs.
 
 With around 4K lines of code, YAKL provides the following:
 
