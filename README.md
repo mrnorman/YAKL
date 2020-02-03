@@ -547,6 +547,17 @@ Notice that in the Fortran interface, any scalar with `intent(in)` must be passe
 
 Regarding return values for functions, do not return a reference like you do with dummy arguments. If you added the `&` to the function return, you would essentially be returning a reference to a locally scoped variable, which won't have any meaning outside the function. The `iso_c_binding` handles things appropriately for you, so just return the appropriate type by value in C++, and map it to a simple return of the same type in the Fortran `interface` block.
 
+The following table can help you convert Fortran parameter types to Fortran interfaces, and C++ dummy arguments:
+
+|-----------------------------------|--------------------------------|------------------------|
+| Fortran datatype                  | Fortran interface              | C++ dummy argument     |
+|-----------------------------------|--------------------------------|------------------------|
+| `integer(c_int), intent(in)`      | `integer(c_int), value`        | `int`                  |
+| `real(c_double), intent(out)`     | `real(c_double)`               | `double &`             |
+| `real(c_float), dimension(...)`   | `real(c_float), dimension(*)`  | `float *`              |
+| `logical(c_bool), dimension(...)` | `logical(c_bool), dimension(*)`| `bool *`               |
+|-----------------------------------|--------------------------------|------------------------|
+
 
 ### Interoperating with Kokkos
 
