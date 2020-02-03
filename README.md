@@ -30,7 +30,7 @@ The YAKL API is similar to Kokkos in many ways. It is simplified in many ways to
 
 YAKL currently has backends for CPUs, Nvidia GPUs, and AMD GPUs.
 
-With less than 3K lines of code, YAKL provides the following:
+With around 4K lines of code, YAKL provides the following:
 
 * **Pool Allocator**: An optional pool allocator based on Mark Berrill's `BuddyAllocator` class for device data
   * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
