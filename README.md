@@ -454,15 +454,15 @@ YAKL also has the `FArray` and `FSArray` classes to make porting Fortran code to
 The `FArray` and `FSArray` classes allow any arbritrary lower bound, defaulting to one, and the left-most index always varies the fastest like in Fortran. You can create them as follows:
 
 **`FArray`**:
-* `FArray<float,yakl::memSpace> arr( "label" , int dim1 [, int dim2 , ...] )
+* `FArray<float,yakl::memSpace> arr( "label" , int dim1 [, int dim2 , ...] )`
   * Equivalent to Fortran: `real, allocatable :: arr(:[,:,...]); allocate(arr(dim1[,dim2,...])`
   * Creates an owned array
-* `FArray<float,yakl::memSpace> arr( "label" , float *data_p , int dim1 [, int dim2 , ...] )
+* `FArray<float,yakl::memSpace> arr( "label" , float *data_p , int dim1 [, int dim2 , ...] )`
   * Same as before but non-owned (wraps an existing contiguous data pointer)
-* `FArray<double,yakl::memSpace> arr( "label" , {-1,52} [ , {0,43} , ...] )
+* `FArray<double,yakl::memSpace> arr( "label" , {-1,52} [ , {0,43} , ...] )`
   * Equivalent to Fortran: `real(8), allocatable :: arr(:[,:,...]); allocate(arr(-1:52 [ , 0:43 , ...])`
   * Lower and upper bounds are specified as integer pairs and accepted as `std::vector<int>` dummy variables
-* `FArray<double,yakl::memSpace> arr( "label" , double *data_p , {-1,52} [ , {0,43} , ...] )
+* `FArray<double,yakl::memSpace> arr( "label" , double *data_p , {-1,52} [ , {0,43} , ...] )`
   * Same as before but non-owned (wraps an existing contiguous data pointer)
 * `FArray::slice(COLON,COLON,ind1,ind2)`
   * Equivalent to Fortran array slicing: `arr(:,:,ind1,ind2)`
