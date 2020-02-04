@@ -30,7 +30,7 @@ template <class T, int myMem=memDefault> class FArray {
 
   size_t offsets  [8];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
   int    lbounds  [8];  // Lower bounds for each dimension
-  size_t dimension[8];  // Sizes of the 8 possible dimensions
+  int    dimension[8];  // Sizes of the 8 possible dimensions
   T      * myData;      // Pointer to the flattened internal data
   int    rank;          // Number of dimensions
   size_t totElems;      // Total number of elements in this FArray
@@ -77,42 +77,42 @@ template <class T, int myMem=memDefault> class FArray {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
   //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be one
-  FArray(char const * label, size_t const d1) {
+  FArray(char const * label, int const d1) {
     nullify();
     owned = 1;
     setup(label,d1);
   }
-  FArray(char const * label, size_t const d1, size_t const d2) {
+  FArray(char const * label, int const d1, int const d2) {
     nullify();
     owned = 1;
     setup(label,d1,d2);
   }
-  FArray(char const * label, size_t const d1, size_t const d2, size_t const d3) {
+  FArray(char const * label, int const d1, int const d2, int const d3) {
     nullify();
     owned = 1;
     setup(label,d1,d2,d3);
   }
-  FArray(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
+  FArray(char const * label, int const d1, int const d2, int const d3, int const d4) {
     nullify();
     owned = 1;
     setup(label,d1,d2,d3,d4);
   }
-  FArray(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
+  FArray(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5) {
     nullify();
     owned = 1;
     setup(label,d1,d2,d3,d4,d5);
   }
-  FArray(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
+  FArray(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
     nullify();
     owned = 1;
     setup(label,d1,d2,d3,d4,d5,d6);
   }
-  FArray(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
+  FArray(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
     nullify();
     owned = 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
-  FArray(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
+  FArray(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
     nullify();
     owned = 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
@@ -123,7 +123,7 @@ template <class T, int myMem=memDefault> class FArray {
     nullify();
     owned = 1;
     lbounds[0] = b1[0];
-    size_t d1 = b1[1] - b1[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
     setup(label,d1);
   }
   FArray(char const * label, std::vector<int> b1, std::vector<int> b2) {
@@ -131,8 +131,8 @@ template <class T, int myMem=memDefault> class FArray {
     owned = 1;
     lbounds[0] = b1[0];
     lbounds[1] = b2[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
     setup(label,d1,d2);
   }
   FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3) {
@@ -141,9 +141,9 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[0] = b1[0];
     lbounds[1] = b2[0];
     lbounds[2] = b3[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
     setup(label,d1,d2,d3);
   }
   FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4) {
@@ -153,10 +153,10 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[1] = b2[0];
     lbounds[2] = b3[0];
     lbounds[3] = b4[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
     setup(label,d1,d2,d3,d4);
   }
   FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5) {
@@ -167,11 +167,11 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[2] = b3[0];
     lbounds[3] = b4[0];
     lbounds[4] = b5[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
-    size_t d5 = b5[1] - b5[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
+    int d5 = b5[1] - b5[0] + 1;
     setup(label,d1,d2,d3,d4,d5);
   }
   FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5, std::vector<int> b6) {
@@ -183,12 +183,12 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[3] = b4[0];
     lbounds[4] = b5[0];
     lbounds[5] = b6[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
-    size_t d5 = b5[1] - b5[0] + 1;
-    size_t d6 = b6[1] - b6[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
+    int d5 = b5[1] - b5[0] + 1;
+    int d6 = b6[1] - b6[0] + 1;
     setup(label,d1,d2,d3,d4,d5,d6);
   }
   FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5, std::vector<int> b6, std::vector<int> b7) {
@@ -201,13 +201,13 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[4] = b5[0];
     lbounds[5] = b6[0];
     lbounds[6] = b7[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
-    size_t d5 = b5[1] - b5[0] + 1;
-    size_t d6 = b6[1] - b6[0] + 1;
-    size_t d7 = b7[1] - b7[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
+    int d5 = b5[1] - b5[0] + 1;
+    int d6 = b6[1] - b6[0] + 1;
+    int d7 = b7[1] - b7[0] + 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
   FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5, std::vector<int> b6, std::vector<int> b7, std::vector<int> b8) {
@@ -221,14 +221,14 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[5] = b6[0];
     lbounds[6] = b7[0];
     lbounds[7] = b8[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
-    size_t d5 = b5[1] - b5[0] + 1;
-    size_t d6 = b6[1] - b6[0] + 1;
-    size_t d7 = b7[1] - b7[0] + 1;
-    size_t d8 = b8[1] - b8[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
+    int d5 = b5[1] - b5[0] + 1;
+    int d6 = b6[1] - b6[0] + 1;
+    int d7 = b7[1] - b7[0] + 1;
+    int d8 = b8[1] - b8[0] + 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
   }
 
@@ -236,49 +236,49 @@ template <class T, int myMem=memDefault> class FArray {
   // Non-owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
-  FArray(char const * label, T * data, size_t const d1) {
+  FArray(char const * label, T * data, int const d1) {
     nullify();
     owned = 0;
     setup(label,d1);
     myData = data;
   }
-  FArray(char const * label, T * data, size_t const d1, size_t const d2) {
+  FArray(char const * label, T * data, int const d1, int const d2) {
     nullify();
     owned = 0;
     setup(label,d1,d2);
     myData = data;
   }
-  FArray(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3) {
+  FArray(char const * label, T * data, int const d1, int const d2, int const d3) {
     nullify();
     owned = 0;
     setup(label,d1,d2,d3);
     myData = data;
   }
-  FArray(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
+  FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4) {
     nullify();
     owned = 0;
     setup(label,d1,d2,d3,d4);
     myData = data;
   }
-  FArray(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
+  FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5) {
     nullify();
     owned = 0;
     setup(label,d1,d2,d3,d4,d5);
     myData = data;
   }
-  FArray(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
+  FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
     nullify();
     owned = 0;
     setup(label,d1,d2,d3,d4,d5,d6);
     myData = data;
   }
-  FArray(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
+  FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
     nullify();
     owned = 0;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
     myData = data;
   }
-  FArray(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
+  FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
     nullify();
     owned = 0;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
@@ -290,7 +290,7 @@ template <class T, int myMem=memDefault> class FArray {
     nullify();
     owned = 0;
     lbounds[0] = b1[0];
-    size_t d1 = b1[1] - b1[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
     setup(label,d1);
     myData = data;
   }
@@ -299,8 +299,8 @@ template <class T, int myMem=memDefault> class FArray {
     owned = 0;
     lbounds[0] = b1[0];
     lbounds[1] = b2[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
     setup(label,d1,d2);
     myData = data;
   }
@@ -310,9 +310,9 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[0] = b1[0];
     lbounds[1] = b2[0];
     lbounds[2] = b3[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
     setup(label,d1,d2,d3);
     myData = data;
   }
@@ -323,10 +323,10 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[1] = b2[0];
     lbounds[2] = b3[0];
     lbounds[3] = b4[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
     setup(label,d1,d2,d3,d4);
     myData = data;
   }
@@ -338,11 +338,11 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[2] = b3[0];
     lbounds[3] = b4[0];
     lbounds[4] = b5[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
-    size_t d5 = b5[1] - b5[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
+    int d5 = b5[1] - b5[0] + 1;
     setup(label,d1,d2,d3,d4,d5);
     myData = data;
   }
@@ -355,12 +355,12 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[3] = b4[0];
     lbounds[4] = b5[0];
     lbounds[5] = b6[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
-    size_t d5 = b5[1] - b5[0] + 1;
-    size_t d6 = b6[1] - b6[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
+    int d5 = b5[1] - b5[0] + 1;
+    int d6 = b6[1] - b6[0] + 1;
     setup(label,d1,d2,d3,d4,d5,d6);
     myData = data;
   }
@@ -374,13 +374,13 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[4] = b5[0];
     lbounds[5] = b6[0];
     lbounds[6] = b7[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
-    size_t d5 = b5[1] - b5[0] + 1;
-    size_t d6 = b6[1] - b6[0] + 1;
-    size_t d7 = b7[1] - b7[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
+    int d5 = b5[1] - b5[0] + 1;
+    int d6 = b6[1] - b6[0] + 1;
+    int d7 = b7[1] - b7[0] + 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
     myData = data;
   }
@@ -395,14 +395,14 @@ template <class T, int myMem=memDefault> class FArray {
     lbounds[5] = b6[0];
     lbounds[6] = b7[0];
     lbounds[7] = b8[0];
-    size_t d1 = b1[1] - b1[0] + 1;
-    size_t d2 = b2[1] - b2[0] + 1;
-    size_t d3 = b3[1] - b3[0] + 1;
-    size_t d4 = b4[1] - b4[0] + 1;
-    size_t d5 = b5[1] - b5[0] + 1;
-    size_t d6 = b6[1] - b6[0] + 1;
-    size_t d7 = b7[1] - b7[0] + 1;
-    size_t d8 = b8[1] - b8[0] + 1;
+    int d1 = b1[1] - b1[0] + 1;
+    int d2 = b2[1] - b2[0] + 1;
+    int d3 = b3[1] - b3[0] + 1;
+    int d4 = b4[1] - b4[0] + 1;
+    int d5 = b5[1] - b5[0] + 1;
+    int d6 = b6[1] - b6[0] + 1;
+    int d7 = b7[1] - b7[0] + 1;
+    int d8 = b8[1] - b8[0] + 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
     myData = data;
   }
@@ -518,53 +518,53 @@ template <class T, int myMem=memDefault> class FArray {
   /* SETUP FUNCTIONS
   Initialize the array with the given dimensions
   */
-  inline void setup(char const * label, size_t const d1) {
-    size_t tmp[1];
+  inline void setup(char const * label, int const d1) {
+    int tmp[1];
     tmp[0] = d1;
-    setup_arr(label, (size_t) 1,tmp);
+    setup_arr(label, (int) 1,tmp);
   }
-  inline void setup(char const * label, size_t const d1, size_t const d2) {
-    size_t tmp[2];
+  inline void setup(char const * label, int const d1, int const d2) {
+    int tmp[2];
     tmp[0] = d1;
     tmp[1] = d2;
-    setup_arr(label, (size_t) 2,tmp);
+    setup_arr(label, (int) 2,tmp);
   }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3) {
-    size_t tmp[3];
+  inline void setup(char const * label, int const d1, int const d2, int const d3) {
+    int tmp[3];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
-    setup_arr(label, (size_t) 3,tmp);
+    setup_arr(label, (int) 3,tmp);
   }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
-    size_t tmp[4];
+  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4) {
+    int tmp[4];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
-    setup_arr(label, (size_t) 4,tmp);
+    setup_arr(label, (int) 4,tmp);
   }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
-    size_t tmp[5];
+  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5) {
+    int tmp[5];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
     tmp[4] = d5;
-    setup_arr(label, (size_t) 5,tmp);
+    setup_arr(label, (int) 5,tmp);
   }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
-    size_t tmp[6];
+  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
+    int tmp[6];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
     tmp[4] = d5;
     tmp[5] = d6;
-    setup_arr(label, (size_t) 6,tmp);
+    setup_arr(label, (int) 6,tmp);
   }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
-    size_t tmp[7];
+  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
+    int tmp[7];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
@@ -572,10 +572,10 @@ template <class T, int myMem=memDefault> class FArray {
     tmp[4] = d5;
     tmp[5] = d6;
     tmp[6] = d7;
-    setup_arr(label, (size_t) 7,tmp);
+    setup_arr(label, (int) 7,tmp);
   }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
-    size_t tmp[8];
+  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
+    int tmp[8];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
@@ -584,9 +584,9 @@ template <class T, int myMem=memDefault> class FArray {
     tmp[5] = d6;
     tmp[6] = d7;
     tmp[7] = d8;
-    setup_arr(label, (size_t) 8,tmp);
+    setup_arr(label, (int) 8,tmp);
   }
-  inline void setup_arr(char const * label, size_t const rank, size_t const dimension[]) {
+  inline void setup_arr(char const * label, int const rank, int const dimension[]) {
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
     #endif
@@ -596,7 +596,7 @@ template <class T, int myMem=memDefault> class FArray {
     // Setup this FArray with the given number of dimensions and dimension sizes
     this->rank = rank;
     totElems = 1;
-    for (size_t i=0; i<rank; i++) {
+    for (int i=0; i<rank; i++) {
       this->dimension[i] = dimension[i];
       totElems *= this->dimension[i];
     }
@@ -645,7 +645,7 @@ template <class T, int myMem=memDefault> class FArray {
   /* ARRAY INDEXERS (FORTRAN index ordering)
   Return the element at the given index (either read-only or read-write)
   */
-  YAKL_INLINE T &operator()(size_t const i0) const {
+  YAKL_INLINE T &operator()(int const i0) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(1,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
@@ -653,7 +653,7 @@ template <class T, int myMem=memDefault> class FArray {
     size_t ind = i0-lbounds[0];
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1) const {
+  YAKL_INLINE T &operator()(int const i0, int const i1) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(2,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
@@ -663,7 +663,7 @@ template <class T, int myMem=memDefault> class FArray {
                  (i0-lbounds[0]);
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2) const {
+  YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(3,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
@@ -675,7 +675,7 @@ template <class T, int myMem=memDefault> class FArray {
                  (i0-lbounds[0]);
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3) const {
+  YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(4,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
@@ -689,7 +689,7 @@ template <class T, int myMem=memDefault> class FArray {
                  (i0-lbounds[0]);
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4) const {
+  YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(5,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
@@ -705,7 +705,7 @@ template <class T, int myMem=memDefault> class FArray {
                  (i0-lbounds[0]);
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5) const {
+  YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(6,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
@@ -723,7 +723,7 @@ template <class T, int myMem=memDefault> class FArray {
                  (i0-lbounds[0]);
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6) const {
+  YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(7,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
@@ -743,7 +743,7 @@ template <class T, int myMem=memDefault> class FArray {
                  (i0-lbounds[0]);
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6, size_t const i7) const {
+  YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6, int const i7) const {
     #ifdef ARRAY_DEBUG
       this->check_dims(8,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
@@ -940,7 +940,7 @@ template <class T, int myMem=memDefault> class FArray {
   YAKL_INLINE size_t get_totElems() const {
     return totElems;
   }
-  YAKL_INLINE size_t const *get_dimensions() const {
+  YAKL_INLINE int const *get_dimensions() const {
     return dimension;
   }
   YAKL_INLINE T *data() const {
@@ -949,7 +949,7 @@ template <class T, int myMem=memDefault> class FArray {
   YAKL_INLINE T *get_data() const {
     return myData;
   }
-  YAKL_INLINE size_t extent( int const dim ) const {
+  YAKL_INLINE int extent( int const dim ) const {
     return dimension[dim];
   }
   YAKL_INLINE int extent_int( int const dim ) const {
@@ -1001,12 +1001,12 @@ template <class T, int myMem=memDefault> class FArray {
       std::cout << "For FArray labeled: " << myname << "\n";
     #endif
     if (rank == 1) {
-      for (size_t i=0; i<dimension[0]; i++) {
+      for (int i=0; i<dimension[0]; i++) {
         std::cout << std::setw(12) << (*this)(i) << "\n";
       }
     } else if (rank == 2) {
-      for (size_t j=0; j<dimension[0]; j++) {
-        for (size_t i=0; i<dimension[1]; i++) {
+      for (int j=0; j<dimension[0]; j++) {
+        for (int i=0; i<dimension[1]; i++) {
           std::cout << std::setw(12) << (*this)(i,j) << " ";
         }
         std::cout << "\n";
@@ -1037,12 +1037,12 @@ template <class T, int myMem=memDefault> class FArray {
     }
     os << "\n";
     if (v.rank == 1) {
-      for (size_t i=0; i<v.dimension[0]; i++) {
+      for (int i=0; i<v.dimension[0]; i++) {
         os << std::setw(12) << v(i) << "\n";
       }
     } else if (v.rank == 2) {
-      for (size_t j=0; j<v.dimension[1]; j++) {
-        for (size_t i=0; i<v.dimension[0]; i++) {
+      for (int j=0; j<v.dimension[1]; j++) {
+        for (int i=0; i<v.dimension[0]; i++) {
           os << std::setw(12) << v(i,j) << " ";
         }
         os << "\n";
