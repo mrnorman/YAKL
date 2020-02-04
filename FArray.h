@@ -792,7 +792,7 @@ template <class T, int myMem=memDefault> class FArray {
   }
 
 
-  YAKL_INLINE FArray<T,myMem> slice( int d0 , int d1=NOSPEC , int d2=NOSPEC , int d3=NOSPEC , int d4=NOSPEC , int d5=NOSPEC , int d6=NOSPEC , int d7=NOSPEC ) {
+  YAKL_INLINE FArray<T,myMem> slice( int d0 , int d1=NOSPEC , int d2=NOSPEC , int d3=NOSPEC , int d4=NOSPEC , int d5=NOSPEC , int d6=NOSPEC , int d7=NOSPEC ) const {
     FArray<T,myMem> ret;
     ret.owned = 0;
 
