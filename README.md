@@ -1,5 +1,5 @@
 # YAKL: Yet Another Kernel Launcher
-## A C++ Kernel Launcher for Performance Portability
+## A C++ Kernel Launcher for Performance Portability and Fortran Code Porting
 
 **This is still a work in progress**
 
@@ -12,12 +12,13 @@ YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laborato
   * [`Array`](#array)
   * [Moving Data Between Two Memory Spaces](#moving-data-between-two-memory-spaces)
   * [`SArray` and `YAKL_INLINE`](#sarray-and-yakl_inline)
+  * [`FArray`, and `FSArray`, and Fortran-like `parallel_for` (Fortran Behavior in C++)](#farray-and-fsarray-and-fortran-like-parallel_for-fortran-behavior-in-c)
   * [Managed Memory](#managed-memory)
   * [Pool Allocator](#pool-allocator)
   * [Synchronization](#synchronization)
   * [Atomics](#atomics)
   * [Reductions (Min, Max, and Sum)](#reductions-min-max-and-sum)
-  * [Fortran - C++ Interoperability with YAKL: `gator_mod.F90`](#fortran---c-interoperability-with-yakl-gator_modf90)
+  * [Fortran - C++ Interoperability with YAKL: `FArray` and `gator_mod.F90`](#fortran---c-interoperability-with-yakl-farray-and-gator_modf90)
   * [Interoperating with Kokkos](#interoperating-with-kokkos)
 * [Compiling with YAKL](#compiling-with-yakl)
 * [Future Work](#future-work)
@@ -25,11 +26,16 @@ YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laborato
 
 ## Overview
 
-The YAKL API is similar to Kokkos in many ways. It is simplified in many ways to make adding multiple hardware backends easier. Yet, YAKL's increased simplicity allows it to do some things that some other frameworks cannot such as provide Fortran interoperability, lighter weight exposure of atomics, handling of host-to-device and device-to-host transfers, and easier interoperability with external libraries such as MPI and I/O libraries. 
+The YAKL API is similar to Kokkos in many ways. It is simplified in many ways to make adding multiple hardware backends easier. Yet, YAKL's increased simplicity allows it to do some things that some other frameworks cannot such as providing:
+* Fortran interoperability
+* Fortran-like multi-dimensional arrays that negate the need to permute dimensions and change indexing strategies
+* Lighter weight exposure of atomics
+* Handling of host-to-device and device-to-host transfers
+* Easier interoperability with external libraries such as MPI and I/O libraries
 
-YAKL currently has backends for CPUs, Nvidia GPUs, and AMD GPUs.
+YAKL currently has backends for CPUs (serial), Nvidia GPUs, and AMD GPUs.
 
-With less than 3K lines of code, YAKL provides the following:
+With around 4K lines of code, YAKL provides the following:
 
 * **Pool Allocator**: An optional pool allocator based on Mark Berrill's `BuddyAllocator` class for device data
   * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
@@ -61,6 +67,12 @@ With less than 3K lines of code, YAKL provides the following:
   * Supports up to four dimensions, the sizes of which are template parameters
   * Supports array index debugging to throw an error when indices are out of bounds
   * Because `SArray` objects are inherently on the stack, they have no templated memory space specifiers
+* **Fortran-style Multi-dimensional Arrays**: `FArray` and `FSArray` classes for allocated and stack Fortran-like arrays
+  * Left-most index varies the fastest just like in Fortran
+  * Arbitrary lower bounds that default to one
+  * `parallel_for` kernel launchers that take arbitrary loop bounds and strides like Fortran loops
+  * Contains a `slice()` function with `yakl::COLON` to allow simple contiguous Fortran-like array slices
+  * Removes the need to permute array indices and change indexing when porting Fortran codes to C++
 * **Kernel Launchers**: `parallel_for` launchers
   * Similar syntax as the Kokkos `parallel_for`
   * Only supports one level of parallelism for simplicity, so your loops need to be collapsed
@@ -147,7 +159,7 @@ std::cout << tot << std::endl;
 
 ## Using YAKL
 
-If you want to use the YAKL `Array` or `SArray` classes, you'll need to `#include "Array.h"` or `#include "SArray.h"`. If you want to use the YAKL launchers, atomics, allocators, or reductions you'll need to `#include YAKL.h`.
+If you want to use the YAKL `Array`, `SArray`, `FArray`, or `FSArray` classes, you'll need to `#include "Array.h"`, `#include "SArray.h"`, `#include "FArray.h"`, or `#include "FSArray.h"`, respectively. If you want to use the YAKL launchers, atomics, allocators, or reductions you'll need to `#include "YAKL.h"`.
 
 Be sure to use `yakl::init(...)` at the beginning of the program and `yakl::finalize()` at the end. If you do not call these functions, you will get errors during runtime for all `Array`s, `SArray`s, and device reductions. You may get errors for CUDA `parallel_for`s.
 
@@ -182,11 +194,11 @@ The `Array` class is set up to handle two different memories: Host and Device, a
 The `Array` class can be owned or non-owned. The constructors are:
 
 ```C++
-# Owned (Allocated, reference counted, and deallocated by YAKL)
+// Owned (Allocated, reference counted, and deallocated by YAKL)
 yakl::Array<T type,int memSpace>(char const *label, int dim1, [int dim2, ...]);
 
-# Non-Owned (NOT allocated, reference counted, or deallocated)
-# Use this to wrap existing contiguous data pointers (e.g., from Fortran)
+// Non-Owned (NOT allocated, reference counted, or deallocated)
+// Use this to wrap existing contiguous data pointers (e.g., from Fortran)
 yakl::Array<T type,int memSpace>(char const *label, T *ptr, int dim1, [int dim2, ...]);
 ```
 
@@ -222,20 +234,79 @@ To declare local data on the stack inside a kernel, you'll use the `SArray` clas
 typedef float real;
 yakl::Array<real,memDevice> state("state",nx+2*hs);
 yakl::Array<real,memDevice> coefs("coefs",nx,ord);
+
 ...
+
 YAKL_INLINE void recon( SArray<real,ord> const &stencil , 
-                        SArray<real,ord> &coefs ) { ... }
+                        SArray<real,ord> &coefs ) {
+  ...
+}
+                        
 yakl::parallel_for( nx , YAKL_LAMBDA (int i) {
   yakl::SArray<real,ord> stencil, coefs;
   for (int ii=0; ii<ord; ii++) { stencil(ii) = state(i+ii); }
   recon(stencil,coefs);
   for (int ii=0; ii<ord; ii++) { coefs(i,ii) = coefs(ii); }
+  ...
 });
 ```
 
 Data is accessed in an `SArray` object via the `(ind1[,ind2,...])` operator with the right-most index varying the fastest.
 
 Note that `SArray` objects are inherently placed on the stack of whatever context they are declared in. Because of this, it doesn't make sense to allow a templated memory specifier (i.e., `yakl::memHost` or `yakl::memDevice`). If used in a CUDA kernel, `SArray` objects will be placed onto the kernel stack frame. if used in CPU functions, they will be placed in the CPU function's stack.
+
+## `FArray`, and `FSArray`, and Fortran-like `parallel_for` (Fortran Behavior in C++)
+
+YAKL also has the `FArray` and `FSArray` classes to make porting Fortran code to C++ simpler. It's time-consuming and error-prone to have to reorder the indices of every array to row-major and change all indexing to match C's always-zero lower bound. Also, Fortran allows array slicing and non-one lower bounds, which can make porting very tedious. Look-up tables and intermediate index arrays make this even harder.
+
+The `FArray` and `FSArray` classes allow any arbritrary lower bound, defaulting to one, and the left-most index always varies the fastest like in Fortran. You can create them as follows:
+
+**`FArray`**:
+* `FArray<float,yakl::memSpace> arr( "label" , int dim1 [, int dim2 , ...] )`
+  * Equivalent to Fortran: `real, allocatable :: arr(:[,:,...]); allocate(arr(dim1[,dim2,...])`
+  * Creates an owned array
+* `FArray<float,yakl::memSpace> arr( "label" , float *data_p , int dim1 [, int dim2 , ...] )`
+  * Same as before but non-owned (wraps an existing contiguous data pointer)
+* `FArray<double,yakl::memSpace> arr( "label" , {-1,52} [ , {0,43} , ...] )`
+  * Equivalent to Fortran: `real(8), allocatable :: arr(:[,:,...]); allocate(arr(-1:52 [ , 0:43 , ...])`
+  * Lower and upper bounds are specified as integer pairs and accepted as `std::vector<int>` dummy variables
+* `FArray<double,yakl::memSpace> arr( "label" , double *data_p , {-1,52} [ , {0,43} , ...] )`
+  * Same as before but non-owned (wraps an existing contiguous data pointer)
+* **slice()**: `using yakl::COLON;  FArray... arr;  arr.slice(COLON,COLON,ind1,ind2)`
+  * Equivalent to Fortran array slicing: `arr(:,:,ind1,ind2)`
+  * Only works on simple, *contiguous* array slices with *entire dimensions* (not partial dimensions) sliced out
+  * E.g., `arr(0:5,4,7)`, though contiguous is not supported
+  * If you want to **write** to the array slice passed to a function, you must save it as a temporary variable first and pass the temporary variable: E.g., `auto tmp = arr.slice(COLON,COLON,ind1,ind2);  myfunc(tmp);`
+  * If you're reading from the array slice, you can pass it directly inline
+  * `slice()` always produces non-owned FArrays of the same type in the same memory space wrapping a contiguous portion of the host `FArray`
+
+**`FSArray`**:
+* Must template on the lower and upper bounds to place it on the stack.
+* `FSArray<float,bnd<-hs,hs>> stencil;`
+  * Equivalent to the Fortran "automatic" array: `real :: stencil(-hs:hs)`
+  * Low-overhead, placed ont he stack
+  * You **must** specify two indices for each of up to four dimension in the template: the lower and upper bounds for that dimension
+
+**`parallel_for` (Fortran style)**:
+```C++
+using yakl::Bounds;
+yakl::parallel_for( Bounds({-1,30,3},{0,29}) , YAKL_LAMBDA ( int indices[] ) {
+  int j, i;
+  yakl::storeIndices( indices , j,i );
+  
+  // Loop body
+});
+```
+
+This is the parallel C++ equivalent of the following Fortran code:
+
+```fortran
+do j=-1,30,3
+  do i=0,29
+    ! Loop body
+  enddo
+enddo
+```
 
 ### Managed Memory
 
@@ -309,7 +380,7 @@ pmin.deviceReduce( dt3d.data() , dtDev );
 
 As a rule, if you ever see a scalar on the left-hand and right-hand sides of an `=`, then it's a race condition in parallel that you will need to resolve by using a reduction.
 
-### Fortran - C++ interoperability with YAKL: `gator_mod.F90`
+### Fortran - C++ interoperability with YAKL: `FArray` and `gator_mod.F90`
 
 We provide the `gator_mod` Fortran module to interface with YAKL's internal device allocator. To use it, you'll first need to make all "automatic" fortran arrays into `allocatable` arrays and explicitly allocat them:
 
@@ -339,7 +410,8 @@ use gator_mod, only: gator_allocate, gator_deallocate
 real, pointer, contiguous :: var1(:,:,:)
 real, pointer, contiguous :: var2(:,:,:)
 ...
-call gator_allocate( var1 , (/ ubnd_x-lbnd_x+1 , ubnd_y-lbnd_y+1 , ubnd_z-lbnd_z+1 /) , (/-1,-1,-1/) )
+call gator_allocate( var1 , (/ ubnd_x-lbnd_x+1 , ubnd_y-lbnd_y+1 , ubnd_z-lbnd_z+1 /) , &
+                            (/ lbnd_x , lbnd_y , lbnd_z /) )
 call gator_allocate( var2 , (/nx,ny,nz/) )
 ...
 call gator_deallocate(var1)
@@ -348,7 +420,7 @@ call gator_deallocate(var2)
 
 Note that YAKL **does** support non-1 lower bounds in Fortran in `gator_allocate()`. The first set of indices specify the total extents of each dimension. The second set of indices specify the lower bounds of each dimension in case they aren't the default 1 lower bounds of Fortran. 
 
-If a Fortran routine uses module data, when porting to C++, it is often easiest to mirror the Fortran practice. In this case, it is best to pass to allocate the Fortran data with `gator_allocate` and then immediately pass it to a C++ wrapping function, which will wrap it in unmanaged YAKL `Array` classes. With the above data, you will have the following code to do that:
+If a Fortran routine uses module data, when porting to C++, it is often easiest to mirror the Fortran practice. In this case, it is best to pass to allocate the Fortran data with `gator_allocate` and then immediately pass it to a C++ wrapping function, which will wrap it in unmanaged (non-owned) YAKL `Array` classes. With the above data, you will have the following code to do that:
 
 ```Fortran
 module cpp_interface_mod
@@ -360,7 +432,20 @@ module cpp_interface_mod
     end subroutine wrap_arrays
   end interface
 contains
-  integer(c_int), bind(C) :: ubnd_x, ubnd_y, ubnd_z, lbnd_x, lbnd_y, lbnd_z, nx, ny, nz
+  ! All scalars can be directly bound to C
+  real(c_float) , bind(C) :: scalar1, scalar2, scalar3
+  
+  ! Parameters cannot use bind(C), but rather must be replicated in
+  ! a C++ header file with the constexpr keyword
+  integer(c_int), parameter :: nx=DOM_NX, ny=DOM_NY, nz=DOM_NZ
+  integer(c_int), parameter :: lbnd_x=-1, ubnd_x=nx+2
+  integer(c_int), parameter :: lbnd_y=-1, ubnd_y=ny+2
+  integer(c_int), parameter :: lbnd_z=-1, ubnd_z=nz+2
+  
+  ! Pass all arrays to a wrapper function to wrap them in FArray objects in C++
+  ! It's best to do this even for automatic arrays as well
+  real(c_float) :: var1( lbnd_x:ubnd_x , lbnd_y:ubnd_y , lbnd_z:ubnd_z )
+  real(c_float) :: var2( nx , ny , nz )
 end module cpp_interface_mod
 ```
 
@@ -371,15 +456,28 @@ All variables in Fortran modules need to be moved to `iso_c_binding` types such 
 In C++, you would have a header file, `fortran_data.h` with the following:
 
 ```C++
-#ifndef __FORTRAN_DATA_H__
-#define __FORTRAN_DATA_H__
-typedef yakl::Array<real,yakl::memDevice> umgReal3d;
+#pragma once
+
+int constexpr nx=DOM_NZ;
+int constexpr ny=DOM_NZ;
+int constexpr nz=DOM_NZ;
+int constexpr lbnd_x=-1; 
+int constexpr lbnd_y=-1; 
+int constexpr lbnd_z=-1; 
+int constexpr ubnd_x=nx+2; 
+int constexpr ubnd_y=ny+2; 
+int constexpr ubnd_z=nz+2; 
+
+typedef yakl::FArray<float,yakl::memDevice> real3d;
+
 extern "C" void wrap_arrays(float *var1, float *var2);
-extern real3d var1;
-extern real3d var2;
-extern int ubnd_x, ubnd_y, ubnd_z, lbnd_x, lbnd_y, lbnd_z, nx, ny, nz;
-extern int dim_x, dim_y, dim_z;
-extern int offset_x, offset_y, offset_z;
+
+// Declare FArray wrappers defined in fortran_data.cpp
+extern real3d var1, var2;
+
+// Declare external scalars defined in Fortran code
+extern int scalar1, scalar2, scalar3;  
+
 #endif
 ```
 
@@ -387,25 +485,77 @@ And you would have a source file, `fortran_data.cpp`, with:
 
 ```C++
 #include "fortran_data.h"
-int dimx = ubnd_x - lbnd_x + 1;
-int dimy = ubnd_y - lbnd_y + 1;
-int dimz = ubnd_z - lbnd_z + 1;
-int offset_x = 1-lbnd_x;
-int offset_y = 1-lbnd_y;
-int offset_z = 1-lbnd_z;
 
 extern "C" void wrap_arrays(float *var1_p, float *var2_p) {
   // These create un-owned YAKL Arrays using existing allocations from Fortran
-  var1 = real3d( "var1" , var1_p , dimz , dimy , dimx );
-  var2 = real3d( "var2" , var2_p , nz   , ny   , nx   );
+  var1 = real3d( "var1" , var1_p , {lbnd_x:ubnd_x} , {lbnd_y:ubnd_y} , {lbnd_x:ubnd_x} );
+  var2 = real3d( "var2" , var2_p , nx, ny, nz   );
 }
 ```
 
-Notice that the order of the dimensions is reversed in the C++ code. This is because the fastest varying index is now the right-most, not the left-most. Also notice that the `[l|u]bnd_[x|y|z]` variables are declared as `extern` in the header file but aren't mentioned in the source file. This is because with the `bind(C)` attribute in Fortran, they already exist in the object files under those names. Also, the `wrap_arrays` function in C++ must be declared as `extern "C"` to force the compiler to give it a name in the object file that is expected by Fortran with the `iso_c_binding`. 
+Notice that because of the YAKL `FArray` class, you do not need to change the way you index these arrays in the C++ code at all. It's column-major ordering like Fortran, it defaults to lower bounds of 1, and it supports non-1 lower bounds as well. In the end, you often have C++ code that looks nearly identical to your previous Fortran code, with the exception of Fortran intrinsics like `merge`, `minval`, `maxloc`, and elemental array operations. 
 
-Finally, the `var2` array will be indexed from indices `0` to `nx-1`, `0` to `ny-1`, and `0` to `nz-1` in the C++ code in the x, y, and z dimensions, respectively. But since `var1` has non-standard Fortran lower bounds, you must add the `offset_x`, `offset_y`, and `offset_z` integers to the indexing in the x, y, and z dimensions, respectively, when indexing using zero-based loops like `var1`.
+Any time Fortran data is passed by parameter, you can use the un-owned `Array` constructors to wrap them just as seen above in the `wrap_arrays` functions. 
 
-When Fortran data is passed by parameter, you can use the un-owned `Array` constructors inside the C++ functions following the same ideas regarding non-standard Fortran lower bounds.
+We've already seen how to pass Fortran arrays to C++. For scalars, though, consider the following Fortran function:
+
+```fortran
+module mymod
+contains
+  function blah(n,x,which,y) result(z)
+    integer(c_int) , intent(in   ) :: n
+    real(c_float)  , intent(in   ) :: x
+    logical(c_bool), intent(in   ) :: which
+    real(c_double) , intent(  out) :: y
+    real(c_float)                  :: z
+    ! code
+    ! y = ...
+  end function
+end module
+```
+
+When you port this to C++, you'll change the Fortran code to the following:
+
+```fortran
+module mymod
+  interface 
+    function blah(n,x,which,y) result(z)  bind(C, name="blah")
+      integer(c_int) , intent(in   ), value :: n
+      real(c_float)  , intent(in   ), value :: x
+      logical(c_bool), intent(in   ), value :: which
+      real(c_double) , intent(  out)        :: y
+      real(c_float)                         :: z
+    end function
+  end interface
+contains
+  ! You remove the code from here
+  ! And you only put the function *header* above (no code)
+end module
+```
+
+And you'll have a C++ function:
+
+```C++
+extern "C" float blah( int n , real x , bool which , double &y ) {
+  // code
+  // real y = ...
+  return y;
+}
+```
+
+Notice that in the Fortran interface, any scalar with `intent(in)` must be passed by value and not by reference (i.e., the `value` fortran keyword must be added). However, since the scalar `y` has `intent(out)`, we must pass it by reference, meaning we do not use the `value` keyword. On the C++ side of things, we accept `n`, `x`, and `which` as a simple `int`, `real`, and `bool`. But we accept `y` as `&y`, meaning when we change its value, the change lives outside the function like we want it to.
+
+Regarding return values for functions, do not return a reference like you do with dummy arguments. If you added the `&` to the function return, you would essentially be returning a reference to a locally scoped variable, which won't have any meaning outside the function. The `iso_c_binding` handles things appropriately for you, so just return the appropriate type by value in C++, and map it to a simple return of the same type in the Fortran `interface` block.
+
+The following table can help you convert Fortran parameter types to Fortran interfaces, and C++ dummy arguments:
+
+| Fortran datatype                  | Fortran interface              | C++ dummy argument     |
+| --------------------------------- | ------------------------------ | ---------------------- |
+| `integer(c_int), intent(in)`      | `integer(c_int), value`        | `int`                  |
+| `real(c_double), intent(out)`     | `real(c_double)`               | `double &`             |
+| `real(c_float), dimension(...)`   | `real(c_float), dimension(*)`  | `float *`              |
+| `logical(c_bool), dimension(...)` | `logical(c_bool), dimension(*)`| `bool *`               |
+
 
 ### Interoperating with Kokkos
 
@@ -419,6 +569,8 @@ YAKL can interoperate with Kokkos in a number of ways. The YAKL `Array` is equiv
   * This is compatible with any dimension of Kokkos `View<T*,LayoutRight,CudaSpace>`
 * `Array<T,memDevice>` with `-D__USE_CUDA__ -D__MANAGED__`
   * This is compatible with any dimension of Kokkos `View<T*,LayoutRight,CudaUVMSpace>`
+  
+YAKL `FArray` objects are compatible with Kokkos `View` objects in the same way that `Array` objects are, except that the lower bounds will be changes to zero, and the order of indexing will be reversed.
 
 Both Kokkos and YAKL have unmanaged / un-owned multi-dimensional arrays, so you can wrap equivalent types using the data pointer, which each expose via `Array::data()` and `View::data()`
 
@@ -478,6 +630,8 @@ endif()
 
 Also, the YAKL source files are given to you in case you want to compile YAKL is a different way yourself, for instance, if the YAKL `CMakeLists.txt` isn't playing nicely with your own CMake build system for some reason.
 
+To compile with **HIP** for AMD GPUs, you need to use `hipcc` as the C++ compiler. For MPI codes, if you're using OpenMPI, you can also set `OMPI_CXX=hipcc` for simplicity, and OpenMPI will use `hipcc` under the hood with `mpic++`.
+
 ### Traditional Makefile
 
 You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
@@ -488,7 +642,7 @@ You currently have three choices for a device backend: HIP, CUDA, and serial CPU
 | Nvidia GPU    |`-D__USE_CUDA__`| 
 | CPU Serial    | neither of the above two | 
 
-Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array` and `SArray` objections. **Beware** that this only works on host code at the moment, so do not pass `-DARRAY_DEBUG` at the same time as passing `-D__USE_CUDA__` or `-D__USE_HIP__`.
+Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array`, `SArray`, `FArray`, and `FSArray` objects. **Beware** that this only works on host code at the moment, so do not pass `-DARRAY_DEBUG` at the same time as passing `-D__USE_CUDA__` or `-D__USE_HIP__`. The reason is that the CUDA and HIP runtimes do not currently support exception throwing.
 
 Pasing `-D__MANAGED__` will trigger `cudaMallocManaged()` in tandem with `-D__USE_CUDA__` and `hipMallocHost()` in tandem with `-D__USE_HIP__`.
 
@@ -499,9 +653,10 @@ You will have to explicitly pass `-I/path/to/cub` if you specify `-D__USE_CUDA__
 ## Future Work
 
 Plans for the future include:
-* Add [OpenCL](https://www.khronos.org/opencl/) and [OpenMP](https://www.openmp.org/) backends
-* Improve the documentation and testing of YAKL
-* Improve YAKL's CMake build system to be more generic
+* Add a low-level backend for Intel accelerators when it become available
+* Improve the documentation, testing, and runtime error checking of YAKL
+* Improve the performance of the YAKL backends
+* Try to improve CPU code vectorization for host targets
 
 ## Software Dependencies
 * For Nvidia GPUs, you'll need to clone [CUB](https://nvlabs.github.io/cub/)
