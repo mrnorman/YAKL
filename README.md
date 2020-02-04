@@ -549,14 +549,12 @@ Regarding return values for functions, do not return a reference like you do wit
 
 The following table can help you convert Fortran parameter types to Fortran interfaces, and C++ dummy arguments:
 
-|-----------------------------------|--------------------------------|------------------------|
 | Fortran datatype                  | Fortran interface              | C++ dummy argument     |
-|-----------------------------------|--------------------------------|------------------------|
+| --------------------------------- | ------------------------------ | ---------------------- |
 | `integer(c_int), intent(in)`      | `integer(c_int), value`        | `int`                  |
 | `real(c_double), intent(out)`     | `real(c_double)`               | `double &`             |
 | `real(c_float), dimension(...)`   | `real(c_float), dimension(*)`  | `float *`              |
 | `logical(c_bool), dimension(...)` | `logical(c_bool), dimension(*)`| `bool *`               |
-|-----------------------------------|--------------------------------|------------------------|
 
 
 ### Interoperating with Kokkos
