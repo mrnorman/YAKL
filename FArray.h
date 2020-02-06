@@ -784,54 +784,74 @@ template <class T, int myMem=memDefault> class FArray {
   }
 
 
-  YAKL_INLINE FArray<T,myMem> slice( int d0 , int d1=NOSPEC , int d2=NOSPEC , int d3=NOSPEC , int d4=NOSPEC , int d5=NOSPEC , int d6=NOSPEC , int d7=NOSPEC ) const {
+  YAKL_INLINE FArray<T,myMem> slice( Dims dims ) const {
     FArray<T,myMem> ret;
     ret.owned = 0;
-
-    // Place dims in an array
-    int dims[8];
-    dims[0]=d0; dims[1]=d1; dims[2]=d2; dims[3]=d3; dims[4]=d4; dims[5]=d5; dims[6]=d6; dims[7]=d7;
-
-    // Find out how many parameters we have
-    int retNdims = 0;
-    while (dims[retNdims] != NOSPEC) { retNdims++; }
-
-    // Make sure # slice parameters = the rank of this FArray
-    if (retNdims != this->rank) {
-      printf("ERROR: Number of slice parameters differs from the rank of this FArray object. Returning NULL\n");
-      return NULL;
-    }
-
-    // Loop over valid parameters, and construct the array slice
-    ret.totElems = 1;
-    int subRank=0;
-    while (subRank < 8 && dims[subRank] == COLON) {
-      ret.dimension[subRank] = this->dimension[subRank];
-      ret.lbounds  [subRank] = this->lbounds  [subRank];
-      ret.offsets  [subRank] = this->offsets  [subRank];
-      ret.totElems *= ret.dimension[subRank];
-      ret.rank = subRank+1;
-      subRank++;
-    }
-
-    // Compute the offset for the array slice
-    int retOff = 0;
-    for (int i=this->rank-1; i>=subRank; i--) {
-      if (dims[i] == COLON) {
-        printf("ERROR: Non-contiguous slices are not supported! Returning NULL\n");
-        return NULL;
+    ret.rank = 0;
+    size_t retOff = 0;
+    for (int i=0; i<rank; i++) {
+      if (dims.data[i] == COLON) {
+        ret.dimension[i] = this->dimension[i];
+        ret.offsets  [i] = this->offsets  [i];
+        ret.lbounds  [i] = this->lbounds  [i];
+        ret.totElems *= this->dimension[i];
+        ret.rank++;
+      } else {
+        retOff += (dims.data[i]-lbounds[i])*offsets[i];
       }
-      if ( (dims[i] < this->lbounds[i]) || (dims[i] > this->lbounds[i]+(int)this->dimension[i]-1) ) {
-        printf("ERROR: The %dth dimension is out of bounds! Returning NULL\n",i+1);
-        printf("%d <= %d <= %d\n",this->lbounds[i],dims[i],this->lbounds[i]+(int)this->dimension[i]-1);
-        return NULL;
-      }
-      retOff += (dims[i]-lbounds[i])*offsets[i];
     }
     ret.myData = &(this->myData[retOff]);
-
     return ret;
   }
+
+  // YAKL_INLINE FArray<T,myMem> slice( int d0 , int d1=NOSPEC , int d2=NOSPEC , int d3=NOSPEC , int d4=NOSPEC , int d5=NOSPEC , int d6=NOSPEC , int d7=NOSPEC ) const {
+  //   FArray<T,myMem> ret;
+  //   ret.owned = 0;
+
+  //   // Place dims in an array
+  //   int dims[8];
+  //   dims[0]=d0; dims[1]=d1; dims[2]=d2; dims[3]=d3; dims[4]=d4; dims[5]=d5; dims[6]=d6; dims[7]=d7;
+
+  //   // Find out how many parameters we have
+  //   int retNdims = 0;
+  //   while (dims[retNdims] != NOSPEC) { retNdims++; }
+
+  //   // Make sure # slice parameters = the rank of this FArray
+  //   if (retNdims != this->rank) {
+  //     printf("ERROR: Number of slice parameters differs from the rank of this FArray object. Returning NULL\n");
+  //     return NULL;
+  //   }
+
+  //   // Loop over valid parameters, and construct the array slice
+  //   ret.totElems = 1;
+  //   int subRank=0;
+  //   while (subRank < 8 && dims[subRank] == COLON) {
+  //     ret.dimension[subRank] = this->dimension[subRank];
+  //     ret.lbounds  [subRank] = this->lbounds  [subRank];
+  //     ret.offsets  [subRank] = this->offsets  [subRank];
+  //     ret.totElems *= ret.dimension[subRank];
+  //     ret.rank = subRank+1;
+  //     subRank++;
+  //   }
+
+  //   // Compute the offset for the array slice
+  //   int retOff = 0;
+  //   for (int i=this->rank-1; i>=subRank; i--) {
+  //     if (dims[i] == COLON) {
+  //       printf("ERROR: Non-contiguous slices are not supported! Returning NULL\n");
+  //       return NULL;
+  //     }
+  //     if ( (dims[i] < this->lbounds[i]) || (dims[i] > this->lbounds[i]+(int)this->dimension[i]-1) ) {
+  //       printf("ERROR: The %dth dimension is out of bounds! Returning NULL\n",i+1);
+  //       printf("%d <= %d <= %d\n",this->lbounds[i],dims[i],this->lbounds[i]+(int)this->dimension[i]-1);
+  //       return NULL;
+  //     }
+  //     retOff += (dims[i]-lbounds[i])*offsets[i];
+  //   }
+  //   ret.myData = &(this->myData[retOff]);
+
+  //   return ret;
+  // }
 
 
   inline FArray<T,memHost> createHostCopy() {

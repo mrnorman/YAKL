@@ -323,9 +323,6 @@
 
 
 
-
-
-
   YAKL_INLINE void storeIndices( int const ind[1] , int &i0 ) {
     i0 = ind[0];
   }

@@ -45,6 +45,10 @@ namespace yakl {
   int constexpr COLON = std::numeric_limits<int>::min();
   int constexpr NOSPEC = std::numeric_limits<int>::min()+1;
 
+  struct Dims {
+    int data[8];
+  };
+
 
   // Size of the buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
   int constexpr functorBufSize = 1024*128;
