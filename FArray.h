@@ -642,7 +642,7 @@ template <class T, int myMem=memDefault> class FArray {
       this->check_dims(1,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = i0-lbounds[0];
+    int ind = i0-lbounds[0];
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1) const {
@@ -651,8 +651,8 @@ template <class T, int myMem=memDefault> class FArray {
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = (i1-lbounds[1])*offsets[1] +
-                 (i0-lbounds[0]);
+    int ind = (i1-lbounds[1])*offsets[1] +
+              (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
@@ -662,9 +662,9 @@ template <class T, int myMem=memDefault> class FArray {
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = (i2-lbounds[2])*offsets[2] +
-                 (i1-lbounds[1])*offsets[1] +
-                 (i0-lbounds[0]);
+    int ind = (i2-lbounds[2])*offsets[2] +
+              (i1-lbounds[1])*offsets[1] +
+              (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3) const {
@@ -675,10 +675,10 @@ template <class T, int myMem=memDefault> class FArray {
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
       this->check_index(3,i3,lbounds[3],lbounds[3]+dimension[3]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = (i3-lbounds[3])*offsets[3] +
-                 (i2-lbounds[2])*offsets[2] +
-                 (i1-lbounds[1])*offsets[1] +
-                 (i0-lbounds[0]);
+    int ind = (i3-lbounds[3])*offsets[3] +
+              (i2-lbounds[2])*offsets[2] +
+              (i1-lbounds[1])*offsets[1] +
+              (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4) const {
@@ -690,11 +690,11 @@ template <class T, int myMem=memDefault> class FArray {
       this->check_index(3,i3,lbounds[3],lbounds[3]+dimension[3]-1,__FILE__,__LINE__);
       this->check_index(4,i4,lbounds[4],lbounds[4]+dimension[4]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = (i4-lbounds[4])*offsets[4] +
-                 (i3-lbounds[3])*offsets[3] +
-                 (i2-lbounds[2])*offsets[2] +
-                 (i1-lbounds[1])*offsets[1] +
-                 (i0-lbounds[0]);
+    int ind = (i4-lbounds[4])*offsets[4] +
+              (i3-lbounds[3])*offsets[3] +
+              (i2-lbounds[2])*offsets[2] +
+              (i1-lbounds[1])*offsets[1] +
+              (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5) const {
@@ -707,12 +707,12 @@ template <class T, int myMem=memDefault> class FArray {
       this->check_index(4,i4,lbounds[4],lbounds[4]+dimension[4]-1,__FILE__,__LINE__);
       this->check_index(5,i5,lbounds[5],lbounds[5]+dimension[5]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = (i5-lbounds[5])*offsets[5] +
-                 (i4-lbounds[4])*offsets[4] +
-                 (i3-lbounds[3])*offsets[3] +
-                 (i2-lbounds[2])*offsets[2] +
-                 (i1-lbounds[1])*offsets[1] +
-                 (i0-lbounds[0]);
+    int ind = (i5-lbounds[5])*offsets[5] +
+              (i4-lbounds[4])*offsets[4] +
+              (i3-lbounds[3])*offsets[3] +
+              (i2-lbounds[2])*offsets[2] +
+              (i1-lbounds[1])*offsets[1] +
+              (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6) const {
@@ -726,13 +726,13 @@ template <class T, int myMem=memDefault> class FArray {
       this->check_index(5,i5,lbounds[5],lbounds[5]+dimension[5]-1,__FILE__,__LINE__);
       this->check_index(6,i6,lbounds[6],lbounds[6]+dimension[6]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = (i6-lbounds[6])*offsets[6] +
-                 (i5-lbounds[5])*offsets[5] +
-                 (i4-lbounds[4])*offsets[4] +
-                 (i3-lbounds[3])*offsets[3] +
-                 (i2-lbounds[2])*offsets[2] +
-                 (i1-lbounds[1])*offsets[1] +
-                 (i0-lbounds[0]);
+    int ind = (i6-lbounds[6])*offsets[6] +
+              (i5-lbounds[5])*offsets[5] +
+              (i4-lbounds[4])*offsets[4] +
+              (i3-lbounds[3])*offsets[3] +
+              (i2-lbounds[2])*offsets[2] +
+              (i1-lbounds[1])*offsets[1] +
+              (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6, int const i7) const {
@@ -747,14 +747,14 @@ template <class T, int myMem=memDefault> class FArray {
       this->check_index(6,i6,lbounds[6],lbounds[6]+dimension[6]-1,__FILE__,__LINE__);
       this->check_index(7,i7,lbounds[7],lbounds[7]+dimension[7]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = (i7-lbounds[7])*offsets[7] +
-                 (i6-lbounds[6])*offsets[6] +
-                 (i5-lbounds[5])*offsets[5] +
-                 (i4-lbounds[4])*offsets[4] +
-                 (i3-lbounds[3])*offsets[3] +
-                 (i2-lbounds[2])*offsets[2] +
-                 (i1-lbounds[1])*offsets[1] +
-                 (i0-lbounds[0]);
+    int ind = (i7-lbounds[7])*offsets[7] +
+              (i6-lbounds[6])*offsets[6] +
+              (i5-lbounds[5])*offsets[5] +
+              (i4-lbounds[4])*offsets[4] +
+              (i3-lbounds[3])*offsets[3] +
+              (i2-lbounds[2])*offsets[2] +
+              (i1-lbounds[1])*offsets[1] +
+              (i0-lbounds[0]);
     return myData[ind];
   }
 
