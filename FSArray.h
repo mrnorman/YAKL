@@ -1,6 +1,5 @@
 
-#ifndef _FSARRAY_H_
-#define _FSARRAY_H_
+#pragma once
 
 #include <iostream>
 #include <iomanip>
@@ -13,12 +12,14 @@ namespace yakl {
   without pointer dereferencing. It supports indexing and cout only up to 4-D.
 */
 
-template <class T, typename B0, typename B1=bnd<1,1>, typename B2=bnd<1,1>, typename B3=bnd<1,1>> class FSArray {
+template <class T, typename B0, typename B1=SBnd<1,1>, typename B2=SBnd<1,1>, typename B3=SBnd<1,1>> class FSArray {
 
   static int constexpr D0 = B0::u() - B0::l() + 1;
   static int constexpr D1 = B1::u() - B1::l() + 1;
   static int constexpr D2 = B2::u() - B2::l() + 1;
   static int constexpr D3 = B3::u() - B3::l() + 1;
+
+  static int constexpr totElems = D0*D1*D2*D3;
 
   static int constexpr OFF0 = 1;
   static int constexpr OFF1 = D0;
@@ -99,4 +100,3 @@ public :
 
 }
 
-#endif

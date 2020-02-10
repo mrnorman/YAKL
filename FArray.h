@@ -111,108 +111,108 @@ template <class T, int myMem=memDefault> class FArray {
   }
   
   //Define the dimension ranges using bounding pairs of {lowerbound,higherbound}
-  FArray(char const * label, std::vector<int> b1) {
+  FArray(char const * label, Bnd b1) {
     nullify();
-    lbounds[0] = b1[0];
-    int d1 = b1[1] - b1[0] + 1;
+    lbounds[0] = b1.l;
+    int d1 = b1.u - b1.l + 1;
     setup(label,d1);
   }
-  FArray(char const * label, std::vector<int> b1, std::vector<int> b2) {
+  FArray(char const * label, Bnd b1, Bnd b2) {
     nullify();
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
     setup(label,d1,d2);
   }
-  FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3) {
+  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3) {
     nullify();
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
     setup(label,d1,d2,d3);
   }
-  FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4) {
+  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4) {
     nullify();
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
     setup(label,d1,d2,d3,d4);
   }
-  FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5) {
+  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5) {
     nullify();
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    lbounds[4] = b5[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
-    int d5 = b5[1] - b5[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    lbounds[4] = b5.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
+    int d5 = b5.u - b5.l + 1;
     setup(label,d1,d2,d3,d4,d5);
   }
-  FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5, std::vector<int> b6) {
+  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6) {
     nullify();
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    lbounds[4] = b5[0];
-    lbounds[5] = b6[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
-    int d5 = b5[1] - b5[0] + 1;
-    int d6 = b6[1] - b6[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    lbounds[4] = b5.l;
+    lbounds[5] = b6.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
+    int d5 = b5.u - b5.l + 1;
+    int d6 = b6.u - b6.l + 1;
     setup(label,d1,d2,d3,d4,d5,d6);
   }
-  FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5, std::vector<int> b6, std::vector<int> b7) {
+  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7) {
     nullify();
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    lbounds[4] = b5[0];
-    lbounds[5] = b6[0];
-    lbounds[6] = b7[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
-    int d5 = b5[1] - b5[0] + 1;
-    int d6 = b6[1] - b6[0] + 1;
-    int d7 = b7[1] - b7[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    lbounds[4] = b5.l;
+    lbounds[5] = b6.l;
+    lbounds[6] = b7.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
+    int d5 = b5.u - b5.l + 1;
+    int d6 = b6.u - b6.l + 1;
+    int d7 = b7.u - b7.l + 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
-  FArray(char const * label, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5, std::vector<int> b6, std::vector<int> b7, std::vector<int> b8) {
+  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7, Bnd b8) {
     nullify();
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    lbounds[4] = b5[0];
-    lbounds[5] = b6[0];
-    lbounds[6] = b7[0];
-    lbounds[7] = b8[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
-    int d5 = b5[1] - b5[0] + 1;
-    int d6 = b6[1] - b6[0] + 1;
-    int d7 = b7[1] - b7[0] + 1;
-    int d8 = b8[1] - b8[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    lbounds[4] = b5.l;
+    lbounds[5] = b6.l;
+    lbounds[6] = b7.l;
+    lbounds[7] = b8.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
+    int d5 = b5.u - b5.l + 1;
+    int d6 = b6.u - b6.l + 1;
+    int d7 = b7.u - b7.l + 1;
+    int d8 = b8.u - b8.l + 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
   }
 
@@ -278,123 +278,123 @@ template <class T, int myMem=memDefault> class FArray {
   }
 
   // Define the dimension ranges using bounding pairs of {lowerbound,higherbound}
-  FArray(char const * label, T * data, std::vector<int> b1) {
+  FArray(char const * label, T * data, Bnd b1) {
     nullify();
     owned = 0;
-    lbounds[0] = b1[0];
-    int d1 = b1[1] - b1[0] + 1;
+    lbounds[0] = b1.l;
+    int d1 = b1.u - b1.l + 1;
     setup(label,d1);
     myData = data;
   }
-  FArray(char const * label, T * data, std::vector<int> b1, std::vector<int> b2) {
+  FArray(char const * label, T * data, Bnd b1, Bnd b2) {
     nullify();
     owned = 0;
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
     setup(label,d1,d2);
     myData = data;
   }
-  FArray(char const * label, T * data, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3) {
+  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3) {
     nullify();
     owned = 0;
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
     setup(label,d1,d2,d3);
     myData = data;
   }
-  FArray(char const * label, T * data, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4) {
+  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4) {
     nullify();
     owned = 0;
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
     setup(label,d1,d2,d3,d4);
     myData = data;
   }
-  FArray(char const * label, T * data, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5) {
+  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5) {
     nullify();
     owned = 0;
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    lbounds[4] = b5[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
-    int d5 = b5[1] - b5[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    lbounds[4] = b5.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
+    int d5 = b5.u - b5.l + 1;
     setup(label,d1,d2,d3,d4,d5);
     myData = data;
   }
-  FArray(char const * label, T * data, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5, std::vector<int> b6) {
+  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6) {
     nullify();
     owned = 0;
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    lbounds[4] = b5[0];
-    lbounds[5] = b6[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
-    int d5 = b5[1] - b5[0] + 1;
-    int d6 = b6[1] - b6[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    lbounds[4] = b5.l;
+    lbounds[5] = b6.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
+    int d5 = b5.u - b5.l + 1;
+    int d6 = b6.u - b6.l + 1;
     setup(label,d1,d2,d3,d4,d5,d6);
     myData = data;
   }
-  FArray(char const * label, T * data, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5, std::vector<int> b6, std::vector<int> b7) {
+  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7) {
     nullify();
     owned = 0;
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    lbounds[4] = b5[0];
-    lbounds[5] = b6[0];
-    lbounds[6] = b7[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
-    int d5 = b5[1] - b5[0] + 1;
-    int d6 = b6[1] - b6[0] + 1;
-    int d7 = b7[1] - b7[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    lbounds[4] = b5.l;
+    lbounds[5] = b6.l;
+    lbounds[6] = b7.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
+    int d5 = b5.u - b5.l + 1;
+    int d6 = b6.u - b6.l + 1;
+    int d7 = b7.u - b7.l + 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
     myData = data;
   }
-  FArray(char const * label, T * data, std::vector<int> b1, std::vector<int> b2, std::vector<int> b3, std::vector<int> b4, std::vector<int> b5, std::vector<int> b6, std::vector<int> b7, std::vector<int> b8) {
+  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7, Bnd b8) {
     nullify();
     owned = 0;
-    lbounds[0] = b1[0];
-    lbounds[1] = b2[0];
-    lbounds[2] = b3[0];
-    lbounds[3] = b4[0];
-    lbounds[4] = b5[0];
-    lbounds[5] = b6[0];
-    lbounds[6] = b7[0];
-    lbounds[7] = b8[0];
-    int d1 = b1[1] - b1[0] + 1;
-    int d2 = b2[1] - b2[0] + 1;
-    int d3 = b3[1] - b3[0] + 1;
-    int d4 = b4[1] - b4[0] + 1;
-    int d5 = b5[1] - b5[0] + 1;
-    int d6 = b6[1] - b6[0] + 1;
-    int d7 = b7[1] - b7[0] + 1;
-    int d8 = b8[1] - b8[0] + 1;
+    lbounds[0] = b1.l;
+    lbounds[1] = b2.l;
+    lbounds[2] = b3.l;
+    lbounds[3] = b4.l;
+    lbounds[4] = b5.l;
+    lbounds[5] = b6.l;
+    lbounds[6] = b7.l;
+    lbounds[7] = b8.l;
+    int d1 = b1.u - b1.l + 1;
+    int d2 = b2.u - b2.l + 1;
+    int d3 = b3.u - b3.l + 1;
+    int d4 = b4.u - b4.l + 1;
+    int d5 = b5.u - b5.l + 1;
+    int d6 = b6.u - b6.l + 1;
+    int d7 = b7.u - b7.l + 1;
+    int d8 = b8.u - b8.l + 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
     myData = data;
   }
@@ -803,55 +803,6 @@ template <class T, int myMem=memDefault> class FArray {
     ret.myData = &(this->myData[retOff]);
     return ret;
   }
-
-  // YAKL_INLINE FArray<T,myMem> slice( int d0 , int d1=NOSPEC , int d2=NOSPEC , int d3=NOSPEC , int d4=NOSPEC , int d5=NOSPEC , int d6=NOSPEC , int d7=NOSPEC ) const {
-  //   FArray<T,myMem> ret;
-  //   ret.owned = 0;
-
-  //   // Place dims in an array
-  //   int dims[8];
-  //   dims[0]=d0; dims[1]=d1; dims[2]=d2; dims[3]=d3; dims[4]=d4; dims[5]=d5; dims[6]=d6; dims[7]=d7;
-
-  //   // Find out how many parameters we have
-  //   int retNdims = 0;
-  //   while (dims[retNdims] != NOSPEC) { retNdims++; }
-
-  //   // Make sure # slice parameters = the rank of this FArray
-  //   if (retNdims != this->rank) {
-  //     printf("ERROR: Number of slice parameters differs from the rank of this FArray object. Returning NULL\n");
-  //     return NULL;
-  //   }
-
-  //   // Loop over valid parameters, and construct the array slice
-  //   ret.totElems = 1;
-  //   int subRank=0;
-  //   while (subRank < 8 && dims[subRank] == COLON) {
-  //     ret.dimension[subRank] = this->dimension[subRank];
-  //     ret.lbounds  [subRank] = this->lbounds  [subRank];
-  //     ret.offsets  [subRank] = this->offsets  [subRank];
-  //     ret.totElems *= ret.dimension[subRank];
-  //     ret.rank = subRank+1;
-  //     subRank++;
-  //   }
-
-  //   // Compute the offset for the array slice
-  //   int retOff = 0;
-  //   for (int i=this->rank-1; i>=subRank; i--) {
-  //     if (dims[i] == COLON) {
-  //       printf("ERROR: Non-contiguous slices are not supported! Returning NULL\n");
-  //       return NULL;
-  //     }
-  //     if ( (dims[i] < this->lbounds[i]) || (dims[i] > this->lbounds[i]+(int)this->dimension[i]-1) ) {
-  //       printf("ERROR: The %dth dimension is out of bounds! Returning NULL\n",i+1);
-  //       printf("%d <= %d <= %d\n",this->lbounds[i],dims[i],this->lbounds[i]+(int)this->dimension[i]-1);
-  //       return NULL;
-  //     }
-  //     retOff += (dims[i]-lbounds[i])*offsets[i];
-  //   }
-  //   ret.myData = &(this->myData[retOff]);
-
-  //   return ret;
-  // }
 
 
   inline FArray<T,memHost> createHostCopy() {

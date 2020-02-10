@@ -1,6 +1,5 @@
 
-#ifndef _YAKL_H_
-#define _YAKL_H_
+#pragma once
 
 #include <iostream>
 #include <algorithm>
@@ -68,12 +67,15 @@ namespace yakl {
   extern std::function<void ( void * )>  yaklFreeHost;
 
 
-  template <int L, int U> class bnd {
+  // Static (compile-time) Array Bounds (templated)
+  template <int L, int U> class SBnd {
   public:
-    bnd() = delete;
+    SBnd() = delete;
     static constexpr int l() { return L; }
     static constexpr int u() { return U; }
+    constexpr bool operator== ( SBnd const &rhs ) { return rhs.l() == l() && rhs.u() == u(); }
   };
+
 
 
   // Block the CPU code until the device code and data transfers are all completed
@@ -98,13 +100,7 @@ namespace yakl {
   }
 
 
-#include "YAKL_unpack.h"
-
-
-#include "YAKL_parallel_for_c.h"
-
-
-#include "YAKL_parallel_for_fortran.h"
+#include "YAKL_parallel_for.h"
 
 
 #include "YAKL_reductions.h"
@@ -116,5 +112,4 @@ namespace yakl {
 }
 
 
-#endif
 
