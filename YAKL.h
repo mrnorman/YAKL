@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <algorithm>
-#include <vector>
 #include <limits>
 #include "BuddyAllocator.h"
 

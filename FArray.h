@@ -111,13 +111,13 @@ template <class T, int myMem=memDefault> class FArray {
   }
   
   //Define the dimension ranges using bounding pairs of {lowerbound,higherbound}
-  FArray(char const * label, Bnd b1) {
+  FArray(char const * label, Bnd const &b1) {
     nullify();
     lbounds[0] = b1.l;
     int d1 = b1.u - b1.l + 1;
     setup(label,d1);
   }
-  FArray(char const * label, Bnd b1, Bnd b2) {
+  FArray(char const * label, Bnd const &b1, Bnd const &b2) {
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -125,7 +125,7 @@ template <class T, int myMem=memDefault> class FArray {
     int d2 = b2.u - b2.l + 1;
     setup(label,d1,d2);
   }
-  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3) {
+  FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -135,7 +135,7 @@ template <class T, int myMem=memDefault> class FArray {
     int d3 = b3.u - b3.l + 1;
     setup(label,d1,d2,d3);
   }
-  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4) {
+  FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -147,7 +147,7 @@ template <class T, int myMem=memDefault> class FArray {
     int d4 = b4.u - b4.l + 1;
     setup(label,d1,d2,d3,d4);
   }
-  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5) {
+  FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -161,7 +161,7 @@ template <class T, int myMem=memDefault> class FArray {
     int d5 = b5.u - b5.l + 1;
     setup(label,d1,d2,d3,d4,d5);
   }
-  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6) {
+  FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -177,7 +177,7 @@ template <class T, int myMem=memDefault> class FArray {
     int d6 = b6.u - b6.l + 1;
     setup(label,d1,d2,d3,d4,d5,d6);
   }
-  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7) {
+  FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -195,7 +195,7 @@ template <class T, int myMem=memDefault> class FArray {
     int d7 = b7.u - b7.l + 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
-  FArray(char const * label, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7, Bnd b8) {
+  FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -278,7 +278,7 @@ template <class T, int myMem=memDefault> class FArray {
   }
 
   // Define the dimension ranges using bounding pairs of {lowerbound,higherbound}
-  FArray(char const * label, T * data, Bnd b1) {
+  FArray(char const * label, T * data, Bnd const &b1) {
     nullify();
     owned = 0;
     lbounds[0] = b1.l;
@@ -286,7 +286,7 @@ template <class T, int myMem=memDefault> class FArray {
     setup(label,d1);
     myData = data;
   }
-  FArray(char const * label, T * data, Bnd b1, Bnd b2) {
+  FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2) {
     nullify();
     owned = 0;
     lbounds[0] = b1.l;
@@ -296,7 +296,7 @@ template <class T, int myMem=memDefault> class FArray {
     setup(label,d1,d2);
     myData = data;
   }
-  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3) {
+  FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
     nullify();
     owned = 0;
     lbounds[0] = b1.l;
@@ -308,7 +308,7 @@ template <class T, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3);
     myData = data;
   }
-  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4) {
+  FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
     nullify();
     owned = 0;
     lbounds[0] = b1.l;
@@ -322,7 +322,7 @@ template <class T, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3,d4);
     myData = data;
   }
-  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5) {
+  FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
     nullify();
     owned = 0;
     lbounds[0] = b1.l;
@@ -338,7 +338,7 @@ template <class T, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3,d4,d5);
     myData = data;
   }
-  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6) {
+  FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
     nullify();
     owned = 0;
     lbounds[0] = b1.l;
@@ -356,7 +356,7 @@ template <class T, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3,d4,d5,d6);
     myData = data;
   }
-  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7) {
+  FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
     nullify();
     owned = 0;
     lbounds[0] = b1.l;
@@ -376,7 +376,7 @@ template <class T, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3,d4,d5,d6,d7);
     myData = data;
   }
-  FArray(char const * label, T * data, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7, Bnd b8) {
+  FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
     nullify();
     owned = 0;
     lbounds[0] = b1.l;
@@ -784,17 +784,17 @@ template <class T, int myMem=memDefault> class FArray {
   }
 
 
-  YAKL_INLINE FArray<T,myMem> slice( Dims dims ) const {
+  YAKL_INLINE FArray<T,myMem> slice( Dims const &dims ) const {
     FArray<T,myMem> ret;
     ret.owned = 0;
     ret.rank = 0;
     size_t retOff = 0;
     for (int i=0; i<rank; i++) {
       if (dims.data[i] == COLON) {
-        ret.dimension[i] = this->dimension[i];
-        ret.offsets  [i] = this->offsets  [i];
-        ret.lbounds  [i] = this->lbounds  [i];
-        ret.totElems *= this->dimension[i];
+        ret.dimension[i] = dimension[i];
+        ret.offsets  [i] = offsets  [i];
+        ret.lbounds  [i] = lbounds  [i];
+        ret.totElems *= dimension[i];
         ret.rank++;
       } else {
         retOff += (dims.data[i]-lbounds[i])*offsets[i];
