@@ -77,6 +77,12 @@ namespace yakl {
   };
 
 
+  // Dynamic (runtime) Array Bounds
+  struct Bnd {
+    int l, u;
+  };
+
+
 
   // Block the CPU code until the device code and data transfers are all completed
   inline void fence() {
