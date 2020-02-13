@@ -1,7 +1,7 @@
 # YAKL: Yet Another Kernel Launcher
 ## A C++ Kernel Launcher for Performance Portability and Fortran Code Porting
 
-**This is still a work in progress**
+**This is still a work in progress. The API is still in flux.**
 
 YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laboratory.
 
