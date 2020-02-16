@@ -1,6 +1,5 @@
 
-#ifndef _ARRAY_H_
-#define _ARRAY_H_
+#pragma once
 
 #include <iostream>
 #include <iomanip>
@@ -859,14 +858,14 @@ template <class T, int myMem=memDefault> class FArray {
 
   inline void deep_copy_to(FArray<T,memHost> lhs) {
     if (myMem == memHost) {
-      for (size_t i=0; i<totElems; i++) {
-        lhs.myData[i] = myData[i];
-      }
+      for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost,0);
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost,0);
+      #else
+        for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
   }
@@ -878,12 +877,16 @@ template <class T, int myMem=memDefault> class FArray {
         cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice,0);
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice,0);
+      #else
+        for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice,0);
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice,0);
+      #else
+        for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
   }
@@ -893,6 +896,47 @@ template <class T, int myMem=memDefault> class FArray {
     T sum = 0;
     for (int i=0; i<totElems; i++) { sum += myData[i]; }
     return sum;
+  }
+
+
+  void setRandom() {
+    Random rand;
+    rand.fillArray(this->data(),this->totElems);
+  }
+  void setRandom(Random &rand) {
+    rand.fillArray(this->data(),this->totElems);
+  }
+
+
+  T relNorm(FArray<T,myMem> &other) {
+    double numer = 0;
+    double denom = 0;
+    for (int i=0; i<this->totElems; i++) {
+      numer += abs(this->myData[i] - other.myData[i]);
+      denom += abs(this->myData[i]);
+    }
+    if (denom > 0) {
+      numer /= denom;
+    }
+    return numer;
+  }
+
+
+  T absNorm(FArray<T,myMem> &other) {
+    T numer = 0;
+    for (int i=0; i<this->totElems; i++) {
+      numer += abs(this->myData[i] - other.myData[i]);
+    }
+    return numer;
+  }
+
+
+  T maxAbs(FArray<T,myMem> &other) {
+    T numer = abs(this->myData[0] - other.myData[0]);
+    for (int i=1; i<this->totElems; i++) {
+      numer = max( numer , abs(this->myData[i] - other.myData[i]) );
+    }
+    return numer;
   }
 
 
@@ -1027,4 +1071,3 @@ template <class T, int myMem=memDefault> class FArray {
 
 }
 
-#endif

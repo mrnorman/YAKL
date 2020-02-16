@@ -1,6 +1,5 @@
 
-#ifndef _ARRAY_H_
-#define _ARRAY_H_
+#pragma once
 
 #include <iostream>
 #include <iomanip>
@@ -574,14 +573,14 @@ template <class T, int myMem=memDefault> class Array {
 
   inline void deep_copy_to(Array<T,memHost> lhs) {
     if (myMem == memHost) {
-      for (size_t i=0; i<totElems; i++) {
-        lhs.myData[i] = myData[i];
-      }
+      for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost,0);
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost,0);
+      #else
+        for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
   }
@@ -593,14 +592,27 @@ template <class T, int myMem=memDefault> class Array {
         cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice,0);
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice,0);
+      #else
+        for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice,0);
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice,0);
+      #else
+        for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
+  }
+
+
+  void setRandom() {
+    Random rand;
+    rand.fillArray(this->data(),this->totElems);
+  }
+  void setRandom(Random &rand) {
+    rand.fillArray(this->data(),this->totElems);
   }
 
 
@@ -735,4 +747,3 @@ template <class T, int myMem=memDefault> class Array {
 
 }
 
-#endif
