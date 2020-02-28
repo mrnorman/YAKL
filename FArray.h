@@ -67,41 +67,49 @@ template <class T, int rank, int myMem=memDefault> class FArray {
   
   //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be one
   FArray(char const * label, int const d1) {
+    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 FArray" );
     nullify();
     for (int i=0; i<1; i++) { lbounds[i] = 1; }
     setup(label,d1);
   }
   FArray(char const * label, int const d1, int const d2) {
+    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 FArray" );
     nullify();
     for (int i=0; i<2; i++) { lbounds[i] = 1; }
     setup(label,d1,d2);
   }
   FArray(char const * label, int const d1, int const d2, int const d3) {
+    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 FArray" );
     nullify();
     for (int i=0; i<3; i++) { lbounds[i] = 1; }
     setup(label,d1,d2,d3);
   }
   FArray(char const * label, int const d1, int const d2, int const d3, int const d4) {
+    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 FArray" );
     nullify();
     for (int i=0; i<4; i++) { lbounds[i] = 1; }
     setup(label,d1,d2,d3,d4);
   }
   FArray(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5) {
+    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 FArray" );
     nullify();
     for (int i=0; i<5; i++) { lbounds[i] = 1; }
     setup(label,d1,d2,d3,d4,d5);
   }
   FArray(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
+    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 FArray" );
     nullify();
     for (int i=0; i<6; i++) { lbounds[i] = 1; }
     setup(label,d1,d2,d3,d4,d5,d6);
   }
   FArray(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
+    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 FArray" );
     nullify();
     for (int i=0; i<7; i++) { lbounds[i] = 1; }
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
   FArray(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
+    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 FArray" );
     nullify();
     for (int i=0; i<8; i++) { lbounds[i] = 1; }
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
@@ -109,12 +117,14 @@ template <class T, int rank, int myMem=memDefault> class FArray {
   
   //Define the dimension ranges using bounding pairs of {lowerbound,higherbound}
   FArray(char const * label, Bnd const &b1) {
+    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 FArray" );
     nullify();
     lbounds[0] = b1.l;
     int d1 = b1.u - b1.l + 1;
     setup(label,d1);
   }
   FArray(char const * label, Bnd const &b1, Bnd const &b2) {
+    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 FArray" );
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -123,6 +133,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup(label,d1,d2);
   }
   FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
+    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 FArray" );
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -133,6 +144,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3);
   }
   FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
+    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 FArray" );
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -145,6 +157,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3,d4);
   }
   FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
+    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 FArray" );
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -159,6 +172,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3,d4,d5);
   }
   FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
+    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 FArray" );
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -175,6 +189,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3,d4,d5,d6);
   }
   FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
+    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 FArray" );
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -193,6 +208,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
   FArray(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
+    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 FArray" );
     nullify();
     lbounds[0] = b1.l;
     lbounds[1] = b2.l;
@@ -218,6 +234,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
   FArray(char const * label, T * data, int const d1) {
+    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 FArray" );
     nullify();
     owned = false;
     for (int i=0; i<1; i++) { lbounds[i] = 1; }
@@ -225,6 +242,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, int const d1, int const d2) {
+    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 FArray" );
     nullify();
     owned = false;
     for (int i=0; i<2; i++) { lbounds[i] = 1; }
@@ -232,6 +250,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, int const d1, int const d2, int const d3) {
+    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 FArray" );
     nullify();
     owned = false;
     for (int i=0; i<3; i++) { lbounds[i] = 1; }
@@ -239,6 +258,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4) {
+    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 FArray" );
     nullify();
     owned = false;
     for (int i=0; i<4; i++) { lbounds[i] = 1; }
@@ -246,6 +266,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5) {
+    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 FArray" );
     nullify();
     owned = false;
     for (int i=0; i<5; i++) { lbounds[i] = 1; }
@@ -253,6 +274,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
+    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 FArray" );
     nullify();
     owned = false;
     for (int i=0; i<6; i++) { lbounds[i] = 1; }
@@ -260,6 +282,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
+    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 FArray" );
     nullify();
     owned = false;
     for (int i=0; i<7; i++) { lbounds[i] = 1; }
@@ -267,6 +290,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
+    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 FArray" );
     nullify();
     owned = false;
     for (int i=0; i<8; i++) { lbounds[i] = 1; }
@@ -276,6 +300,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
 
   // Define the dimension ranges using bounding pairs of {lowerbound,higherbound}
   FArray(char const * label, T * data, Bnd const &b1) {
+    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 FArray" );
     nullify();
     owned = false;
     lbounds[0] = b1.l;
@@ -284,6 +309,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2) {
+    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 FArray" );
     nullify();
     owned = false;
     lbounds[0] = b1.l;
@@ -294,6 +320,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
+    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 FArray" );
     nullify();
     owned = false;
     lbounds[0] = b1.l;
@@ -306,6 +333,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
+    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 FArray" );
     nullify();
     owned = false;
     lbounds[0] = b1.l;
@@ -320,6 +348,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
+    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 FArray" );
     nullify();
     owned = false;
     lbounds[0] = b1.l;
@@ -336,6 +365,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
+    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 FArray" );
     nullify();
     owned = false;
     lbounds[0] = b1.l;
@@ -354,6 +384,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
+    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 FArray" );
     nullify();
     owned = false;
     lbounds[0] = b1.l;
@@ -374,6 +405,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     myData = data;
   }
   FArray(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
+    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 FArray" );
     nullify();
     owned = false;
     lbounds[0] = b1.l;
@@ -499,19 +531,21 @@ template <class T, int rank, int myMem=memDefault> class FArray {
   /* SETUP FUNCTIONS
   Initialize the array with the given dimensions
   */
-  // template <typename std::enable_if< rank == 1 , int >::type = 0>
   inline void setup(char const * label, int const d1) {
+    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 FArray" );
     int tmp[1];
     tmp[0] = d1;
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2) {
+    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 FArray" );
     int tmp[2];
     tmp[0] = d1;
     tmp[1] = d2;
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3) {
+    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 FArray" );
     int tmp[3];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -519,6 +553,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4) {
+    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 FArray" );
     int tmp[4];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -527,6 +562,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5) {
+    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 FArray" );
     int tmp[5];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -536,6 +572,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
+    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 FArray" );
     int tmp[6];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -546,6 +583,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
+    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 FArray" );
     int tmp[7];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -557,6 +595,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
+    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 FArray" );
     int tmp[8];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -625,16 +664,16 @@ template <class T, int rank, int myMem=memDefault> class FArray {
   Return the element at the given index (either read-only or read-write)
   */
   YAKL_INLINE T &operator()(int const i0) const {
+    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 FArray" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(1,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
     #endif
     int ind = i0-lbounds[0];
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1) const {
+    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 FArray" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(2,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
     #endif
@@ -643,8 +682,8 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
+    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 FArray" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(3,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
@@ -655,8 +694,8 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3) const {
+    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 FArray" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(4,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
@@ -669,8 +708,8 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4) const {
+    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 FArray" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(5,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
@@ -685,8 +724,8 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5) const {
+    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 FArray" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(6,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
@@ -703,8 +742,8 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6) const {
+    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 FArray" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(7,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
@@ -724,7 +763,6 @@ template <class T, int rank, int myMem=memDefault> class FArray {
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6, int const i7) const {
     #ifdef ARRAY_DEBUG
-      this->check_dims(8,rank,__FILE__,__LINE__);
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
