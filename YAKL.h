@@ -42,6 +42,10 @@ namespace yakl {
     int constexpr memDefault = memHost;
   #endif
 
+  int constexpr styleC       = 1;
+  int constexpr styleFortran = 2;
+  int constexpr styleDefault = styleC;
+
   int constexpr COLON = std::numeric_limits<int>::min();
   int constexpr NOSPEC = std::numeric_limits<int>::min()+1;
 
