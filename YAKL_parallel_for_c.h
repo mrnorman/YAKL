@@ -287,11 +287,11 @@ namespace c {
       }
     }
 
-    template<class F , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> void parallel_for_cuda( Bounds const &bounds , F const &f , int vectorSize = 128 ) {
+    template<class F , int N , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0> void parallel_for_cuda( Bounds<N> const &bounds , F const &f , int vectorSize = 128 ) {
       cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , f );
     }
 
-    template<class F , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> void parallel_for_cuda( Bounds const &bounds , F const &f , int vectorSize = 128 ) {
+    template<class F , int N , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0> void parallel_for_cuda( Bounds<N> const &bounds , F const &f , int vectorSize = 128 ) {
       F *fp = (F *) functorBuffer;
       cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
       cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , *fp );

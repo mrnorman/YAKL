@@ -1,7 +1,5 @@
 
-#include <iostream>
-#include <iomanip>
-#include <cmath>
+#pragma once
 
 
 // Lower-level routine for FFTs
@@ -192,11 +190,11 @@ YAKL_INLINE constexpr unsigned nextPowerOfTwo(unsigned n) {
 template<unsigned SIZE, typename T=double> class FFT {
   static unsigned constexpr N = nextPowerOfTwo(SIZE)/2;
   static_assert(SIZE-nextPowerOfTwo(SIZE) == 0,"ERROR: Running GFFT with a non-power-of-two-size");
-  YAKL_INLINE void forwardComplex(T* data) {
+  YAKL_INLINE void forwardComplex(T* data) const {
     scramble(data,N);
     DanielsonLanczos<N,T>::apply(data);
   }
-  YAKL_INLINE void inverseComplex(T* data) {
+  YAKL_INLINE void inverseComplex(T* data) const {
     // Multiply complex components by -1
     for (unsigned i=0; i<2*N; i+=2) { data[i+1] = -data[i+1]; }
     forwardComplex(data);
@@ -204,7 +202,7 @@ template<unsigned SIZE, typename T=double> class FFT {
     for (unsigned i=0; i<2*N; i+=2) { data[i+1] = -data[i+1]; }
   }
 public:
-  YAKL_INLINE void forward(T *data, T *tmp) {
+  YAKL_INLINE void forward(T *data, T *tmp) const {
     // Copy to temporary buffer
     for (unsigned i=0; i<2*N; i++) {
       tmp[i] = data[i];
@@ -218,147 +216,12 @@ public:
     // Transform the FFT into the true FFT for the real sequence
     ProcessRealFFT<N-1,N,T>::process(data,tmp);
   }
-  YAKL_INLINE void inverse(T* data, T *tmp) {
+  YAKL_INLINE void inverse(T* data, T *tmp) const {
     // Transform FFTs into something whose inverse reproduces the original real signal
     ProcessRealInverseFFT<N-1,N,T>::process(data,tmp);
     inverseComplex(tmp);
     for (unsigned i=0; i<2*N; i++) {
       data[i] = tmp[i];
-    }
-  }
-};
-
-
-///////////////////////////////////////////////////////////////////////////////////////
-// Class to compute Discrete Fourier Transforms on real data of any length. There is
-// no behind-the-scenes temporary storage. The user must have two arrays: one for data
-// in nodal space, and one for Fourier modes in modal space. DFTs perform more 
-// computations than FFTs, but they are parallelizable whereas FFTs are not, potentially
-// lending a benefit on GPUs. The forward_one and inverse_one functions exist to allow
-// you to easily parallelize the loops over N+2 (for forward transforms) and N (for
-// inverse transforms) yourself however you like.
-//
-// Suggested Use:
-//     unsigned constexpr N = 58; // DFTs can be any size in this code
-//     DFT<N,double> dft;
-//     double data[N  ];
-//     double ffts[N+2];
-//     // Initialize data
-//     // You can parallelize this loop!
-//     for (int i=0; i<N+2; i++) {
-//       dft.forward_one(data,ffts,i);
-//     }
-//     // Manipulate data in Fourier space
-//     // You can parallelize this loop!
-//     for (int i=0; i<N+2; i++) {
-//       fft.inverse_one(data,ffts,i);
-//     }
-//
-// forward(T *data, T *ffts):
-//       data: (INPUT)  1-D array of type T with N elements allocated. It is
-//             expected to contain N real values
-//       ffts: (OUTPUT) 1-D array of type T with N+2 elements allocated. It stores
-//             N/2+1 complex Fourier modes stored as:
-//             [ real,imag , real,imag , real,imag , ... ]
-//
-//       Computes a forward transform of N real values and stores it into N/2+1
-//       complex Fourier modes. The 0th and (N/2)th modes have no imaginary component
-//       (i.e., data[1] and data[2*N+1] are both zero)
-//
-//       Consider this the equivalent of:
-//       fft[k] = sum( data[m]*exp(-I*2*pi*k*m/N) , m=0..N-1 ) / N
-//
-//       Note the scaling by N in the forward transform rather than in the inverse
-//       transform. Also, only N/2 transforms need to be computed because the rest
-//       can be computed by symmetry since this is using an entirely real signal
-//
-// inverse(T *data, T *ffts):
-//       data: (OUTPUT) 1-D array of type T with N elements allocated. It contains
-//                      the resulting real-valued nodal-space signal
-//       ffts: (INPUT)  1-D array of type T with N+2 elements allocated. It contains
-//                      N/2+1 complex Fourier modes.
-//
-//       Computes an inverse transform of N/2+1 complex Fourier modes into N
-//       real values.
-//
-//       Consider this the equivalent of:
-//       data[k] = sum( fft[n]*exp(I*2*pi*k*m/N) , m=0..N-1 )
-//
-//       Note that the scaling is done in the forward transform so it isn't needed in
-//       the inverse. 
-// 
-// forward_one(T *data, T *ffts, int k):
-//       Same as forward, but only for the (k/2)th Fourier mode. This allows you to place
-//       a loop outside the call that you can parallelize however you need to:
-//       for (int k=0; k<N+2; k++) { forward_one( data , ffts , k ); }
-//       
-//       If you're confused as to why there are N+2 iterations for only N/2+1 complex
-//       Fourier modes, it's because even iterations compute real values while odd
-//       iterations compute imaginary values. 
-// 
-// inverse_one(T *data, T *ffts, int k):
-//       Same as inverse, but only for the kth real nodal value. This allows you to
-//       place a loop outside the call that you can parallelize however you need to:
-//       for (int k=0; k<N; k++) { inverse_one( data , ffts , k ); }
-///////////////////////////////////////////////////////////////////////////////////////
-template <unsigned N, class T=double> class DFT {
-  T cos_table[N];
-  T sin_table[N];
-public:
-  YAKL_INLINE constexpr DFT() {
-    for (unsigned i=0; i<N; i++) {
-      cos_table[i] = cos(2*M_PI*i/N);
-      sin_table[i] = sin(2*M_PI*i/N);
-    }
-  }
-
-  static YAKL_INLINE unsigned constexpr wrap( unsigned ind ) {
-    return ind - (ind/N)*N;
-  }
-
-  YAKL_INLINE void forward_one(T const *data, T *fft, unsigned l) const {
-    fft[l] = 0;
-    // The i-loop is sequential
-    for (unsigned i=0; i<N; i++) {
-      unsigned ind = wrap(i*(l/2));
-      T trig;
-      if (l - ( (l >> 1) << 1 ) == 0) { // This is a cheap l%2 operator
-        trig = cos_table[ind];
-      } else {
-        trig = -sin_table[ind];
-      }
-      fft[l] += trig*data[i];
-    }
-    fft[l] /= N;
-  }
-
-  YAKL_INLINE void inverse_one(T *data, T const *fft, unsigned l) const {
-    data[l] = 0;
-    // The i-loop is sequential
-    for (unsigned i=0; i<N; i++) {
-      unsigned ind_tab = wrap(i*l);
-      unsigned ind_fft = 2*i;
-      int      sgn     = -1;
-      if (i > N/2) {
-        ind_fft = 2*(N-i);
-        sgn     = 1;
-      }
-      data[l] +=     fft[ind_fft  ]*cos_table[ind_tab] +
-                 sgn*fft[ind_fft+1]*sin_table[ind_tab];
-    }
-  }
-
-
-  YAKL_INLINE void forward(T const *data, T *fft) const {
-    for (unsigned l=0; l<N+2; l++) {
-      forward_one(data, fft, l);
-    }
-  }
-
-
-  YAKL_INLINE void inverse(T *data, T const *fft) const {
-    for (unsigned l=0; l<N; l++) {
-      inverse_one(data, fft, l);
     }
   }
 };

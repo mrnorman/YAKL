@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
+#include <cmath>
 #include "BuddyAllocator.h"
 
 #ifdef __USE_CUDA__
@@ -115,6 +116,9 @@ namespace yakl {
 
 
 #include "YAKL_random.h"
+
+
+#include "YAKL_fft.h"
 
 
 template <class T> T max(T a, T b) { return a>b? a : b; }
