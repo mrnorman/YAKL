@@ -21,17 +21,15 @@ namespace yakl {
 Multi-dimensional array with functor indexing up to eight dimensions.
 */
 
-template <class T, int myMem=memDefault> class Array {
+template <class T, int rank, int myMem> class Array {
 
   public :
 
-  size_t offsets  [8];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
-  size_t dimension[8];  // Sizes of the 8 possible dimensions
+  size_t offsets  [rank];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
+  size_t dimension[rank];  // Sizes of the 8 possible dimensions
   T      * myData;      // Pointer to the flattened internal data
-  int    rank;          // Number of dimensions
-  size_t totElems;      // Total number of elements in this Array
   int    * refCount;    // Pointer shared by multiple copies of this Array to keep track of allcation / free
-  int    owned;         // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
+  bool   owned;         // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef ARRAY_DEBUG
     std::string myname; // Label for debug printing. Only stored if debugging is turned on
   #endif
@@ -39,14 +37,9 @@ template <class T, int myMem=memDefault> class Array {
 
   // Start off all constructors making sure the pointers are null
   YAKL_INLINE void nullify() {
+    owned = true;
     myData   = nullptr;
     refCount = nullptr;
-    rank = 0;
-    totElems = 0;
-    for (int i=0; i<8; i++) {
-      dimension[i] = 0;
-      offsets  [i] = 0;
-    }
   }
 
   /* CONSTRUCTORS
@@ -58,11 +51,9 @@ template <class T, int myMem=memDefault> class Array {
   */
   Array() {
     nullify();
-    owned = 1;
   }
   Array(char const * label) {
     nullify();
-    owned = 1;
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
     #endif
@@ -73,43 +64,43 @@ template <class T, int myMem=memDefault> class Array {
   
   //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
   Array(char const * label, size_t const d1) {
+    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 Array" );
     nullify();
-    owned = 1;
     setup(label,d1);
   }
   Array(char const * label, size_t const d1, size_t const d2) {
+    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 Array" );
     nullify();
-    owned = 1;
     setup(label,d1,d2);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3) {
+    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 Array" );
     nullify();
-    owned = 1;
     setup(label,d1,d2,d3);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
+    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 Array" );
     nullify();
-    owned = 1;
     setup(label,d1,d2,d3,d4);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
+    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 Array" );
     nullify();
-    owned = 1;
     setup(label,d1,d2,d3,d4,d5);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
+    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 Array" );
     nullify();
-    owned = 1;
     setup(label,d1,d2,d3,d4,d5,d6);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
+    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 Array" );
     nullify();
-    owned = 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
+    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 Array" );
     nullify();
-    owned = 1;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
   }
 
@@ -118,50 +109,58 @@ template <class T, int myMem=memDefault> class Array {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
   Array(char const * label, T * data, size_t const d1) {
+    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 Array" );
     nullify();
-    owned = 0;
+    owned = false;
     setup(label,d1);
     myData = data;
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2) {
+    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 Array" );
     nullify();
-    owned = 0;
+    owned = false;
     setup(label,d1,d2);
     myData = data;
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3) {
+    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 Array" );
     nullify();
-    owned = 0;
+    owned = false;
     setup(label,d1,d2,d3);
     myData = data;
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
+    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 Array" );
     nullify();
-    owned = 0;
+    owned = false;
     setup(label,d1,d2,d3,d4);
     myData = data;
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
+    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 Array" );
     nullify();
-    owned = 0;
+    owned = false;
     setup(label,d1,d2,d3,d4,d5);
     myData = data;
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
+    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 Array" );
     nullify();
-    owned = 0;
+    owned = false;
     setup(label,d1,d2,d3,d4,d5,d6);
     myData = data;
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
+    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 Array" );
     nullify();
-    owned = 0;
+    owned = false;
     setup(label,d1,d2,d3,d4,d5,d6,d7);
     myData = data;
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
+    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 Array" );
     nullify();
-    owned = 0;
+    owned = false;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
     myData = data;
   }
@@ -174,8 +173,6 @@ template <class T, int myMem=memDefault> class Array {
   Array(Array const &rhs) {
     nullify();
     owned    = rhs.owned;
-    rank     = rhs.rank;
-    totElems = rhs.totElems;
     for (int i=0; i<rank; i++) {
       offsets  [i] = rhs.offsets  [i];
       dimension[i] = rhs.dimension[i];
@@ -195,8 +192,6 @@ template <class T, int myMem=memDefault> class Array {
     }
     owned    = rhs.owned;
     deallocate();
-    rank     = rhs.rank;
-    totElems = rhs.totElems;
     for (int i=0; i<rank; i++) {
       offsets  [i] = rhs.offsets  [i];
       dimension[i] = rhs.dimension[i];
@@ -219,8 +214,6 @@ template <class T, int myMem=memDefault> class Array {
   Array(Array &&rhs) {
     nullify();
     owned    = rhs.owned;
-    rank     = rhs.rank;
-    totElems = rhs.totElems;
     for (int i=0; i<rank; i++) {
       offsets  [i] = rhs.offsets  [i];
       dimension[i] = rhs.dimension[i];
@@ -242,8 +235,6 @@ template <class T, int myMem=memDefault> class Array {
     }
     owned    = rhs.owned;
     deallocate();
-    rank     = rhs.rank;
-    totElems = rhs.totElems;
     for (int i=0; i<rank; i++) {
       offsets  [i] = rhs.offsets  [i];
       dimension[i] = rhs.dimension[i];
@@ -274,41 +265,47 @@ template <class T, int myMem=memDefault> class Array {
   Initialize the array with the given dimensions
   */
   inline void setup(char const * label, size_t const d1) {
+    static_assert( rank == 1 , "ERROR: Calling invalid function on rank 1 Array" );
     size_t tmp[1];
     tmp[0] = d1;
-    setup_arr(label, (size_t) 1,tmp);
+    setup_arr(label,tmp);
   }
   inline void setup(char const * label, size_t const d1, size_t const d2) {
+    static_assert( rank == 2 , "ERROR: Calling invalid function on rank 2 Array" );
     size_t tmp[2];
     tmp[0] = d1;
     tmp[1] = d2;
-    setup_arr(label, (size_t) 2,tmp);
+    setup_arr(label,tmp);
   }
   inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3) {
+    static_assert( rank == 3 , "ERROR: Calling invalid function on rank 3 Array" );
     size_t tmp[3];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
-    setup_arr(label, (size_t) 3,tmp);
+    setup_arr(label,tmp);
   }
   inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
+    static_assert( rank == 4 , "ERROR: Calling invalid function on rank 4 Array" );
     size_t tmp[4];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
-    setup_arr(label, (size_t) 4,tmp);
+    setup_arr(label,tmp);
   }
   inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
+    static_assert( rank == 5 , "ERROR: Calling invalid function on rank 5 Array" );
     size_t tmp[5];
     tmp[0] = d1;
     tmp[1] = d2;
     tmp[2] = d3;
     tmp[3] = d4;
     tmp[4] = d5;
-    setup_arr(label, (size_t) 5,tmp);
+    setup_arr(label,tmp);
   }
   inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
+    static_assert( rank == 6 , "ERROR: Calling invalid function on rank 6 Array" );
     size_t tmp[6];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -316,9 +313,10 @@ template <class T, int myMem=memDefault> class Array {
     tmp[3] = d4;
     tmp[4] = d5;
     tmp[5] = d6;
-    setup_arr(label, (size_t) 6,tmp);
+    setup_arr(label,tmp);
   }
   inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
+    static_assert( rank == 7 , "ERROR: Calling invalid function on rank 7 Array" );
     size_t tmp[7];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -327,9 +325,10 @@ template <class T, int myMem=memDefault> class Array {
     tmp[4] = d5;
     tmp[5] = d6;
     tmp[6] = d7;
-    setup_arr(label, (size_t) 7,tmp);
+    setup_arr(label,tmp);
   }
   inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
+    static_assert( rank == 8 , "ERROR: Calling invalid function on rank 8 Array" );
     size_t tmp[8];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -339,9 +338,9 @@ template <class T, int myMem=memDefault> class Array {
     tmp[5] = d6;
     tmp[6] = d7;
     tmp[7] = d8;
-    setup_arr(label, (size_t) 8,tmp);
+    setup_arr(label,tmp);
   }
-  inline void setup_arr(char const * label, size_t const rank, size_t const dimension[]) {
+  inline void setup_arr(char const * label, size_t const dimension[]) {
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
     #endif
@@ -349,11 +348,8 @@ template <class T, int myMem=memDefault> class Array {
     deallocate();
 
     // Setup this Array with the given number of dimensions and dimension sizes
-    this->rank = rank;
-    totElems = 1;
     for (size_t i=0; i<rank; i++) {
       this->dimension[i] = dimension[i];
-      totElems *= this->dimension[i];
     }
     offsets[rank-1] = 1;
     for (int i=rank-2; i>=0; i--) {
@@ -368,9 +364,9 @@ template <class T, int myMem=memDefault> class Array {
       refCount = new int;
       *refCount = 1;
       if (myMem == memDevice) {
-        myData = (T *) yaklAllocDevice( totElems*sizeof(T) );
+        myData = (T *) yaklAllocDevice( totElems()*sizeof(T) );
       } else {
-        myData = (T *) yaklAllocHost  ( totElems*sizeof(T) );
+        myData = (T *) yaklAllocHost  ( totElems()*sizeof(T) );
       }
     }
   }
@@ -401,16 +397,16 @@ template <class T, int myMem=memDefault> class Array {
   Return the element at the given index (either read-only or read-write)
   */
   YAKL_INLINE T &operator()(size_t const i0) const {
+    static_assert( rank == 1 , "ERROR: Calling invalid function on rank 1 Array" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(1,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
     #endif
     size_t ind = i0;
     return myData[ind];
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1) const {
+    static_assert( rank == 2 , "ERROR: Calling invalid function on rank 2 Array" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(2,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
     #endif
@@ -418,8 +414,8 @@ template <class T, int myMem=memDefault> class Array {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2) const {
+    static_assert( rank == 3 , "ERROR: Calling invalid function on rank 3 Array" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(3,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -428,8 +424,8 @@ template <class T, int myMem=memDefault> class Array {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3) const {
+    static_assert( rank == 4 , "ERROR: Calling invalid function on rank 4 Array" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(4,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -439,8 +435,8 @@ template <class T, int myMem=memDefault> class Array {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4) const {
+    static_assert( rank == 5 , "ERROR: Calling invalid function on rank 5 Array" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(5,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -451,8 +447,8 @@ template <class T, int myMem=memDefault> class Array {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5) const {
+    static_assert( rank == 6 , "ERROR: Calling invalid function on rank 6 Array" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(6,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -464,8 +460,8 @@ template <class T, int myMem=memDefault> class Array {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6) const {
+    static_assert( rank == 7 , "ERROR: Calling invalid function on rank 7 Array" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(7,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -478,8 +474,8 @@ template <class T, int myMem=memDefault> class Array {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6, size_t const i7) const {
+    static_assert( rank == 8 , "ERROR: Calling invalid function on rank 8 Array" );
     #ifdef ARRAY_DEBUG
-      this->check_dims(8,rank,__FILE__,__LINE__);
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -494,17 +490,6 @@ template <class T, int myMem=memDefault> class Array {
   }
 
 
-  inline void check_dims(int const rank_called, int const rank_actual, char const *file, int const line) const {
-    #ifdef ARRAY_DEBUG
-    if (rank_called != rank_actual) {
-      std::stringstream ss;
-      ss << "For Array labeled: " << myname << "\n";
-      ss << "Using " << rank_called << " dimensions to index an Array with " << rank_actual << " dimensions\n";
-      ss << "File, Line: " << file << ", " << line << "\n";
-      throw std::out_of_range(ss.str());
-    }
-    #endif
-  }
   inline void check_index(int const dim, long const ind, long const lb, long const ub, char const *file, int const line) const {
     #ifdef ARRAY_DEBUG
     if (ind < lb || ind > ub) {
@@ -519,23 +504,23 @@ template <class T, int myMem=memDefault> class Array {
   }
 
 
-  inline Array<T,memHost> createHostCopy() {
-    Array<T,memHost> ret;
+  inline Array<T,rank,memHost> createHostCopy() {
+    Array<T,rank,memHost> ret;
     #ifdef ARRAY_DEBUG
-      ret.setup_arr( myname.c_str() , rank , dimension );
+      ret.setup_arr( myname.c_str() , dimension );
     #else
-      ret.setup_arr( ""             , rank , dimension );
+      ret.setup_arr( ""             , dimension );
     #endif
     if (myMem == memHost) {
-      for (size_t i=0; i<totElems; i++) {
+      for (size_t i=0; i<totElems(); i++) {
         ret.myData[i] = myData[i];
       }
     } else {
       #ifdef __USE_CUDA__
-        cudaMemcpyAsync(ret.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost,0);
+        cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToHost,0);
         cudaDeviceSynchronize();
       #elif defined(__USE_HIP__)
-        hipMemcpyAsync(ret.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost,0);
+        hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
         hipDeviceSynchronize();
       #endif
     }
@@ -543,19 +528,19 @@ template <class T, int myMem=memDefault> class Array {
   }
 
 
-  inline Array<T,memDevice> createDeviceCopy() {
-    Array<T,memDevice> ret;
+  inline Array<T,rank,memDevice> createDeviceCopy() {
+    Array<T,rank,memDevice> ret;
     #ifdef ARRAY_DEBUG
-      ret.setup_arr( myname.c_str() , rank , dimension );
+      ret.setup_arr( myname.c_str() , dimension );
     #else
-      ret.setup_arr( ""             , rank , dimension );
+      ret.setup_arr( ""             , dimension );
     #endif
     if (myMem == memHost) {
       #ifdef __USE_CUDA__
-        cudaMemcpyAsync(ret.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice,0);
+        cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyHostToDevice,0);
         cudaDeviceSynchronize();
       #elif defined(__USE_HIP__)
-        hipMemcpyAsync(ret.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice,0);
+        hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
         hipDeviceSynchronize();
       #endif
     } else {
@@ -571,37 +556,37 @@ template <class T, int myMem=memDefault> class Array {
   }
 
 
-  inline void deep_copy_to(Array<T,memHost> lhs) {
+  inline void deep_copy_to(Array<T,rank,memHost> lhs) {
     if (myMem == memHost) {
-      for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
+      for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
     } else {
       #ifdef __USE_CUDA__
-        cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToHost,0);
+        cudaMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToHost,0);
       #elif defined(__USE_HIP__)
-        hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToHost,0);
+        hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
       #else
-        for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
+        for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
   }
 
 
-  inline void deep_copy_to(Array<T,memDevice> lhs) {
+  inline void deep_copy_to(Array<T,rank,memDevice> lhs) {
     if (myMem == memHost) {
       #ifdef __USE_CUDA__
-        cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyHostToDevice,0);
+        cudaMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),cudaMemcpyHostToDevice,0);
       #elif defined(__USE_HIP__)
-        hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyHostToDevice,0);
+        hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
       #else
-        for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
+        for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
-        cudaMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice,0);
+        cudaMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToDevice,0);
       #elif defined(__USE_HIP__)
-        hipMemcpyAsync(lhs.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice,0);
+        hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
       #else
-        for (size_t i=0; i<totElems; i++) { lhs.myData[i] = myData[i]; }
+        for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
   }
@@ -609,10 +594,10 @@ template <class T, int myMem=memDefault> class Array {
 
   void setRandom() {
     Random rand;
-    rand.fillArray(this->data(),this->totElems);
+    rand.fillArray(this->data(),this->totElems());
   }
   void setRandom(Random &rand) {
-    rand.fillArray(this->data(),this->totElems);
+    rand.fillArray(this->data(),this->totElems());
   }
 
 
@@ -621,7 +606,12 @@ template <class T, int myMem=memDefault> class Array {
     return rank;
   }
   YAKL_INLINE size_t get_totElems() const {
-    return totElems;
+    size_t tot = dimension[0];
+    for (int i=0; i<rank; i++) { tot *= dimension[i]; }
+    return tot;
+  }
+  YAKL_INLINE size_t totElems() const {
+    return get_totElems();
   }
   YAKL_INLINE size_t const *get_dimensions() const {
     return dimension;
@@ -657,28 +647,6 @@ template <class T, int myMem=memDefault> class Array {
 
 
   /* INFORM */
-  inline void print_rank() const {
-    #ifdef ARRAY_DEBUG
-      std::cout << "For Array labeled: " << myname << "\n";
-    #endif
-    std::cout << "Number of Dimensions: " << rank << "\n";
-  }
-  inline void print_totElems() const {
-    #ifdef ARRAY_DEBUG
-      std::cout << "For Array labeled: " << myname << "\n";
-    #endif
-    std::cout << "Total Number of Elements: " << totElems << "\n";
-  }
-  inline void print_dimensions() const {
-    #ifdef ARRAY_DEBUG
-      std::cout << "For Array labeled: " << myname << "\n";
-    #endif
-    std::cout << "Dimension Sizes: ";
-    for (int i=0; i<rank; i++) {
-      std::cout << dimension[i] << ", ";
-    }
-    std::cout << "\n";
-  }
   inline void print_data() const {
     #ifdef ARRAY_DEBUG
       std::cout << "For Array labeled: " << myname << "\n";
@@ -697,7 +665,7 @@ template <class T, int myMem=memDefault> class Array {
     } else if (rank == 0) {
       std::cout << "Empty Array\n\n";
     } else {
-      for (size_t i=0; i<totElems; i++) {
+      for (size_t i=0; i<totElems(); i++) {
         std::cout << std::setw(12) << myData[i] << " ";
       }
       std::cout << "\n";
@@ -713,7 +681,7 @@ template <class T, int myMem=memDefault> class Array {
       os << "For Array labeled: " << v.myname << "\n";
     #endif
     os << "Number of Dimensions: " << v.rank << "\n";
-    os << "Total Number of Elements: " << v.totElems << "\n";
+    os << "Total Number of Elements: " << v.totElems() << "\n";
     os << "Dimension Sizes: ";
     for (int i=0; i<v.rank; i++) {
       os << v.dimension[i] << ", ";
@@ -733,7 +701,7 @@ template <class T, int myMem=memDefault> class Array {
     } else if (v.rank == 0) {
       os << "Empty Array\n\n";
     } else {
-      for (size_t i=0; i<v.totElems; i++) {
+      for (size_t i=0; i<v.totElems(); i++) {
         os << v.myData[i] << " ";
       }
       os << "\n";

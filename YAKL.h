@@ -35,6 +35,7 @@ namespace yakl {
   // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
+  int constexpr memStack  = 3;
   #if defined(__USE_CUDA__) || defined(__USE_HIP__)
     int constexpr memDefault = memDevice;
   #else

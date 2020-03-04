@@ -532,20 +532,20 @@ template <class T, int rank, int myMem=memDefault> class FArray {
   Initialize the array with the given dimensions
   */
   inline void setup(char const * label, int const d1) {
-    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 FArray" );
+    static_assert( rank == 1 , "ERROR: Calling invalid function on rank 1 FArray" );
     int tmp[1];
     tmp[0] = d1;
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2) {
-    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 FArray" );
+    static_assert( rank == 2 , "ERROR: Calling invalid function on rank 2 FArray" );
     int tmp[2];
     tmp[0] = d1;
     tmp[1] = d2;
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3) {
-    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 FArray" );
+    static_assert( rank == 3 , "ERROR: Calling invalid function on rank 3 FArray" );
     int tmp[3];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -553,7 +553,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4) {
-    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 FArray" );
+    static_assert( rank == 4 , "ERROR: Calling invalid function on rank 4 FArray" );
     int tmp[4];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -562,7 +562,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5) {
-    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 FArray" );
+    static_assert( rank == 5 , "ERROR: Calling invalid function on rank 5 FArray" );
     int tmp[5];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -572,7 +572,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
-    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 FArray" );
+    static_assert( rank == 6 , "ERROR: Calling invalid function on rank 6 FArray" );
     int tmp[6];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -583,7 +583,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
-    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 FArray" );
+    static_assert( rank == 7 , "ERROR: Calling invalid function on rank 7 FArray" );
     int tmp[7];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -595,7 +595,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     setup_arr(label, tmp);
   }
   inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
-    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 FArray" );
+    static_assert( rank == 8 , "ERROR: Calling invalid function on rank 8 FArray" );
     int tmp[8];
     tmp[0] = d1;
     tmp[1] = d2;
@@ -664,7 +664,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
   Return the element at the given index (either read-only or read-write)
   */
   YAKL_INLINE T &operator()(int const i0) const {
-    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 FArray" );
+    static_assert( rank == 1 , "ERROR: Calling invalid function on rank 1 FArray" );
     #ifdef ARRAY_DEBUG
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
     #endif
@@ -672,7 +672,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1) const {
-    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 FArray" );
+    static_assert( rank == 2 , "ERROR: Calling invalid function on rank 2 FArray" );
     #ifdef ARRAY_DEBUG
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
@@ -682,7 +682,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
-    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 FArray" );
+    static_assert( rank == 3 , "ERROR: Calling invalid function on rank 3 FArray" );
     #ifdef ARRAY_DEBUG
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
@@ -694,7 +694,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3) const {
-    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 FArray" );
+    static_assert( rank == 4 , "ERROR: Calling invalid function on rank 4 FArray" );
     #ifdef ARRAY_DEBUG
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
@@ -708,7 +708,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4) const {
-    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 FArray" );
+    static_assert( rank == 5 , "ERROR: Calling invalid function on rank 5 FArray" );
     #ifdef ARRAY_DEBUG
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
@@ -724,7 +724,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5) const {
-    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 FArray" );
+    static_assert( rank == 6 , "ERROR: Calling invalid function on rank 6 FArray" );
     #ifdef ARRAY_DEBUG
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
@@ -742,7 +742,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6) const {
-    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 FArray" );
+    static_assert( rank == 7 , "ERROR: Calling invalid function on rank 7 FArray" );
     #ifdef ARRAY_DEBUG
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
@@ -762,6 +762,7 @@ template <class T, int rank, int myMem=memDefault> class FArray {
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6, int const i7) const {
+    static_assert( rank == 8 , "ERROR: Calling invalid function on rank 8 FArray" );
     #ifdef ARRAY_DEBUG
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
@@ -784,17 +785,6 @@ template <class T, int rank, int myMem=memDefault> class FArray {
   }
 
 
-  inline void check_dims(int const rank_called, int const rank_actual, char const *file, int const line) const {
-    #ifdef ARRAY_DEBUG
-    if (rank_called != rank_actual) {
-      std::stringstream ss;
-      ss << "For FArray labeled: " << myname << "\n";
-      ss << "Using " << rank_called << " dimensions to index an FArray with " << rank_actual << " dimensions\n";
-      ss << "File, Line: " << file << ", " << line << "\n";
-      throw std::out_of_range(ss.str());
-    }
-    #endif
-  }
   inline void check_index(int const dim, long const ind, long const lb, long const ub, char const *file, int const line) const {
     #ifdef ARRAY_DEBUG
     if (ind < lb || ind > ub) {
