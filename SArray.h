@@ -1,12 +1,5 @@
 
-#ifndef _SARRAY_H_
-#define _SARRAY_H_
-
-#include <iostream>
-#include <iomanip>
-#include "YAKL.h"
-
-namespace yakl {
+#pragma once
 
 /*
   This is intended to be a simple, low-overhead class to do multi-dimensional arrays
@@ -47,12 +40,14 @@ public :
   YAKL_INLINE ~SArray() { }
 
   YAKL_INLINE T &operator()(uint const i0) const {
+    static_assert(D1==1 && D2==1 && D3==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef ARRAY_DEBUG
       if (i0<0 || i0>D0-1) { printf("SArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,0,D0-1); exit(-1); }
     #endif
     return myData[i0];
   }
   YAKL_INLINE T &operator()(uint const i0, uint const i1) const {
+    static_assert(D2==1 && D3==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef ARRAY_DEBUG
       if (i0<0 || i0>D0-1) { printf("SArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,0,D0-1); exit(-1); }
       if (i1<0 || i1>D1-1) { printf("SArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,0,D1-1); exit(-1); }
@@ -60,6 +55,7 @@ public :
     return myData[i0*OFF0 + i1];
   }
   YAKL_INLINE T &operator()(uint const i0, uint const i1, uint const i2) const {
+    static_assert(D3==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef ARRAY_DEBUG
       if (i0<0 || i0>D0-1) { printf("SArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,0,D0-1); exit(-1); }
       if (i1<0 || i1>D1-1) { printf("SArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,0,D1-1); exit(-1); }
@@ -103,6 +99,3 @@ public :
 
 };
 
-}
-
-#endif

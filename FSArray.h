@@ -1,12 +1,6 @@
 
 #pragma once
 
-#include <iostream>
-#include <iomanip>
-#include "YAKL.h"
-
-namespace yakl {
-
 /*
   This is intended to be a simple, low-overhead class to do multi-dimensional arrays
   without pointer dereferencing. It supports indexing and cout only up to 4-D.
@@ -46,12 +40,14 @@ public :
   YAKL_INLINE ~FSArray() { }
 
   YAKL_INLINE T &operator()(int const i0) const {
+    static_assert(D1==1 && D2==1 && D3==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef ARRAY_DEBUG
       if (i0<B0::l() || i0>B0::u()) { printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,B0::l(),B0::u()); exit(-1); }
     #endif
     return myData[i0-B0::l()];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1) const {
+    static_assert(D2==1 && D3==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef ARRAY_DEBUG
       if (i0<B0::l() || i0>B0::u()) { printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,B0::l(),B0::u()); exit(-1); }
       if (i1<B1::l() || i1>B1::u()) { printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,B1::l(),B1::u()); exit(-1); }
@@ -59,6 +55,7 @@ public :
     return myData[(i1-B1::l())*OFF1 + i0-B0::l()];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
+    static_assert(D3==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef ARRAY_DEBUG
       if (i0<B0::l() || i0>B0::u()) { printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,B0::l(),B0::u()); exit(-1); }
       if (i1<B1::l() || i1>B1::u()) { printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,B1::l(),B1::u()); exit(-1); }
@@ -101,6 +98,4 @@ public :
   }
 
 };
-
-}
 
