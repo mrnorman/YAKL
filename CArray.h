@@ -475,7 +475,7 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
     if (ind < lb || ind > ub) {
       std::stringstream ss;
       ss << "For Array labeled: " << myname << "\n";
-      ss << "Index " << dim << " of " << this->rank << " out of bounds\n";
+      ss << "Index " << dim << " of " << rank << " out of bounds\n";
       ss << "File, Line: " << file << ", " << line << "\n";
       ss << "Index: " << ind << ". Bounds: (" << lb << "," << ub << ")\n";
       throw std::out_of_range(ss.str());

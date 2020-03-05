@@ -319,15 +319,15 @@ namespace fortran {
 
   template <class F> inline void parallel_for_cpu_serial( Bounds<1> const &bounds , F const &f ) {
     int indices[1];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
       indices[0] = i0;
       f( indices );
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<2> const &bounds , F const &f ) {
     int indices[2];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
       indices[0] = i0;
       indices[1] = i1;
       f( indices );
@@ -335,9 +335,9 @@ namespace fortran {
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<3> const &bounds , F const &f ) {
     int indices[3];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
       indices[0] = i0;
       indices[1] = i1;
       indices[2] = i2;
@@ -346,10 +346,10 @@ namespace fortran {
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<4> const &bounds , F const &f ) {
     int indices[4];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
       indices[0] = i0;
       indices[1] = i1;
       indices[2] = i2;
@@ -359,11 +359,11 @@ namespace fortran {
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<5> const &bounds , F const &f ) {
     int indices[5];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4++) {
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
       indices[0] = i0;
       indices[1] = i1;
       indices[2] = i2;
@@ -374,12 +374,12 @@ namespace fortran {
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<6> const &bounds , F const &f ) {
     int indices[6];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4++) {
-    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5++) {
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
       indices[0] = i0;
       indices[1] = i1;
       indices[2] = i2;
@@ -391,13 +391,13 @@ namespace fortran {
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<7> const &bounds , F const &f ) {
     int indices[7];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4++) {
-    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5++) {
-    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6++) {
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
+    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6+=bounds.strides[6]) {
       indices[0] = i0;
       indices[1] = i1;
       indices[2] = i2;
@@ -410,14 +410,14 @@ namespace fortran {
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<8> const &bounds , F const &f ) {
     int indices[8];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4++) {
-    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5++) {
-    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6++) {
-    for (int i7 = bounds.lbounds[7]; i7 < bounds.lbounds[7]+bounds.dims[7]; i7++) {
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
+    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6+=bounds.strides[6]) {
+    for (int i7 = bounds.lbounds[7]; i7 < bounds.lbounds[7]+bounds.dims[7]; i7+=bounds.strides[7]) {
       indices[0] = i0;
       indices[1] = i1;
       indices[2] = i2;
