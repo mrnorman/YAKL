@@ -2,10 +2,19 @@
 #pragma once
 
 #include <iostream>
+#include <iomanip>
+#include <time.h>
 #include <algorithm>
 #include <limits>
 #include <cmath>
 #include "BuddyAllocator.h"
+#include "stdlib.h"
+
+#ifdef ARRAY_DEBUG
+#include <stdexcept>
+#include <sstream>
+#include <string>
+#endif
 
 #ifdef __USE_CUDA__
   #define YAKL_LAMBDA [=] __device__
@@ -124,9 +133,12 @@ namespace yakl {
 #include "YAKL_fft.h"
 
 
-template <class T> T max(T a, T b) { return a>b? a : b; }
-template <class T> T min(T a, T b) { return a<b? a : b; }
-template <class T> T abs(T a) { return a>0? a : -a; }
+template <class T> YAKL_INLINE T max(T a, T b) { return a>b? a : b; }
+template <class T> YAKL_INLINE T min(T a, T b) { return a<b? a : b; }
+template <class T> YAKL_INLINE T abs(T a) { return a>0? a : -a; }
+
+
+#include "Array.h"
 
 
 }

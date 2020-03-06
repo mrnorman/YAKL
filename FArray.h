@@ -882,13 +882,6 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
   }
 
 
-  inline T sum() {
-    T sum = 0;
-    for (int i=0; i<totElems(); i++) { sum += myData[i]; }
-    return sum;
-  }
-
-
   void setRandom() {
     Random rand;
     rand.fillArray(this->data(),this->totElems());
@@ -969,6 +962,9 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
     } else {
       return -1;
     }
+  }
+  YAKL_INLINE bool initialized() const {
+    return myData != nullptr;
   }
   #ifdef ARRAY_DEBUG
     const char* label() const {

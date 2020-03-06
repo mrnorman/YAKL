@@ -1,21 +1,6 @@
 
 #pragma once
 
-#include <iostream>
-#include <iomanip>
-#include <time.h>
-#include <math.h>
-#include "stdlib.h"
-#include "YAKL.h"
-
-#ifdef ARRAY_DEBUG
-#include <stdexcept>
-#include <sstream>
-#include <string>
-#endif
-
-namespace yakl {
-
 template <class T, int rank, int myMem=memDefault, int myStyle=styleDefault> class Array;
 
 #include "CArray.h"
@@ -26,5 +11,22 @@ template <class T, int rank, int myMem=memDefault, int myStyle=styleDefault> cla
 
 #include "FSArray.h"
 
+template <class T, int rank, int myMem, int myStyle> T minval( Array<T,rank,myMem,myStyle> &arr ) {
+  ParallelMin<T,myMem> pmin(arr.totElems());
+  return pmin(arr.data());
 }
+template <class T, int rank, int myMem, int myStyle> T minvalDevice( Array<T,rank,myMem,myStyle> &arr ) {
+  T ret;
+  ParallelMin<T,myMem> pmin(arr.totElems());
+  pmin.deviceReduce(arr.data(),&ret);
+  return ret;
+}
+template <class T, int rank, int myMem, int myStyle> int minloc( Array<T,rank,myMem,myStyle> &arr ) {
+  T m = minval(arr);
+  int loc = -999;
+  parallel_for( arr.totElems() , YAKL_LAMBDA ( int i ) {
+    if (arr.myData[i] == m) { loc = i; }
+  });
+}
+
 

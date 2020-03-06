@@ -268,22 +268,61 @@ namespace c {
 
 
 
+  template <class F> YAKL_INLINE void callFunctor(F const &f , Bounds<1> const &bnd , int const i ) {
+   int ind[1];
+   bnd.unpackIndices( i , ind );
+    f(ind[0]);
+  }
+  template <class F> YAKL_INLINE void callFunctor(F const &f , Bounds<2> const &bnd , int const i ) {
+   int ind[2];
+   bnd.unpackIndices( i , ind );
+    f(ind[0],ind[1]);
+  }
+  template <class F> YAKL_INLINE void callFunctor(F const &f , Bounds<3> const &bnd , int const i ) {
+   int ind[3];
+   bnd.unpackIndices( i , ind );
+    f(ind[0],ind[1],ind[2]);
+  }
+  template <class F> YAKL_INLINE void callFunctor(F const &f , Bounds<4> const &bnd , int const i ) {
+   int ind[4];
+   bnd.unpackIndices( i , ind );
+    f(ind[0],ind[1],ind[2],ind[3]);
+  }
+  template <class F> YAKL_INLINE void callFunctor(F const &f , Bounds<5> const &bnd , int const i ) {
+   int ind[5];
+   bnd.unpackIndices( i , ind );
+    f(ind[0],ind[1],ind[2],ind[3],ind[4]);
+  }
+  template <class F> YAKL_INLINE void callFunctor(F const &f , Bounds<6> const &bnd , int const i ) {
+   int ind[6];
+   bnd.unpackIndices( i , ind );
+    f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5]);
+  }
+  template <class F> YAKL_INLINE void callFunctor(F const &f , Bounds<7> const &bnd , int const i ) {
+   int ind[7];
+   bnd.unpackIndices( i , ind );
+    f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6]);
+  }
+  template <class F> YAKL_INLINE void callFunctor(F const &f , Bounds<8> const &bnd , int const i ) {
+   int ind[8];
+   bnd.unpackIndices( i , ind );
+    f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],ind[7]);
+  }
+
+
+
   #ifdef __USE_CUDA__
     template <class F, int N> __global__ void cudaKernelVal( Bounds<N> bounds , F f ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
       if (i < bounds.nIter) {
-        int indices[N];
-        bounds.unpackIndices( i , indices );
-        f( indices );
+        callFunctor( f , bounds , i );
       }
     }
 
     template <class F, int N> __global__ void cudaKernelRef( Bounds<N> bounds , F const &f ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
       if (i < bounds.nIter) {
-        int indices[N];
-        bounds.unpackIndices( i , indices );
-        f( indices );
+        callFunctor( f , bounds , i );
       }
     }
 
@@ -304,9 +343,7 @@ namespace c {
     template <class F, int N> __global__ void hipKernel( Bounds<N> bounds , F f ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
       if (i < bounds.nIter) {
-        int indices[N];
-        bounds.unpackIndices( i , indices );
-        f( indices );
+        callFunctor( f , bounds , i );
       }
     }
 
@@ -317,116 +354,82 @@ namespace c {
 
 
 
+  template <class F> inline void parallel_for_cpu_serial( int ubnd , F const &f , int vectorSize = 128 ) {
+    for (int i0 = 0; i0 < ubnd; i0++) {
+      f( i0 );
+    }
+  }
+  template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f , int vectorSize = 128 ) {
+    for (int i0 = bnd.l; i0 < bnd.l+(bnd.u-bnd.l+1); i0+=bnd.s) {
+      f( i0 );
+    }
+  }
   template <class F> inline void parallel_for_cpu_serial( Bounds<1> const &bounds , F const &f ) {
-    int indices[1];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-      indices[0] = i0;
-      f( indices );
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+      f( i0 );
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<2> const &bounds , F const &f ) {
-    int indices[2];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-      indices[0] = i0;
-      indices[1] = i1;
-      f( indices );
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+      f( i0 , i1 );
     } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<3> const &bounds , F const &f ) {
-    int indices[3];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-      indices[0] = i0;
-      indices[1] = i1;
-      indices[2] = i2;
-      f( indices );
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+      f( i0 , i1 , i2 );
     } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<4> const &bounds , F const &f ) {
-    int indices[4];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
-      indices[0] = i0;
-      indices[1] = i1;
-      indices[2] = i2;
-      indices[3] = i3;
-      f( indices );
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+      f( i0 , i1 , i2 , i3 );
     } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<5> const &bounds , F const &f ) {
-    int indices[5];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4++) {
-      indices[0] = i0;
-      indices[1] = i1;
-      indices[2] = i2;
-      indices[3] = i3;
-      indices[4] = i4;
-      f( indices );
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+      f( i0 , i1 , i2 , i3 , i4 );
     } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<6> const &bounds , F const &f ) {
-    int indices[6];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4++) {
-    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5++) {
-      indices[0] = i0;
-      indices[1] = i1;
-      indices[2] = i2;
-      indices[3] = i3;
-      indices[4] = i4;
-      indices[5] = i5;
-      f( indices );
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
+      f( i0 , i1 , i2 , i3 , i4 , i5 );
     } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<7> const &bounds , F const &f ) {
-    int indices[7];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4++) {
-    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5++) {
-    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6++) {
-      indices[0] = i0;
-      indices[1] = i1;
-      indices[2] = i2;
-      indices[3] = i3;
-      indices[4] = i4;
-      indices[5] = i5;
-      indices[6] = i6;
-      f( indices );
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
+    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6+=bounds.strides[6]) {
+      f( i0 , i1 , i2 , i3 , i4 , i5 , i6 );
     } } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<8> const &bounds , F const &f ) {
-    int indices[8];
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0++) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1++) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2++) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3++) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4++) {
-    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5++) {
-    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6++) {
-    for (int i7 = bounds.lbounds[7]; i7 < bounds.lbounds[7]+bounds.dims[7]; i7++) {
-      indices[0] = i0;
-      indices[1] = i1;
-      indices[2] = i2;
-      indices[3] = i3;
-      indices[4] = i4;
-      indices[5] = i5;
-      indices[6] = i6;
-      indices[7] = i7;
-      f( indices );
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
+    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6+=bounds.strides[6]) {
+    for (int i7 = bounds.lbounds[7]; i7 < bounds.lbounds[7]+bounds.dims[7]; i7+=bounds.strides[7]) {
+      f( i0 , i1 , i2 , i3 , i4 , i5 , i6 , i7 );
     } } } } } } } }
   }
 
@@ -450,6 +453,16 @@ namespace c {
 
   template <class F, int N> inline void parallel_for( char const * str , Bounds<N> const &bounds , F const &f, int vectorSize = 128 ) {
     parallel_for( bounds , f , vectorSize );
+  }
+
+
+  template <class F> inline void parallel_for( LBnd &bnd , F const &f , int vectorSize = 128 ) {
+    parallel_for( Bounds<1>(bnd) , f , vectorSize );
+  }
+
+
+  template <class F> inline void parallel_for( char const * str , LBnd &bnd , F const &f , int vectorSize = 128 ) {
+    parallel_for( Bounds<1>(bnd) , f , vectorSize );
   }
 
 

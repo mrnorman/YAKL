@@ -619,6 +619,9 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
       return -1;
     }
   }
+  YAKL_INLINE bool initialized() const {
+    return myData != nullptr;
+  }
   #ifdef ARRAY_DEBUG
     const char* label() const {
       return myname.c_str();
