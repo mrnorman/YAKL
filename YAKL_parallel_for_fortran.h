@@ -354,12 +354,12 @@ namespace fortran {
 
 
 
-  template <class F> inline void parallel_for_cpu_serial( int ubnd , F const &f , int vectorSize = 128 ) {
+  template <class F> inline void parallel_for_cpu_serial( int &ubnd , F const &f ) {
     for (int i0 = 1; i0 <= ubnd; i0++) {
       f( i0 );
     }
   }
-  template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f , int vectorSize = 128 ) {
+  template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f ) {
     for (int i0 = bnd.l; i0 < bnd.l+(bnd.u-bnd.l+1); i0+=bnd.s) {
       f( i0 );
     }
@@ -462,6 +462,16 @@ namespace fortran {
 
 
   template <class F> inline void parallel_for( char const * str , LBnd &bnd , F const &f , int vectorSize = 128 ) {
+    parallel_for( Bounds<1>(bnd) , f , vectorSize );
+  }
+
+
+  template <class F> inline void parallel_for( int bnd , F const &f , int vectorSize = 128 ) {
+    parallel_for( Bounds<1>(bnd) , f , vectorSize );
+  }
+
+
+  template <class F> inline void parallel_for( char const * str , int bnd , F const &f , int vectorSize = 128 ) {
     parallel_for( Bounds<1>(bnd) , f , vectorSize );
   }
 

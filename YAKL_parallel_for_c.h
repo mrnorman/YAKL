@@ -466,5 +466,15 @@ namespace c {
   }
 
 
+  template <class F> inline void parallel_for( int &bnd , F const &f , int vectorSize = 128 ) {
+    parallel_for( Bounds<1>(bnd) , f , vectorSize );
+  }
+
+
+  template <class F> inline void parallel_for( char const * str , int &bnd , F const &f , int vectorSize = 128 ) {
+    parallel_for( Bounds<1>(bnd) , f , vectorSize );
+  }
+
+
 
 }
