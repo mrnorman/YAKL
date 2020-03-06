@@ -12,7 +12,7 @@ YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laborato
   * [`Array`](#array)
   * [Moving Data Between Two Memory Spaces](#moving-data-between-two-memory-spaces)
   * [`SArray` and `YAKL_INLINE`](#sarray-and-yakl_inline)
-  * [`Array`, and `FSArray`, and Fortran-like `parallel_for` (Fortran Behavior in C++)](#fortran-style-array-and-fsarray-and-fortran-like-parallel_for-fortran-behavior-in-c)
+  * [`Array`, and `FSArray`, and Fortran-like `parallel_for` (Fortran Behavior in C++)](#fortran-style-array-fsarray-and-fortran-like-parallel_for-fortran-behavior-in-c)
   * [Managed Memory](#managed-memory)
   * [Pool Allocator](#pool-allocator)
   * [Synchronization](#synchronization)
