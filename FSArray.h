@@ -6,12 +6,13 @@
   without pointer dereferencing. It supports indexing and cout only up to 4-D.
 */
 
-template <class T, typename B0, typename B1=SBnd<1,1>, typename B2=SBnd<1,1>, typename B3=SBnd<1,1>> class FSArray {
+template <class T, class B0, class B1=SBnd<1,1>, class B2=SBnd<1,1>, class B3=SBnd<1,1>> class FSArray {
 public :
   static unsigned constexpr D0 = B0::u() - B0::l() + 1;
   static unsigned constexpr D1 = B1::u() - B1::l() + 1;
   static unsigned constexpr D2 = B2::u() - B2::l() + 1;
   static unsigned constexpr D3 = B3::u() - B3::l() + 1;
+  static unsigned constexpr rank = 1 + D1 != 1 + D2 != 1 + D3 != 1;
 
   static unsigned constexpr totElems() { return D0*D1*D2*D3; }
 
@@ -91,6 +92,31 @@ public :
       }
     }
     return os;
+  }
+  
+  YAKL_INLINE auto get_dimensions() const {
+    FSArray<int,SBnd<1,rank>> ret;
+                     ret(1) = D0;
+    if (rank >= 2) { ret(2) = D1; }
+    if (rank >= 3) { ret(3) = D2; }
+    if (rank >= 4) { ret(4) = D3; }
+    return ret;
+  }
+  YAKL_INLINE auto get_lbounds() const {
+    FSArray<int,SBnd<1,rank>> ret;
+                     ret(1) = B0::l();
+    if (rank >= 2) { ret(2) = B1::l(); }
+    if (rank >= 3) { ret(3) = B2::l(); }
+    if (rank >= 4) { ret(4) = B3::l(); }
+    return ret;
+  }
+  YAKL_INLINE auto get_ubounds() const {
+    FSArray<int,SBnd<1,rank>> ret;
+                     ret(1) = B0::u();
+    if (rank >= 2) { ret(2) = B1::u(); }
+    if (rank >= 3) { ret(3) = B2::u(); }
+    if (rank >= 4) { ret(4) = B3::u(); }
+    return ret;
   }
 
 };

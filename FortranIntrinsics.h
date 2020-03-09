@@ -3,14 +3,14 @@
 
 namespace fortran {
 
-  template <class T> YAKL_INLINE int  size(T &arr, int dim) { return arr.dimension[dim-1]; }
+  template <class T> YAKL_INLINE int  size(T &arr, int dim) { return arr.get_dimensions()(dim); }
   template <class T> YAKL_INLINE int  size(T &arr) { return arr.totElems(); }
   template <class T> YAKL_INLINE auto shape(T &arr) { return arr.get_dimensions(); }
   template <class T> YAKL_INLINE bool allocated (T &arr) { return arr.myData != nullptr; }
   template <class T> YAKL_INLINE bool associated (T &arr) { return arr.myData != nullptr; }
-  template <class T> YAKL_INLINE int  lbound (T &arr, int dim) { return arr.lbounds[dim-1]; }
+  template <class T> YAKL_INLINE int  lbound (T &arr, int dim) { return arr.get_lbounds()(dim); }
   template <class T> YAKL_INLINE auto lbound (T &arr) { return arr.get_lbounds(); }
-  template <class T> YAKL_INLINE int  ubound (T &arr, int dim) { return arr.lbounds[dim-1]+arr.dimension[dim-1]-1; }
+  template <class T> YAKL_INLINE int  ubound (T &arr, int dim) { return arr.get_ubounds()(dim); }
   template <class T> YAKL_INLINE auto ubound (T &arr) { return arr.get_ubounds(); }
 
 
@@ -34,16 +34,6 @@ namespace fortran {
 
 
 
-  template <class T, class B0> YAKL_INLINE T dot_product( FSArray<T,B0> &a1 , FSArray<T,B0> &a2) {
-    static_assert(a1.D1 == 1 && a1.D2 == 1 && a1.D3 == 1 && a2.D1 == 1 && a2.D2 == 1 && a2.D3 == 1 , "ERROR: dot_product of arrays with rank > 1");
-    T ret = a1.myData[0]*a2.myData[0];
-    for (int i=1; i<a1.D0; i++) {
-      ret += a1.myData[i]*a2.myData[i];
-    }
-  }
-
-
-
   template <class T> YAKL_INLINE T merge(T t, T f, bool cond) { return cond ? t : f; }
 
 
@@ -62,23 +52,23 @@ namespace fortran {
     }
     return m;
   }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE int minloc( Array<T,rank,myMem,myStyle> &arr ) {
+  template <class T, int myMem, int myStyle> YAKL_INLINE int minloc( Array<T,1,myMem,myStyle> &arr ) {
     T m = arr.myData[0];
-    int loc = 0;
-    for (int i=1; i<arr.totElems(); i++) {
-      if (arr.myData[i] < m) {
-        m = arr.myData[i];
+    int loc = lbound(arr,1);
+    for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
+      if (arr(i) < m) {
+        m = arr(i);
         loc = i;
       }
     }
     return loc;
   }
-  template <class T, class D0, class D1, class D2, class D3> YAKL_INLINE int minloc( FSArray<T,D0,D1,D2,D3> &arr ) {
+  template <class T, class D0> YAKL_INLINE int minloc( FSArray<T,D0> &arr ) {
     T m = arr.myData[0];
-    int loc = 0;
-    for (int i=1; i<arr.totElems(); i++) {
-      if (arr.myData[i] < m) {
-        m = arr.myData[i];
+    int loc = lbound(arr,1);
+    for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
+      if (arr(i) < m) {
+        m = arr(i);
         loc = i;
       }
     }
@@ -101,23 +91,23 @@ namespace fortran {
     }
     return m;
   }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE int maxloc( Array<T,rank,myMem,myStyle> &arr ) {
+  template <class T, int myMem, int myStyle> YAKL_INLINE int maxloc( Array<T,1,myMem,myStyle> &arr ) {
     T m = arr.myData[0];
-    int loc = 0;
-    for (int i=1; i<arr.totElems(); i++) {
-      if (arr.myData[i] > m) {
-        m = arr.myData[i];
+    int loc = lbound(arr,1);
+    for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
+      if (arr(i) > m) {
+        m = arr(i);
         loc = i;
       }
     }
     return loc;
   }
-  template <class T, class D0, class D1, class D2, class D3> YAKL_INLINE int maxloc( FSArray<T,D0,D1,D2,D3> &arr ) {
+  template <class T, class D0> YAKL_INLINE int maxloc( FSArray<T,D0> &arr ) {
     T m = arr.myData[0];
-    int loc = 0;
-    for (int i=1; i<arr.totElems(); i++) {
-      if (arr.myData[i] > m) {
-        m = arr.myData[i];
+    int loc = lbound(arr,1);
+    for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
+      if (arr(i) > m) {
+        m = arr(i);
         loc = i;
       }
     }
@@ -189,23 +179,23 @@ namespace fortran {
     }
     return ret;
   }
-  template <class F, class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLT ( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLT ( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem <  val; };
     return any( arr , test , val );
   }
-  template <class F, class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLTE( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLTE( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem <= val; };
     return any( arr , test , val );
   }
-  template <class F, class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGT ( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGT ( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem >  val; };
     return any( arr , test , val );
   }
-  template <class F, class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGTE( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGTE( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem >= val; };
     return any( arr , test , val );
   }
-  template <class F, class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyEQ ( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyEQ ( FSArray<T,D0,D1,D2,D3> &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem == val; };
     return any( arr , test , val );
   }
