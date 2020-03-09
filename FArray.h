@@ -42,368 +42,130 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  
-  //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be one
-  Array(char const * label, int const d1) {
-    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 Array" );
-    nullify();
-    for (int i=0; i<1; i++) { lbounds[i] = 1; }
-    setup(label,d1);
-  }
-  Array(char const * label, int const d1, int const d2) {
-    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 Array" );
-    nullify();
-    for (int i=0; i<2; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2);
-  }
-  Array(char const * label, int const d1, int const d2, int const d3) {
-    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 Array" );
-    nullify();
-    for (int i=0; i<3; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3);
-  }
-  Array(char const * label, int const d1, int const d2, int const d3, int const d4) {
-    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 Array" );
-    nullify();
-    for (int i=0; i<4; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4);
-  }
-  Array(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5) {
-    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 Array" );
-    nullify();
-    for (int i=0; i<5; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4,d5);
-  }
-  Array(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
-    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 Array" );
-    nullify();
-    for (int i=0; i<6; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4,d5,d6);
-  }
-  Array(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
-    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 Array" );
-    nullify();
-    for (int i=0; i<7; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4,d5,d6,d7);
-  }
-  Array(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
-    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 Array" );
-    nullify();
-    for (int i=0; i<8; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
-  }
-  
-  //Define the dimension ranges using bounding pairs of {lowerbound,higherbound}
   Array(char const * label, Bnd const &b1) {
     static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 Array" );
     nullify();
-    lbounds[0] = b1.l;
-    int d1 = b1.u - b1.l + 1;
-    setup(label,d1);
+    setup(label,b1);
   }
   Array(char const * label, Bnd const &b1, Bnd const &b2) {
     static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 Array" );
     nullify();
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    setup(label,d1,d2);
+    setup(label,b1,b2);
   }
   Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
     static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 Array" );
     nullify();
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    setup(label,d1,d2,d3);
+    setup(label,b1,b2,b3);
   }
   Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
     static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 Array" );
     nullify();
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    setup(label,d1,d2,d3,d4);
+    setup(label,b1,b2,b3,b4);
   }
   Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
     static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 Array" );
     nullify();
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    lbounds[4] = b5.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    int d5 = b5.u - b5.l + 1;
-    setup(label,d1,d2,d3,d4,d5);
+    setup(label,b1,b2,b3,b4,b5);
   }
   Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
     static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 Array" );
     nullify();
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    lbounds[4] = b5.l;
-    lbounds[5] = b6.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    int d5 = b5.u - b5.l + 1;
-    int d6 = b6.u - b6.l + 1;
-    setup(label,d1,d2,d3,d4,d5,d6);
+    setup(label,b1,b2,b3,b4,b5,b6);
   }
   Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
     static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 Array" );
     nullify();
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    lbounds[4] = b5.l;
-    lbounds[5] = b6.l;
-    lbounds[6] = b7.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    int d5 = b5.u - b5.l + 1;
-    int d6 = b6.u - b6.l + 1;
-    int d7 = b7.u - b7.l + 1;
-    setup(label,d1,d2,d3,d4,d5,d6,d7);
+    setup(label,b1,b2,b3,b4,b5,b6,b7);
   }
   Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
     static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 Array" );
     nullify();
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    lbounds[4] = b5.l;
-    lbounds[5] = b6.l;
-    lbounds[6] = b7.l;
-    lbounds[7] = b8.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    int d5 = b5.u - b5.l + 1;
-    int d6 = b6.u - b6.l + 1;
-    int d7 = b7.u - b7.l + 1;
-    int d8 = b8.u - b8.l + 1;
-    setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
+    setup(label,b1,b2,b3,b4,b5,b6,b7,b8);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Non-owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
-  Array(char const * label, T * data, int const d1) {
-    static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 Array" );
-    nullify();
-    owned = false;
-    for (int i=0; i<1; i++) { lbounds[i] = 1; }
-    setup(label,d1);
-    myData = data;
-  }
-  Array(char const * label, T * data, int const d1, int const d2) {
-    static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 Array" );
-    nullify();
-    owned = false;
-    for (int i=0; i<2; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2);
-    myData = data;
-  }
-  Array(char const * label, T * data, int const d1, int const d2, int const d3) {
-    static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 Array" );
-    nullify();
-    owned = false;
-    for (int i=0; i<3; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3);
-    myData = data;
-  }
-  Array(char const * label, T * data, int const d1, int const d2, int const d3, int const d4) {
-    static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 Array" );
-    nullify();
-    owned = false;
-    for (int i=0; i<4; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4);
-    myData = data;
-  }
-  Array(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5) {
-    static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 Array" );
-    nullify();
-    owned = false;
-    for (int i=0; i<5; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4,d5);
-    myData = data;
-  }
-  Array(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
-    static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 Array" );
-    nullify();
-    owned = false;
-    for (int i=0; i<6; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4,d5,d6);
-    myData = data;
-  }
-  Array(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
-    static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 Array" );
-    nullify();
-    owned = false;
-    for (int i=0; i<7; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4,d5,d6,d7);
-    myData = data;
-  }
-  Array(char const * label, T * data, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
-    static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 Array" );
-    nullify();
-    owned = false;
-    for (int i=0; i<8; i++) { lbounds[i] = 1; }
-    setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
-    myData = data;
-  }
-
-  // Define the dimension ranges using bounding pairs of {lowerbound,higherbound}
   Array(char const * label, T * data, Bnd const &b1) {
     static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 Array" );
     nullify();
     owned = false;
-    lbounds[0] = b1.l;
-    int d1 = b1.u - b1.l + 1;
-    setup(label,d1);
+    setup(label,b1);
     myData = data;
   }
   Array(char const * label, T * data, Bnd const &b1, Bnd const &b2) {
     static_assert( rank == 2 , "ERROR: Calling invalid constructor on rank 2 Array" );
     nullify();
     owned = false;
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    setup(label,d1,d2);
+    setup(label,b1,b2);
     myData = data;
   }
   Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
     static_assert( rank == 3 , "ERROR: Calling invalid constructor on rank 3 Array" );
     nullify();
     owned = false;
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    setup(label,d1,d2,d3);
+    setup(label,b1,b2,b3);
     myData = data;
   }
   Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
     static_assert( rank == 4 , "ERROR: Calling invalid constructor on rank 4 Array" );
     nullify();
     owned = false;
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    setup(label,d1,d2,d3,d4);
+    setup(label,b1,b2,b3,b4);
     myData = data;
   }
   Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
     static_assert( rank == 5 , "ERROR: Calling invalid constructor on rank 5 Array" );
     nullify();
     owned = false;
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    lbounds[4] = b5.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    int d5 = b5.u - b5.l + 1;
-    setup(label,d1,d2,d3,d4,d5);
+    setup(label,b1,b2,b3,b4,b5);
     myData = data;
   }
   Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
     static_assert( rank == 6 , "ERROR: Calling invalid constructor on rank 6 Array" );
     nullify();
     owned = false;
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    lbounds[4] = b5.l;
-    lbounds[5] = b6.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    int d5 = b5.u - b5.l + 1;
-    int d6 = b6.u - b6.l + 1;
-    setup(label,d1,d2,d3,d4,d5,d6);
+    setup(label,b1,b2,b3,b4,b5,b6);
     myData = data;
   }
   Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
     static_assert( rank == 7 , "ERROR: Calling invalid constructor on rank 7 Array" );
     nullify();
     owned = false;
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    lbounds[4] = b5.l;
-    lbounds[5] = b6.l;
-    lbounds[6] = b7.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    int d5 = b5.u - b5.l + 1;
-    int d6 = b6.u - b6.l + 1;
-    int d7 = b7.u - b7.l + 1;
-    setup(label,d1,d2,d3,d4,d5,d6,d7);
+    setup(label,b1,b2,b3,b4,b5,b6,b7);
     myData = data;
   }
   Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
     static_assert( rank == 8 , "ERROR: Calling invalid constructor on rank 8 Array" );
     nullify();
     owned = false;
-    lbounds[0] = b1.l;
-    lbounds[1] = b2.l;
-    lbounds[2] = b3.l;
-    lbounds[3] = b4.l;
-    lbounds[4] = b5.l;
-    lbounds[5] = b6.l;
-    lbounds[6] = b7.l;
-    lbounds[7] = b8.l;
-    int d1 = b1.u - b1.l + 1;
-    int d2 = b2.u - b2.l + 1;
-    int d3 = b3.u - b3.l + 1;
-    int d4 = b4.u - b4.l + 1;
-    int d5 = b5.u - b5.l + 1;
-    int d6 = b6.u - b6.l + 1;
-    int d7 = b7.u - b7.l + 1;
-    int d8 = b8.u - b8.l + 1;
-    setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
+    setup(label,b1,b2,b3,b4,b5,b6,b7,b8);
     myData = data;
+  }
+
+
+  inline void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
+    #ifdef ARRAY_DEBUG
+      myname = std::string(label);
+    #endif
+
+    deallocate();
+
+                     lbounds[0] = b1.l; dimension[0] = b1.u - b1.l + 1;  
+    if (rank >= 2) { lbounds[1] = b2.l; dimension[1] = b2.u - b2.l + 1; }
+    if (rank >= 3) { lbounds[2] = b3.l; dimension[2] = b3.u - b3.l + 1; }
+    if (rank >= 4) { lbounds[3] = b4.l; dimension[3] = b4.u - b4.l + 1; }
+    if (rank >= 5) { lbounds[4] = b5.l; dimension[4] = b5.u - b5.l + 1; }
+    if (rank >= 6) { lbounds[5] = b6.l; dimension[5] = b6.u - b6.l + 1; }
+    if (rank >= 7) { lbounds[6] = b7.l; dimension[6] = b7.u - b7.l + 1; }
+    if (rank >= 8) { lbounds[7] = b8.l; dimension[7] = b8.u - b8.l + 1; }
+
+    offsets[0] = 1;
+    for (int i=1; i<rank; i++) {
+      offsets[i] = offsets[i-1] * dimension[i-1];
+    }
+
+    allocate();
   }
 
 
@@ -503,104 +265,6 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
   */
   ~Array() {
     deallocate();
-  }
-
-
-  /* SETUP FUNCTIONS
-  Initialize the array with the given dimensions
-  */
-  inline void setup(char const * label, int const d1) {
-    static_assert( rank == 1 , "ERROR: Calling invalid function on rank 1 Array" );
-    int tmp[1];
-    tmp[0] = d1;
-    setup_arr(label, tmp);
-  }
-  inline void setup(char const * label, int const d1, int const d2) {
-    static_assert( rank == 2 , "ERROR: Calling invalid function on rank 2 Array" );
-    int tmp[2];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    setup_arr(label, tmp);
-  }
-  inline void setup(char const * label, int const d1, int const d2, int const d3) {
-    static_assert( rank == 3 , "ERROR: Calling invalid function on rank 3 Array" );
-    int tmp[3];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    setup_arr(label, tmp);
-  }
-  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4) {
-    static_assert( rank == 4 , "ERROR: Calling invalid function on rank 4 Array" );
-    int tmp[4];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    setup_arr(label, tmp);
-  }
-  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5) {
-    static_assert( rank == 5 , "ERROR: Calling invalid function on rank 5 Array" );
-    int tmp[5];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    tmp[4] = d5;
-    setup_arr(label, tmp);
-  }
-  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6) {
-    static_assert( rank == 6 , "ERROR: Calling invalid function on rank 6 Array" );
-    int tmp[6];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    tmp[4] = d5;
-    tmp[5] = d6;
-    setup_arr(label, tmp);
-  }
-  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7) {
-    static_assert( rank == 7 , "ERROR: Calling invalid function on rank 7 Array" );
-    int tmp[7];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    tmp[4] = d5;
-    tmp[5] = d6;
-    tmp[6] = d7;
-    setup_arr(label, tmp);
-  }
-  inline void setup(char const * label, int const d1, int const d2, int const d3, int const d4, int const d5, int const d6, int const d7, int const d8) {
-    static_assert( rank == 8 , "ERROR: Calling invalid function on rank 8 Array" );
-    int tmp[8];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    tmp[4] = d5;
-    tmp[5] = d6;
-    tmp[6] = d7;
-    tmp[7] = d8;
-    setup_arr(label, tmp);
-  }
-  inline void setup_arr(char const * label, int const dimension[]) {
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-
-    deallocate();
-
-    // Setup this Array with the given number of dimensions and dimension sizes
-    for (int i=0; i<rank; i++) {
-      this->dimension[i] = dimension[i];
-    }
-    offsets[0] = 1;
-    for (int i=1; i<rank; i++) {
-      offsets[i] = offsets[i-1] * dimension[i-1];
-    }
-    allocate();
   }
 
 
@@ -937,8 +601,20 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
   YAKL_INLINE size_t get_totElems() const {
     return totElems();
   }
-  YAKL_INLINE int const *get_dimensions() const {
-    return dimension;
+  YAKL_INLINE auto get_dimensions() const {
+    FSArray<int,SBnd<1,rank>> ret;
+    for (int i=0; i<rank; i++) { ret(i+1) = dimension[i]; }
+    return ret;
+  }
+  YAKL_INLINE auto get_lbounds() const {
+    FSArray<int,SBnd<1,rank>> ret;
+    for (int i=0; i<rank; i++) { ret(i+1) = lbounds[i]; }
+    return ret;
+  }
+  YAKL_INLINE auto get_ubounds() const {
+    FSArray<int,SBnd<1,rank>> ret;
+    for (int i=0; i<rank; i++) { ret(i+1) = lbounds[i]+dimension[i]-1; }
+    return ret;
   }
   YAKL_INLINE T *data() const {
     return myData;
@@ -973,56 +649,6 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
   #endif
 
 
-  /* INFORM */
-  inline void print_rank() const {
-    #ifdef ARRAY_DEBUG
-      std::cout << "For Array labeled: " << myname << "\n";
-    #endif
-    std::cout << "Number of Dimensions: " << rank << "\n";
-  }
-  inline void print_totElems() const {
-    #ifdef ARRAY_DEBUG
-      std::cout << "For Array labeled: " << myname << "\n";
-    #endif
-    std::cout << "Total Number of Elements: " << totElems() << "\n";
-  }
-  inline void print_dimensions() const {
-    #ifdef ARRAY_DEBUG
-      std::cout << "For Array labeled: " << myname << "\n";
-    #endif
-    std::cout << "Dimension Sizes: ";
-    for (int i=0; i<rank; i++) {
-      std::cout << dimension[i] << ", ";
-    }
-    std::cout << "\n";
-  }
-  inline void print_data() const {
-    #ifdef ARRAY_DEBUG
-      std::cout << "For Array labeled: " << myname << "\n";
-    #endif
-    if (rank == 1) {
-      for (int i=0; i<dimension[0]; i++) {
-        std::cout << std::setw(12) << (*this)(i) << "\n";
-      }
-    } else if (rank == 2) {
-      for (int j=0; j<dimension[0]; j++) {
-        for (int i=0; i<dimension[1]; i++) {
-          std::cout << std::setw(12) << (*this)(i,j) << " ";
-        }
-        std::cout << "\n";
-      }
-    } else if (rank == 0) {
-      std::cout << "Empty Array\n\n";
-    } else {
-      for (size_t i=0; i<totElems(); i++) {
-        std::cout << std::setw(12) << myData[i] << " ";
-      }
-      std::cout << "\n";
-    }
-    std::cout << "\n";
-  }
-
-
   /* OPERATOR<<
   Print the array. If it's 2-D, print a pretty looking matrix */
   inline friend std::ostream &operator<<(std::ostream& os, Array const &v) {
@@ -1037,12 +663,12 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
     }
     os << "\n";
     if (v.rank == 1) {
-      for (int i=0; i<v.dimension[0]; i++) {
+      for (int i=v.lbound[0]; i<v.lbound[0]+v.dimension[0]; i++) {
         os << std::setw(12) << v(i) << "\n";
       }
     } else if (v.rank == 2) {
-      for (int j=0; j<v.dimension[1]; j++) {
-        for (int i=0; i<v.dimension[0]; i++) {
+      for (int j=v.lbound[1]; j<v.lbound[1]+v.dimension[1]; j++) {
+        for (int i=v.lbound[0]; i<v.lbound[0]+v.dimension[0]; i++) {
           os << std::setw(12) << v(i,j) << " ";
         }
         os << "\n";

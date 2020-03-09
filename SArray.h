@@ -10,31 +10,28 @@
 */
 
 template <class T, unsigned int D0, unsigned int D1=1, unsigned int D2=1, unsigned int D3=1> class SArray {
+public :
 
-  static unsigned int constexpr totElems = D3*D2*D1*D0;
+  static unsigned int constexpr totElems() { return D3*D2*D1*D0; }
 
   static unsigned int constexpr OFF0 = D3*D2*D1;
   static unsigned int constexpr OFF1 = D3*D2;
   static unsigned int constexpr OFF2 = D3;
   static unsigned int constexpr OFF3 = 1;
 
-protected:
-
   typedef unsigned int uint;
 
   T mutable myData[D0*D1*D2*D3];
 
-public :
-
   YAKL_INLINE SArray() { }
   YAKL_INLINE SArray(SArray &&in) {
-    for (uint i=0; i < totElems; i++) { myData[i] = in.myData[i]; }
+    for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }
   }
   YAKL_INLINE SArray(SArray const &in) {
-    for (uint i=0; i < totElems; i++) { myData[i] = in.myData[i]; }
+    for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }
   }
   YAKL_INLINE SArray &operator=(SArray &&in) {
-    for (uint i=0; i < totElems; i++) { myData[i] = in.myData[i]; }
+    for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }
     return *this;
   }
   YAKL_INLINE ~SArray() { }

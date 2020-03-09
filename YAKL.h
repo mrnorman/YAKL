@@ -90,8 +90,11 @@ namespace yakl {
 
 
   // Dynamic (runtime) Array Bounds
-  struct Bnd {
+  class Bnd {
+  public:
     int l, u;
+    Bnd(          int u_in) { l = 1   ; u = u_in; }
+    Bnd(int l_in, int u_in) { l = l_in; u = u_in; }
   };
 
 

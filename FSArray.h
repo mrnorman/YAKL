@@ -7,34 +7,30 @@
 */
 
 template <class T, typename B0, typename B1=SBnd<1,1>, typename B2=SBnd<1,1>, typename B3=SBnd<1,1>> class FSArray {
+public :
+  static unsigned constexpr D0 = B0::u() - B0::l() + 1;
+  static unsigned constexpr D1 = B1::u() - B1::l() + 1;
+  static unsigned constexpr D2 = B2::u() - B2::l() + 1;
+  static unsigned constexpr D3 = B3::u() - B3::l() + 1;
 
-  static int constexpr D0 = B0::u() - B0::l() + 1;
-  static int constexpr D1 = B1::u() - B1::l() + 1;
-  static int constexpr D2 = B2::u() - B2::l() + 1;
-  static int constexpr D3 = B3::u() - B3::l() + 1;
+  static unsigned constexpr totElems() { return D0*D1*D2*D3; }
 
-  static int constexpr totElems = D0*D1*D2*D3;
-
-  static int constexpr OFF0 = 1;
-  static int constexpr OFF1 = D0;
-  static int constexpr OFF2 = D0*D1;
-  static int constexpr OFF3 = D0*D1*D2;
-
-protected:
+  static unsigned constexpr OFF0 = 1;
+  static unsigned constexpr OFF1 = D0;
+  static unsigned constexpr OFF2 = D0*D1;
+  static unsigned constexpr OFF3 = D0*D1*D2;
 
   T mutable myData[D0*D1*D2*D3];
 
-public :
-
   YAKL_INLINE FSArray() { }
   YAKL_INLINE FSArray(FSArray &&in) {
-    for (int i=0; i < D0*D1*D2*D3; i++) { myData[i] = in.myData[i]; }
+    for (int i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }
   }
   YAKL_INLINE FSArray(FSArray const &in) {
-    for (int i=0; i < D0*D1*D2*D3; i++) { myData[i] = in.myData[i]; }
+    for (int i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }
   }
   YAKL_INLINE FSArray &operator=(FSArray &&in) {
-    for (int i=0; i < D0*D1*D2*D3; i++) { myData[i] = in.myData[i]; }
+    for (int i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }
     return *this;
   }
   YAKL_INLINE ~FSArray() { }
@@ -79,12 +75,12 @@ public :
 
   inline friend std::ostream &operator<<(std::ostream& os, FSArray const &v) {
     if (D1*D2*D3 == 1) {
-      for (int i=0; i<D0; i++) {
+      for (int i=B0::l(); i<=B0::u(); i++) {
         os << std::setw(12) << v(i) << "\n";
       }
     } else if (D2*D3 == 1) {
-      for (int j=0; j<D1; j++) {
-        for (int i=0; i<D0; i++) {
+      for (int j=B1::l(); j<B1::u(); j++) {
+        for (int i=B0::l(); i<B0::u(); i++) {
           os << std::setw(12) << v(i,j) << " ";
         }
         os << "\n";
