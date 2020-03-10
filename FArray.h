@@ -2,14 +2,12 @@
 #pragma once
 
 template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
-
-  public :
+public:
 
   size_t offsets  [rank];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
   int    lbounds  [rank];  // Lower bounds for each dimension
   int    dimension[rank];  // Sizes of dimensions
   T      * myData;         // Pointer to the flattened internal data
-  int    * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
   bool   owned;            // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef ARRAY_DEBUG
     std::string myname; // Label for debug printing. Only stored if debugging is turned on
@@ -144,38 +142,14 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
   }
 
 
-  inline void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-
-    deallocate();
-
-                     lbounds[0] = b1.l; dimension[0] = b1.u - b1.l + 1;  
-    if (rank >= 2) { lbounds[1] = b2.l; dimension[1] = b2.u - b2.l + 1; }
-    if (rank >= 3) { lbounds[2] = b3.l; dimension[2] = b3.u - b3.l + 1; }
-    if (rank >= 4) { lbounds[3] = b4.l; dimension[3] = b4.u - b4.l + 1; }
-    if (rank >= 5) { lbounds[4] = b5.l; dimension[4] = b5.u - b5.l + 1; }
-    if (rank >= 6) { lbounds[5] = b6.l; dimension[5] = b6.u - b6.l + 1; }
-    if (rank >= 7) { lbounds[6] = b7.l; dimension[6] = b7.u - b7.l + 1; }
-    if (rank >= 8) { lbounds[7] = b8.l; dimension[7] = b8.u - b8.l + 1; }
-
-    offsets[0] = 1;
-    for (int i=1; i<rank; i++) {
-      offsets[i] = offsets[i-1] * dimension[i-1];
-    }
-
-    allocate();
-  }
-
-
   /*
   COPY CONSTRUCTORS / FUNCTIONS
   This shares the pointers with another Array and increments the refCounter
   */
   Array(Array const &rhs) {
+    // This is a constructor, so no need to deallocate
     nullify();
-    owned    = rhs.owned;
+    owned = rhs.owned;
     for (int i=0; i<rank; i++) {
       offsets  [i] = rhs.offsets  [i];
       lbounds  [i] = rhs.lbounds  [i];
@@ -191,10 +165,8 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
 
 
   Array & operator=(Array const &rhs) {
-    if (this == &rhs) {
-      return *this;
-    }
-    owned    = rhs.owned;
+    if (this == &rhs) { return *this; }
+    owned = rhs.owned;
     deallocate();
     for (int i=0; i<rank; i++) {
       offsets  [i] = rhs.offsets  [i];
@@ -214,11 +186,13 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
 
   /*
   MOVE CONSTRUCTORS
-  This straight up steals the pointers form the rhs and sets them to null.
+  This steals the pointers form the rhs instead of sharing and sets rhs pointers to nullptr.
+  Therefore, no need to increment reference counter
   */
   Array(Array &&rhs) {
+    // This is a constructor, so no need to deallocate
     nullify();
-    owned    = rhs.owned;
+    owned = rhs.owned;
     for (int i=0; i<rank; i++) {
       offsets  [i] = rhs.offsets  [i];
       lbounds  [i] = rhs.lbounds  [i];
@@ -236,10 +210,8 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
 
 
   Array& operator=(Array &&rhs) {
-    if (this == &rhs) {
-      return *this;
-    }
-    owned    = rhs.owned;
+    if (this == &rhs) { return *this; }
+    owned = rhs.owned;
     deallocate();
     for (int i=0; i<rank; i++) {
       offsets  [i] = rhs.offsets  [i];
@@ -265,40 +237,6 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
   */
   ~Array() {
     deallocate();
-  }
-
-
-  inline void allocate() {
-    if (owned) {
-      refCount = new int;
-      *refCount = 1;
-      if (myMem == memDevice) {
-        myData = (T *) yaklAllocDevice( totElems()*sizeof(T) );
-      } else {
-        myData = (T *) yaklAllocHost  ( totElems()*sizeof(T) );
-      }
-    }
-  }
-
-
-  inline void deallocate() {
-    if (owned) {
-      if (refCount != nullptr) {
-        (*refCount)--;
-
-        if (*refCount == 0) {
-          delete refCount;
-          refCount = nullptr;
-          if (myMem == memDevice) {
-            yaklFreeDevice(myData);
-          } else {
-            yaklFreeHost  (myData);
-          }
-          myData = nullptr;
-        }
-
-      }
-    }
   }
 
 
@@ -685,6 +623,70 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
     return os;
   }
 
+
+protected:
+  // This is stuff the user has no business messing with
+
+  int *refCount; // Pointer shared by multiple copies of this Array to keep track of allcation / free
+
+  inline void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
+    #ifdef ARRAY_DEBUG
+      myname = std::string(label);
+    #endif
+
+    deallocate();
+
+                     lbounds[0] = b1.l; dimension[0] = b1.u - b1.l + 1;  
+    if (rank >= 2) { lbounds[1] = b2.l; dimension[1] = b2.u - b2.l + 1; }
+    if (rank >= 3) { lbounds[2] = b3.l; dimension[2] = b3.u - b3.l + 1; }
+    if (rank >= 4) { lbounds[3] = b4.l; dimension[3] = b4.u - b4.l + 1; }
+    if (rank >= 5) { lbounds[4] = b5.l; dimension[4] = b5.u - b5.l + 1; }
+    if (rank >= 6) { lbounds[5] = b6.l; dimension[5] = b6.u - b6.l + 1; }
+    if (rank >= 7) { lbounds[6] = b7.l; dimension[6] = b7.u - b7.l + 1; }
+    if (rank >= 8) { lbounds[7] = b8.l; dimension[7] = b8.u - b8.l + 1; }
+
+    offsets[0] = 1;
+    for (int i=1; i<rank; i++) {
+      offsets[i] = offsets[i-1] * dimension[i-1];
+    }
+
+    allocate();
+  }
+
+
+  // This is *only* called from a constructor, so no need to test for existing refCount or myData
+  inline void allocate() {
+    if (owned) {
+      refCount = new int;
+      *refCount = 1;
+      if (myMem == memDevice) {
+        myData = (T *) yaklAllocDevice( totElems()*sizeof(T) );
+      } else {
+        myData = (T *) yaklAllocHost  ( totElems()*sizeof(T) );
+      }
+    }
+  }
+
+
+  inline void deallocate() {
+    if (owned) {
+      if (refCount != nullptr) {
+        (*refCount)--;
+
+        if (*refCount == 0) {
+          delete refCount;
+          refCount = nullptr;
+          if (myMem == memDevice) {
+            yaklFreeDevice(myData);
+          } else {
+            yaklFreeHost  (myData);
+          }
+          myData = nullptr;
+        }
+
+      }
+    }
+  }
 
 };
 

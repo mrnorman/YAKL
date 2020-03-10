@@ -2,13 +2,11 @@
 #pragma once
 
 template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
-
-  public :
+public:
 
   size_t offsets  [rank];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
   size_t dimension[rank];  // Sizes of the 8 possible dimensions
   T      * myData;      // Pointer to the flattened internal data
-  int    * refCount;    // Pointer shared by multiple copies of this Array to keep track of allcation / free
   bool   owned;         // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef ARRAY_DEBUG
     std::string myname; // Label for debug printing. Only stored if debugging is turned on
@@ -41,8 +39,6 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  
-  //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
   Array(char const * label, size_t const d1) {
     static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 Array" );
     nullify();
@@ -87,7 +83,6 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Non-owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //Define the dimension ranges using an array of upper bounds, assuming lower bounds to be zero
   Array(char const * label, T * data, size_t const d1) {
     static_assert( rank == 1 , "ERROR: Calling invalid constructor on rank 1 Array" );
     nullify();
@@ -151,6 +146,7 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
   This shares the pointers with another Array and increments the refCounter
   */
   Array(Array const &rhs) {
+    // constructor, so no need to deallocate
     nullify();
     owned    = rhs.owned;
     for (int i=0; i<rank; i++) {
@@ -189,9 +185,11 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
 
   /*
   MOVE CONSTRUCTORS
-  This straight up steals the pointers form the rhs and sets them to null.
+  This steals the pointers form the rhs rather than sharing and sets rhs pointers to nullptr.
+  Therefore, no need to increment refCout
   */
   Array(Array &&rhs) {
+    // constructor, so no need to deallocate
     nullify();
     owned    = rhs.owned;
     for (int i=0; i<rank; i++) {
@@ -210,9 +208,7 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
 
 
   Array& operator=(Array &&rhs) {
-    if (this == &rhs) {
-      return *this;
-    }
+    if (this == &rhs) { return *this; }
     owned    = rhs.owned;
     deallocate();
     for (int i=0; i<rank; i++) {
@@ -238,138 +234,6 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
   */
   ~Array() {
     deallocate();
-  }
-
-
-  /* SETUP FUNCTIONS
-  Initialize the array with the given dimensions
-  */
-  inline void setup(char const * label, size_t const d1) {
-    static_assert( rank == 1 , "ERROR: Calling invalid function on rank 1 Array" );
-    size_t tmp[1];
-    tmp[0] = d1;
-    setup_arr(label,tmp);
-  }
-  inline void setup(char const * label, size_t const d1, size_t const d2) {
-    static_assert( rank == 2 , "ERROR: Calling invalid function on rank 2 Array" );
-    size_t tmp[2];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    setup_arr(label,tmp);
-  }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3) {
-    static_assert( rank == 3 , "ERROR: Calling invalid function on rank 3 Array" );
-    size_t tmp[3];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    setup_arr(label,tmp);
-  }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
-    static_assert( rank == 4 , "ERROR: Calling invalid function on rank 4 Array" );
-    size_t tmp[4];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    setup_arr(label,tmp);
-  }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
-    static_assert( rank == 5 , "ERROR: Calling invalid function on rank 5 Array" );
-    size_t tmp[5];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    tmp[4] = d5;
-    setup_arr(label,tmp);
-  }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
-    static_assert( rank == 6 , "ERROR: Calling invalid function on rank 6 Array" );
-    size_t tmp[6];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    tmp[4] = d5;
-    tmp[5] = d6;
-    setup_arr(label,tmp);
-  }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
-    static_assert( rank == 7 , "ERROR: Calling invalid function on rank 7 Array" );
-    size_t tmp[7];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    tmp[4] = d5;
-    tmp[5] = d6;
-    tmp[6] = d7;
-    setup_arr(label,tmp);
-  }
-  inline void setup(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
-    static_assert( rank == 8 , "ERROR: Calling invalid function on rank 8 Array" );
-    size_t tmp[8];
-    tmp[0] = d1;
-    tmp[1] = d2;
-    tmp[2] = d3;
-    tmp[3] = d4;
-    tmp[4] = d5;
-    tmp[5] = d6;
-    tmp[6] = d7;
-    tmp[7] = d8;
-    setup_arr(label,tmp);
-  }
-  inline void setup_arr(char const * label, size_t const dimension[]) {
-    #ifdef ARRAY_DEBUG
-      myname = std::string(label);
-    #endif
-
-    deallocate();
-
-    // Setup this Array with the given number of dimensions and dimension sizes
-    for (size_t i=0; i<rank; i++) {
-      this->dimension[i] = dimension[i];
-    }
-    offsets[rank-1] = 1;
-    for (int i=rank-2; i>=0; i--) {
-      offsets[i] = offsets[i+1] * dimension[i+1];
-    }
-    allocate();
-  }
-
-
-  inline void allocate() {
-    if (owned) {
-      refCount = new int;
-      *refCount = 1;
-      if (myMem == memDevice) {
-        myData = (T *) yaklAllocDevice( totElems()*sizeof(T) );
-      } else {
-        myData = (T *) yaklAllocHost  ( totElems()*sizeof(T) );
-      }
-    }
-  }
-
-
-  inline void deallocate() {
-    if (owned) {
-      if (refCount != nullptr) {
-        (*refCount)--;
-
-        if (*refCount == 0) {
-          delete refCount;
-          refCount = nullptr;
-          if (myMem == memDevice) {
-            yaklFreeDevice(myData);
-          } else {
-            yaklFreeHost  (myData);
-          }
-          myData = nullptr;
-        }
-
-      }
-    }
   }
 
 
@@ -691,6 +555,70 @@ template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
     }
     os << "\n";
     return os;
+  }
+
+
+protected:
+  // This is stuff the user has no business messing with
+
+  int *refCount; // Pointer shared by multiple copies of this Array to keep track of allcation / free
+
+  // It would be dangerous for the user to call this directly rather than through the constructors, so we're "hiding" it :)
+  inline void setup(char const * label, size_t d0, size_t d1=-1, size_t d2=-1, size_t d3=-1, size_t d4=-1, size_t d5=-1, size_t d6=-1, size_t d7=-1) {
+    #ifdef ARRAY_DEBUG
+      myname = std::string(label);
+    #endif
+
+    deallocate();
+
+                     dimension[0] = d0;  
+    if (rank >= 2) { dimension[1] = d1; }
+    if (rank >= 3) { dimension[2] = d2; }
+    if (rank >= 4) { dimension[3] = d3; }
+    if (rank >= 5) { dimension[4] = d4; }
+    if (rank >= 6) { dimension[5] = d5; }
+    if (rank >= 7) { dimension[6] = d6; }
+    if (rank >= 8) { dimension[7] = d7; }
+
+    offsets[rank-1] = 1;
+    for (int i=rank-2; i>=0; i--) {
+      offsets[i] = offsets[i+1] * dimension[i+1];
+    }
+    allocate();
+  }
+
+
+  inline void allocate() {
+    if (owned) {
+      refCount = new int;
+      *refCount = 1;
+      if (myMem == memDevice) {
+        myData = (T *) yaklAllocDevice( totElems()*sizeof(T) );
+      } else {
+        myData = (T *) yaklAllocHost  ( totElems()*sizeof(T) );
+      }
+    }
+  }
+
+
+  inline void deallocate() {
+    if (owned) {
+      if (refCount != nullptr) {
+        (*refCount)--;
+
+        if (*refCount == 0) {
+          delete refCount;
+          refCount = nullptr;
+          if (myMem == memDevice) {
+            yaklFreeDevice(myData);
+          } else {
+            yaklFreeHost  (myData);
+          }
+          myData = nullptr;
+        }
+
+      }
+    }
   }
 
 
