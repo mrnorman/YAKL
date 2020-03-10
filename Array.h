@@ -11,5 +11,5 @@ template <class T, int rank, int myMem=memDefault, int myStyle=styleDefault> cla
 
 #include "FArray.h"
 
-#include "FortranIntrinsics.h"
+// #include "FortranIntrinsics.h"
 

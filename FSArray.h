@@ -6,13 +6,22 @@
   without pointer dereferencing. It supports indexing and cout only up to 4-D.
 */
 
-template <class T, class B0, class B1=SBnd<1,1>, class B2=SBnd<1,1>, class B3=SBnd<1,1>> class FSArray {
+template <class T, int L0_IN, int U0_IN, int L1_IN, int U1_IN, int L2_IN, int U2_IN, int L3_IN, int U3_IN, int rank>
+class Array< FSPEC< T , SB<L0_IN,U0_IN> , SB<L1_IN,U1_IN> , SB<L2_IN,U2_IN> , SB<L3_IN,U3_IN> > , rank , memStack , styleFortran > {
 public :
-  static unsigned constexpr D0 = B0::u() - B0::l() + 1;
-  static unsigned constexpr D1 = B1::u() - B1::l() + 1;
-  static unsigned constexpr D2 = B2::u() - B2::l() + 1;
-  static unsigned constexpr D3 = B3::u() - B3::l() + 1;
-  static unsigned constexpr rank = 1 + D1 != 1 + D2 != 1 + D3 != 1;
+  static int constexpr U0 = U0_IN == -999 ? L0_IN : U0_IN;
+  static int constexpr L0 = U0_IN == -999 ? 1     : L0_IN;
+  static int constexpr U1 = U1_IN == -999 ? L1_IN : U1_IN;
+  static int constexpr L1 = U1_IN == -999 ? 1     : L1_IN;
+  static int constexpr U2 = U2_IN == -999 ? L2_IN : U2_IN;
+  static int constexpr L2 = U2_IN == -999 ? 1     : L2_IN;
+  static int constexpr U3 = U3_IN == -999 ? L3_IN : U3_IN;
+  static int constexpr L3 = U3_IN == -999 ? 1     : L3_IN;
+
+  static unsigned constexpr D0 =             U0 - L0 + 1;
+  static unsigned constexpr D1 = rank >= 1 ? U1 - L1 + 1 : 1;
+  static unsigned constexpr D2 = rank >= 1 ? U2 - L2 + 1 : 1;
+  static unsigned constexpr D3 = rank >= 1 ? U3 - L3 + 1 : 1;
 
   static unsigned constexpr totElems() { return D0*D1*D2*D3; }
 
@@ -23,65 +32,65 @@ public :
 
   T mutable myData[D0*D1*D2*D3];
 
-  YAKL_INLINE FSArray() { }
-  YAKL_INLINE FSArray(FSArray &&in) {
+  YAKL_INLINE Array() {}
+  YAKL_INLINE Array(Array &&in) {
     for (int i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }
   }
-  YAKL_INLINE FSArray(FSArray const &in) {
+  YAKL_INLINE Array(Array const &in) {
     for (int i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }
   }
-  YAKL_INLINE FSArray &operator=(FSArray &&in) {
+  YAKL_INLINE Array &operator=(Array &&in) {
     for (int i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }
     return *this;
   }
-  YAKL_INLINE ~FSArray() { }
+  YAKL_INLINE ~Array() { }
 
   YAKL_INLINE T &operator()(int const i0) const {
     static_assert(D1==1 && D2==1 && D3==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef ARRAY_DEBUG
-      if (i0<B0::l() || i0>B0::u()) { printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,B0::l(),B0::u()); exit(-1); }
+      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); exit(-1); }
     #endif
-    return myData[i0-B0::l()];
+    return myData[i0-L0];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1) const {
     static_assert(D2==1 && D3==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef ARRAY_DEBUG
-      if (i0<B0::l() || i0>B0::u()) { printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,B0::l(),B0::u()); exit(-1); }
-      if (i1<B1::l() || i1>B1::u()) { printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,B1::l(),B1::u()); exit(-1); }
+      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); exit(-1); }
+      if (i1<L1 || i1>U1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); exit(-1); }
     #endif
-    return myData[(i1-B1::l())*OFF1 + i0-B0::l()];
+    return myData[(i1-L1)*OFF1 + i0-L0];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
     static_assert(D3==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef ARRAY_DEBUG
-      if (i0<B0::l() || i0>B0::u()) { printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,B0::l(),B0::u()); exit(-1); }
-      if (i1<B1::l() || i1>B1::u()) { printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,B1::l(),B1::u()); exit(-1); }
-      if (i2<B2::l() || i2>B2::u()) { printf("FSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,B2::l(),B2::u()); exit(-1); }
+      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); exit(-1); }
+      if (i1<L1 || i1>U1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); exit(-1); }
+      if (i2<L2 || i2>U2) { printf("Array i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); exit(-1); }
     #endif
-    return myData[(i2-B2::l())*OFF2 + (i1-B1::l())*OFF1 + i0-B0::l()];
+    return myData[(i2-L2)*OFF2 + (i1-L1)*OFF1 + i0-L0];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3) const {
     #ifdef ARRAY_DEBUG
-      if (i0<B0::l() || i0>B0::u()) { printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,B0::l(),B0::u()); exit(-1); }
-      if (i1<B1::l() || i1>B1::u()) { printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,B1::l(),B1::u()); exit(-1); }
-      if (i2<B2::l() || i2>B2::u()) { printf("FSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,B2::l(),B2::u()); exit(-1); }
-      if (i3<B3::l() || i3>B3::u()) { printf("FSArray i3 out of bounds (i3: %d; lb3: %d; ub3: %d",i3,B3::l(),B3::u()); exit(-1); }
+      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); exit(-1); }
+      if (i1<L1 || i1>U1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); exit(-1); }
+      if (i2<L2 || i2>U2) { printf("Array i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); exit(-1); }
+      if (i3<L3 || i3>U3) { printf("Array i3 out of bounds (i3: %d; lb3: %d; ub3: %d",i3,L3,U3); exit(-1); }
     #endif
-    return myData[(i3-B3::l())*OFF3 + (i2-B2::l())*OFF2 + (i1-B1::l())*OFF1 + i0-B0::l()];
+    return myData[(i3-L3)*OFF3 + (i2-L2)*OFF2 + (i1-L1)*OFF1 + i0-L0];
   }
 
   YAKL_INLINE T *data() {
     return myData;
   }
 
-  inline friend std::ostream &operator<<(std::ostream& os, FSArray const &v) {
+  inline friend std::ostream &operator<<(std::ostream& os, Array const &v) {
     if (D1*D2*D3 == 1) {
-      for (int i=B0::l(); i<=B0::u(); i++) {
+      for (int i=L0; i<=U0; i++) {
         os << std::setw(12) << v(i) << "\n";
       }
     } else if (D2*D3 == 1) {
-      for (int j=B1::l(); j<B1::u(); j++) {
-        for (int i=B0::l(); i<B0::u(); i++) {
+      for (int j=L1; j<U1; j++) {
+        for (int i=L0; i<U0; i++) {
           os << std::setw(12) << v(i,j) << " ";
         }
         os << "\n";
@@ -95,7 +104,7 @@ public :
   }
   
   YAKL_INLINE auto get_dimensions() const {
-    FSArray<int,SBnd<1,rank>> ret;
+    Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> ret;
                      ret(1) = D0;
     if (rank >= 2) { ret(2) = D1; }
     if (rank >= 3) { ret(3) = D2; }
@@ -103,19 +112,19 @@ public :
     return ret;
   }
   YAKL_INLINE auto get_lbounds() const {
-    FSArray<int,SBnd<1,rank>> ret;
-                     ret(1) = B0::l();
-    if (rank >= 2) { ret(2) = B1::l(); }
-    if (rank >= 3) { ret(3) = B2::l(); }
-    if (rank >= 4) { ret(4) = B3::l(); }
+    Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> ret;
+                     ret(1) = L0;
+    if (rank >= 2) { ret(2) = L1; }
+    if (rank >= 3) { ret(3) = L2; }
+    if (rank >= 4) { ret(4) = L3; }
     return ret;
   }
   YAKL_INLINE auto get_ubounds() const {
-    FSArray<int,SBnd<1,rank>> ret;
-                     ret(1) = B0::u();
-    if (rank >= 2) { ret(2) = B1::u(); }
-    if (rank >= 3) { ret(3) = B2::u(); }
-    if (rank >= 4) { ret(4) = B3::u(); }
+    Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> ret;
+                     ret(1) = U0;
+    if (rank >= 2) { ret(2) = U1; }
+    if (rank >= 3) { ret(3) = U2; }
+    if (rank >= 4) { ret(4) = U3; }
     return ret;
   }
 

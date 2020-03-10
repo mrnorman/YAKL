@@ -44,6 +44,7 @@ namespace yakl {
   // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
+  int constexpr memStack  = 3;
   #if defined(__USE_CUDA__) || defined(__USE_HIP__)
     int constexpr memDefault = memDevice;
   #else
@@ -80,12 +81,24 @@ namespace yakl {
   extern std::function<void ( void * )>  yaklFreeHost;
 
 
-  // Static (compile-time) Array Bounds (templated)
-  template <int L, int U> class SBnd {
+  // [S]tatic (compile-time) Array [B]ounds (templated)
+  // It's only used for Fortran, so it takes on Fortran defaults
+  // with lower bound default to 1
+  template <int L, int U=-999> class SB {
   public:
-    SBnd() = delete;
-    static constexpr int l() { return L; }
-    static constexpr int u() { return U; }
+    SB() = delete;
+  };
+
+  // Fortran list of static bounds
+  template <class T, class B0, class B1=SB<1,1>, class B2=SB<1,1>, class B3=SB<1,1>> class FSPEC {
+  public:
+    FSPEC() = delete;
+  };
+
+  // C list of static dimension sizes
+  template <class T, size_t D0, size_t D1=1, size_t D2=1, size_t D3=1> class CSPEC {
+  public:
+    CSPEC() = delete;
   };
 
 

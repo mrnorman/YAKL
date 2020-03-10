@@ -8,12 +8,12 @@ namespace yakl {
   BuddyAllocator pool;
 
   // YAKL allocator and deallocator
-  std::function<void *( size_t )> yaklAllocDevice;
-  std::function<void ( void * )>  yaklFreeDevice;
+  std::function<void *( size_t )> yaklAllocDevice = [] ( size_t bytes ) -> void* {std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);};
+  std::function<void ( void * )>  yaklFreeDevice  = [] ( void *ptr    )          {std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);};
 
   // YAKL allocator and deallocator
-  std::function<void *( size_t )> yaklAllocHost;
-  std::function<void ( void * )>  yaklFreeHost;
+  std::function<void *( size_t )> yaklAllocHost = [] ( size_t bytes ) -> void* {std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);};
+  std::function<void ( void * )>  yaklFreeHost  = [] ( void *ptr    )          {std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);};
 
 }
 

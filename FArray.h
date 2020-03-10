@@ -539,21 +539,21 @@ public:
   YAKL_INLINE size_t get_totElems() const {
     return totElems();
   }
-  YAKL_INLINE auto get_dimensions() const {
-    FSArray<int,SBnd<1,rank>> ret;
-    for (int i=0; i<rank; i++) { ret(i+1) = dimension[i]; }
-    return ret;
-  }
-  YAKL_INLINE auto get_lbounds() const {
-    FSArray<int,SBnd<1,rank>> ret;
-    for (int i=0; i<rank; i++) { ret(i+1) = lbounds[i]; }
-    return ret;
-  }
-  YAKL_INLINE auto get_ubounds() const {
-    FSArray<int,SBnd<1,rank>> ret;
-    for (int i=0; i<rank; i++) { ret(i+1) = lbounds[i]+dimension[i]-1; }
-    return ret;
-  }
+  // YAKL_INLINE auto get_dimensions() const {
+  //   FSArray<int,SBnd<1,rank>> ret;
+  //   for (int i=0; i<rank; i++) { ret(i+1) = dimension[i]; }
+  //   return ret;
+  // }
+  // YAKL_INLINE auto get_lbounds() const {
+  //   FSArray<int,SBnd<1,rank>> ret;
+  //   for (int i=0; i<rank; i++) { ret(i+1) = lbounds[i]; }
+  //   return ret;
+  // }
+  // YAKL_INLINE auto get_ubounds() const {
+  //   FSArray<int,SBnd<1,rank>> ret;
+  //   for (int i=0; i<rank; i++) { ret(i+1) = lbounds[i]+dimension[i]-1; }
+  //   return ret;
+  // }
   YAKL_INLINE T *data() const {
     return myData;
   }
