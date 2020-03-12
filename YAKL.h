@@ -149,9 +149,9 @@ namespace yakl {
 #include "YAKL_fft.h"
 
 
-template <class T> YAKL_INLINE T max(T a, T b) { return a>b? a : b; }
-template <class T> YAKL_INLINE T min(T a, T b) { return a<b? a : b; }
-template <class T> YAKL_INLINE T abs(T a) { return a>0? a : -a; }
+template <class T> YAKL_INLINE constexpr T max(T a, T b) { return a>b? a : b; }
+template <class T> YAKL_INLINE constexpr T min(T a, T b) { return a<b? a : b; }
+template <class T> YAKL_INLINE constexpr T abs(T a) { return a>0? a : -a; }
 
 
 #include "Array.h"

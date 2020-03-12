@@ -451,7 +451,7 @@ public:
   }
   YAKL_INLINE size_t get_totElems() const {
     size_t tot = dimension[0];
-    for (int i=0; i<rank; i++) { tot *= dimension[i]; }
+    for (int i=1; i<rank; i++) { tot *= dimension[i]; }
     return tot;
   }
   YAKL_INLINE size_t totElems() const {
