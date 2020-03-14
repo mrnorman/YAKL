@@ -27,10 +27,10 @@ public:
   setup() functions to keep from deallocating myData upon initialization, since
   you don't know what "myData" will be when the object is created.
   */
-  Array() {
+  YAKL_INLINE Array() {
     nullify();
   }
-  Array(char const * label) {
+  YAKL_INLINE Array(char const * label) {
     nullify();
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
@@ -389,10 +389,10 @@ public:
       #endif
     } else {
       #ifdef __USE_CUDA__
-        cudaMemcpyAsync(ret.myData,myData,totElems*sizeof(T),cudaMemcpyDeviceToDevice,0);
+        cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToDevice,0);
         cudaDeviceSynchronize();
       #elif defined(__USE_HIP__)
-        hipMemcpyAsync(ret.myData,myData,totElems*sizeof(T),hipMemcpyDeviceToDevice,0);
+        hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
         hipDeviceSynchronize();
       #endif
     }
@@ -564,7 +564,7 @@ protected:
   int *refCount; // Pointer shared by multiple copies of this Array to keep track of allcation / free
 
   // It would be dangerous for the user to call this directly rather than through the constructors, so we're "hiding" it :)
-  inline void setup(char const * label, size_t d0, size_t d1=-1, size_t d2=-1, size_t d3=-1, size_t d4=-1, size_t d5=-1, size_t d6=-1, size_t d7=-1) {
+  inline void setup(char const * label, size_t d0, size_t d1=1, size_t d2=1, size_t d3=1, size_t d4=1, size_t d5=1, size_t d6=1, size_t d7=1) {
     #ifdef ARRAY_DEBUG
       myname = std::string(label);
     #endif

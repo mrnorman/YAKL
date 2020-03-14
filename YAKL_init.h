@@ -53,7 +53,11 @@
     if ( poolBytes > 0 ) {
       std::cout << "Initializing the YAKL Pool Allocator with " << poolBytes << " bytes" << std::endl;
 
-      auto zerofunc = [] (void *ptr, size_t bytes) { memset(ptr,0,bytes); };
+      #if   defined(__USE_CUDA__)
+        auto zerofunc = [] (void *ptr, size_t bytes) { cudaMemset(ptr,0,bytes); };
+      #else
+        auto zerofunc = [] (void *ptr, size_t bytes) { memset(ptr,0,bytes); };
+      #endif
 
       pool = BuddyAllocator( poolBytes , 1024 , alloc , dealloc , zerofunc );
 
