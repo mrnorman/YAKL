@@ -443,6 +443,15 @@ public:
   void setRandom(Random &rand) {
     rand.fillArray(this->data(),this->totElems());
   }
+  void memset(T val) {
+    #if   defined(__USE_CUDA__)
+      cudaMemset( myData , val , totElems()*sizeof(T) );
+    #elif defined(__USE_HIP__)
+      hipMemset ( myData , val , totElems()*sizeof(T) );
+    #else
+      ::memset  ( myData , val , totElems()*sizeof(T) );
+    #endif
+  }
 
 
   /* ACCESSORS */
