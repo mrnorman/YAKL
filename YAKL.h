@@ -158,6 +158,19 @@ template <class T> YAKL_INLINE constexpr T abs(T a) { return a>0? a : -a; }
 #include "Array.h"
 
 
+template <class T, int rank, int myMem, int myStyle> void memset( Array<T,rank,myMem,myStyle> &arr , T val ) {
+  if (myMem == memDevice) {
+    c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
+      arr.myData[i] = val;
+    });
+  } else if (myMem == memHost) {
+    for (size_t i = 0; i < arr.totElems(); i++) {
+      arr.myData[i] = val;
+    }
+  }
+}
+
+
 }
 
 
