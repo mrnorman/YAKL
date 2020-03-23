@@ -349,16 +349,17 @@ public:
 
 
   inline Array<T,rank,memHost,styleC> createHostCopy() {
-    Array<T,rank,memHost,styleC> ret;
+    Array<T,rank,memHost,styleC> ret;  // nullified + owned == true
+    for (int i=0; i<rank; i++) {
+      ret.offsets  [i] = offsets  [i];
+      ret.dimension[i] = dimension[i];
+    }
     #ifdef ARRAY_DEBUG
-      ret.setup_arr( myname.c_str() , dimension );
-    #else
-      ret.setup_arr( ""             , dimension );
+      ret.myname = myname;
     #endif
+    ret.allocate();
     if (myMem == memHost) {
-      for (size_t i=0; i<totElems(); i++) {
-        ret.myData[i] = myData[i];
-      }
+      for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToHost,0);
@@ -366,6 +367,8 @@ public:
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
         hipDeviceSynchronize();
+      #else
+        for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     }
     return ret;
@@ -373,12 +376,15 @@ public:
 
 
   inline Array<T,rank,memDevice,styleC> createDeviceCopy() {
-    Array<T,rank,memDevice,styleC> ret;
+    Array<T,rank,memDevice,styleC> ret;  // nullified + owned == true
+    for (int i=0; i<rank; i++) {
+      ret.offsets  [i] = offsets  [i];
+      ret.dimension[i] = dimension[i];
+    }
     #ifdef ARRAY_DEBUG
-      ret.setup_arr( myname.c_str() , dimension );
-    #else
-      ret.setup_arr( ""             , dimension );
+      ret.myname = myname;
     #endif
+    ret.allocate();
     if (myMem == memHost) {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyHostToDevice,0);
@@ -386,6 +392,8 @@ public:
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
         hipDeviceSynchronize();
+      #else
+        for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
@@ -394,6 +402,8 @@ public:
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
         hipDeviceSynchronize();
+      #else
+        for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     }
     return ret;
