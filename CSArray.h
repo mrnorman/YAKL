@@ -68,28 +68,45 @@ public :
     return myData;
   }
 
-  inline friend std::ostream &operator<<(std::ostream& os, Array const &v) {
-    if (rank == 1) {
-      for (uint i=0; i<D0; i++) {
-        os << std::setw(12) << v(i) << "\n";
-      }
-    } else if (rank == 2) {
-      for (uint j=0; j<D1; j++) {
-        for (uint i=0; i<D0; i++) {
-          os << std::setw(12) << v(i,j) << " ";
+
+  inline friend std::ostream &operator<<(std::ostream& os, Array<CSPEC<T,D0,D1,D2,D3>,rank,memStack,styleC> const &v) {
+    for (uint i=0; i<totElems(); i++) { os << std::setw(12) << v.myData[i] << "\n"; }
+    os << "\n";
+    return os;
+  }
+
+
+  template <uint D0_R , int myrank=rank , typename std::enable_if<myrank==2,bool>::type = false >
+  YAKL_INLINE auto operator* ( Array< CSPEC<T,D0_R,D0> , 2 , memStack , styleC > const &rhs ) {
+    Array< CSPEC<T,D0_R,D1> , 2 , memStack , styleC > ret;
+    for (uint i=0; i < D0_R; i++) {
+      for (uint j=0; j < D1; j++) {
+        T tmp = 0;
+        for (uint k=0; k < D0; k++) {
+          tmp += (*this)(k,j) * rhs(i,k);
         }
-        os << "\n";
-      }
-    } else {
-      for (uint i=0; i<D0*D1*D2*D3; i++) {
-        os << std::setw(12) << v.myData[i] << "\n";
+        ret(i,j) = tmp;
       }
     }
-    return os;
+    return ret;
+  }
+
+
+  template < int myrank=rank , typename std::enable_if<myrank==2,bool>::type = false >
+  YAKL_INLINE auto operator* ( Array< CSPEC<T,D0> , 1 , memStack , styleC > const &rhs ) {
+    Array< CSPEC<T,D1> , 1 , memStack , styleC > ret;
+    for (uint j=0; j < D1; j++) {
+      T tmp = 0;
+      for (uint k=0; k < D0; k++) {
+        tmp += (*this)(k,j) * rhs(k);
+      }
+      ret(j) = tmp;
+    }
+    return ret;
   }
   
   YAKL_INLINE auto get_dimensions() const {
-    Array<CSPEC<int,rank>,1,memStack,styleC> ret;
+    Array<CSPEC<uint,rank>,1,memStack,styleC> ret;
                      ret(0) = D0;
     if (rank >= 2) { ret(1) = D1; }
     if (rank >= 3) { ret(2) = D2; }

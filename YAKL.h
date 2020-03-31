@@ -97,7 +97,7 @@ namespace yakl {
   };
 
   // C list of static dimension sizes
-  template <class T, size_t D0, size_t D1=1, size_t D2=1, size_t D3=1> class CSPEC {
+  template <class T, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1> class CSPEC {
   public:
     CSPEC() = delete;
   };
