@@ -104,6 +104,12 @@ public :
     }
     return ret;
   }
+
+
+  template <class I> YAKL_INLINE void operator/= (I const val) {
+    for (uint i=0; i < totElems(); i++) { myData[i] /= val; }
+  }
+
   
   YAKL_INLINE auto get_dimensions() const {
     Array<CSPEC<uint,rank>,1,memStack,styleC> ret;

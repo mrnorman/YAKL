@@ -537,32 +537,32 @@ public:
     #ifdef ARRAY_DEBUG
       os << "For Array labeled: " << v.myname << "\n";
     #endif
-    os << "Number of Dimensions: " << v.rank << "\n";
+    os << "Number of Dimensions: " << rank << "\n";
     os << "Total Number of Elements: " << v.totElems() << "\n";
     os << "Dimension Sizes: ";
-    for (int i=0; i<v.rank; i++) {
+    for (int i=0; i<rank; i++) {
       os << v.dimension[i] << ", ";
     }
     os << "\n";
-    if (v.rank == 1) {
-      for (size_t i=0; i<v.dimension[0]; i++) {
-        os << std::setw(12) << v(i) << "\n";
-      }
-    } else if (v.rank == 2) {
-      for (size_t j=0; j<v.dimension[1]; j++) {
-        for (size_t i=0; i<v.dimension[0]; i++) {
-          os << std::setw(12) << v(i,j) << " ";
-        }
-        os << "\n";
-      }
-    } else if (v.rank == 0) {
-      os << "Empty Array\n\n";
-    } else {
+    // if (rank == 1) {
+    //   for (size_t i=0; i<v.dimension[0]; i++) {
+    //     os << std::setw(12) << v(i) << "\n";
+    //   }
+    // } else if (rank == 2) {
+    //   for (size_t j=0; j<v.dimension[1]; j++) {
+    //     for (size_t i=0; i<v.dimension[0]; i++) {
+    //       os << std::setw(12) << v(i,j) << " ";
+    //     }
+    //     os << "\n";
+    //   }
+    // } else if (rank == 0) {
+    //   os << "Empty Array\n\n";
+    // } else {
       for (size_t i=0; i<v.totElems(); i++) {
         os << v.myData[i] << " ";
       }
       os << "\n";
-    }
+    // }
     os << "\n";
     return os;
   }
