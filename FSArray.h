@@ -78,20 +78,9 @@ public :
     return myData;
   }
 
-  template <class FSPEC , int myrank=rank , typename std::enable_if< myrank == 1 || myrank == 3 || myrank == 4 , bool >::type = false> 
-  inline friend std::ostream &operator<<(std::ostream& os, Array<FSPEC,rank,memStack,styleFortran> const &v) {
+
+  inline friend std::ostream &operator<<(std::ostream& os, Array const &v) {
     for (int i=0; i<totElems(); i++) { os << std::setw(12) << v.myData[i] << "\n"; }
-    os << "\n";
-    return os;
-  }
-  template <class FSPEC , int myrank=rank , typename std::enable_if< myrank == 2 , bool >::type = false> 
-  inline friend std::ostream &operator<<(std::ostream& os, Array<FSPEC,rank,memStack,styleFortran> const &v) {
-    for (int i=L0; i<=U0; i++) {
-      for (int j=L1; j<=U1; j++) {
-        os << std::setw(12) << v(i,j) << " ";
-      }
-      os << "\n";
-    }
     os << "\n";
     return os;
   }
