@@ -231,6 +231,41 @@ namespace fortran {
   }
 
 
+
+  template <class T, int rank, int myStyle> inline int count( Array<bool,rank,memHost,myStyle> &mask ) {
+    int numTrue = 0;
+    for (int i=0; i < mask.totElems(); i++) {
+      if (mask.myData[i]) { numTrue++; }
+    }
+    return numTrue;
+  }
+
+
+
+  template <class T, int rank, int myStyle> inline Array<T,1,memHost,myStyle> pack( Array<T,rank,memHost,myStyle> &arr , Array<bool,rank,memHost,myStyle> &mask=Array<bool,rank,memHost,myStyle>() ) {
+    if (allocated(mask)) {
+      if (mask.totElems() != arr.totElems()) {
+        throw "Error: pack: arr and mask have a different number of elements";
+      }
+      // count the number of true elements
+      int numTrue = count( mask );
+      Array<T,1,memHost,myStyle> ret("packReturn",numTrue);
+      int slot = 0;
+      for (int i=0; i < arr.totElems(); i++) {
+        if (mask.myData[i]) { ret.myData[slot] = arr.myData[i]; slot++; }
+      }
+      return ret;
+    } else {
+      Array<T,1,memHost,myStyle> ret("packReturn",arr.totElems());
+      for (int i=0; i < arr.totElems(); i++) {
+        ret.myData[i] = arr.myData[i];
+      }
+      return ret;
+    }
+  }
+
+
+
 }
 
 

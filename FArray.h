@@ -396,7 +396,7 @@ public:
   }
 
 
-  inline Array<T,rank,memHost,styleFortran> createHostCopy() {
+  inline Array<T,rank,memHost,styleFortran> createHostCopy() const {
     Array<T,rank,memHost,styleFortran> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
       ret.offsets  [i] = offsets  [i];
@@ -424,7 +424,7 @@ public:
   }
 
 
-  inline Array<T,rank,memDevice,styleFortran> createDeviceCopy() {
+  inline Array<T,rank,memDevice,styleFortran> createDeviceCopy() const {
     Array<T,rank,memDevice,styleFortran> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
       ret.offsets  [i] = offsets  [i];
@@ -605,31 +605,15 @@ public:
     #ifdef ARRAY_DEBUG
       os << "For Array labeled: " << v.myname << "\n";
     #endif
-    os << "Number of Dimensions: " << v.rank << "\n";
+    os << "Number of Dimensions: " << rank << "\n";
     os << "Total Number of Elements: " << v.totElems() << "\n";
     os << "Dimension Sizes: ";
-    for (int i=0; i<v.rank; i++) {
+    for (int i=0; i<rank; i++) {
       os << v.dimension[i] << ", ";
     }
     os << "\n";
-    if (v.rank == 1) {
-      for (int i=v.lbound[0]; i<v.lbound[0]+v.dimension[0]; i++) {
-        os << std::setw(12) << v(i) << "\n";
-      }
-    } else if (v.rank == 2) {
-      for (int j=v.lbound[1]; j<v.lbound[1]+v.dimension[1]; j++) {
-        for (int i=v.lbound[0]; i<v.lbound[0]+v.dimension[0]; i++) {
-          os << std::setw(12) << v(i,j) << " ";
-        }
-        os << "\n";
-      }
-    } else if (v.rank == 0) {
-      os << "Empty Array\n\n";
-    } else {
-      for (size_t i=0; i<v.totElems(); i++) {
-        os << v.myData[i] << " ";
-      }
-      os << "\n";
+    for (size_t i=0; i<v.totElems(); i++) {
+      os << v.myData[i] << " ";
     }
     os << "\n";
     return os;

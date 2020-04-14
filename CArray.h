@@ -348,7 +348,7 @@ public:
   }
 
 
-  inline Array<T,rank,memHost,styleC> createHostCopy() {
+  inline Array<T,rank,memHost,styleC> createHostCopy() const {
     Array<T,rank,memHost,styleC> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
       ret.offsets  [i] = offsets  [i];
@@ -375,7 +375,7 @@ public:
   }
 
 
-  inline Array<T,rank,memDevice,styleC> createDeviceCopy() {
+  inline Array<T,rank,memDevice,styleC> createDeviceCopy() const {
     Array<T,rank,memDevice,styleC> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
       ret.offsets  [i] = offsets  [i];
@@ -544,25 +544,9 @@ public:
       os << v.dimension[i] << ", ";
     }
     os << "\n";
-    // if (rank == 1) {
-    //   for (size_t i=0; i<v.dimension[0]; i++) {
-    //     os << std::setw(12) << v(i) << "\n";
-    //   }
-    // } else if (rank == 2) {
-    //   for (size_t j=0; j<v.dimension[1]; j++) {
-    //     for (size_t i=0; i<v.dimension[0]; i++) {
-    //       os << std::setw(12) << v(i,j) << " ";
-    //     }
-    //     os << "\n";
-    //   }
-    // } else if (rank == 0) {
-    //   os << "Empty Array\n\n";
-    // } else {
-      for (size_t i=0; i<v.totElems(); i++) {
-        os << v.myData[i] << " ";
-      }
-      os << "\n";
-    // }
+    for (size_t i=0; i<v.totElems(); i++) {
+      os << v.myData[i] << " ";
+    }
     os << "\n";
     return os;
   }
