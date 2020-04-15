@@ -189,7 +189,7 @@ YAKL_INLINE constexpr unsigned nextPowerOfTwo(unsigned n) {
 ///////////////////////////////////////////////////////////////////////////////////////
 template<unsigned SIZE, typename T=double> class FFT {
   static unsigned constexpr N = nextPowerOfTwo(SIZE)/2;
-  static_assert(SIZE-nextPowerOfTwo(SIZE) == 0,"ERROR: Running GFFT with a non-power-of-two-size");
+  static_assert(SIZE-nextPowerOfTwo(SIZE) == 0,"ERROR: Running FFT with a non-power-of-two-size");
   YAKL_INLINE void forwardComplex(T* data) const {
     scramble(data,N);
     DanielsonLanczos<N,T>::apply(data);

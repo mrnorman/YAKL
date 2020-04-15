@@ -11,7 +11,7 @@
 #include "BuddyAllocator.h"
 #include "stdlib.h"
 
-#ifdef ARRAY_DEBUG
+#ifdef YAKL_DEBUG
 #include <stdexcept>
 #include <sstream>
 #include <string>

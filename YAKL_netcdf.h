@@ -79,11 +79,9 @@ namespace yakl {
         if ( var.getType() != getType<T>() ) { throw "Existing variable's type != array's type"; }
         auto varDims = var.getDims();
         if (varDims.size() != rank) { throw "Existing variable's rank != array's rank"; }
-        for (int i=0; i < varDims.size(); i++) {
-          if (varDims[i].getSize() != arr.dimension[i]) {
-            throw "Existing variable's dimension sizes are not the same as the array's";
-          }
-        }
+        int dimSizes[rank];
+        for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[i].getSize(); }
+        arr = Array<T,rank,myMem,myStyle>(varName,);
       } else { throw "Variable does not exist"; }
 
       if (myMem == memDevice) {
