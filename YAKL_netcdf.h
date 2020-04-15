@@ -72,16 +72,27 @@ namespace yakl {
 
 
     template <class T, int rank, int myMem, int myStyle>
-    void read(Array<T,rank,myMem,myStyle> const &arr , std::string varName) {
+    void read(Array<T,rank,myMem,myStyle> &arr , std::string varName) {
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
       if ( ! var.isNull() ) {
         if ( var.getType() != getType<T>() ) { throw "Existing variable's type != array's type"; }
         auto varDims = var.getDims();
         if (varDims.size() != rank) { throw "Existing variable's rank != array's rank"; }
-        int dimSizes[rank];
+        std::vector<int> dimSizes(rank);
         for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[i].getSize(); }
-        arr = Array<T,rank,myMem,myStyle>(varName,);
+        bool createArr = ! arr.initialized();
+        if (arr.initialized()) {
+          for (int i=0; i < dimSizes.size(); i++) {
+            if (dimSizes[i] != arr.dimension[i]) {
+              #ifdef YAKL_DEBUG
+                std::cout << "WARNING: Array dims wrong size; deallocating previous array and allocating a new one\n";
+              #endif
+              createArr = true;
+            }
+          }
+        }
+        if (createArr) { arr = Array<T,rank,myMem,myStyle>(varName.c_str(),dimSizes); }
       } else { throw "Variable does not exist"; }
 
       if (myMem == memDevice) {
@@ -108,6 +119,7 @@ namespace yakl {
       else if ( std::is_same<T,std::string   >::value ) { return ncString; }
       else { throw "Invalid type"; }
     }
+
   };
 
 

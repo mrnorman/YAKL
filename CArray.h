@@ -41,59 +41,75 @@ public:
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   Array(char const * label, size_t const d1) {
     #ifdef YAKL_DEBUG
-      if( rank == 1 ) { throw "ERROR: Calling invalid constructor on rank 1 Array"; }
+      if( rank != 1 ) { throw "ERROR: Calling invalid constructor on rank 1 Array"; }
     #endif
     nullify();
     setup(label,d1);
   }
   Array(char const * label, size_t const d1, size_t const d2) {
     #ifdef YAKL_DEBUG
-      if( rank == 2 ) { throw "ERROR: Calling invalid constructor on rank 2 Array"; }
+      if( rank != 2 ) { throw "ERROR: Calling invalid constructor on rank 2 Array"; }
     #endif
     nullify();
     setup(label,d1,d2);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3) {
     #ifdef YAKL_DEBUG
-      if( rank == 3 ) { throw "ERROR: Calling invalid constructor on rank 3 Array"; }
+      if( rank != 3 ) { throw "ERROR: Calling invalid constructor on rank 3 Array"; }
     #endif
     nullify();
     setup(label,d1,d2,d3);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
     #ifdef YAKL_DEBUG
-      if( rank == 4 ) { throw "ERROR: Calling invalid constructor on rank 4 Array"; }
+      if( rank != 4 ) { throw "ERROR: Calling invalid constructor on rank 4 Array"; }
     #endif
     nullify();
     setup(label,d1,d2,d3,d4);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
     #ifdef YAKL_DEBUG
-      if( rank == 5 ) { throw "ERROR: Calling invalid constructor on rank 5 Array"; }
+      if( rank != 5 ) { throw "ERROR: Calling invalid constructor on rank 5 Array"; }
     #endif
     nullify();
     setup(label,d1,d2,d3,d4,d5);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
     #ifdef YAKL_DEBUG
-      if( rank == 6 ) { throw "ERROR: Calling invalid constructor on rank 6 Array"; }
+      if( rank != 6 ) { throw "ERROR: Calling invalid constructor on rank 6 Array"; }
     #endif
     nullify();
     setup(label,d1,d2,d3,d4,d5,d6);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
     #ifdef YAKL_DEBUG
-      if( rank == 7 ) { throw "ERROR: Calling invalid constructor on rank 7 Array"; }
+      if( rank != 7 ) { throw "ERROR: Calling invalid constructor on rank 7 Array"; }
     #endif
     nullify();
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
   Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
     #ifdef YAKL_DEBUG
-      if( rank == 8 ) { throw "ERROR: Calling invalid constructor on rank 8 Array"; }
+      if( rank != 8 ) { throw "ERROR: Calling invalid constructor on rank 8 Array"; }
     #endif
     nullify();
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
+  }
+  template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
+  Array(char const * label, std::vector<INT> const dims) {
+    #ifdef YAKL_DEBUG
+      if ( dims.size() <= rank ) { throw "ERROR: dims < rank"; }
+      if ( rank < 1 || rank > 8 ) { throw "ERROR: Invalid rank, must be between 1 and 8"; }
+    #endif
+    nullify();
+         if ( rank == 1 ) { setup(label,dims[0]); }
+    else if ( rank == 2 ) { setup(label,dims[0],dims[1]); }
+    else if ( rank == 3 ) { setup(label,dims[0],dims[1],dims[2]); }
+    else if ( rank == 4 ) { setup(label,dims[0],dims[1],dims[2],dims[3]); }
+    else if ( rank == 5 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4]); }
+    else if ( rank == 6 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]); }
+    else if ( rank == 7 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6]); }
+    else if ( rank == 8 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],dims[7]); }
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +117,7 @@ public:
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   Array(char const * label, T * data, size_t const d1) {
     #ifdef YAKL_DEBUG
-      if ( rank == 1 ) { throw "ERROR: Calling invalid constructor on rank 1 Array"; }
+      if ( rank != 1 ) { throw "ERROR: Calling invalid constructor on rank 1 Array"; }
     #endif
     nullify();
     owned = false;
@@ -110,7 +126,7 @@ public:
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2) {
     #ifdef YAKL_DEBUG
-      if ( rank == 2 ) { throw "ERROR: Calling invalid constructor on rank 2 Array"; }
+      if ( rank != 2 ) { throw "ERROR: Calling invalid constructor on rank 2 Array"; }
     #endif
     nullify();
     owned = false;
@@ -119,7 +135,7 @@ public:
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3) {
     #ifdef YAKL_DEBUG
-      if ( rank == 3 ) { throw "ERROR: Calling invalid constructor on rank 3 Array"; }
+      if ( rank != 3 ) { throw "ERROR: Calling invalid constructor on rank 3 Array"; }
     #endif
     nullify();
     owned = false;
@@ -128,7 +144,7 @@ public:
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
     #ifdef YAKL_DEBUG
-      if ( rank == 4 ) { throw "ERROR: Calling invalid constructor on rank 4 Array"; }
+      if ( rank != 4 ) { throw "ERROR: Calling invalid constructor on rank 4 Array"; }
     #endif
     nullify();
     owned = false;
@@ -137,7 +153,7 @@ public:
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
     #ifdef YAKL_DEBUG
-      if ( rank == 5 ) { throw "ERROR: Calling invalid constructor on rank 5 Array"; }
+      if ( rank != 5 ) { throw "ERROR: Calling invalid constructor on rank 5 Array"; }
     #endif
     nullify();
     owned = false;
@@ -146,7 +162,7 @@ public:
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
     #ifdef YAKL_DEBUG
-      if ( rank == 6 ) { throw "ERROR: Calling invalid constructor on rank 6 Array"; }
+      if ( rank != 6 ) { throw "ERROR: Calling invalid constructor on rank 6 Array"; }
     #endif
     nullify();
     owned = false;
@@ -155,7 +171,7 @@ public:
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
     #ifdef YAKL_DEBUG
-      if ( rank == 7 ) { throw "ERROR: Calling invalid constructor on rank 7 Array"; }
+      if ( rank != 7 ) { throw "ERROR: Calling invalid constructor on rank 7 Array"; }
     #endif
     nullify();
     owned = false;
@@ -164,11 +180,29 @@ public:
   }
   Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
     #ifdef YAKL_DEBUG
-      if ( rank == 8 ) { throw "ERROR: Calling invalid constructor on rank 8 Array"; }
+      if ( rank != 8 ) { throw "ERROR: Calling invalid constructor on rank 8 Array"; }
     #endif
     nullify();
     owned = false;
     setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
+    myData = data;
+  }
+  template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
+  Array(char const * label, T * data, std::vector<INT> const dims) {
+    #ifdef YAKL_DEBUG
+      if ( dims.size() <= rank ) { throw "ERROR: dims < rank"; }
+      if ( rank < 1 || rank > 8 ) { throw "ERROR: Invalid rank, must be between 1 and 8"; }
+    #endif
+    nullify();
+    owned = false;
+         if ( rank == 1 ) { setup(label,dims[0]); }
+    else if ( rank == 2 ) { setup(label,dims[0],dims[1]); }
+    else if ( rank == 3 ) { setup(label,dims[0],dims[1],dims[2]); }
+    else if ( rank == 4 ) { setup(label,dims[0],dims[1],dims[2],dims[3]); }
+    else if ( rank == 5 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4]); }
+    else if ( rank == 6 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]); }
+    else if ( rank == 7 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6]); }
+    else if ( rank == 8 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],dims[7]); }
     myData = data;
   }
 
@@ -274,7 +308,7 @@ public:
   */
   YAKL_INLINE T &operator()(size_t const i0) const {
     #ifdef YAKL_DEBUG
-      if ( rank == 1 ) { throw "ERROR: Calling invalid function on rank 1 Array"; }
+      if ( rank != 1 ) { throw "ERROR: Calling invalid function on rank 1 Array"; }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
     #endif
     size_t ind = i0;
@@ -282,7 +316,7 @@ public:
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1) const {
     #ifdef YAKL_DEBUG
-      if ( rank == 2 ) { throw "ERROR: Calling invalid function on rank 2 Array"; }
+      if ( rank != 2 ) { throw "ERROR: Calling invalid function on rank 2 Array"; }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
     #endif
@@ -291,7 +325,7 @@ public:
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2) const {
     #ifdef YAKL_DEBUG
-      if ( rank == 3 ) { throw "ERROR: Calling invalid function on rank 3 Array"; }
+      if ( rank != 3 ) { throw "ERROR: Calling invalid function on rank 3 Array"; }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -301,7 +335,7 @@ public:
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3) const {
     #ifdef YAKL_DEBUG
-      if ( rank == 4 ) { throw "ERROR: Calling invalid function on rank 4 Array"; }
+      if ( rank != 4 ) { throw "ERROR: Calling invalid function on rank 4 Array"; }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -312,7 +346,7 @@ public:
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4) const {
     #ifdef YAKL_DEBUG
-      if ( rank == 5 ) { throw "ERROR: Calling invalid function on rank 5 Array"; }
+      if ( rank != 5 ) { throw "ERROR: Calling invalid function on rank 5 Array"; }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -324,7 +358,7 @@ public:
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5) const {
     #ifdef YAKL_DEBUG
-      if ( rank == 6 ) { throw "ERROR: Calling invalid function on rank 6 Array"; }
+      if ( rank != 6 ) { throw "ERROR: Calling invalid function on rank 6 Array"; }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -337,7 +371,7 @@ public:
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6) const {
     #ifdef YAKL_DEBUG
-      if ( rank == 7 ) { throw "ERROR: Calling invalid function on rank 7 Array"; }
+      if ( rank != 7 ) { throw "ERROR: Calling invalid function on rank 7 Array"; }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -351,7 +385,7 @@ public:
   }
   YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6, size_t const i7) const {
     #ifdef YAKL_DEBUG
-      if ( rank == 8 ) { throw "ERROR: Calling invalid function on rank 8 Array"; }
+      if ( rank != 8 ) { throw "ERROR: Calling invalid function on rank 8 Array"; }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
@@ -369,7 +403,9 @@ public:
   inline void check_index(int const dim, long const ind, long const lb, long const ub, char const *file, int const line) const {
     if (ind < lb || ind > ub) {
       std::stringstream ss;
-      ss << "For Array labeled: " << myname << "\n";
+      #ifdef YAKL_DEBUG
+        ss << "For Array labeled: " << myname << "\n";
+      #endif
       ss << "Index " << dim << " of " << rank << " out of bounds\n";
       ss << "File, Line: " << file << ", " << line << "\n";
       ss << "Index: " << ind << ". Bounds: (" << lb << "," << ub << ")\n";

@@ -8,6 +8,7 @@
 #include <limits>
 #include <cmath>
 #include <cstring>
+#include <vector>
 #include "BuddyAllocator.h"
 #include "stdlib.h"
 
