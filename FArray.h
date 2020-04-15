@@ -720,12 +720,13 @@ public:
   }
 
 
-protected:
   // This is stuff the user has no business messing with
 
   int *refCount; // Pointer shared by multiple copies of this Array to keep track of allcation / free
 
   inline void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
+    static_assert( myMem == memDevice || myMem == memHost ,
+                  "Error: memory space must be yakl::memDevice or yakl::MemHost" );
     #ifdef YAKL_DEBUG
       myname = std::string(label);
     #endif
@@ -753,12 +754,19 @@ protected:
   // This is *only* called from a constructor, so no need to test for existing refCount or myData
   inline void allocate() {
     if (owned) {
+      static_assert( std::is_arithmetic<T>() || myMem == memHost , 
+                     "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
       refCount = new int;
       *refCount = 1;
       if (myMem == memDevice) {
         myData = (T *) yaklAllocDevice( totElems()*sizeof(T) );
       } else {
-        myData = (T *) yaklAllocHost  ( totElems()*sizeof(T) );
+        #ifdef YAKL_DEBUG
+          if ( ! std::is_arithmetic<T>() ) {
+            std::cout << "WARNING: You are creating an Array of a non-arithmetic type, and that can be dangerous.\n";
+          }
+        #endif
+        myData = new T[totElems()];
       }
     }
   }
@@ -775,7 +783,7 @@ protected:
           if (myMem == memDevice) {
             yaklFreeDevice(myData);
           } else {
-            yaklFreeHost  (myData);
+            delete[] myData;
           }
           myData = nullptr;
         }

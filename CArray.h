@@ -620,7 +620,6 @@ public:
   }
 
 
-protected:
   // This is stuff the user has no business messing with
 
   int *refCount; // Pointer shared by multiple copies of this Array to keep track of allcation / free

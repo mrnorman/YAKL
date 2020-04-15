@@ -21,16 +21,25 @@ namespace yakl {
   public:
 
     SimpleNetCDF() {};
-    SimpleNetCDF(std::string fname) { open(fname); };
-    SimpleNetCDF(std::string fname , NcFile::FileMode mode) { open(fname,mode); };
     ~SimpleNetCDF() { close(); }
 
 
-    void open  (std::string fname , NcFile::FileMode mode=NcFile::read) { file.open(fname,mode); }
+    void open  (std::string fname , NcFile::FileMode mode=NcFile::read   ) { file.open(fname,mode); }
+
 
     void create(std::string fname , NcFile::FileMode mode=NcFile::replace) { file.open(fname,mode); }
 
+
     void close() { file.close(); }
+
+
+    bool varExists( std::string varName ) { return ! file.getVar(varName).isNull(); }
+
+
+    bool dimExists( std::string dimName ) { return ! file.getDim(dimName).isNull(); }
+
+
+    int getDimSize( std::string dimName ) { return file.getDim(dimName).getSize(); }
 
 
     template <class T, int rank, int myMem, int myStyle>
@@ -76,7 +85,7 @@ namespace yakl {
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
       if ( ! var.isNull() ) {
-        if ( var.getType() != getType<T>() ) { throw "Existing variable's type != array's type"; }
+        // if ( var.getType() != getType<T>() ) { throw "Existing variable's type != array's type"; }
         auto varDims = var.getDims();
         if (varDims.size() != rank) { throw "Existing variable's rank != array's rank"; }
         std::vector<int> dimSizes(rank);
