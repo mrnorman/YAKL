@@ -21,15 +21,18 @@
 #ifdef __USE_CUDA__
   #define YAKL_LAMBDA [=] __device__
   #define YAKL_INLINE inline __host__ __device__
+  #define YAKL_DEVICE inline __device__
   #include <cub/cub.cuh>
 #elif defined(__USE_HIP__)
   #define YAKL_LAMBDA [=] __host__ __device__
   #define YAKL_INLINE inline __host__ __device__
+  #define YAKL_DEVICE inline __device__
   #include "hip/hip_runtime.h"
   #include <hipcub/hipcub.hpp>
 #else
   #define YAKL_LAMBDA [&]
   #define YAKL_INLINE inline
+  #define YAKL_DEVICE inline
 #endif
 
 #ifdef _OPENMP45
@@ -157,6 +160,9 @@ template <class T> YAKL_INLINE constexpr T abs(T a) { return a>0? a : -a; }
 
 
 #include "Array.h"
+
+
+#include "ScalarLiveOut.h"
 
 
 template <class T, int rank, int myMem, int myStyle> void memset( Array<T,rank,myMem,myStyle> &arr , T val ) {
