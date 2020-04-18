@@ -8,10 +8,10 @@ using namespace netCDF;
 
 namespace yakl {
 
-  NcFile::FileMode constexpr MODE_READ    = NcFile::read;
-  NcFile::FileMode constexpr MODE_WRITE   = NcFile::write;
-  NcFile::FileMode constexpr MODE_REPLACE = NcFile::replace;
-  NcFile::FileMode constexpr MODE_NEW     = NcFile::newFile;
+  NcFile::FileMode constexpr NETCDF_MODE_READ    = NcFile::read;
+  NcFile::FileMode constexpr NETCDF_MODE_WRITE   = NcFile::write;
+  NcFile::FileMode constexpr NETCDF_MODE_REPLACE = NcFile::replace;
+  NcFile::FileMode constexpr NETCDF_MODE_NEW     = NcFile::newFile;
 
   class SimpleNetCDF {
   protected:
