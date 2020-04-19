@@ -3,29 +3,29 @@
 
 namespace fortran {
 
-  template <class T> YAKL_INLINE int  size(T &arr, int dim) { return arr.get_dimensions()(dim); }
-  template <class T> YAKL_INLINE int  size(T &arr) { return arr.totElems(); }
-  template <class T> YAKL_INLINE auto shape(T &arr) { return arr.get_dimensions(); }
-  template <class T> YAKL_INLINE bool allocated (T &arr) { return arr.myData != nullptr; }
-  template <class T> YAKL_INLINE bool associated (T &arr) { return arr.myData != nullptr; }
-  template <class T> YAKL_INLINE int  lbound (T &arr, int dim) { return arr.get_lbounds()(dim); }
-  template <class T> YAKL_INLINE auto lbound (T &arr) { return arr.get_lbounds(); }
-  template <class T> YAKL_INLINE int  ubound (T &arr, int dim) { return arr.get_ubounds()(dim); }
-  template <class T> YAKL_INLINE auto ubound (T &arr) { return arr.get_ubounds(); }
+  template <class T> YAKL_INLINE int  size(T const &arr, int dim) { return arr.get_dimensions()(dim); }
+  template <class T> YAKL_INLINE int  size(T const &arr) { return arr.totElems(); }
+  template <class T> YAKL_INLINE auto shape(T const &arr) { return arr.get_dimensions(); }
+  template <class T> YAKL_INLINE bool allocated (T const &arr) { return arr.myData != nullptr; }
+  template <class T> YAKL_INLINE bool associated (T const &arr) { return arr.myData != nullptr; }
+  template <class T> YAKL_INLINE int  lbound (T const &arr, int dim) { return arr.get_lbounds()(dim); }
+  template <class T> YAKL_INLINE auto lbound (T const &arr) { return arr.get_lbounds(); }
+  template <class T> YAKL_INLINE int  ubound (T const &arr, int dim) { return arr.get_ubounds()(dim); }
+  template <class T> YAKL_INLINE auto ubound (T const &arr) { return arr.get_ubounds(); }
 
 
 
   template <class T> YAKL_INLINE T constexpr epsilon(T) { return std::numeric_limits<T>::epsilon(); }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T constexpr epsilon(Array<T,rank,myMem,myStyle> &arr) { return std::numeric_limits<T>::epsilon(); }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T constexpr epsilon(FSArray<T,rank,D0,D1,D2,D3> &arr) { return std::numeric_limits<T>::epsilon(); }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T constexpr epsilon(Array<T,rank,myMem,myStyle> const &arr) { return std::numeric_limits<T>::epsilon(); }
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T constexpr epsilon(FSArray<T,rank,D0,D1,D2,D3> const &arr) { return std::numeric_limits<T>::epsilon(); }
 
   template <class T> YAKL_INLINE T constexpr tiny(T) { return std::numeric_limits<T>::min(); }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T constexpr tiny(Array<T,rank,myMem,myStyle> &arr) { return std::numeric_limits<T>::min(); }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T constexpr tiny(FSArray<T,rank,D0,D1,D2,D3> &arr) { return std::numeric_limits<T>::min(); }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T constexpr tiny(Array<T,rank,myMem,myStyle> const &arr) { return std::numeric_limits<T>::min(); }
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T constexpr tiny(FSArray<T,rank,D0,D1,D2,D3> const &arr) { return std::numeric_limits<T>::min(); }
 
   template <class T> YAKL_INLINE T constexpr huge(T) { return std::numeric_limits<T>::max(); }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T constexpr huge(Array<T,rank,myMem,myStyle> &arr) { return std::numeric_limits<T>::max(); }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T constexpr huge(FSArray<T,rank,D0,D1,D2,D3> &arr) { return std::numeric_limits<T>::max(); }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T constexpr huge(Array<T,rank,myMem,myStyle> const &arr) { return std::numeric_limits<T>::max(); }
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T constexpr huge(FSArray<T,rank,D0,D1,D2,D3> const &arr) { return std::numeric_limits<T>::max(); }
 
 
 
@@ -34,25 +34,25 @@ namespace fortran {
 
 
 
-  template <class T> YAKL_INLINE T merge(T t, T f, bool cond) { return cond ? t : f; }
+  template <class T> YAKL_INLINE T merge(T const t, T const f, bool cond) { return cond ? t : f; }
 
 
 
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T minval( Array<T,rank,myMem,myStyle> &arr ) {
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T minval( Array<T,rank,myMem,myStyle> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] < m) { m = arr.myData[i]; }
     }
     return m;
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T minval( FSArray<T,rank,D0,D1,D2,D3> &arr ) {
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T minval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] < m) { m = arr.myData[i]; }
     }
     return m;
   }
-  template <class T, int myMem, int myStyle> YAKL_INLINE int minloc( Array<T,1,myMem,myStyle> &arr ) {
+  template <class T, int myMem, int myStyle> YAKL_INLINE int minloc( Array<T,1,myMem,myStyle> const &arr ) {
     T m = arr.myData[0];
     int loc = lbound(arr,1);
     for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
@@ -63,7 +63,7 @@ namespace fortran {
     }
     return loc;
   }
-  template <class T, int rank, class D0> YAKL_INLINE int minloc( FSArray<T,rank,D0> &arr ) {
+  template <class T, int rank, class D0> YAKL_INLINE int minloc( FSArray<T,rank,D0> const &arr ) {
     T m = arr.myData[0];
     int loc = lbound(arr,1);
     for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
@@ -77,21 +77,21 @@ namespace fortran {
 
 
 
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T maxval( Array<T,rank,myMem,myStyle> &arr ) {
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T maxval( Array<T,rank,myMem,myStyle> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] > m) { m = arr.myData[i]; }
     }
     return m;
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T maxval( FSArray<T,rank,D0,D1,D2,D3> &arr ) {
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T maxval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] > m) { m = arr.myData[i]; }
     }
     return m;
   }
-  template <class T, int myMem, int myStyle> YAKL_INLINE int maxloc( Array<T,1,myMem,myStyle> &arr ) {
+  template <class T, int myMem, int myStyle> YAKL_INLINE int maxloc( Array<T,1,myMem,myStyle> const &arr ) {
     T m = arr.myData[0];
     int loc = lbound(arr,1);
     for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
@@ -102,7 +102,7 @@ namespace fortran {
     }
     return loc;
   }
-  template <class T, int rank, class D0> YAKL_INLINE int maxloc( FSArray<T,rank,D0> &arr ) {
+  template <class T, int rank, class D0> YAKL_INLINE int maxloc( FSArray<T,rank,D0> const &arr ) {
     T m = arr.myData[0];
     int loc = lbound(arr,1);
     for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
@@ -116,12 +116,12 @@ namespace fortran {
 
 
 
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T sum( Array<T,rank,myMem,myStyle> &arr ) {
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T sum( Array<T,rank,myMem,myStyle> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
     return m;
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T sum( FSArray<T,rank,D0,D1,D2,D3> &arr ) {
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T sum( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
     return m;
@@ -129,12 +129,12 @@ namespace fortran {
 
 
 
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T product( Array<T,rank,myMem,myStyle> &arr ) {
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T product( Array<T,rank,myMem,myStyle> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m *= arr.myData[i]; }
     return m;
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T product( FSArray<T,rank,D0,D1,D2,D3> &arr ) {
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T product( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m *= arr.myData[i]; }
     return m;
@@ -142,60 +142,60 @@ namespace fortran {
 
 
 
-  template <class F, class T, int rank, int myMem, int myStyle> YAKL_INLINE bool any( Array<T,rank,myMem,myStyle> &arr , F const &f , T val ) {
+  template <class F, class T, int rank, int myMem, int myStyle> YAKL_INLINE bool any( Array<T,rank,myMem,myStyle> const &arr , F const &f , T val ) {
     bool ret = false;
     for (int i=0; i<arr.totElems(); i++) {
       if ( f( arr.myData[i] , val ) ) { ret = true; }
     }
     return ret;
   }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLT ( Array<T,rank,myMem,myStyle> &arr , T val ) {
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLT ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem <  val; };
     return any( arr , test , val );
   }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLTE( Array<T,rank,myMem,myStyle> &arr , T val ) {
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLTE( Array<T,rank,myMem,myStyle> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem <= val; };
     return any( arr , test , val );
   }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGT ( Array<T,rank,myMem,myStyle> &arr , T val ) {
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGT ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem >  val; };
     return any( arr , test , val );
   }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGTE( Array<T,rank,myMem,myStyle> &arr , T val ) {
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGTE( Array<T,rank,myMem,myStyle> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem >= val; };
     return any( arr , test , val );
   }
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyEQ ( Array<T,rank,myMem,myStyle> &arr , T val ) {
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyEQ ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem == val; };
     return any( arr , test , val );
   }
 
 
 
-  template <class F, class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool any( FSArray<T,rank,D0,D1,D2,D3> &arr , F const &f , T val ) {
+  template <class F, class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool any( FSArray<T,rank,D0,D1,D2,D3> const &arr , F const &f , T val ) {
     bool ret = false;
     for (int i=0; i<arr.totElems(); i++) {
       if ( f( arr.myData[i] , val ) ) { ret = true; }
     }
     return ret;
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLT ( FSArray<T,rank,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLT ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem <  val; };
     return any( arr , test , val );
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLTE( FSArray<T,rank,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem <= val; };
     return any( arr , test , val );
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGT ( FSArray<T,rank,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGT ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem >  val; };
     return any( arr , test , val );
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGTE( FSArray<T,rank,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem >= val; };
     return any( arr , test , val );
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyEQ ( FSArray<T,rank,D0,D1,D2,D3> &arr , T val ) {
+  template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyEQ ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem == val; };
     return any( arr , test , val );
   }
@@ -232,7 +232,7 @@ namespace fortran {
 
 
 
-  template <class T, int rank, int myStyle> inline int count( Array<bool,rank,memHost,myStyle> &mask ) {
+  template <class T, int rank, int myStyle> inline int count( Array<bool,rank,memHost,myStyle> const &mask ) {
     int numTrue = 0;
     for (int i=0; i < mask.totElems(); i++) {
       if (mask.myData[i]) { numTrue++; }
@@ -242,7 +242,9 @@ namespace fortran {
 
 
 
-  template <class T, int rank, int myStyle> inline Array<T,1,memHost,myStyle> pack( Array<T,rank,memHost,myStyle> &arr , Array<bool,rank,memHost,myStyle> &mask=Array<bool,rank,memHost,myStyle>() ) {
+  template <class T, int rank, int myStyle> inline Array<T,1,memHost,myStyle> pack( Array<T,rank,memHost,myStyle> const &arr ,
+                                                                                    Array<bool,rank,memHost,myStyle> const &mask = 
+                                                                                                Array<bool,rank,memHost,myStyle>() ) {
     if (allocated(mask)) {
       if (mask.totElems() != arr.totElems()) {
         throw "Error: pack: arr and mask have a different number of elements";
