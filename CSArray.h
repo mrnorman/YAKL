@@ -64,6 +64,11 @@ public :
     return myData[i0*OFF0 + i1*OFF1 + i2*OFF2 + i3];
   }
 
+
+  template <class TLOC=T , typename std::enable_if< std::is_arithmetic<T>::value && std::is_scalar<T>::value , int >::type = 0 >
+  YAKL_INLINE void operator= (TLOC val) { for (int i=0 ; i < totElems() ; i++) { myData[i] = val; } }
+
+
   YAKL_INLINE T *data() {
     return myData;
   }
