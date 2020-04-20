@@ -1,5 +1,5 @@
 # YAKL: Yet Another Kernel Launcher
-## A C++ Kernel Launcher for Performance Portability and Fortran Code Porting
+## A Simple C++ Framework for Performance Portability and Fortran Code Porting
 
 **YAKL is still a work in progress. The API is still in flux. Currently this only supports the E3SM-MMF Exascale Computing Project (ECP) application. It is not intended to compete with the more functional frameworks like Kokkos and RAJA. YAKL will likely require more functionality and hardening of corner-cases and bugs before it's useful for general projects. YAKL does, however, have a strong niche application for porting Fortran codes into a C++ portability framework.**
 
