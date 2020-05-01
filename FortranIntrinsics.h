@@ -232,7 +232,7 @@ namespace fortran {
 
 
 
-  template <class T, int rank, int myStyle> inline int count( Array<bool,rank,memHost,myStyle> const &mask ) {
+  template <int rank, int myStyle> inline int count( Array<bool,rank,memHost,myStyle> const &mask ) {
     int numTrue = 0;
     for (int i=0; i < mask.totElems(); i++) {
       if (mask.myData[i]) { numTrue++; }

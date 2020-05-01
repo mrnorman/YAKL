@@ -114,6 +114,22 @@ namespace yakl {
     }
 
 
+    template <class T> void read(T &arr , std::string varName) {
+      auto var = file.getVar(varName);
+      if ( var.isNull() ) { throw "Variable does not exist"; }
+      var.getVar(&arr);
+    }
+
+
+    template <class T> void write(T arr , std::string varName) {
+      auto var = file.getVar(varName);
+      if ( var.isNull() ) {
+        var = file.addVar( varName , getType<T>() );
+      }
+      var.putVar(&arr);
+    }
+
+
     template <class T> NcType getType() {
            if ( std::is_same<T,          char>::value ) { return ncChar;   }
       else if ( std::is_same<T,unsigned  char>::value ) { return ncUbyte;  }

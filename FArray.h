@@ -558,7 +558,7 @@ public:
   }
 
 
-  inline void deep_copy_to(Array<T,rank,memHost,styleFortran> lhs) {
+  inline void deep_copy_to(Array<T,rank,memHost,styleFortran> lhs) const {
     if (myMem == memHost) {
       for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
     } else {
@@ -573,7 +573,7 @@ public:
   }
 
 
-  inline void deep_copy_to(Array<T,rank,memDevice,styleFortran> lhs) {
+  inline void deep_copy_to(Array<T,rank,memDevice,styleFortran> lhs) const {
     if (myMem == memHost) {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),cudaMemcpyHostToDevice,0);
