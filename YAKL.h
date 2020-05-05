@@ -46,6 +46,14 @@
 
 namespace yakl {
 
+  template <class T> inline void yakl_throw(T &exc) {
+    std::cout << "YAKL FATAL ERROR:\n";
+    if (std::is_same<T,std::string>::value) {
+      std::cout << exc << "\n" << std::endl;
+    }
+    throw exc;
+  }
+
   // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
@@ -111,6 +119,7 @@ namespace yakl {
   class Bnd {
   public:
     int l, u;
+    Bnd(                  ) { l = 1   ; u = 1   ; }
     Bnd(          int u_in) { l = 1   ; u = u_in; }
     Bnd(int l_in, int u_in) { l = l_in; u = u_in; }
   };

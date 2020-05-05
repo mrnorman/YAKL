@@ -291,7 +291,7 @@ namespace fortran {
                                                                                                 Array<bool,rank,memHost,myStyle>() ) {
     if (allocated(mask)) {
       if (mask.totElems() != arr.totElems()) {
-        throw "Error: pack: arr and mask have a different number of elements";
+        yakl_throw("Error: pack: arr and mask have a different number of elements");
       }
       // count the number of true elements
       int numTrue = count( mask );

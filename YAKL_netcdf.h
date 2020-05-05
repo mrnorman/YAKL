@@ -42,9 +42,8 @@ namespace yakl {
     int getDimSize( std::string dimName ) { return file.getDim(dimName).getSize(); }
 
 
-    template <class T, int rank, int myMem, int myStyle>
-    void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
-      if (rank != dimNames.size()) { throw "dimNames.size() != Array's rank"; }
+    template <class T, int rank, int myMem, int myStyle> void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
+      if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
       std::vector<NcDim> dims(rank);
       // Make sure the dimensions are in there and are the right sizes
       for (int i=0; i<rank; i++) {
@@ -53,7 +52,7 @@ namespace yakl {
         if ( dimLoc.isNull() ) {
           dims[i] = file.addDim( dimNames[i] , arr.dimension[i] );
         } else {
-          if (dimLoc.getSize() != arr.dimension[i]) { throw("dimension size differs from the file"); }
+          if (dimLoc.getSize() != arr.dimension[i]) { yakl_throw("dimension size differs from the file"); }
           dims[i] = dimLoc;
         }
       }
@@ -62,12 +61,12 @@ namespace yakl {
       if ( var.isNull() ) {
         var = file.addVar( varName , getType<T>() , dims );
       } else {
-        if ( var.getType() != getType<T>() ) { throw "Existing variable's type != array's type"; }
+        if ( var.getType() != getType<T>() ) { yakl_throw("Existing variable's type != array's type"); }
         auto varDims = var.getDims();
-        if (varDims.size() != rank) { throw "Existing variable's rank != array's rank"; }
+        if (varDims.size() != rank) { yakl_throw("Existing variable's rank != array's rank"); }
         for (int i=0; i < varDims.size(); i++) {
           if (varDims[i].getSize() != arr.dimension[i]) {
-            throw "Existing variable's dimension sizes are not the same as the array's";
+            yakl_throw("Existing variable's dimension sizes are not the same as the array's");
           }
         }
       }
@@ -80,16 +79,18 @@ namespace yakl {
     }
 
 
-    template <class T, int rank, int myMem, int myStyle>
-    void read(Array<T,rank,myMem,myStyle> &arr , std::string varName) {
+    template <class T, int rank, int myMem, int myStyle> void read(Array<T,rank,myMem,myStyle> &arr , std::string varName) {
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
+      std::vector<int> dimSizes(rank);
       if ( ! var.isNull() ) {
-        // if ( var.getType() != getType<T>() ) { throw "Existing variable's type != array's type"; }
         auto varDims = var.getDims();
-        if (varDims.size() != rank) { throw "Existing variable's rank != array's rank"; }
-        std::vector<int> dimSizes(rank);
-        for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[i].getSize(); }
+        if (varDims.size() != rank) { yakl_throw("Existing variable's rank != array's rank"); }
+        if (myStyle == styleC) {
+          for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[i].getSize(); }
+        } else if (myStyle == styleFortran) {
+          for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[varDims.size()-1-i].getSize(); }
+        }
         bool createArr = ! arr.initialized();
         if (arr.initialized()) {
           for (int i=0; i < dimSizes.size(); i++) {
@@ -102,21 +103,33 @@ namespace yakl {
           }
         }
         if (createArr) { arr = Array<T,rank,myMem,myStyle>(varName.c_str(),dimSizes); }
-      } else { throw "Variable does not exist"; }
+      } else { yakl_throw("Variable does not exist"); }
 
       if (myMem == memDevice) {
         auto arrHost = arr.createHostCopy();
-        var.getVar(arrHost.data());
+        if (std::is_same<T,bool>::value) {
+          Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
+          var.getVar(tmp.data());
+          for (int i=0; i < arr.totElems(); i++) { arrHost.myData[i] = tmp.myData[i] == 1; }
+        } else {
+          var.getVar(arrHost.data());
+        }
         arrHost.deep_copy_to(arr);
       } else {
-        var.getVar(arr.data());
+        if (std::is_same<T,bool>::value) {
+          Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
+          var.getVar(tmp.data());
+          for (int i=0; i < arr.totElems(); i++) { arr.myData[i] = tmp.myData[i] == 1; }
+        } else {
+          var.getVar(arr.data());
+        }
       }
     }
 
 
     template <class T> void read(T &arr , std::string varName) {
       auto var = file.getVar(varName);
-      if ( var.isNull() ) { throw "Variable does not exist"; }
+      if ( var.isNull() ) { yakl_throw("Variable does not exist"); }
       var.getVar(&arr);
     }
 
@@ -142,7 +155,7 @@ namespace yakl {
       else if ( std::is_same<T,         float>::value ) { return ncFloat;  }
       else if ( std::is_same<T,        double>::value ) { return ncDouble; }
       else if ( std::is_same<T,std::string   >::value ) { return ncString; }
-      else { throw "Invalid type"; }
+      else { yakl_throw("Invalid type"); }
     }
 
   };
