@@ -15,5 +15,4 @@ using FSArray = Array< FSPEC< T , B0 , B1 , B2 , B3 > , rank , memStack , styleF
 
 #include "FArray.h"
 
-#include "FortranIntrinsics.h"
 

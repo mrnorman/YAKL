@@ -142,9 +142,16 @@ namespace fortran {
 
 
 
-  template <class F, class T, int rank, int myMem, int myStyle> YAKL_INLINE bool any( Array<T,rank,myMem,myStyle> const &arr , F const &f , T val ) {
+  template <class F, class T, int rank, int myStyle> YAKL_INLINE bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , F const &f , T val ) {
+    yakl::ScalarLiveOut<bool> ret = false;
+    yakl::c::parallel_for( yakl::c::Bounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( f( arr.myData[i] , val ) ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class F, class T, int rank, int myStyle> YAKL_INLINE bool any( Array<T,rank,yakl::memHost,myStyle> const &arr , F const &f , T val ) {
     bool ret = false;
-    for (int i=0; i<arr.totElems(); i++) {
+    for (int i=0; i < arr.totElems(); i++) {
       if ( f( arr.myData[i] , val ) ) { ret = true; }
     }
     return ret;
@@ -168,6 +175,43 @@ namespace fortran {
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyEQ ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
     auto test = [](T elem , T val)->bool { return elem == val; };
     return any( arr , test , val );
+  }
+
+
+
+  template <class F, class T, int rank, int myStyle> YAKL_INLINE bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , F const &f , T val ) {
+    yakl::ScalarLiveOut<bool> ret = false;
+    yakl::c::parallel_for( yakl::c::Bounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( mask.myData[i] && f( arr.myData[i] , val ) ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class F, class T, int rank, int myStyle> YAKL_INLINE bool any( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , F const &f , T val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( mask.myData[i] && f( arr.myData[i] , val ) ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLT ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
+    auto test = [](T elem , T val)->bool { return elem <  val; };
+    return any( arr , mask , test , val );
+  }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLTE( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
+    auto test = [](T elem , T val)->bool { return elem <= val; };
+    return any( arr , mask , test , val );
+  }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGT ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
+    auto test = [](T elem , T val)->bool { return elem >  val; };
+    return any( arr , mask , test , val );
+  }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGTE( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
+    auto test = [](T elem , T val)->bool { return elem >= val; };
+    return any( arr , mask , test , val );
+  }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyEQ ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
+    auto test = [](T elem , T val)->bool { return elem == val; };
+    return any( arr , mask , test , val );
   }
 
 
