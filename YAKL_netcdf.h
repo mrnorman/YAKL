@@ -33,13 +33,18 @@ namespace yakl {
     void close() { file.close(); }
 
 
-    bool varExists( std::string varName ) { return ! file.getVar(varName).isNull(); }
+    bool varExists( std::string varName ) const { return ! file.getVar(varName).isNull(); }
 
 
-    bool dimExists( std::string dimName ) { return ! file.getDim(dimName).isNull(); }
+    bool dimExists( std::string dimName ) const { return ! file.getDim(dimName).isNull(); }
 
 
-    int getDimSize( std::string dimName ) { return file.getDim(dimName).getSize(); }
+    int getDimSize( std::string dimName ) const { return file.getDim(dimName).getSize(); }
+
+
+    void createDim( std::string dimName , int len ) {
+      file.addDim( dimName , len );
+    }
 
 
     template <class T, int rank, int myMem, int myStyle> void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
@@ -49,11 +54,17 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         auto dimLoc = file.getDim( dimNames[i] );
         // If dimension doesn't exist, create it; otherwise, make sure it's the right size
+        NcDim tmp;
         if ( dimLoc.isNull() ) {
-          dims[i] = file.addDim( dimNames[i] , arr.dimension[i] );
+          tmp = file.addDim( dimNames[i] , arr.dimension[i] );
         } else {
           if (dimLoc.getSize() != arr.dimension[i]) { yakl_throw("dimension size differs from the file"); }
-          dims[i] = dimLoc;
+          tmp = dimLoc;
+        }
+        if (myStyle == styleC) {
+          dims[i] = tmp;
+        } else {
+          dims[rank-1-i] = tmp;
         }
       }
       // Make sure the variable is there and is the right dimension
@@ -143,7 +154,7 @@ namespace yakl {
     }
 
 
-    template <class T> NcType getType() {
+    template <class T> NcType getType() const {
            if ( std::is_same<T,          char>::value ) { return ncChar;   }
       else if ( std::is_same<T,unsigned  char>::value ) { return ncUbyte;  }
       else if ( std::is_same<T,         short>::value ) { return ncShort;  }
