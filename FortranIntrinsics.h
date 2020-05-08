@@ -116,10 +116,14 @@ namespace fortran {
 
 
 
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T sum( Array<T,rank,myMem,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle> YAKL_INLINE T sum( Array<T,rank,memHost,myStyle> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
     return m;
+  }
+  template <class T, int rank, int myStyle> YAKL_INLINE T sum( Array<T,rank,memDevice,myStyle> const &arr ) {
+    ParallelSum<T,memDevice> psum(arr.totElems());
+    return psum( arr.data() );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T sum( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
     T m = arr.myData[0];
@@ -143,7 +147,7 @@ namespace fortran {
 
 
   template <class F, class T, int rank, int myStyle> YAKL_INLINE bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , F const &f , T val ) {
-    yakl::ScalarLiveOut<bool> ret = false;
+    yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::Bounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( f( arr.myData[i] , val ) ) { ret = true; }
     });
@@ -180,7 +184,7 @@ namespace fortran {
 
 
   template <class F, class T, int rank, int myStyle> YAKL_INLINE bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , F const &f , T val ) {
-    yakl::ScalarLiveOut<bool> ret = false;
+    yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::Bounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && f( arr.myData[i] , val ) ) { ret = true; }
     });
@@ -282,6 +286,13 @@ namespace fortran {
       if (mask.myData[i]) { numTrue++; }
     }
     return numTrue;
+  }
+  template <int rank, int myStyle> inline int count( Array<bool,rank,memDevice,myStyle> const &mask ) {
+    yakl::ScalarLiveOut<int> numTrue(0);
+    yakl::c::parallel_for( yakl::c::Bounds<1>( mask.totElems() ) , YAKL_LAMBDA (int i) {
+      if (mask.myData[i]) { yakl::atomicAdd(numTrue(),1); }
+    });
+    return numTrue.hostRead();
   }
 
 

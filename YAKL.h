@@ -48,9 +48,7 @@ namespace yakl {
 
   template <class T> inline void yakl_throw(T &exc) {
     std::cout << "YAKL FATAL ERROR:\n";
-    if (std::is_same<T,std::string>::value) {
-      std::cout << exc << "\n" << std::endl;
-    }
+    std::cout << exc << std::endl;
     throw exc;
   }
 

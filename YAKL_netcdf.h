@@ -58,7 +58,9 @@ namespace yakl {
         if ( dimLoc.isNull() ) {
           tmp = file.addDim( dimNames[i] , arr.dimension[i] );
         } else {
-          if (dimLoc.getSize() != arr.dimension[i]) { yakl_throw("dimension size differs from the file"); }
+          if (dimLoc.getSize() != arr.dimension[i]) {
+            yakl_throw("dimension size differs from the file");
+          }
           tmp = dimLoc;
         }
         if (myStyle == styleC) {
@@ -76,8 +78,14 @@ namespace yakl {
         auto varDims = var.getDims();
         if (varDims.size() != rank) { yakl_throw("Existing variable's rank != array's rank"); }
         for (int i=0; i < varDims.size(); i++) {
-          if (varDims[i].getSize() != arr.dimension[i]) {
-            yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+          if (myStyle == styleC) {
+            if (varDims[i].getSize() != arr.dimension[i]) {
+              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+            }
+          } else {
+            if (varDims[rank-1-i].getSize() != arr.dimension[i]) {
+              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+            }
           }
         }
       }
