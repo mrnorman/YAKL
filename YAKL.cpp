@@ -8,12 +8,32 @@ namespace yakl {
   BuddyAllocator pool;
 
   // YAKL allocator and deallocator
-  std::function<void *( size_t )> yaklAllocDevice = [] ( size_t bytes ) -> void* {std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);};
-  std::function<void ( void * )>  yaklFreeDevice  = [] ( void *ptr    )          {std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);};
+  std::function<void *( size_t )> yaklAllocDeviceFunc = [] ( size_t bytes ) -> void* {std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);};
+  std::function<void ( void * )>  yaklFreeDeviceFunc  = [] ( void *ptr    )          {std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);};
 
   // YAKL allocator and deallocator
-  std::function<void *( size_t )> yaklAllocHost = [] ( size_t bytes ) -> void* {std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);};
-  std::function<void ( void * )>  yaklFreeHost  = [] ( void *ptr    )          {std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);};
+  std::function<void *( size_t )> yaklAllocHostFunc = [] ( size_t bytes ) -> void* {std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);};
+  std::function<void ( void * )>  yaklFreeHostFunc  = [] ( void *ptr    )          {std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);};
+
+
+  void *yaklAllocDevice( size_t bytes ) {
+    return yaklAllocDeviceFunc(bytes);
+  }
+
+
+  void yaklFreeDevice( void *ptr ) {
+    yaklFreeDeviceFunc(ptr);
+  }
+
+
+  void *yaklAllocHost( size_t bytes ) {
+    return yaklAllocHostFunc(bytes);
+  }
+
+
+  void yaklFreeHost( void *ptr ) {
+    yaklFreeHostFunc(ptr);
+  }
 
 }
 

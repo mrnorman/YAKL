@@ -175,6 +175,7 @@ namespace yakl {
       else if ( std::is_same<T,        double>::value ) { return ncDouble; }
       else if ( std::is_same<T,std::string   >::value ) { return ncString; }
       else { yakl_throw("Invalid type"); }
+      return -1;
     }
 
   };

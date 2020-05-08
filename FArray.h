@@ -333,7 +333,7 @@ public:
   DESTRUCTOR
   Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
-  ~Array() {
+  YAKL_INLINE ~Array() {
     deallocate();
   }
 
@@ -772,7 +772,7 @@ public:
   }
 
 
-  inline void deallocate() {
+  YAKL_INLINE void deallocate() {
     if (owned) {
       if (refCount != nullptr) {
         (*refCount)--;

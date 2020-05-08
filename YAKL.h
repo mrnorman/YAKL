@@ -84,12 +84,19 @@ namespace yakl {
   extern BuddyAllocator pool;
 
   // YAKL allocator and deallocator
-  extern std::function<void *( size_t )> yaklAllocDevice;
-  extern std::function<void ( void * )>  yaklFreeDevice;
+  extern std::function<void *( size_t )> yaklAllocDeviceFunc;
+  extern std::function<void ( void * )>  yaklFreeDeviceFunc;
 
   // YAKL allocator and deallocator
-  extern std::function<void *( size_t )> yaklAllocHost;
-  extern std::function<void ( void * )>  yaklFreeHost;
+  extern std::function<void *( size_t )> yaklAllocHostFunc;
+  extern std::function<void ( void * )>  yaklFreeHostFunc;
+
+  void *yaklAllocDevice( size_t bytes );
+  void yaklFreeDevice( void *ptr );
+
+  void *yaklAllocHost( size_t bytes );
+  void yaklFreeHost( void *ptr );
+    
 
 
   // [S]tatic (compile-time) Array [B]ounds (templated)

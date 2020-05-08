@@ -55,19 +55,19 @@
 
       pool = BuddyAllocator( poolBytes , 1024 , alloc , dealloc );
 
-      yaklAllocDevice = [] (size_t bytes) -> void * { return pool.allocate( bytes ); };
-      yaklFreeDevice  = [] (void *ptr)              { pool.free( ptr );              };
+      yaklAllocDeviceFunc = [] (size_t bytes) -> void * { return pool.allocate( bytes ); };
+      yaklFreeDeviceFunc  = [] (void *ptr)              { pool.free( ptr );              };
 
     } else { // poolBytes < 0
       std::cout << "Not using the YAKL Pool Allocator" << std::endl;
 
-      yaklAllocDevice = alloc;
-      yaklFreeDevice  = dealloc;
+      yaklAllocDeviceFunc = alloc;
+      yaklFreeDeviceFunc  = dealloc;
 
     } // poolBytes
 
-    yaklAllocHost = [] (size_t bytes) -> void * { return malloc(bytes); };
-    yaklFreeHost  = [] (void *ptr) { free(ptr); };
+    yaklAllocHostFunc = [] (size_t bytes) -> void * { return malloc(bytes); };
+    yaklFreeHostFunc  = [] (void *ptr) { free(ptr); };
 
     #if defined(__USE_CUDA__)
       cudaMalloc(&functorBuffer,functorBufSize);

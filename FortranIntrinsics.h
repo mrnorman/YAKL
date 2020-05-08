@@ -77,12 +77,16 @@ namespace fortran {
 
 
 
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T maxval( Array<T,rank,myMem,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle> YAKL_INLINE T maxval( Array<T,rank,memHost,myStyle> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] > m) { m = arr.myData[i]; }
     }
     return m;
+  }
+  template <class T, int rank, int myStyle> YAKL_INLINE T maxval( Array<T,rank,memDevice,myStyle> const &arr ) {
+    ParallelMax<T,memDevice> pmax(arr.totElems());
+    return pmax( arr.data() );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T maxval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
     T m = arr.myData[0];
@@ -121,7 +125,7 @@ namespace fortran {
     for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
     return m;
   }
-  template <class T, int rank, int myStyle> YAKL_INLINE T sum( Array<T,rank,memDevice,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle> inline T sum( Array<T,rank,memDevice,myStyle> const &arr ) {
     ParallelSum<T,memDevice> psum(arr.totElems());
     return psum( arr.data() );
   }
@@ -146,7 +150,7 @@ namespace fortran {
 
 
 
-  template <class F, class T, int rank, int myStyle> YAKL_INLINE bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , F const &f , T val ) {
+  template <class F, class T, int rank, int myStyle> inline bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , F const &f , T val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::Bounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( f( arr.myData[i] , val ) ) { ret = true; }
@@ -161,29 +165,29 @@ namespace fortran {
     return ret;
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLT ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem <  val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <  val; };
     return any( arr , test , val );
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLTE( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem <= val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <= val; };
     return any( arr , test , val );
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGT ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem >  val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >  val; };
     return any( arr , test , val );
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGTE( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem >= val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >= val; };
     return any( arr , test , val );
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyEQ ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem == val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem == val; };
     return any( arr , test , val );
   }
 
 
 
-  template <class F, class T, int rank, int myStyle> YAKL_INLINE bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , F const &f , T val ) {
+  template <class F, class T, int rank, int myStyle> inline bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , F const &f , T val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::Bounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && f( arr.myData[i] , val ) ) { ret = true; }
@@ -198,23 +202,23 @@ namespace fortran {
     return ret;
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLT ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = [](T elem , T val)->bool { return elem <  val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <  val; };
     return any( arr , mask , test , val );
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyLTE( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = [](T elem , T val)->bool { return elem <= val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <= val; };
     return any( arr , mask , test , val );
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGT ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = [](T elem , T val)->bool { return elem >  val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >  val; };
     return any( arr , mask , test , val );
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyGTE( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = [](T elem , T val)->bool { return elem >= val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >= val; };
     return any( arr , mask , test , val );
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyEQ ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = [](T elem , T val)->bool { return elem == val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem == val; };
     return any( arr , mask , test , val );
   }
 
@@ -228,23 +232,23 @@ namespace fortran {
     return ret;
   }
   template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLT ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem <  val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <  val; };
     return any( arr , test , val );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyLTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem <= val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <= val; };
     return any( arr , test , val );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGT ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem >  val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >  val; };
     return any( arr , test , val );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyGTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem >= val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >= val; };
     return any( arr , test , val );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE bool anyEQ ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = [](T elem , T val)->bool { return elem == val; };
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem == val; };
     return any( arr , test , val );
   }
 
