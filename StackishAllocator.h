@@ -33,10 +33,10 @@ public:
 
 
   StackishAllocator( size_t                                bytes ,
-                     unsigned                              blockSize = 128*sizeof(size_t) ,  // 1024 bytes
                      std::function<void *( size_t )>       mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); } ,
                      std::function<void( void * )>         myfree    = [] (void *ptr) { free(ptr); } ,
-                     std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
+                     std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ,
+                     unsigned                              blockSize = 128*sizeof(size_t) ) {
     if (blockSize%sizeof(size_t) != 0) { yakl_throw("Error: blockSize must be a multiple of sizeof(size_t)"); }
     this->blockSize = blockSize;
     this->blockInc  = blockSize / sizeof(size_t);
@@ -79,9 +79,12 @@ public:
 
 
   void deallocate(void *ptr) {
+    // Iterate backwards from the end to search for the pointer
+    // Efficiency requires stack-like accesses
     for (auto it = allocs.rbegin() ; it != allocs.rend() ; it++) {
-      if ( ptr == it ) { //TODO: Erase the element }
+      if ( ptr == getPtr((*it).start) ) { allocs.erase(it); return; }
     }
+    yakl_throw("Error: Trying to deallocate an invalid pointer");
   };
 
 
@@ -90,3 +93,5 @@ public:
   }
 
 };
+
+
