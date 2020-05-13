@@ -1,7 +1,6 @@
 
+#pragma once
 
-unsigned constexpr SA_MAX = 1024;     // Maximum number of allocations allowed
-unsigned constexpr SA_END = SA_MAX+1; // Identifies the end of a linked list
 
 
 struct SA_node {
@@ -10,11 +9,14 @@ struct SA_node {
 };
 
 
+
 class StackishAllocator {
 protected:
+  unsigned static constexpr SA_MAX = 1024;      // Maximum number of allocations allowed
   void *pool;                                   // Raw pool pointer
   size_t nBlocks;                               // Number of blocks in the pool
   unsigned blockSize;                           // Size of each block in bytes
+  unsigned blockInc;                            // Pointer increment for a block if pointer is size_t *
   std::list<SA_node> allocs;                    // List of allocations
   std::function<void *( size_t )> mymalloc;     // allocation function
   std::function<void( void * )> myfree;         // free function
@@ -31,11 +33,13 @@ public:
 
 
   StackishAllocator( size_t                                bytes ,
-                    unsigned                              blockSize = 1024 ,
-                    std::function<void *( size_t )>       mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); } ,
-                    std::function<void( void * )>         myfree    = [] (void *ptr) { free(ptr); } ,
-                    std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
+                     unsigned                              blockSize = 128*sizeof(size_t) ,  // 1024 bytes
+                     std::function<void *( size_t )>       mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); } ,
+                     std::function<void( void * )>         myfree    = [] (void *ptr) { free(ptr); } ,
+                     std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
+    if (blockSize%sizeof(size_t) != 0) { yakl_throw("Error: blockSize must be a multiple of sizeof(size_t)"); }
     this->blockSize = blockSize;
+    this->blockInc  = blockSize / sizeof(size_t);
     this->nBlocks   = (bytes-1) / blockSize + 1;
     this->mymalloc  = mymalloc;
     this->myfree    = myfree  ;
@@ -56,13 +60,16 @@ public:
     if (allocs.empty()) {
       if (nBlocks >= blocksReq) {
         allocs.push_back( { (size_t) 0 , blocksReq } );
+        return pool;
       } else {
         return nullptr;
       }
     } else {
       // If there's room at the end of the pool, then place the allocation there
       if ( nBlocks - (allocs.back().start + allocs.back().length) >= blocksReq ) {
-        allocs.push_back( { allocs.back().start + allocs.back().length , blocksReq } );
+        size_t newStart = allocs.back().start + allocs.back().length;
+        allocs.push_back( { newStart , blocksReq } );
+        return getPtr(newStart);
       } else {
         // If we start looking in between allocations, this could incur a large performance penalty
         return nullptr;
@@ -72,23 +79,14 @@ public:
 
 
   void deallocate(void *ptr) {
-    if (bytes == 0) { return nullptr; }
-    size_t blocksReq = (bytes-1)/blockSize + 1; // Number of blocks needed for this allocation
-    if (allocs.empty()) {
-      if (nBlocks >= blocksReq) {
-        allocs.push_back( { (size_t) 0 , blocksReq } );
-      } else {
-        return nullptr;
-      }
-    } else {
-      // If there's room at the end of the pool, then place the allocation there
-      if ( nBlocks - (allocs.back().start + allocs.back().length) >= blocksReq ) {
-        allocs.push_back( { allocs.back().start + allocs.back().length , blocksReq } );
-      } else {
-        // If we start looking in between allocations, this could incur a large performance penalty
-        return nullptr;
-      }
+    for (auto it = allocs.rbegin() ; it != allocs.rend() ; it++) {
+      if ( ptr == it ) { //TODO: Erase the element }
     }
   };
+
+
+  void * getPtr( size_t blockIndex ) {
+    return (void *) ( ( (size_t *) pool ) + blockIndex*blockInc );
+  }
 
 };
