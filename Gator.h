@@ -166,7 +166,7 @@ public:
     if (bytes > growSize) {
       std::cerr << "ERROR: The allocation request for " << bytes << " bytes does not fit in the initial pool." <<
                    " It is also greater than growSize, so it will not fit in any further pools.\n";
-      die("You need to increase GATOR_INITIAL_MB or GATOR_GROW_MB to a large enough value");
+      die("You need to increase GATOR_INITIAL_MB or GATOR_GROW_MB to a large enough value.");
     }
     pools.push_back( StackyAllocator(growSize , mymalloc , myfree , blockSize , myzero) );
     void *ptr = pools.back().allocate(bytes,label);

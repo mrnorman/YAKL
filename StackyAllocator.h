@@ -66,7 +66,12 @@ public:
     this->myzero    = myzero  ;
     this->pool      = mymalloc( poolSize() );
     if (pool == nullptr) {
-      std::cerr << "ERROR: Could not create pool of size " << bytes << "\n";
+      std::cerr << "ERROR: Could not create pool of size " << bytes << "\n" <<
+                   "You have run out of memory. If GATOR_INITIAL_MB and GATOR_GROW_MB are too small " <<
+                   "and your variables are too large, you're using each of the pools inefficiently. " <<
+                   "To fix this, you need to increase GATOR_INITIAL_MB to a larger value rather than " <<
+                   "relying on a lot of pools. Otherwise, you'll just have to reduce the problem size " <<
+                   "per node." << std::endl;
       die();
     }
     this->myzero( pool , poolSize() );
