@@ -2,11 +2,13 @@
 #pragma once
 
 #include "StackyAllocator.h"
+#include <list>
+#include <functional>
 
 
 class Gator {
 protected:
-  std::vector<StackyAllocator> pools;             // The pools managed by this class
+  std::list<StackyAllocator> pools;               // The pools managed by this class
   std::function<void *( size_t )>       mymalloc; // allocation function
   std::function<void( void * )>         myfree;   // free function
   std::function<void( void *, size_t )> myzero;   // zero function
@@ -134,25 +136,25 @@ public:
 
 
   void finalize() {
-    pools = std::vector<StackyAllocator>();
+    pools = std::list<StackyAllocator>();
   }
 
 
   void * allocate(size_t bytes, std::string label="") {
     // Loop through the pools and see if there's room. If so, allocate in one of them
-    for (int i=0; i < pools.size(); i++) {
-      if (pools[i].iGotRoom(bytes)) { return allocate(bytes,label); }
+    for (auto it = pools.begin() ; it != pools.end() ; it++) {
+      if (it->iGotRoom(bytes)) { return it->allocate(bytes,label); }
     }
     // If we're here, ther isn't enough room in the existing pools. We need to create a new one
-    pools.push_back(StackyAllocator(growSize , mymalloc , myfree , blockSize , myzero));
+    pools.push_back( StackyAllocator(growSize , mymalloc , myfree , blockSize , myzero) );
     return pools.back().allocate(bytes,label);
   };
 
 
   void free(void *ptr) {
     // Iterate backwards. It's assumed accesses are stack-like
-    for (int i=pools.size()-1; i >=0; i--) {
-      if (pools[i].thisIsMyPointer(ptr)) { pools[i].free(ptr); }
+    for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
+      if (it->thisIsMyPointer(ptr)) { it->free(ptr); return; }
     }
     throw("Error: Trying to free an invalid pointer");
   };
@@ -160,21 +162,21 @@ public:
 
   size_t highWaterMark() const {
     size_t highWater = 0;
-    for (int i=0; i <= pools.size() ; i++) { highWater += pools[i].highWaterMark(); }
+    for (auto it = pools.begin() ; it != pools.end() ; it++) { highWater += it->highWaterMark(); }
     return highWater;
   }
 
 
   size_t poolSize( ) const {
     size_t sz = 0;
-    for (int i=0; i <= pools.size() ; i++) { sz += pools[i].poolSize(); }
+    for (auto it = pools.begin() ; it != pools.end() ; it++) { sz += it->poolSize(); }
     return sz;
   }
 
 
   size_t numAllocs( ) const {
     size_t allocs = 0;
-    for (int i=0; i <= pools.size() ; i++) { allocs += pools[i].numAllocs(); }
+    for (auto it = pools.begin() ; it != pools.end() ; it++) { allocs += it->numAllocs(); }
     return allocs;
   }
 

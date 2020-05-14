@@ -144,6 +144,7 @@ public:
 
   void finalize() {
     if (allocs.size() != 0) {
+      throw "fuck";
       std::cerr << "WARNING: Not all allocations were deallocated before destroying this pool.\n" <<
                    "The following allocations were not deallocated:" << std::endl;
       for (auto it = allocs.begin() ; it != allocs.end() ; it++) {
@@ -234,7 +235,8 @@ public:
 
 
   bool thisIsMyPointer(void *ptr) const {
-    return (ptr >= pool && ptr <= (void *) ( ((size_t *) pool) + nBlocks*blockInc ) );
+    long long offset = ( (size_t *) ptr - (size_t *) pool ) / blockInc;
+    return (offset >= 0 && offset <= nBlocks-1);
   }
 
 
