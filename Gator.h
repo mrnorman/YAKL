@@ -15,6 +15,11 @@ protected:
   size_t growSize;
   size_t blockSize;
 
+  void die(std::string str) {
+    std::cerr << str << std::endl;
+    throw str;
+  }
+
 
 public:
 
@@ -101,7 +106,7 @@ public:
     if ( env != nullptr ) {
       long int initial_mb = atol(env);
       if (initial_mb != 0) {
-        initialSize = initial_mb;
+        initialSize = initial_mb*1024*1024;
         this->growSize = initialSize;
       } else {
         std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
@@ -113,7 +118,7 @@ public:
     if ( env != nullptr ) {
       long int grow_mb = atol(env);
       if (grow_mb != 0) {
-        this->growSize = grow_mb;
+        this->growSize = grow_mb*1024*1024;
       } else {
         std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
       }
@@ -145,6 +150,11 @@ public:
     for (auto it = pools.begin() ; it != pools.end() ; it++) {
       if (it->iGotRoom(bytes)) { return it->allocate(bytes,label); }
     }
+    if (bytes > growSize) {
+      std::cerr << "ERROR: Trying to allocate " << bytes << " bytes, but the current pool is too small, and growSize is only " << 
+                   growSize << " bytes. Thus, the allocation will never fit in pool memory.\n";
+      die("You need to increase GATOR_GROW_MB and probably GATOR_INITIAL_MB as well\n");
+    }
     // If we're here, ther isn't enough room in the existing pools. We need to create a new one
     pools.push_back( StackyAllocator(growSize , mymalloc , myfree , blockSize , myzero) );
     return pools.back().allocate(bytes,label);
@@ -156,7 +166,7 @@ public:
     for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
       if (it->thisIsMyPointer(ptr)) { it->free(ptr); return; }
     }
-    throw("Error: Trying to free an invalid pointer");
+    die("Error: Trying to free an invalid pointer");
   };
 
 
