@@ -29,10 +29,14 @@ protected:
   int *refCount; // Pointer shared by multiple copies of this StackyAllocator to keep track of allcation / free
   size_t highWater;                             // Memory high-water mark in blocks
 
-
   // Transform a block index into a memory pointer
   void * getPtr( size_t blockIndex ) const {
     return (void *) ( ( (size_t *) pool ) + blockIndex*blockInc );
+  }
+
+  void die(std::string str="") {
+    std::cerr << str << std::endl;
+    throw str;
   }
 
 
@@ -52,7 +56,7 @@ public:
                    std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); } ,
                    unsigned                              blockSize = 128*sizeof(size_t) ,
                    std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
-    if (blockSize%sizeof(size_t) != 0) { throw("Error: blockSize must be a multiple of sizeof(size_t)"); }
+    if (blockSize%sizeof(size_t) != 0) { die("Error: blockSize must be a multiple of sizeof(size_t)"); }
     this->highWater = 0;
     this->blockSize = blockSize;
     this->blockInc  = blockSize / sizeof(size_t);
@@ -61,6 +65,10 @@ public:
     this->myfree    = myfree  ;
     this->myzero    = myzero  ;
     this->pool      = mymalloc( poolSize() );
+    if (pool == nullptr) {
+      std::cerr << "ERROR: Could not create pool of size " << bytes << "\n";
+      die();
+    }
     this->myzero( pool , poolSize() );
     refCount = new int;
     *refCount = 1;
@@ -144,7 +152,6 @@ public:
 
   void finalize() {
     if (allocs.size() != 0) {
-      throw "fuck";
       std::cerr << "WARNING: Not all allocations were deallocated before destroying this pool.\n" <<
                    "The following allocations were not deallocated:" << std::endl;
       for (auto it = allocs.begin() ; it != allocs.end() ; it++) {
@@ -170,7 +177,9 @@ public:
 
 
   void * allocate(size_t bytes, std::string label="") {
-    if (bytes == 0) { return nullptr; }
+    if (bytes == 0) {
+      return nullptr;
+    }
     size_t blocksReq = (bytes-1)/blockSize + 1; // Number of blocks needed for this allocation
     if (allocs.empty()) {
       if (nBlocks >= blocksReq) {
@@ -207,7 +216,7 @@ public:
         return;
       }
     }
-    throw("Error: Trying to free an invalid pointer");
+    die("Error: Trying to free an invalid pointer");
   };
 
 

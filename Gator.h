@@ -15,6 +15,11 @@ protected:
   size_t growSize;
   size_t blockSize;
 
+  void die(std::string str="") {
+    std::cerr << str << std::endl;
+    throw str;
+  }
+
 
 public:
 
@@ -101,7 +106,7 @@ public:
     if ( env != nullptr ) {
       long int initial_mb = atol(env);
       if (initial_mb != 0) {
-        initialSize = initial_mb;
+        initialSize = initial_mb*1024*1024;
         this->growSize = initialSize;
       } else {
         std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
@@ -113,7 +118,7 @@ public:
     if ( env != nullptr ) {
       long int grow_mb = atol(env);
       if (grow_mb != 0) {
-        this->growSize = grow_mb;
+        this->growSize = grow_mb*1024*1024;
       } else {
         std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
       }
@@ -143,11 +148,28 @@ public:
   void * allocate(size_t bytes, std::string label="") {
     // Loop through the pools and see if there's room. If so, allocate in one of them
     for (auto it = pools.begin() ; it != pools.end() ; it++) {
-      if (it->iGotRoom(bytes)) { return it->allocate(bytes,label); }
+      if (it->iGotRoom(bytes)) {
+        void *ptr = it->allocate(bytes,label);
+        if (ptr != nullptr) {
+          return ptr;
+        } else {
+          die("Unable to allocate pointer 1");
+        }
+      }
     }
     // If we're here, ther isn't enough room in the existing pools. We need to create a new one
+    if (bytes > growSize) {
+      std::cerr << "ERROR: The allocation request for " << bytes << " bytes does not fit in the initial pool." <<
+                   " It is also greater than growSize, so it will not fit in any further pools.\n";
+      die("You need to increase GATOR_INITIAL_MB or GATOR_GROW_MB to a large enough value");
+    }
     pools.push_back( StackyAllocator(growSize , mymalloc , myfree , blockSize , myzero) );
-    return pools.back().allocate(bytes,label);
+    void *ptr = pools.back().allocate(bytes,label);
+    if (ptr != nullptr) {
+      return ptr;
+    } else {
+      die("Unable to allocate pointer 2");
+    }
   };
 
 
@@ -156,7 +178,7 @@ public:
     for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
       if (it->thisIsMyPointer(ptr)) { it->free(ptr); return; }
     }
-    throw("Error: Trying to free an invalid pointer");
+    die("Error: Trying to free an invalid pointer");
   };
 
 
