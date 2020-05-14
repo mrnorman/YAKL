@@ -157,6 +157,11 @@ public:
         }
       }
     }
+    if (bytes > growSize) {
+      std::cerr << "ERROR: Trying to allocate " << bytes << " bytes, but the current pool is too small, and growSize is only " << 
+                   growSize << " bytes. Thus, the allocation will never fit in pool memory.\n";
+      die("You need to increase GATOR_GROW_MB and probably GATOR_INITIAL_MB as well\n");
+    }
     // If we're here, ther isn't enough room in the existing pools. We need to create a new one
     if (bytes > growSize) {
       std::cerr << "ERROR: The allocation request for " << bytes << " bytes does not fit in the initial pool." <<
