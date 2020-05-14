@@ -16,13 +16,57 @@ protected:
 
 public:
 
-  Gator() { }
+  Gator() {
+    std::function<void *( size_t )> alloc;
+    std::function<void ( void * )>  dealloc;
+
+    #if   defined(__USE_CUDA__)
+      #if defined (__MANAGED__)
+        alloc   = [] ( size_t bytes ) -> void* {
+          void *ptr;
+          cudaMallocManaged(&ptr,bytes);
+          cudaMemPrefetchAsync(ptr,bytes,0);
+          #ifdef _OPENMP45
+            omp_target_associate_ptr(ptr,ptr,bytes,0,0);
+          #endif
+          #ifdef _OPENACC
+            acc_map_data(ptr,ptr,bytes);
+          #endif
+          return ptr;
+        };
+        dealloc = [] ( void *ptr    ) {
+          cudaFree(ptr);
+        };
+      #else
+        alloc   = [] ( size_t bytes ) -> void* {
+          void *ptr;
+          cudaMalloc(&ptr,bytes);
+          return ptr;
+        };
+        dealloc = [] ( void *ptr    ) {
+          cudaFree(ptr);
+        };
+      #endif
+    #elif defined(__USE_HIP__)
+      #if defined (__MANAGED__)
+        alloc   = [] ( size_t bytes ) -> void* { void *ptr; hipMallocHost(&ptr,bytes); return ptr; };
+        dealloc = [] ( void *ptr    )          { hipFree(ptr); };
+      #else
+        alloc   = [] ( size_t bytes ) -> void* { void *ptr; hipMalloc(&ptr,bytes); return ptr; };
+        dealloc = [] ( void *ptr    )          { hipFree(ptr); };
+      #endif
+    #else
+      alloc   = ::malloc;
+      dealloc = ::free;
+    #endif
+    init(alloc,dealloc);
+  }
 
 
-  Gator( std::function<void *( size_t )>       mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); } ,
-         std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); } ,
+  Gator( std::function<void *( size_t )>       mymalloc ,
+         std::function<void( void * )>         myfree   ,
          std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
-    init(mymaloc,myfree,myzero)
+    init(mymalloc,myfree,myzero);
   }
 
 
@@ -108,7 +152,7 @@ public:
   void free(void *ptr) {
     // Iterate backwards. It's assumed accesses are stack-like
     for (int i=pools.size()-1; i >=0; i--) {
-      if (pools[i].thisIsMyPointer(pointer)) { pools[i].free(ptr); }
+      if (pools[i].thisIsMyPointer(ptr)) { pools[i].free(ptr); }
     }
     throw("Error: Trying to free an invalid pointer");
   };
@@ -116,13 +160,8 @@ public:
 
   size_t highWaterMark() const {
     size_t highWater = 0;
-    for (int i=0; i <= pools.size() ; i++) { highWater += pools[i].highWaterMark; }
+    for (int i=0; i <= pools.size() ; i++) { highWater += pools[i].highWaterMark(); }
     return highWater;
-  }
-
-
-  bool initialized() const {
-    return pools.size() != 0;
   }
 
 

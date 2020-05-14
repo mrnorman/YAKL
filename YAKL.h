@@ -146,17 +146,15 @@ namespace yakl {
 
 
   inline void finalize() {
-    if (pool.initialized()) {
-      size_t hwm = pool.highWaterMark();
-      if        (hwm >= 1024*1024*1024) {
-        std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024*1024) << " GB\n";
-      } else if (hwm >= 1024*1024     ) {
-        std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024     ) << " MB\n";
-      } else if (hwm >= 1024          ) {
-        std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
-      }
+    size_t hwm = pool.highWaterMark();
+    if        (hwm >= 1024*1024*1024) {
+      std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024*1024) << " GB\n";
+    } else if (hwm >= 1024*1024     ) {
+      std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024     ) << " MB\n";
+    } else if (hwm >= 1024          ) {
+      std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
     }
-    pool = Gator();
+    pool.finalize();
     #if defined(__USE_CUDA__)
       cudaFree(functorBuffer);
     #endif

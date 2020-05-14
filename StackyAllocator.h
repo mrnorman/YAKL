@@ -36,12 +36,6 @@ protected:
   }
 
 
-  // Transform an offset into a memory pointer
-  size_t getOffset( void *ptr ) {
-    return ( ((size_t *) ptr) - ((size_t *)pool) ) * blockInc;
-  }
-
-
 public:
 
   StackyAllocator() {
@@ -240,8 +234,7 @@ public:
 
 
   bool thisIsMyPointer(void *ptr) const {
-    size_t offset = getOffset( void *ptr );
-    return (offset >= 0 && offset <= nBlocks);
+    return (ptr >= pool && ptr <= (void *) ( ((size_t *) pool) + nBlocks*blockInc ) );
   }
 
 

@@ -4,67 +4,9 @@
 
 
   // Initialize the YAKL framework
-  inline void init( size_t poolBytes = 0 ) {
-
-    std::function<void *( size_t )> alloc;
-    std::function<void( void * )>   dealloc;
-
-    #if   defined(__USE_CUDA__)
-      #if defined (__MANAGED__)
-        alloc   = [] ( size_t bytes ) -> void* {
-          void *ptr;
-          cudaMallocManaged(&ptr,bytes);
-          cudaMemPrefetchAsync(ptr,bytes,0);
-          #ifdef _OPENMP45
-            omp_target_associate_ptr(ptr,ptr,bytes,0,0);
-          #endif
-          #ifdef _OPENACC
-            acc_map_data(ptr,ptr,bytes);
-          #endif
-          return ptr;
-        };
-        dealloc = [] ( void *ptr    ) {
-          cudaFree(ptr);
-        };
-      #else
-        alloc   = [] ( size_t bytes ) -> void* {
-          void *ptr;
-          cudaMalloc(&ptr,bytes);
-          return ptr;
-        };
-        dealloc = [] ( void *ptr    ) {
-          cudaFree(ptr);
-        };
-      #endif
-    #elif defined(__USE_HIP__)
-      #if defined (__MANAGED__)
-        alloc   = [] ( size_t bytes ) -> void* { void *ptr; hipMallocHost(&ptr,bytes); return ptr; };
-        dealloc = [] ( void *ptr    )          { hipFree(ptr); };
-      #else
-        alloc   = [] ( size_t bytes ) -> void* { void *ptr; hipMalloc(&ptr,bytes); return ptr; };
-        dealloc = [] ( void *ptr    )          { hipFree(ptr); };
-      #endif
-    #else
-      alloc   = ::malloc;
-      dealloc = ::free;
-    #endif
-
-    // If bytes are specified, then initialize a pool allocator
-    if ( poolBytes > 0 ) {
-      std::cout << "Initializing the YAKL Pool Allocator with " << poolBytes << " bytes" << std::endl;
-
-      pool = Gator( alloc , dealloc );
-
-      yaklAllocDeviceFunc = [] (size_t bytes) -> void * { return pool.allocate( bytes ); };
-      yaklFreeDeviceFunc  = [] (void *ptr)              { pool.free( ptr );              };
-
-    } else { // poolBytes < 0
-      std::cout << "Not using the YAKL Pool Allocator" << std::endl;
-
-      yaklAllocDeviceFunc = alloc;
-      yaklFreeDeviceFunc  = dealloc;
-
-    } // poolBytes
+  inline void init() {
+    yaklAllocDeviceFunc = [] (size_t bytes) -> void * { return pool.allocate( bytes ); };
+    yaklFreeDeviceFunc  = [] (void *ptr)              { pool.free( ptr );              };
 
     yaklAllocHostFunc = [] (size_t bytes) -> void * { return malloc(bytes); };
     yaklFreeHostFunc  = [] (void *ptr) { free(ptr); };

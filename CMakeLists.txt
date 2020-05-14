@@ -1,8 +1,8 @@
 
-set(YAKL_SOURCE BuddyAllocator.cpp YAKL.cpp gator_mod.F90             )
-set(YAKL_SOURCE BuddyAllocator.cpp YAKL.cpp gator_mod.F90 PARENT_SCOPE)
-set(YAKL_CXX_SOURCE BuddyAllocator.cpp YAKL.cpp             )
-set(YAKL_CXX_SOURCE BuddyAllocator.cpp YAKL.cpp PARENT_SCOPE)
+set(YAKL_SOURCE YAKL.cpp gator_mod.F90             )
+set(YAKL_SOURCE YAKL.cpp gator_mod.F90 PARENT_SCOPE)
+set(YAKL_CXX_SOURCE YAKL.cpp             )
+set(YAKL_CXX_SOURCE YAKL.cpp PARENT_SCOPE)
 set(YAKL_F90_SOURCE gator_mod.F90             )
 set(YAKL_F90_SOURCE gator_mod.F90 PARENT_SCOPE)
 

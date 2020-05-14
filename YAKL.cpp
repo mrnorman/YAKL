@@ -43,12 +43,12 @@ extern "C" void gatorInit() {
 }
 
 
-extern "C" void gatorInitPool( size_t bytes ) {
-  yakl::init( bytes );
+extern "C" void gatorInitPool() {
+  yakl::init();
 }
 
 
-extern "C" void gatorFinalize( size_t bytes ) {
+extern "C" void gatorFinalize() {
   yakl::finalize();
 }
 
