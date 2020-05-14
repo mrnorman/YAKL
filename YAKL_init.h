@@ -53,7 +53,7 @@
     if ( poolBytes > 0 ) {
       std::cout << "Initializing the YAKL Pool Allocator with " << poolBytes << " bytes" << std::endl;
 
-      pool = BuddyAllocator( poolBytes , 1024 , alloc , dealloc );
+      pool = StackyAllocator( poolBytes , alloc , dealloc );
 
       yaklAllocDeviceFunc = [] (size_t bytes) -> void * { return pool.allocate( bytes ); };
       yaklFreeDeviceFunc  = [] (void *ptr)              { pool.free( ptr );              };

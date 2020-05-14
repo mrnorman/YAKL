@@ -9,7 +9,7 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
-#include "BuddyAllocator.h"
+#include "StackyAllocator.h"
 #include "stdlib.h"
 
 #ifdef YAKL_DEBUG
@@ -81,7 +81,7 @@ namespace yakl {
 
 
   // Pool allocator object
-  extern BuddyAllocator pool;
+  extern StackyAllocator pool;
 
   // YAKL allocator and deallocator
   extern std::function<void *( size_t )> yaklAllocDeviceFunc;
@@ -146,7 +146,17 @@ namespace yakl {
 
 
   inline void finalize() {
-    pool = BuddyAllocator();
+    if (pool.initialized()) {
+      size_t hwm = pool.highWaterMark();
+      if        (hwm >= 1024*1024*1024) {
+        std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024*1024) << " GB\n";
+      } else if (hwm >= 1024*1024     ) {
+        std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024     ) << " MB\n";
+      } else if (hwm >= 1024          ) {
+        std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
+      }
+    }
+    pool = StackyAllocator();
     #if defined(__USE_CUDA__)
       cudaFree(functorBuffer);
     #endif

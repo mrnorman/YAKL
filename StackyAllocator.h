@@ -5,7 +5,6 @@
 #include <iomanip>
 #include <list>
 #include <functional>
-#include "YAKL.h"
 
 
 
@@ -29,6 +28,7 @@ protected:
   std::function<void( void * )> myfree;         // free function
   std::function<void( void *, size_t )> myzero; // zero function
   int *refCount; // Pointer shared by multiple copies of this StackyAllocator to keep track of allcation / free
+  size_t highWater;                             // Memory high-water mark in blocks
 
 
   // Transform a block index into a memory pointer
@@ -37,9 +37,16 @@ protected:
   }
 
 
+  // Transform an offset into a memory pointer
+  size_t getOffset( void *ptr ) {
+    return ( ((size_t *) ptr) - ((size_t *)pool) ) * blockInc;
+  }
+
+
 public:
 
   StackyAllocator() {
+    this->highWater = 0;
     this->blockSize = 0;
     this->nBlocks   = 0;
     this->pool      = nullptr;
@@ -49,10 +56,11 @@ public:
 
   StackyAllocator( size_t                                bytes ,
                    std::function<void *( size_t )>       mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); } ,
-                   std::function<void( void * )>         myfree    = [] (void *ptr) { free(ptr); } ,
-                   std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ,
-                   unsigned                              blockSize = 128*sizeof(size_t) ) {
-    if (blockSize%sizeof(size_t) != 0) { yakl::yakl_throw("Error: blockSize must be a multiple of sizeof(size_t)"); }
+                   std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); } ,
+                   unsigned                              blockSize = 128*sizeof(size_t) ,
+                   std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
+    if (blockSize%sizeof(size_t) != 0) { throw("Error: blockSize must be a multiple of sizeof(size_t)"); }
+    this->highWater = 0;
     this->blockSize = blockSize;
     this->blockInc  = blockSize / sizeof(size_t);
     this->nBlocks   = (bytes-1) / blockSize + 1;
@@ -67,6 +75,7 @@ public:
 
 
   StackyAllocator( StackyAllocator && rhs) {
+    this->highWater = rhs.highWater;
     this->pool      = rhs.pool     ;
     this->nBlocks   = rhs.nBlocks  ;
     this->blockSize = rhs.blockSize;
@@ -85,6 +94,7 @@ public:
   StackyAllocator &operator =( StackyAllocator && rhs) {
     if (this == &rhs) { return *this; }
     this->finalize();
+    this->highWater = rhs.highWater;
     this->pool      = rhs.pool     ;
     this->nBlocks   = rhs.nBlocks  ;
     this->blockSize = rhs.blockSize;
@@ -102,6 +112,7 @@ public:
 
 
   StackyAllocator( StackyAllocator const &rhs ) {
+    this->highWater = rhs.highWater;
     this->pool      = rhs.pool     ;
     this->nBlocks   = rhs.nBlocks  ;
     this->blockSize = rhs.blockSize;
@@ -118,6 +129,7 @@ public:
   StackyAllocator &operator=( StackyAllocator const &rhs ) {
     if (this == &rhs) { return *this; }
     this->finalize();
+    this->highWater = rhs.highWater;
     this->pool      = rhs.pool     ;
     this->nBlocks   = rhs.nBlocks  ;
     this->blockSize = rhs.blockSize;
@@ -169,6 +181,7 @@ public:
     if (allocs.empty()) {
       if (nBlocks >= blocksReq) {
         allocs.push_back( { (size_t) 0 , blocksReq , label } );
+        if (allocs.back().start + allocs.back().length  > highWater) { highWater = allocs.back().start + allocs.back().length; }
         // std::cout << "Allocating: " << label << " with " << blocksReq*blockSize << " bytes at location " << pool << "\n";
         return pool;
       } else {
@@ -179,6 +192,7 @@ public:
       if ( nBlocks - (allocs.back().start + allocs.back().length) >= blocksReq ) {
         size_t newStart = allocs.back().start + allocs.back().length;
         allocs.push_back( { newStart , blocksReq , label } );
+        if (allocs.back().start + allocs.back().length  > highWater) { highWater = allocs.back().start + allocs.back().length; }
         // std::cout << "Allocating: " << label << " with " << blocksReq*blockSize << " bytes at location " << getPtr(newStart) << "\n";
         return getPtr(newStart);
       } else {
@@ -189,7 +203,7 @@ public:
   };
 
 
-  void deallocate(void *ptr) {
+  void free(void *ptr) {
     // Iterate backwards from the end to search for the pointer
     // Efficiency requires stack-like accesses to avoid traversing the entire list
     for (auto it = allocs.rbegin() ; it != allocs.rend() ; it++) {
@@ -199,8 +213,13 @@ public:
         return;
       }
     }
-    yakl::yakl_throw("Error: Trying to deallocate an invalid pointer");
+    throw("Error: Trying to free an invalid pointer");
   };
+
+
+  size_t highWaterMark() const {
+    return this->highWater*blockSize;
+  }
 
 
   bool iGotRoom( size_t bytes ) const {
