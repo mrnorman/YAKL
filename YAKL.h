@@ -9,7 +9,7 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
-#include "StackyAllocator.h"
+#include "Gator.h"
 #include "stdlib.h"
 
 #ifdef YAKL_DEBUG
@@ -81,7 +81,7 @@ namespace yakl {
 
 
   // Pool allocator object
-  extern StackyAllocator pool;
+  extern Gator pool;
 
   // YAKL allocator and deallocator
   extern std::function<void *( size_t )> yaklAllocDeviceFunc;
@@ -156,7 +156,7 @@ namespace yakl {
         std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
       }
     }
-    pool = StackyAllocator();
+    pool = Gator();
     #if defined(__USE_CUDA__)
       cudaFree(functorBuffer);
     #endif

@@ -5,7 +5,7 @@ namespace yakl {
 
   void *functorBuffer;
 
-  StackyAllocator pool;
+  Gator pool;
 
   // YAKL allocator and deallocator
   std::function<void *( size_t )> yaklAllocDeviceFunc = [] ( size_t bytes ) -> void* {std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);};

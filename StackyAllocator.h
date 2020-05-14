@@ -18,7 +18,6 @@ struct SA_node {
 
 class StackyAllocator {
 protected:
-  unsigned static constexpr SA_MAX = 1024;      // Maximum number of allocations allowed
   void *pool;                                   // Raw pool pointer
   size_t nBlocks;                               // Number of blocks in the pool
   unsigned blockSize;                           // Size of each block in bytes
@@ -237,6 +236,12 @@ public:
         return false;
       }
     }
+  }
+
+
+  bool thisIsMyPointer(void *ptr) const {
+    size_t offset = getOffset( void *ptr );
+    return (offset >= 0 && offset <= nBlocks);
   }
 
 
