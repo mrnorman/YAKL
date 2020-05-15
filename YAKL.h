@@ -91,11 +91,18 @@ namespace yakl {
   extern std::function<void *( size_t )> yaklAllocHostFunc;
   extern std::function<void ( void * )>  yaklFreeHostFunc;
 
-  void *yaklAllocDevice( size_t bytes );
-  void yaklFreeDevice( void *ptr );
+  #ifdef __USE_HIP__
+    YAKL_INLINE void *yaklAllocDevice( size_t bytes ) { return yaklAllocDeviceFunc(bytes); }
+    YAKL_INLINE void yaklFreeDevice( void *ptr ) { yaklFreeDeviceFunc(ptr); }
+    YAKL_INLINE void *yaklAllocHost( size_t bytes ) { return yaklAllocHostFunc(bytes); }
+    YAKL_INLINE void yaklFreeHost( void *ptr ) { yaklFreeHostFunc(ptr); }
+  #else
+    void *yaklAllocDevice( size_t bytes );
+    void yaklFreeDevice( void *ptr );
+    void *yaklAllocHost( size_t bytes );
+    void yaklFreeHost( void *ptr );
+  #endif
 
-  void *yaklAllocHost( size_t bytes );
-  void yaklFreeHost( void *ptr );
     
 
 

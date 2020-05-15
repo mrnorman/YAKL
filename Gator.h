@@ -4,6 +4,9 @@
 #include "StackyAllocator.h"
 #include <list>
 #include <functional>
+#if defined(__USE_HIP__)
+  #include "hip/hip_runtime.h"
+#endif
 
 
 class Gator {

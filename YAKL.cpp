@@ -16,25 +16,13 @@ namespace yakl {
   std::function<void ( void * )>  yaklFreeHostFunc  = [] ( void *ptr    )          {std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);};
 
 
-  void *yaklAllocDevice( size_t bytes ) {
-    return yaklAllocDeviceFunc(bytes);
-  }
-
-
-  void yaklFreeDevice( void *ptr ) {
-    yaklFreeDeviceFunc(ptr);
-  }
-
-
-  void *yaklAllocHost( size_t bytes ) {
-    return yaklAllocHostFunc(bytes);
-  }
-
-
-  void yaklFreeHost( void *ptr ) {
-    yaklFreeHostFunc(ptr);
-  }
-
+  #ifdef __USE_HIP__
+  #else
+    void *yaklAllocDevice( size_t bytes ) { return yaklAllocDeviceFunc(bytes); }
+    void yaklFreeDevice( void *ptr ) { yaklFreeDeviceFunc(ptr); }
+    void *yaklAllocHost( size_t bytes ) { return yaklAllocHostFunc(bytes); }
+    void yaklFreeHost( void *ptr ) { yaklFreeHostFunc(ptr); }
+  #endif
 }
 
 
