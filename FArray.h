@@ -494,6 +494,21 @@ public:
   }
 
 
+  template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleFortran> &store ) const {
+    store.owned = false;
+    for (int i=0; i<N; i++) {
+      store.dimension[i] = dimension[i];
+      store.offsets  [i] = offsets  [i];
+      store.lbounds  [i] = lbounds  [i];
+    }
+    size_t retOff = 0;
+    for (int i=N; i<rank; i++) {
+      retOff += (dims.data[i]-lbounds[i])*offsets[i];
+    }
+    store.myData = &(this->myData[retOff]);
+  }
+
+
   inline Array<T,rank,memHost,styleFortran> createHostCopy() const {
     Array<T,rank,memHost,styleFortran> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
