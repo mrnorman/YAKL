@@ -81,33 +81,40 @@ public :
   }
 
 
-  template <uint D0_R , int myrank=rank , typename std::enable_if<myrank==2,bool>::type = false >
+  template <uint D0_R>
   YAKL_INLINE auto operator* ( Array< CSPEC<T,D0_R,D0> , 2 , memStack , styleC > const &rhs ) {
-    Array< CSPEC<T,D0_R,D1> , 2 , memStack , styleC > ret;
-    for (uint i=0; i < D0_R; i++) {
-      for (uint j=0; j < D1; j++) {
-        T tmp = 0;
-        for (uint k=0; k < D0; k++) {
-          tmp += (*this)(k,j) * rhs(i,k);
+    if (rank == 2) {
+      Array< CSPEC<T,D0_R,D1> , 2 , memStack , styleC > ret;
+      for (uint i=0; i < D0_R; i++) {
+        for (uint j=0; j < D1; j++) {
+          T tmp = 0;
+          for (uint k=0; k < D0; k++) {
+            tmp += (*this)(k,j) * rhs(i,k);
+          }
+          ret(i,j) = tmp;
         }
-        ret(i,j) = tmp;
       }
+      return ret;
+    } else {
+      yakl_throw("ERROR: attempting to multiply matrices, but left matrix rank != 2");
     }
-    return ret;
   }
 
 
-  template < int myrank=rank , typename std::enable_if<myrank==2,bool>::type = false >
   YAKL_INLINE auto operator* ( Array< CSPEC<T,D0> , 1 , memStack , styleC > const &rhs ) {
-    Array< CSPEC<T,D1> , 1 , memStack , styleC > ret;
-    for (uint j=0; j < D1; j++) {
-      T tmp = 0;
-      for (uint k=0; k < D0; k++) {
-        tmp += (*this)(k,j) * rhs(k);
+    if (rank == 2) {
+      Array< CSPEC<T,D1> , 1 , memStack , styleC > ret;
+      for (uint j=0; j < D1; j++) {
+        T tmp = 0;
+        for (uint k=0; k < D0; k++) {
+          tmp += (*this)(k,j) * rhs(k);
+        }
+        ret(j) = tmp;
       }
-      ret(j) = tmp;
+      return ret;
+    } else {
+      yakl_throw("ERROR: attempting to multiply matrices, but left matrix rank != 2");
     }
-    return ret;
   }
 
 

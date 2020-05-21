@@ -45,7 +45,7 @@
     ////////////////////////////////////////////////////////////
     // CUDA has HW atomics for atomicAdd in float, double, int, unsigned int, and unsigned long long int
     ////////////////////////////////////////////////////////////
-    __device__ __forceinline__ void atomicAdd(float &update , double value) {
+    __device__ __forceinline__ void atomicAdd(float &update , float value) {
       ::atomicAdd( &update , value );
     }
     #if __CUDA_ARCH__ >= 600
@@ -144,7 +144,7 @@
     // HIP has HW atomicAdd for float, but not for double
     // Software atomicAdd in double is probably going to be slow as hell
     //////////////////////////////////////////////////////////////////////
-    __device__ __forceinline__ void atomicAdd(float &update , double value) {
+    __device__ __forceinline__ void atomicAdd(float &update , float value) {
       ::atomicAdd( &update , value );
     }
     __device__ __forceinline__ void atomicAdd(double &update , double value) {
