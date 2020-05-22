@@ -8,30 +8,33 @@ namespace yakl {
   Gator pool;
 
   // YAKL allocator and deallocator
-  std::function<void *( size_t )> yaklAllocDeviceFunc = [] ( size_t bytes ) -> void* {std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);};
-  std::function<void ( void * )>  yaklFreeDeviceFunc  = [] ( void *ptr    )          {std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);};
+  std::function<void *( size_t , char const *)> yaklAllocDeviceFunc = [] ( size_t bytes , char const *label ) -> void* {
+    std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);
+  };
+  std::function<void ( void * , char const *)>  yaklFreeDeviceFunc  = [] ( void *ptr    , char const *label )          {
+    std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);
+  };
 
   // YAKL allocator and deallocator
-  std::function<void *( size_t )> yaklAllocHostFunc = [] ( size_t bytes ) -> void* {std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);};
-  std::function<void ( void * )>  yaklFreeHostFunc  = [] ( void *ptr    )          {std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);};
+  std::function<void *( size_t , char const *)> yaklAllocHostFunc = [] ( size_t bytes , char const *label ) -> void* {
+    std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);
+  };
+  std::function<void ( void * , char const *)>  yaklFreeHostFunc  = [] ( void *ptr    , char const *label )          {
+    std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);
+  };
 
 
   #ifdef __USE_HIP__
   #else
-    void *yaklAllocDevice( size_t bytes ) { return yaklAllocDeviceFunc(bytes); }
-    void yaklFreeDevice( void *ptr ) { yaklFreeDeviceFunc(ptr); }
-    void *yaklAllocHost( size_t bytes ) { return yaklAllocHostFunc(bytes); }
-    void yaklFreeHost( void *ptr ) { yaklFreeHostFunc(ptr); }
+    void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
+    void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
+    void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
+    void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
   #endif
 }
 
 
 extern "C" void gatorInit() {
-  yakl::init();
-}
-
-
-extern "C" void gatorInitPool() {
   yakl::init();
 }
 
@@ -43,13 +46,13 @@ extern "C" void gatorFinalize() {
 
 // Fortran binding
 extern "C" void* gatorAllocate( size_t bytes ) {
-  return yakl::yaklAllocDevice( bytes );
+  return yakl::yaklAllocDevice( bytes , "");
 }
 
 
 // Fortran binding
 extern "C" void gatorDeallocate( void *ptr ) {
-  yakl::yaklFreeDevice( ptr );
+  yakl::yaklFreeDevice( ptr , "");
 }
 
 

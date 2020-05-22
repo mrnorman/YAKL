@@ -84,23 +84,23 @@ namespace yakl {
   extern Gator pool;
 
   // YAKL allocator and deallocator
-  extern std::function<void *( size_t )> yaklAllocDeviceFunc;
-  extern std::function<void ( void * )>  yaklFreeDeviceFunc;
+  extern std::function<void *( size_t , char const *)> yaklAllocDeviceFunc;
+  extern std::function<void ( void * , char const *)>  yaklFreeDeviceFunc;
 
   // YAKL allocator and deallocator
-  extern std::function<void *( size_t )> yaklAllocHostFunc;
-  extern std::function<void ( void * )>  yaklFreeHostFunc;
+  extern std::function<void *( size_t , char const *)> yaklAllocHostFunc;
+  extern std::function<void ( void * , char const *)>  yaklFreeHostFunc;
 
   #ifdef __USE_HIP__
-    YAKL_INLINE void *yaklAllocDevice( size_t bytes ) { return yaklAllocDeviceFunc(bytes); }
-    YAKL_INLINE void yaklFreeDevice( void *ptr ) { yaklFreeDeviceFunc(ptr); }
-    YAKL_INLINE void *yaklAllocHost( size_t bytes ) { return yaklAllocHostFunc(bytes); }
-    YAKL_INLINE void yaklFreeHost( void *ptr ) { yaklFreeHostFunc(ptr); }
+    YAKL_INLINE void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
+    YAKL_INLINE void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
+    YAKL_INLINE void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
+    YAKL_INLINE void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
   #else
-    void *yaklAllocDevice( size_t bytes );
-    void yaklFreeDevice( void *ptr );
-    void *yaklAllocHost( size_t bytes );
-    void yaklFreeHost( void *ptr );
+    void *yaklAllocDevice( size_t bytes , char const *label );
+    void yaklFreeDevice( void *ptr , char const *label );
+    void *yaklAllocHost( size_t bytes , char const *label );
+    void yaklFreeHost( void *ptr , char const *label );
   #endif
 
     

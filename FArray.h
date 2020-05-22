@@ -767,19 +767,19 @@ public:
       offsets[i] = offsets[i-1] * dimension[i-1];
     }
 
-    allocate();
+    allocate(label);
   }
 
 
   // This is *only* called from a constructor, so no need to test for existing refCount or myData
-  inline void allocate() {
+  inline void allocate(char const * label) {
     if (owned) {
       static_assert( std::is_arithmetic<T>() || myMem == memHost , 
                      "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
       refCount = new int;
       *refCount = 1;
       if (myMem == memDevice) {
-        myData = (T *) yaklAllocDevice( totElems()*sizeof(T) );
+        myData = (T *) yaklAllocDevice( totElems()*sizeof(T) , label);
       } else {
         myData = new T[totElems()];
       }
@@ -796,7 +796,11 @@ public:
           delete refCount;
           refCount = nullptr;
           if (myMem == memDevice) {
-            yaklFreeDevice(myData);
+            #ifdef YAKL_DEBUG
+              yaklFreeDevice(myData,mynamge.c_str());
+            #else
+              yaklFreeDevice(myData,"");
+            #endif
           } else {
             delete[] myData;
           }

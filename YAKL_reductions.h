@@ -19,16 +19,16 @@
       ~ParallelMin() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         hipcub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
-        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
         if (tmp != NULL) {
-          yaklFreeDevice(rsltP);
-          yaklFreeDevice(tmp);
+          yaklFreeDevice(rsltP,"");
+          yaklFreeDevice(tmp,"");
         }
         tmp = NULL;
       }
@@ -55,16 +55,16 @@
       ~ParallelMax() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         hipcub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
-        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
         if (tmp != NULL) {
-          yaklFreeDevice(rsltP);
-          yaklFreeDevice(tmp);
+          yaklFreeDevice(rsltP,"");
+          yaklFreeDevice(tmp,"");
         }
         tmp = NULL;
       }
@@ -91,10 +91,10 @@
       ~ParallelSum() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         hipcub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
-        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
@@ -129,10 +129,10 @@
       ~ParallelMin() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         cub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
-        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
@@ -165,10 +165,10 @@
       ~ParallelMax() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         cub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
-        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {
@@ -201,10 +201,10 @@
       ~ParallelSum() { finalize(); }
       void setup(int const nItems) {
         finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T)); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         cub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
-        tmp = yaklAllocDevice(nTmp);       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
       }
       void finalize() {

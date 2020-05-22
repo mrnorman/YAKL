@@ -11,7 +11,7 @@
 struct SA_node {
   size_t start;       // Offset of this allocation in "blocks"
   size_t length;      // Length of this allocation in "blocks"
-  std::string label;  // Label for this allocation
+  char const * label;  // Label for this allocation
 };
 
 
@@ -178,10 +178,24 @@ public:
   }
 
 
+  void checkAllocsLeft() {
+    if (allocs.size() != 0) {
+      std::cerr << "The following allocations were not deallocated:" << std::endl;
+      for (auto it = allocs.begin() ; it != allocs.end() ; it++) {
+        std::cerr << "*** Label: " << it->label << "  ;  size: " << it->length*blockSize << " bytes  ;  offset: " << 
+                     it->start*blockSize << " bytes  ;  ptr: " << getPtr(it->start) << std::endl;
+      }
+    }
+  }
+
+
   static constexpr const char *classname() { return "StackyAllocator"; }
 
 
-  void * allocate(size_t bytes, std::string label="") {
+  void * allocate(size_t bytes, char const * label="") {
+    #ifdef MEMORY_DEBUG
+      std::cout << "MEMORY DEBUG: StackyAllocator attempting to allocate " << label << " with " << bytes << " bytes\n";
+    #endif
     if (bytes == 0) {
       return nullptr;
     }
@@ -211,7 +225,10 @@ public:
   };
 
 
-  void free(void *ptr) {
+  void free(void *ptr, char const * label = "") {
+    #ifdef MEMORY_DEBUG
+      std::cout << "MEMORY DEBUG: StackyAllocator attempting to free " << label << " with the pointer: " << ptr << "\n";
+    #endif
     // Iterate backwards from the end to search for the pointer
     // Efficiency requires stack-like accesses to avoid traversing the entire list
     for (auto it = allocs.rbegin() ; it != allocs.rend() ; it++) {
@@ -221,7 +238,7 @@ public:
         return;
       }
     }
-    die("Error: Trying to free an invalid pointer");
+    die("Error: StackyAllocator is trying to free an invalid pointer");
   };
 
 

@@ -645,18 +645,18 @@ public:
     for (int i=rank-2; i>=0; i--) {
       offsets[i] = offsets[i+1] * dimension[i+1];
     }
-    allocate();
+    allocate(label);
   }
 
 
-  inline void allocate() {
+  inline void allocate(char const * label) {
     if (owned) {
       refCount = new int;
       *refCount = 1;
       if (myMem == memDevice) {
-        myData = (T *) yaklAllocDevice( totElems()*sizeof(T) );
+        myData = (T *) yaklAllocDevice( totElems()*sizeof(T) , label );
       } else {
-        myData = (T *) yaklAllocHost  ( totElems()*sizeof(T) );
+        myData = (T *) yaklAllocHost  ( totElems()*sizeof(T) , label );
       }
     }
   }
@@ -671,9 +671,17 @@ public:
           delete refCount;
           refCount = nullptr;
           if (myMem == memDevice) {
-            yaklFreeDevice(myData);
+            #ifdef YAKL_DEBUG
+              yaklFreeDevice(myData,mynamge.c_str());
+            #else
+              yaklFreeDevice(myData,"");
+            #endif
           } else {
-            yaklFreeHost  (myData);
+            #ifdef YAKL_DEBUG
+              yaklFreeHost  (myData,mynamge.c_str());
+            #else
+              yaklFreeHost  (myData,"");
+            #endif
           }
           myData = nullptr;
         }

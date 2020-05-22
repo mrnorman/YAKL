@@ -18,17 +18,21 @@
 
     if (use_pool) {
 
-      yaklAllocDeviceFunc = [] (size_t bytes) -> void * { return pool.allocate( bytes ); };
-      yaklFreeDeviceFunc  = [] (void *ptr)              { pool.free( ptr );              };
+      yaklAllocDeviceFunc = [] (size_t bytes , char const *label) -> void * {
+        return pool.allocate( bytes , label );
+      };
+      yaklFreeDeviceFunc  = [] (void *ptr , char const *label)              {
+        pool.free( ptr , label );
+      };
 
     } else {
 
-      std::function<void *( size_t )> alloc;
-      std::function<void ( void * )>  dealloc;
+      std::function<void *( size_t , char const *)> alloc;
+      std::function<void ( void * , char const *)>  dealloc;
 
       #if   defined(__USE_CUDA__)
         #if defined (__MANAGED__)
-          alloc   = [] ( size_t bytes ) -> void* {
+          alloc   = [] ( size_t bytes , char const *label ) -> void* {
             void *ptr;
             cudaMallocManaged(&ptr,bytes);
             cudaMemPrefetchAsync(ptr,bytes,0);
@@ -40,38 +44,38 @@
             #endif
             return ptr;
           };
-          dealloc = [] ( void *ptr    ) {
+          dealloc = [] ( void *ptr    , char const *label ) {
             cudaFree(ptr);
           };
         #else
-          alloc   = [] ( size_t bytes ) -> void* {
+          alloc   = [] ( size_t bytes , char const *label ) -> void* {
             void *ptr;
             cudaMalloc(&ptr,bytes);
             return ptr;
           };
-          dealloc = [] ( void *ptr    ) {
+          dealloc = [] ( void *ptr    , char const *label ) {
             cudaFree(ptr);
           };
         #endif
       #elif defined(__USE_HIP__)
         #if defined (__MANAGED__)
-          alloc   = [] ( size_t bytes ) -> void* { void *ptr; hipMallocHost(&ptr,bytes); return ptr; };
-          dealloc = [] ( void *ptr    )          { hipFree(ptr); };
+          alloc   = [] ( size_t bytes , char const *label ) -> void* { void *ptr; hipMallocHost(&ptr,bytes); return ptr; };
+          dealloc = [] ( void *ptr    , char const *label )          { hipFree(ptr); };
         #else
-          alloc   = [] ( size_t bytes ) -> void* { void *ptr; hipMalloc(&ptr,bytes); return ptr; };
-          dealloc = [] ( void *ptr    )          { hipFree(ptr); };
+          alloc   = [] ( size_t bytes , char const *label ) -> void* { void *ptr; hipMalloc(&ptr,bytes); return ptr; };
+          dealloc = [] ( void *ptr    , char const *label )          { hipFree(ptr); };
         #endif
       #else
-        alloc   = ::malloc;
-        dealloc = ::free;
+        alloc   = [] ( size_t bytes , char const *label ) -> void* { return ::malloc(bytes); };
+        dealloc = [] ( void *ptr    , char const *label )          { ::free(ptr); };
       #endif
 
       yaklAllocDeviceFunc = alloc;
       yaklFreeDeviceFunc  = dealloc;
     }
 
-    yaklAllocHostFunc = [] (size_t bytes) -> void * { return malloc(bytes); };
-    yaklFreeHostFunc  = [] (void *ptr) { free(ptr); };
+    yaklAllocHostFunc = [] (size_t bytes , char const *label) -> void * { return malloc(bytes); };
+    yaklFreeHostFunc  = [] (void *ptr , char const *label) { free(ptr); };
 
     #if defined(__USE_CUDA__)
       cudaMalloc(&functorBuffer,functorBufSize);

@@ -148,7 +148,17 @@ public:
   }
 
 
-  void * allocate(size_t bytes, std::string label="") {
+  void checkAllocsLeft() {
+    for (auto it = pools.begin() ; it != pools.end() ; it++) {
+      it->checkAllocsLeft();
+    }
+  }
+
+
+  void * allocate(size_t bytes, char const * label="") {
+    #ifdef MEMORY_DEBUG
+      std::cout << "MEMORY DEBUG: Gator attempting to allocate " << label << " with " << bytes << " bytes\n";
+    #endif
     // Loop through the pools and see if there's room. If so, allocate in one of them
     for (auto it = pools.begin() ; it != pools.end() ; it++) {
       if (it->iGotRoom(bytes)) {
@@ -156,35 +166,36 @@ public:
         if (ptr != nullptr) {
           return ptr;
         } else {
-          die("Unable to allocate pointer 1");
+          die("StackyAllocator said it has room, but it apparently does not. This indicates a bug in StackyAllocator::iGotRoom(size_t bytes)");
         }
       }
     }
+    #ifdef MEMORY_DEBUG
+      std::cout << "MEMORY DEBUG: Current pools are not large enough. Adding a new pool of size " << growSize << " bytes\n";
+    #endif
     if (bytes > growSize) {
       std::cerr << "ERROR: Trying to allocate " << bytes << " bytes, but the current pool is too small, and growSize is only " << 
                    growSize << " bytes. Thus, the allocation will never fit in pool memory.\n";
       die("You need to increase GATOR_GROW_MB and probably GATOR_INITIAL_MB as well\n");
-    }
-    // If we're here, ther isn't enough room in the existing pools. We need to create a new one
-    if (bytes > growSize) {
-      std::cerr << "ERROR: The allocation request for " << bytes << " bytes does not fit in the initial pool." <<
-                   " It is also greater than growSize, so it will not fit in any further pools.\n";
-      die("You need to increase GATOR_INITIAL_MB or GATOR_GROW_MB to a large enough value.");
     }
     pools.push_back( StackyAllocator(growSize , mymalloc , myfree , blockSize , myzero) );
     void *ptr = pools.back().allocate(bytes,label);
     if (ptr != nullptr) {
       return ptr;
     } else {
-      die("Unable to allocate pointer 2");
+      die("Unable to allocate pointer. It looks like you might have run out of memory.");
     }
+    return nullptr;
   };
 
 
-  void free(void *ptr) {
+  void free(void *ptr , char const * label = "") {
+    #ifdef MEMORY_DEBUG
+      std::cout << "MEMORY DEBUG: Gator attempting to free " << label << " with the pointer: " << ptr << "\n";
+    #endif
     // Iterate backwards. It's assumed accesses are stack-like
     for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
-      if (it->thisIsMyPointer(ptr)) { it->free(ptr); return; }
+      if (it->thisIsMyPointer(ptr)) { it->free(ptr,label); return; }
     }
     die("Error: Trying to free an invalid pointer");
   };
