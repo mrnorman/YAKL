@@ -10,13 +10,8 @@ module gator_mod
   logical    :: lg
 
   interface gator_init
-    subroutine gator_init_noargs() bind(C, name="gatorInit")
-    end subroutine gator_init_noargs
-
-    subroutine gator_init_pool( bytes ) bind(C, name="gatorInitPool")
-      use iso_c_binding
-      integer(c_size_t), value :: bytes
-    end subroutine gator_init_pool
+    subroutine gator_init() bind(C, name="gatorInit")
+    end subroutine gator_init
   end interface gator_init
 
   interface

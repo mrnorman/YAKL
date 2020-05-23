@@ -99,8 +99,8 @@
       }
       void finalize() {
         if (tmp != NULL) {
-          yaklFreeDevice(rsltP);
-          yaklFreeDevice(tmp);
+          yaklFreeDevice(rsltP,"");
+          yaklFreeDevice(tmp,"");
         }
         tmp = NULL;
       }
@@ -137,8 +137,8 @@
       }
       void finalize() {
         if (tmp != NULL) {
-          yaklFreeDevice(rsltP);
-          yaklFreeDevice(tmp);
+          yaklFreeDevice(rsltP,"");
+          yaklFreeDevice(tmp,"");
         }
         tmp = NULL;
       }
@@ -173,8 +173,8 @@
       }
       void finalize() {
         if (tmp != NULL) {
-          yaklFreeDevice(rsltP);
-          yaklFreeDevice(tmp);
+          yaklFreeDevice(rsltP,"");
+          yaklFreeDevice(tmp,"");
         }
         tmp = NULL;
       }
@@ -209,8 +209,8 @@
       }
       void finalize() {
         if (tmp != NULL) {
-          yaklFreeDevice(rsltP);
-          yaklFreeDevice(tmp);
+          yaklFreeDevice(rsltP,"");
+          yaklFreeDevice(tmp,"");
         }
         tmp = NULL;
       }
