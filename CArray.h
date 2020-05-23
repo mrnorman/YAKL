@@ -649,7 +649,7 @@ public:
   }
 
 
-  inline void allocate(char const * label) {
+  inline void allocate(char const * label = "") {
     if (owned) {
       refCount = new int;
       *refCount = 1;

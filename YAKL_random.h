@@ -16,7 +16,7 @@ public:
 
   // No seed (1.5 billion-th prime number)
   YAKL_INLINE Random()                            { this->state = (uint64_t) 3121238909U;}
-  YAKL_INLINE Random(uint64_t state)              { this->state = state; }
+  YAKL_INLINE Random(uint64_t state)              { this->state = state; warmup(); }
   YAKL_INLINE Random(Random const            &in) { this->state = in.state; }
   YAKL_INLINE Random(Random                 &&in) { this->state = in.state; }
   YAKL_INLINE Random &operator=(Random const &in) { this->state = in.state; return *this; }
