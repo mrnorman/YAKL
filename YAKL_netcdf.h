@@ -49,7 +49,7 @@ namespace yakl {
 
     template <class T, int rank, int myMem, int myStyle> void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
       if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
-      std::vector<NcDim> dims(rank);
+      std::vector<NcDim> dims(rank); // List of dimensions for this variable
       // Make sure the dimensions are in there and are the right sizes
       for (int i=0; i<rank; i++) {
         auto dimLoc = file.getDim( dimNames[i] );
@@ -94,6 +94,91 @@ namespace yakl {
         var.putVar(arr.createHostCopy().data());
       } else {
         var.putVar(arr.data());
+      }
+    }
+
+
+    template <class T, typename = std::enable_if_t<std::is_arithmetic<T>::value> > void write1(T val , std::string varName , int ind , std::string ulDimName="unlim" ) {
+      // Get the unlimited dimension or create it if it doesn't exist
+      auto ulDim = file.getDim( ulDimName );
+      if ( ulDim.isNull() ) {
+        ulDim = file.addDim( ulDimName );
+      }
+      // Make sure the variable is there and is the right dimension
+      auto var = file.getVar(varName);
+      if ( var.isNull() ) {
+        std::vector<NcDim> dims(1);
+        dims[0] = ulDim;
+        var = file.addVar( varName , getType<T>() , dims );
+      }
+      std::vector<size_t> start(1);
+      std::vector<size_t> count(1);
+      start[0] = ind;
+      count[0] = 1;
+      var.putVar(start,count,&val);
+    }
+
+
+    template <class T, int rank, int myMem, int myStyle> void write1(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames , int ind , std::string ulDimName="unlim" ) {
+      if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
+      std::vector<NcDim> dims(rank+1); // List of dimensions for this variable
+      // Get the unlimited dimension or create it if it doesn't exist
+      dims[0] = file.getDim( ulDimName );
+      if ( dims[0].isNull() ) {
+        dims[0] = file.addDim( ulDimName );
+      }
+      // Make sure the dimensions are in there and are the right sizes
+      for (int i=0; i<rank; i++) {
+        auto dimLoc = file.getDim( dimNames[i] );
+        // If dimension doesn't exist, create it; otherwise, make sure it's the right size
+        NcDim tmp;
+        if ( dimLoc.isNull() ) {
+          tmp = file.addDim( dimNames[i] , arr.dimension[i] );
+        } else {
+          if (dimLoc.getSize() != arr.dimension[i]) {
+            yakl_throw("dimension size differs from the file");
+          }
+          tmp = dimLoc;
+        }
+        if (myStyle == styleC) {
+          dims[1+i] = tmp;
+        } else {
+          dims[1+rank-1-i] = tmp;
+        }
+      }
+      // Make sure the variable is there and is the right dimension
+      auto var = file.getVar(varName);
+      if ( var.isNull() ) {
+        var = file.addVar( varName , getType<T>() , dims );
+      } else {
+        if ( var.getType() != getType<T>() ) { yakl_throw("Existing variable's type != array's type"); }
+        auto varDims = var.getDims();
+        if (varDims.size() != rank+1) { yakl_throw("Existing variable's rank != array's rank"); }
+        for (int i=1; i < varDims.size(); i++) {
+          if (myStyle == styleC) {
+            if (varDims[i].getSize() != arr.dimension[i-1]) {
+              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+            }
+          } else {
+            if (varDims[rank-1-i].getSize() != arr.dimension[i-1]) {
+              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+            }
+          }
+        }
+      }
+
+      std::vector<size_t> start(rank+1);
+      std::vector<size_t> count(rank+1);
+      start[0] = ind;
+      count[0] = 1;
+      for (int i=1; i < rank+1; i++) {
+        start[i] = 0;
+        count[i] = dims[i].getSize();
+      }
+      if (myMem == memDevice) {
+        var.putVar(start,count,arr.createHostCopy().data());
+      } else {
+        var.putVar(start,count,arr.data());
       }
     }
 

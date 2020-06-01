@@ -672,13 +672,13 @@ public:
           refCount = nullptr;
           if (myMem == memDevice) {
             #ifdef YAKL_DEBUG
-              yaklFreeDevice(myData,mynamge.c_str());
+              yaklFreeDevice(myData,myname.c_str());
             #else
               yaklFreeDevice(myData,"");
             #endif
           } else {
             #ifdef YAKL_DEBUG
-              yaklFreeHost  (myData,mynamge.c_str());
+              yaklFreeHost  (myData,myname.c_str());
             #else
               yaklFreeHost  (myData,"");
             #endif
