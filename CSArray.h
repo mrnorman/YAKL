@@ -65,7 +65,7 @@ public :
   }
 
 
-  template <class TLOC=T , typename std::enable_if< std::is_arithmetic<T>::value && std::is_scalar<T>::value , int >::type = 0 >
+  template <class TLOC , typename = std::enable_if_t<std::is_arithmetic<TLOC>::value> >
   YAKL_INLINE void operator= (TLOC val) { for (int i=0 ; i < totElems() ; i++) { myData[i] = val; } }
 
 
