@@ -772,7 +772,7 @@ public:
 
 
   // This is *only* called from a constructor, so no need to test for existing refCount or myData
-  inline void allocate(char const * label) {
+  inline void allocate(char const * label = "") {
     if (owned) {
       static_assert( std::is_arithmetic<T>() || myMem == memHost , 
                      "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
