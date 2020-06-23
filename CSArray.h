@@ -81,43 +81,6 @@ public :
   }
 
 
-  template <uint D0_R>
-  YAKL_INLINE auto operator* ( Array< CSPEC<T,D0_R,D0> , 2 , memStack , styleC > const &rhs ) {
-    if (rank == 2) {
-      Array< CSPEC<T,D0_R,D1> , 2 , memStack , styleC > ret;
-      for (uint i=0; i < D0_R; i++) {
-        for (uint j=0; j < D1; j++) {
-          T tmp = 0;
-          for (uint k=0; k < D0; k++) {
-            tmp += (*this)(k,j) * rhs(i,k);
-          }
-          ret(i,j) = tmp;
-        }
-      }
-      return ret;
-    } else {
-      yakl_throw("ERROR: attempting to multiply matrices, but left matrix rank != 2");
-    }
-  }
-
-
-  YAKL_INLINE auto operator* ( Array< CSPEC<T,D0> , 1 , memStack , styleC > const &rhs ) {
-    if (rank == 2) {
-      Array< CSPEC<T,D1> , 1 , memStack , styleC > ret;
-      for (uint j=0; j < D1; j++) {
-        T tmp = 0;
-        for (uint k=0; k < D0; k++) {
-          tmp += (*this)(k,j) * rhs(k);
-        }
-        ret(j) = tmp;
-      }
-      return ret;
-    } else {
-      yakl_throw("ERROR: attempting to multiply matrices, but left matrix rank != 2");
-    }
-  }
-
-
   template <class I> YAKL_INLINE void operator/= (I const val) {
     for (uint i=0; i < totElems(); i++) { myData[i] /= val; }
   }

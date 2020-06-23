@@ -16,3 +16,34 @@ using FSArray = Array< FSPEC< T , B0 , B1 , B2 , B3 > , rank , memStack , styleF
 #include "FArray.h"
 
 
+
+template <class T, uint COL_L, uint ROW_L, uint COL_R>
+YAKL_INLINE auto operator* ( Array< CSPEC<T,COL_L,ROW_L> , 2 , memStack , styleC > const &left , Array< CSPEC<T,COL_R,COL_L> , 2 , memStack , styleC > const &right ) {
+  Array< CSPEC<T,COL_R,ROW_L> , 2 , memStack , styleC > ret;
+  for (uint i=0; i < COL_R; i++) {
+    for (uint j=0; j < ROW_L; j++) {
+      T tmp = 0;
+      for (uint k=0; k < COL_L; k++) {
+        tmp += left(k,j) * right(i,k);
+      }
+      ret(i,j) = tmp;
+    }
+  }
+  return ret;
+}
+
+
+template<class T, uint COL_L, uint ROW_L>
+YAKL_INLINE auto operator* ( Array< CSPEC<T,COL_L,ROW_L> , 2 , memStack , styleC > const &left , Array< CSPEC<T,COL_L> , 1 , memStack , styleC > const &right ) {
+  Array< CSPEC<T,ROW_L> , 1 , memStack , styleC > ret;
+  for (uint j=0; j < ROW_L; j++) {
+    T tmp = 0;
+    for (uint k=0; k < COL_L; k++) {
+      tmp += left(k,j) * right(k);
+    }
+    ret(j) = tmp;
+  }
+  return ret;
+}
+
+
