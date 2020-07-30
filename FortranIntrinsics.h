@@ -184,6 +184,10 @@ namespace fortran {
     auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem == val; };
     return any( arr , test , val );
   }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyNEQ ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem != val; };
+    return any( arr , test , val );
+  }
 
 
 
@@ -219,6 +223,10 @@ namespace fortran {
   }
   template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyEQ ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
     auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem == val; };
+    return any( arr , mask , test , val );
+  }
+  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE bool anyNEQ ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
+    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem != val; };
     return any( arr , mask , test , val );
   }
 
