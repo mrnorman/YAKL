@@ -5,13 +5,13 @@ namespace fortran {
 
   template <class T> YAKL_INLINE int  size(T const &arr, int dim) { return arr.get_dimensions()(dim); }
   template <class T> YAKL_INLINE int  size(T const &arr) { return arr.totElems(); }
-  template <class T> YAKL_INLINE auto shape(T const &arr) { return arr.get_dimensions(); }
+  template <class T> YAKL_INLINE auto shape(T const &arr) -> decltype(arr.get_dimensions()) { return arr.get_dimensions(); }
   template <class T> YAKL_INLINE bool allocated (T const &arr) { return arr.myData != nullptr; }
   template <class T> YAKL_INLINE bool associated (T const &arr) { return arr.myData != nullptr; }
   template <class T> YAKL_INLINE int  lbound (T const &arr, int dim) { return arr.get_lbounds()(dim); }
-  template <class T> YAKL_INLINE auto lbound (T const &arr) { return arr.get_lbounds(); }
+  template <class T> YAKL_INLINE auto lbound (T const &arr) -> decltype(arr.get_lbounds()) { return arr.get_lbounds(); }
   template <class T> YAKL_INLINE int  ubound (T const &arr, int dim) { return arr.get_ubounds()(dim); }
-  template <class T> YAKL_INLINE auto ubound (T const &arr) { return arr.get_ubounds(); }
+  template <class T> YAKL_INLINE auto ubound (T const &arr) -> decltype(arr.get_ubounds()) { return arr.get_ubounds(); }
 
 
 
@@ -254,7 +254,9 @@ namespace fortran {
 
 
   template <class T, int D0_L, int D1_L, int D1_R>
-  YAKL_INLINE auto matmul( FSArray<T,2,SB<D0_L>,SB<D1_L>> const &a1 , FSArray<T,2,SB<D1_L>,SB<D1_R>> const &a2 ) {
+  YAKL_INLINE FSArray<T,2,SB<D0_L>,SB<D1_R>>
+  matmul( FSArray<T,2,SB<D0_L>,SB<D1_L>> const &a1 ,
+          FSArray<T,2,SB<D1_L>,SB<D1_R>> const &a2 ) {
     FSArray<T,2,SB<D0_L>,SB<D1_R>> ret;
     for (int i=1; i <= D0_L; i++) {
       for (int j=1; j <= D1_R; j++) {
@@ -270,7 +272,9 @@ namespace fortran {
 
 
   template <class T, int D0_L, int D1_L>
-  YAKL_INLINE auto matmul( FSArray<T,2,SB<D0_L>,SB<D1_L>> const &a1 , FSArray<T,1,SB<D1_L>> const &a2 ) {
+  YAKL_INLINE FSArray<T,1,SB<D0_L>>
+  matmul( FSArray<T,2,SB<D0_L>,SB<D1_L>> const &a1 ,
+          FSArray<T,1,SB<D1_L>> const &a2 ) {
     FSArray<T,1,SB<D0_L>> ret;
     for (int i=1; i <= D0_L; i++) {
       T tmp = 0;

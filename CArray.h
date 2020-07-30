@@ -402,14 +402,13 @@ public:
 
   inline void check_index(int const dim, long const ind, long const lb, long const ub, char const *file, int const line) const {
     if (ind < lb || ind > ub) {
-      std::stringstream ss;
       #ifdef YAKL_DEBUG
-        ss << "For Array labeled: " << myname << "\n";
+        std::cout << "For Array labeled: " << myname << "\n";
       #endif
-      ss << "Index " << dim+1 << " of " << rank << " out of bounds\n";
-      ss << "File, Line: " << file << ", " << line << "\n";
-      ss << "Index: " << ind << ". Bounds: (" << lb << "," << ub << ")\n";
-      throw std::out_of_range(ss.str());
+      std::cout << "Index " << dim+1 << " of " << rank << " out of bounds\n";
+      std::cout << "File, Line: " << file << ", " << line << "\n";
+      std::cout << "Index: " << ind << ". Bounds: (" << lb << "," << ub << ")\n";
+      throw "";
     }
   }
 

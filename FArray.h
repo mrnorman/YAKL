@@ -465,14 +465,13 @@ public:
 
   inline void check_index(int const dim, long const ind, long const lb, long const ub, char const *file, int const line) const {
     if (ind < lb || ind > ub) {
-      std::stringstream ss;
       #ifdef YAKL_DEBUG
-        ss << "For Array labeled: " << myname << "\n";
+        std::cout << "For Array labeled: " << myname << "\n";
       #endif
-      ss << "Index " << dim+1 << " of " << rank << " out of bounds\n";
-      ss << "File, Line: " << file << ", " << line << "\n";
-      ss << "Index: " << ind << ". Bounds: (" << lb << "," << ub << ")\n";
-      throw std::out_of_range(ss.str());
+      std::cout << "Index " << dim+1 << " of " << rank << " out of bounds\n";
+      std::cout << "File, Line: " << file << ", " << line << "\n";
+      std::cout << "Index: " << ind << ". Bounds: (" << lb << "," << ub << ")\n";
+      throw "";
     }
   }
 
@@ -664,22 +663,22 @@ public:
   YAKL_INLINE size_t get_totElems() const {
     return totElems();
   }
-  YAKL_INLINE auto get_dimensions() const {
+  YAKL_INLINE FSArray<int,1,SB<rank>> get_dimensions() const {
     FSArray<int,1,SB<rank>> ret;
     for (int i=0; i<rank; i++) { ret(i+1) = dimension[i]; }
     return ret;
   }
-  YAKL_INLINE auto get_lbounds() const {
+  YAKL_INLINE FSArray<int,1,SB<rank>> get_lbounds() const {
     FSArray<int,1,SB<rank>> ret;
     for (int i=0; i<rank; i++) { ret(i+1) = lbounds[i]; }
     return ret;
   }
-  YAKL_INLINE auto get_ubounds() const {
+  YAKL_INLINE FSArray<int,1,SB<rank>> get_ubounds() const {
     FSArray<int,1,SB<rank>> ret;
     for (int i=0; i<rank; i++) { ret(i+1) = lbounds[i]+dimension[i]-1; }
     return ret;
   }
-  YAKL_INLINE auto get_bounds() const {
+  YAKL_INLINE std::vector<Bnd> get_bounds() const {
     std::vector<Bnd> ret(rank);
     for (int i=0; i<rank; i++) { ret[i] = Bnd(lbounds[i],lbounds[i]+dimension[i]-1); }
     return ret;

@@ -65,7 +65,7 @@ public :
   }
 
 
-  template <class TLOC , typename = std::enable_if_t<std::is_arithmetic<TLOC>::value> >
+  template <class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,int>::type = 0 >
   YAKL_INLINE void operator= (TLOC val) { for (int i=0 ; i < totElems() ; i++) { myData[i] = val; } }
 
 
@@ -86,7 +86,7 @@ public :
   }
 
   
-  YAKL_INLINE auto get_dimensions() const {
+  YAKL_INLINE Array<CSPEC<uint,rank>,1,memStack,styleC> get_dimensions() const {
     Array<CSPEC<uint,rank>,1,memStack,styleC> ret;
                      ret(0) = D0;
     if (rank >= 2) { ret(1) = D1; }

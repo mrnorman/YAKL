@@ -87,7 +87,8 @@ public :
 
 
   template <int D1_R , int myrank=rank , typename std::enable_if<myrank==2,bool>::type = false >
-  YAKL_INLINE auto operator* ( Array< FSPEC<T,SB<D1>,SB<D1_R>> , 2 , memStack , styleFortran > const &rhs ) {
+  YAKL_INLINE Array< FSPEC<T,SB<D0>,SB<D1_R>> , 2 , memStack , styleFortran >
+  operator* ( Array< FSPEC<T,SB<D1>,SB<D1_R>> , 2 , memStack , styleFortran > const &rhs ) {
     Array< FSPEC<T,SB<D0>,SB<D1_R>> , 2 , memStack , styleFortran > ret;
     for (int i=1; i <= D0; i++) {
       for (int j=1; j <= D1_R; j++) {
@@ -103,7 +104,7 @@ public :
 
 
   template < int myrank=rank , typename std::enable_if<myrank==2,bool>::type = false >
-  YAKL_INLINE auto operator* ( Array< FSPEC<T,SB<D1>> , 1 , memStack , styleFortran > const &rhs ) {
+  YAKL_INLINE Array< FSPEC<T,SB<D0>> , 1 , memStack , styleFortran > operator* ( Array< FSPEC<T,SB<D1>> , 1 , memStack , styleFortran > const &rhs ) {
     Array< FSPEC<T,SB<D0>> , 1 , memStack , styleFortran > ret;
     for (int i=1; i <= D0; i++) {
       T tmp = 0;
@@ -116,7 +117,7 @@ public :
   }
 
   
-  YAKL_INLINE auto get_dimensions() const {
+  YAKL_INLINE Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> get_dimensions() const {
     Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> ret;
                      ret(1) = D0;
     if (rank >= 2) { ret(2) = D1; }
@@ -124,7 +125,7 @@ public :
     if (rank >= 4) { ret(4) = D3; }
     return ret;
   }
-  YAKL_INLINE auto get_lbounds() const {
+  YAKL_INLINE Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> get_lbounds() const {
     Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> ret;
                      ret(1) = L0;
     if (rank >= 2) { ret(2) = L1; }
@@ -132,7 +133,7 @@ public :
     if (rank >= 4) { ret(4) = L3; }
     return ret;
   }
-  YAKL_INLINE auto get_ubounds() const {
+  YAKL_INLINE Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> get_ubounds() const {
     Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> ret;
                      ret(1) = U0;
     if (rank >= 2) { ret(2) = U1; }
