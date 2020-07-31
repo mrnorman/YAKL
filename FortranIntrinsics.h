@@ -38,12 +38,16 @@ namespace fortran {
 
 
 
-  template <class T, int rank, int myMem, int myStyle> YAKL_INLINE T minval( Array<T,rank,myMem,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle> YAKL_INLINE T minval( Array<T,rank,memHost,myStyle> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] < m) { m = arr.myData[i]; }
     }
     return m;
+  }
+  template <class T, int rank, int myStyle> YAKL_INLINE T minval( Array<T,rank,memDevice,myStyle> const &arr ) {
+    ParallelMin<T,memDevice> pmin(arr.totElems());
+    return pmin( arr.data() );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3> YAKL_INLINE T minval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
     T m = arr.myData[0];
