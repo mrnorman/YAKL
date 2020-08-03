@@ -9,7 +9,7 @@ public:
   ScalarLiveOut() {
     data = Array<T,1,memDevice,styleC>("data",1);  // Create array
   }
-  ScalarLiveOut(T val) {
+  explicit ScalarLiveOut(T val) {
     data = Array<T,1,memDevice,styleC>("data",1);  // Create array
     hostWrite(val);                                // Copy to device
   }
