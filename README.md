@@ -98,6 +98,10 @@ With around 5K lines of code, YAKL provides the following:
   * If the pool allocator is turned on, allocations are fast either way
   * The `operator(T *data)` function defaults to copying the result of the reduction to a host scalar value
   * The user can also use the `deviceReduce(T *data)` function to store the result into a device scalar location
+* **Scalar Live-Out**: When a device kernel needs to return a scalar that depends on calculations in the kernel, the scalar has to be allocated in device memory. YAKL has a `ScalarLiveOut` class that makes this more convenient.
+  * This is perhaps the most obscure among common issues encountered in GPU porting, but scalars that are assigned in a kernel and used outside the kernel must be allocated in device memory (perhaps using a 1-D YAKL `Array` of size 1), and the data must be copied from device to host once the kernel is done.
+  * This situation happens most often with testing kernels (i.e., a `bool` decides if the data is valid or not) and in stability-inquiry routines (e.g., how many cycles should I use, or what is my time step size?).
+  * `ScalarLiveOut` allows normal assignment with the `=` operator inside a kernel (so it looks like a normal scalar in the kernel), simple initialization via a constructor that allocates on the device and copies initial data the device behind the scenes, and allows use on the host with a `hostRead()` member function.
 * **Synchronization**
   * The `yakl::fence()` operation forces the host code to wait for all device code to complete
 
