@@ -18,6 +18,7 @@
   * [Synchronization](#synchronization)
   * [Atomics](#atomics)
   * [Reductions (Min, Max, and Sum)](#reductions-min-max-and-sum)
+  * [ScalarLiveOut](#scalarliveout)
   * [Fortran - C++ Interoperability with YAKL: `Array` and `gator_mod.F90`](#fortran---c-interoperability-with-yakl-array-and-gator_modf90)
   * [Interoperating with Kokkos](#interoperating-with-kokkos)
 * [Compiling with YAKL](#compiling-with-yakl)
@@ -101,7 +102,7 @@ With around 5K lines of code, YAKL provides the following:
 * **Scalar Live-Out**: When a device kernel needs to return a scalar that depends on calculations in the kernel, the scalar has to be allocated in device memory. YAKL has a `ScalarLiveOut` class that makes this more convenient.
   * This is perhaps the most obscure among common issues encountered in GPU porting, but scalars that are assigned in a kernel and used outside the kernel must be allocated in device memory (perhaps using a 1-D YAKL `Array` of size 1), and the data must be copied from device to host once the kernel is done.
   * This situation happens most often with testing kernels (i.e., a `bool` decides if the data is valid or not) and in stability-inquiry routines (e.g., how many cycles should I use, or what is my time step size?).
-  * `ScalarLiveOut` allows normal assignment with the `=` operator inside a kernel (so it looks like a normal scalar in the kernel), simple initialization via a constructor that allocates on the device and copies initial data the device behind the scenes, and allows use on the host with a `hostRead()` member function.
+  * `ScalarLiveOut` allows normal assignment with the `=` operator inside a kernel (so it looks like a normal scalar in the kernel), simple initialization via a constructor that allocates on the device and copies initial data the device behind the scenes, and allows use on the host with a `hostRead()` member function that copies data from the device to the host behind the scenes.
 * **Synchronization**
   * The `yakl::fence()` operation forces the host code to wait for all device code to complete
 
@@ -534,6 +535,40 @@ pmin.deviceReduce( dt3d.data() , dtDev );
 ```
 
 As a rule, if you ever see a scalar on the left-hand and right-hand sides of an `=`, then it's a race condition in parallel that you will need to resolve by using a reduction.
+
+### `ScalarLiveOut`
+
+When you write to a scalar in a device kernel and need to subsequently read that value on the host, you encounter a "scalar live-out" scenario, and some compilers even tell you when this happens (though some do not). This happens most often in the following two scenarios:
+
+* __Testing routines__: You pass through some data and determine whether it's realistic or not, assigning this to a `bool` that is read on the host later to report the error.
+* __Stability inquiry routines__: You pass through the data to determine how many sub-cycles a routine needs to remain stable or what the size of your time step should be, assigning this to an `int`, `float`, or `double` that is read on the host later on to use the number of cycles or the time step size.
+
+These situations are reductions in nature, but often it's not convenient or efficient to express them as reductions. 
+
+In these cases, the scalar must be explicitly allocated in device memory, the initial scalar value transferred from host to device memory, the scalar value altered in the kernel, and the scalar value transferred from device to host memory after the kernel. `ScalarLiveOut` handles all of this for you as follows:
+
+```C++
+// Creates a bool scalar that is allocated in device memory
+// and has an initial value of false (which is transferred
+// to device memory for you in the constructor)
+yakl::ScalarLiveOut<bool> dataIsBad(false);
+
+yakl::c::parallel_for( yakl::c::Bounds<2>(ny,nx) ,
+                       YAKL_LAMBDA (int j, int i) {
+  // The ScalarLiveOut class overloads operator=, so you can
+  // simply assign to it like any other scalar inside a kernel
+  if (density(j,i) < 0 || pressure(j,i) < 0) {
+    dataIsBad = true;
+  }
+});
+
+// To read on the host after a kernel, use the hostRead()
+// member function, which transfers the value to the host for you
+if (dataIsBad.hostRead()) {
+  std::cout << "ERROR: Invalid density or pressure!\n";
+  throw ...
+}
+```
 
 ### Fortran - C++ interoperability with YAKL: `Array` and `gator_mod.F90`
 
