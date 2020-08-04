@@ -98,7 +98,7 @@ namespace yakl {
     }
 
 
-    template <class T, typename = std::enable_if_t<std::is_arithmetic<T>::value> > void write1(T val , std::string varName , int ind , std::string ulDimName="unlim" ) {
+    template <class T, typename std::enable_if<std::is_arithmetic<T>::value,int>::type = 0 > void write1(T val , std::string varName , int ind , std::string ulDimName="unlim" ) {
       // Get the unlimited dimension or create it if it doesn't exist
       auto ulDim = file.getDim( ulDimName );
       if ( ulDim.isNull() ) {
