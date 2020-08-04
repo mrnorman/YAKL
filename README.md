@@ -5,8 +5,6 @@
 
 **YAKL is still a work in progress. The API is still in flux. Currently this only supports the E3SM-MMF Exascale Computing Project (ECP) application. It is not intended to compete with the more functional frameworks like Kokkos and RAJA. YAKL would require much more functionality and hardening of corner-cases and bugs before it's useful for general projects. YAKL does, however, have a niche application for porting Fortran codes into a C++ portability framework.**
 
-YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laboratory.
-
 * [Overview](#overview)
 * [Code Sample](#code-sample)
 * [Using YAKL](#using-yakl)
@@ -40,11 +38,12 @@ YAKL currently has backends for CPUs (serial), Nvidia GPUs, and AMD GPUs.
 
 With around 5K lines of code, YAKL provides the following:
 
-* **Pool Allocator**: An optional pool allocator based on Mark Berrill's `BuddyAllocator` class for device data
+* **Pool Allocator**: A pool allocator for all `memDevice` data in accelerator memory
   * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
   * CUDA Managed memory also calls `cudaMemPrefetchAsync` on the entire pool
   * If the pool allocator is not used, YAKL still maintains internal host and device allocators with the afforementioned options
   * Specify `-D__MANAGED__` to turn on `cudaMallocManaged` for Nvidia GPUs and `hipMallocHost` for AMD GPUs
+  * Controllable via environment variables
 * **Fortran Bindings**: Fortran bindings for the YAKL internal / pool device allocators
   * For `real(4)`, `real(8)`, `int(4)`, `int(8)`, and `logical` arrays up to seven dimensions
   * Using Fortran bindings for Managed memory makes porting from Fortran to C++ on the GPU significantly easier
@@ -356,17 +355,130 @@ if (allocated(arr)) { ... }
 To use CUDA Managed Memory or HIP pinned memory (which performs terribly but does make CPU data available to the GPU), add `-D__MANAGED__` to the compiler flags. This will make your life much easier when porting a Fortran code to a GPU-enabled C++ code because all data allocated with the Fortran hooks of YAKL will be avilable on the CPU and the GPU without having to transfer it explicitly.
 
 ### Pool Allocator
+An easy-to-use, self-contained, automatically growing C++ pool allocator optimized for stack-like allocations and deallocations with fortran bindings and hooks into OpenMP offload and OpenACC, CUDA Managed memory, and HIP.
 
-You can initialize a pool allocator by initializing YAKL with a parameter for the size of the pool in bytes.
-
-**Beware**: The pool size must be large enough because YAKL does not support multiples pools or resizing the existing pool.
-
-```C++
-  typedef float real;
-  yakl::init( nz*ny*nx*100*sizeof(real) );
+```
+   ,(   ,(   ,(   ,(   ,(   ,(   ,(   ,(
+`-'  `-'  `-'  `-'  `-'  `-'  `-'  `-'  `
+   _________________________
+ / "Don't be a malloc-hater  \
+|   Use the pool alligator!"  |
+ \     _____________________ / 
+  |  /
+  |/       .-._   _ _ _ _ _ _ _ _
+.-''-.__.-'00  '-' ' ' ' ' ' ' ' '-.
+'.___ '    .   .--_'-' '-' '-' _'-' '._
+ V: V 'vv-'   '_   '.       .'  _..' '.'.
+   '=.____.=_.--'   :_.__.__:_   '.   : :
+           (((____.-'        '-.  /   : :
+                             (((-'\ .' /
+                           _____..'  .'
+                          '-._____.-'
+   ,(   ,(   ,(   ,(   ,(   ,(   ,(   ,(
+`-'  `-'  `-'  `-'  `-'  `-'  `-'  `-'  `
 ```
 
-To disable the pool allocator, simply call `yakl::init()` without any parameters.
+**Author:** Matt Norman, Oak Ridge National Laboratory
+
+#### Features
+
+* Fortran bindings for integer, integer(8), real, real(8), and logical
+* Fortran bindings for arrays of one to seven dimensions
+* Able to call cudaMallocManaged under the hood with prefetching and memset
+* Able to support arbitrary lower bounds for Fortran allocations
+* Simple and efficient pool allocator implementation that's easy to compile and automatically grows as needed
+* The pool allocator responds to environment variables to control the initial allocation size, growth size, and block size
+* No segmentation for stack-like allocations and deallocations for efficient use of limited memory space.
+* Warns the user if allocations are left allocated after the pool is destroyed to help the user debug the infamous "double free" error.
+
+#### Why Use A Memory Pool?
+
+In most of our codes in weather and climate, the reason we need a pool allocator on GPUs is that the native `cudaMalloc` and `hipMalloc` for Nvidia and AMD GPUs (presumably Intel will fall into this category as well) have extremely large runtimes that scale with the size of the allocation. This is for two reasons: (1) `cudaMalloc` is basically a system-level call, and (2) there is no Operating System layer on GPUs to manage a pool for us like we have in the Linux kernel in main system memory. Further, `cudaFree` and `hipFree` are synchronizing calls because they cannot deallocate memory while kernels are still using that memory. These issues combined make frequent intermittent malloc and free operations prohibitively expensive on GPUs, and the speed-up is usually reduced by at least 5x in our strong-scaled codes.
+
+#### What Does "Stack-Like" Allocations and Deallocations Mean?
+
+In weather and climate, we tend to allocate local data dynamically at the beginning of subroutines and then deallocate that data at the end of the subroutines. It ends up lookng like this:
+
+```Fortran
+subroutine parent()
+   allocate(parent_a(...))
+   allocate(parent_b(...))
+   call child1()
+   call child2()
+   ! do work
+   deallocate(parent_a))
+   deallocate(parent_b))
+end subroutine parent
+
+subroutine child1()
+   allocate(child1_data(...))
+   ! do work
+   deallocate(child1_data)
+end subroutine child1
+
+subroutine child2()
+   allocate(child2_data(...))
+   ! do work
+   call grandchild()
+   deallocate(child2_data)
+end subroutine child2
+
+subroutine grandchild()
+   allocate(grandchild_data(...))
+   ! do work
+   deallocate(grandchild_data)
+end subroutine randchild
+```
+
+If you follow the order of allocations and deallocations in that code, it's very close to a stack:
+
+* `allocate(parent_a(...))`
+* `allocate(parent_b(...))`
+  * `allocate(child1_data(...))`
+  * `deallocate(child1_data)`
+  * `allocate(child2_data(...))`
+    * `allocate(grandchild_data(...))`
+    * `deallocate(grandchild_data)`
+  * `deallocate(child2_data)`
+* `deallocate(parent_a))`
+* `deallocate(parent_b))`
+
+You push allocations onto the back of the stack, and then your free allocations from the back of the stack (First In, Last Out). The most efficient memory allocator in terms of space efficiency and speed is, in fact, a stack. However, a stack **requires** you to deallocate in the reverse order that you allocate, and it can't be thread-safe. A stack-like allocator is more flexible. It allows you to allocate and deallocate in any order you want, and it can be made thread safe.
+
+However, unlike a more general allocator like a Buddy Allocator (https://en.wikipedia.org/wiki/Buddy_memory_allocation), the stack-like allocator here assumes the allocations and deallocations are **close** to stack-like behavior, and it optimizes for that case. In essence, new allocations can only be pushed to the end of the allocation list (there is no searching for gaps between previous allocations in the list), and when a pointer is deallocated, the search for the allocation for that pointer begins at the end of the allocation list and traverses backward.
+
+With this assumption, any violation of stack-like behavior will incur linear search costs and additional segmentation. But for most of weather and climate, the behavior is very close to that of a stack.
+
+#### Automatically Growing
+
+Gator automatically allocates more space whenever it runs out of space for a requested allocation. This is done by adding additional pools to a list. The behavior is still the same as it was with a single pool in terms of allocation and deallcation searching. The new pools will remain in place for the duration of the simulation. Therefore, once a pool has grown, it does not need to grow again until the memory requirements reach a new memory high-water mark, which they rarely do in weather and climate after the first time step.
+
+#### Informative
+
+Gator keeps track of the memory high-water mark in the pool automatically and informs the user at the end of the simulation.
+
+Error messages are made as helpful as possible to help the user know what to do in the event of a pool overflow. Sometimes, it is necessary to create a larger initial pool to use a limited memory space more effectively, and this guidance is given in error messages as errors occur.
+
+Also, all allocations can be labeled with an optional string parameter upon allocation. This allows tracking of timestamped and labeled allocations that are written to a file in debug mode (**soon to be implemented**).
+
+#### Environment variables 
+
+You control the behavior of Gator's pool management through the following environment variables:
+
+* `GATOR_INITIAL_MB`: The initial pool size in MB
+* `GATOR_GROW_MB`: The size of each new pool in MB once the initial pool is out of memory
+* `GATOR_BLOCK_BYTES`: The size of a byte. I can't imagine why you'd want to change this, but you can
+
+Environment variables are advantageous because they allow easier adaptation to critical metrics like the number of processes per node or per GPU, which are easiest to calculate outside of the executable itself.
+
+#### GPUs and Managed Memory
+
+The following CPP defines control Gator's behavior as well:
+
+* `-D__USE_CUDA__`: Enable CUDA allcoations (`cudaMalloc` and `cudaFree` are used to create and destroy the pools)
+* `-D__USE_HIP__`: Enable HIP allocations (`hipMalloc` and `hipFree` are used to create and destroy the pools)
+* `-D__MANAGED__`: Enable managed memory (`cudaMallocManaged` and `hipMallocHost` are used for CUDA and HIP, respectively, and the pools are pre-fetched to the GPU ahead of time for you), and inform OpenMP and OpenACC runtimes of this memory's Managed status whenever OpenACC or OpenMP are enabled. This is done automatically for OpenACC, but for OpenMP45, you'll need to specify a CPP define
+* `-D_OPENMP45 -D__MANAGED__`: Tell the OpenMP4.5 runtime that your allocations are managed so that OpenMP doesn't try to copy the data for you (i.e., this lets the underlying CUDA runtime handle it for you instead). This only does anything if `-D__MANAGED__` is also specified.
 
 ### Synchronization
 
