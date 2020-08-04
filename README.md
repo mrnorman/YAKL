@@ -296,11 +296,11 @@ The Fortran-style `Array` and `FSArray` classes allow any arbritrary lower bound
   * Lower and upper bounds are specified as integer initializer lists
 * `Array<double,2,yakl::memHost,yakl::styleFortran> arr( "label" , double *data_p , {-1,52} , {0,43} )`
   * Same as before but non-owned (wraps an existing contiguous data pointer)
-* **slice()**: `using yakl::COLON;  Array... arr;  arr.slice<2>(COLON,COLON,ind1,ind2)`
+* **slice()**: `using yakl::COLON;  Array... arr;  arr.slice<2>({COLON,COLON,ind1,ind2})`
   * Equivalent to Fortran array slicing: `arr(:,:,ind1,ind2)`
   * Only works on simple, *contiguous* array slices with *entire dimensions* (not partial dimensions) sliced out
     * E.g., `arr(0:5,4,7)`, though contiguous is not supported
-  * If you want to **write** to the array slice passed to a function, you must save it as a temporary variable first and pass the temporary variable: E.g., `auto tmp = arr.slice<2>(COLON,COLON,ind1,ind2);  myfunc(tmp);`
+  * If you want to **write** to the array slice passed to a function, you must save it as a temporary variable first and pass the temporary variable: E.g., `auto tmp = arr.slice<2>({COLON,COLON,ind1,ind2});  myfunc(tmp);`
   * If you're reading from the array slice, you can pass it directly inline
   * `slice()` always produces non-owned Fortran-style Arrays of the same type in the same memory space wrapping a contiguous portion of the host `Array`
 
