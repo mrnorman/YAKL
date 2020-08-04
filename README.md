@@ -101,7 +101,7 @@ With around 5K lines of code, YAKL provides the following:
   * The user can also use the `deviceReduce(T *data)` function to store the result into a device scalar location
 * **Scalar Live-Out**: When a device kernel needs to return a scalar that depends on calculations in the kernel, the scalar has to be allocated in device memory. YAKL has a `ScalarLiveOut` class that makes this more convenient.
   * This is perhaps the most obscure among common issues encountered in GPU porting, but scalars that are assigned in a kernel and used outside the kernel must be allocated in device memory (perhaps using a 1-D YAKL `Array` of size 1), and the data must be copied from device to host once the kernel is done.
-  * This situation happens most often with testing kernels (i.e., a `bool` decides if the data is valid or not) and in stability-inquiry routines (e.g., how many cycles should I use, or what is my time step size?).
+  * This situation happens most often with testing kernels (i.e., a `bool` decides if the data is valid or not).
   * `ScalarLiveOut` allows normal assignment with the `=` operator inside a kernel (so it looks like a normal scalar in the kernel), simple initialization via a constructor that allocates on the device and copies initial data the device behind the scenes, and allows use on the host with a `hostRead()` member function that copies data from the device to the host behind the scenes.
 * **Synchronization**
   * The `yakl::fence()` operation forces the host code to wait for all device code to complete
@@ -538,10 +538,9 @@ As a rule, if you ever see a scalar on the left-hand and right-hand sides of an 
 
 ### `ScalarLiveOut`
 
-When you write to a scalar in a device kernel and need to subsequently read that value on the host, you encounter a "scalar live-out" scenario, and some compilers even tell you when this happens (though some do not). This happens most often in the following two scenarios:
+When you write to a scalar in a device kernel and need to subsequently read that value on the host, you encounter a "scalar live-out" scenario, and some compilers even tell you when this happens (though some do not). This happens most often in the following scenario:
 
 * __Testing routines__: You pass through some data and determine whether it's realistic or not, assigning this to a `bool` that is read on the host later to report the error.
-* __Stability inquiry routines__: You pass through the data to determine how many sub-cycles a routine needs to remain stable or what the size of your time step should be, assigning this to an `int`, `float`, or `double` that is read on the host later on to use the number of cycles or the time step size.
 
 These situations are reductions in nature, but often it's not convenient or efficient to express them as reductions. 
 
@@ -569,6 +568,8 @@ if (dataIsBad.hostRead()) {
   throw ...
 }
 ```
+
+**When to not use `ScalarLiveOut`:** If you find yourself wanting to use atomics on a scalar, often times you're better off using a reduction instead, because all of the data is being reduced to a single scalar value. To facilitate this, it's best to create a temporary array with all necessary calculations (e.g., `dt3d` for the stable time step at each cell in a 3-D grid), and then perform a reduction on that array. While there is an `operator()` to expose the scalar for reading on the GPU, if you're needing to do this, there is usually an easier solution to you problem.
 
 ### Fortran - C++ interoperability with YAKL: `Array` and `gator_mod.F90`
 
