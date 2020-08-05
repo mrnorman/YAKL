@@ -1,9 +1,9 @@
 # YAKL: Yet Another Kernel Launcher
 ## A Simple C++ Framework for Performance Portability and Fortran Code Porting
 
-**YAKL is still a work in progress. The API is still in flux. Currently this only supports the E3SM-MMF Exascale Computing Project (ECP) application. It is not intended to compete with the more functional frameworks like Kokkos and RAJA. YAKL will likely require more functionality and hardening of corner-cases and bugs before it's useful for general projects. YAKL does, however, have a strong niche application for porting Fortran codes into a C++ portability framework.**
+**Please see the [Issues](https://github.com/mrnorman/YAKL/issues) page for coming features.**
 
-YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laboratory.
+**YAKL is still a work in progress. The API is still in flux. Currently this only supports the E3SM-MMF Exascale Computing Project (ECP) application. It is not intended to compete with the more functional frameworks like Kokkos and RAJA. YAKL would require much more functionality and hardening of corner-cases and bugs before it's useful for general projects. YAKL does, however, have a niche application for porting Fortran codes into a C++ portability framework.**
 
 * [Overview](#overview)
 * [Code Sample](#code-sample)
@@ -18,6 +18,7 @@ YAKL uses `BuddyAllocator` code from Mark Berrill at Oak Ridge National Laborato
   * [Synchronization](#synchronization)
   * [Atomics](#atomics)
   * [Reductions (Min, Max, and Sum)](#reductions-min-max-and-sum)
+  * [ScalarLiveOut](#scalarliveout)
   * [Fortran - C++ Interoperability with YAKL: `Array` and `gator_mod.F90`](#fortran---c-interoperability-with-yakl-array-and-gator_modf90)
   * [Interoperating with Kokkos](#interoperating-with-kokkos)
 * [Compiling with YAKL](#compiling-with-yakl)
@@ -38,11 +39,12 @@ YAKL currently has backends for CPUs (serial), Nvidia GPUs, and AMD GPUs.
 
 With around 5K lines of code, YAKL provides the following:
 
-* **Pool Allocator**: An optional pool allocator based on Mark Berrill's `BuddyAllocator` class for device data
+* **Pool Allocator**: A pool allocator for all `memDevice` data in accelerator memory
   * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
   * CUDA Managed memory also calls `cudaMemPrefetchAsync` on the entire pool
   * If the pool allocator is not used, YAKL still maintains internal host and device allocators with the afforementioned options
   * Specify `-D__MANAGED__` to turn on `cudaMallocManaged` for Nvidia GPUs and `hipMallocHost` for AMD GPUs
+  * Controllable via environment variables
 * **Fortran Bindings**: Fortran bindings for the YAKL internal / pool device allocators
   * For `real(4)`, `real(8)`, `int(4)`, `int(8)`, and `logical` arrays up to seven dimensions
   * Using Fortran bindings for Managed memory makes porting from Fortran to C++ on the GPU significantly easier
@@ -97,6 +99,10 @@ With around 5K lines of code, YAKL provides the following:
   * If the pool allocator is turned on, allocations are fast either way
   * The `operator(T *data)` function defaults to copying the result of the reduction to a host scalar value
   * The user can also use the `deviceReduce(T *data)` function to store the result into a device scalar location
+* **Scalar Live-Out**: When a device kernel needs to return a scalar that depends on calculations in the kernel, the scalar has to be allocated in device memory. YAKL has a `ScalarLiveOut` class that makes this more convenient.
+  * This is perhaps the most obscure among common issues encountered in GPU porting, but scalars that are assigned in a kernel and used outside the kernel must be allocated in device memory (perhaps using a 1-D YAKL `Array` of size 1), and the data must be copied from device to host once the kernel is done.
+  * This situation happens most often with testing kernels (i.e., a `bool` decides if the data is valid or not).
+  * `ScalarLiveOut` allows normal assignment with the `=` operator inside a kernel (so it looks like a normal scalar in the kernel), simple initialization via a constructor that allocates on the device and copies initial data the device behind the scenes, and allows use on the host with a `hostRead()` member function that copies data from the device to the host behind the scenes.
 * **Synchronization**
   * The `yakl::fence()` operation forces the host code to wait for all device code to complete
 
@@ -290,11 +296,11 @@ The Fortran-style `Array` and `FSArray` classes allow any arbritrary lower bound
   * Lower and upper bounds are specified as integer initializer lists
 * `Array<double,2,yakl::memHost,yakl::styleFortran> arr( "label" , double *data_p , {-1,52} , {0,43} )`
   * Same as before but non-owned (wraps an existing contiguous data pointer)
-* **slice()**: `using yakl::COLON;  Array... arr;  arr.slice<2>(COLON,COLON,ind1,ind2)`
+* **slice()**: `using yakl::COLON;  Array... arr;  arr.slice<2>({COLON,COLON,ind1,ind2})`
   * Equivalent to Fortran array slicing: `arr(:,:,ind1,ind2)`
   * Only works on simple, *contiguous* array slices with *entire dimensions* (not partial dimensions) sliced out
     * E.g., `arr(0:5,4,7)`, though contiguous is not supported
-  * If you want to **write** to the array slice passed to a function, you must save it as a temporary variable first and pass the temporary variable: E.g., `auto tmp = arr.slice<2>(COLON,COLON,ind1,ind2);  myfunc(tmp);`
+  * If you want to **write** to the array slice passed to a function, you must save it as a temporary variable first and pass the temporary variable: E.g., `auto tmp = arr.slice<2>({COLON,COLON,ind1,ind2});  myfunc(tmp);`
   * If you're reading from the array slice, you can pass it directly inline
   * `slice()` always produces non-owned Fortran-style Arrays of the same type in the same memory space wrapping a contiguous portion of the host `Array`
 
@@ -354,17 +360,130 @@ if (allocated(arr)) { ... }
 To use CUDA Managed Memory or HIP pinned memory (which performs terribly but does make CPU data available to the GPU), add `-D__MANAGED__` to the compiler flags. This will make your life much easier when porting a Fortran code to a GPU-enabled C++ code because all data allocated with the Fortran hooks of YAKL will be avilable on the CPU and the GPU without having to transfer it explicitly.
 
 ### Pool Allocator
+An easy-to-use, self-contained, automatically growing C++ pool allocator optimized for stack-like allocations and deallocations with fortran bindings and hooks into OpenMP offload and OpenACC, CUDA Managed memory, and HIP.
 
-You can initialize a pool allocator by initializing YAKL with a parameter for the size of the pool in bytes.
-
-**Beware**: The pool size must be large enough because YAKL does not support multiples pools or resizing the existing pool.
-
-```C++
-  typedef float real;
-  yakl::init( nz*ny*nx*100*sizeof(real) );
+```
+   ,(   ,(   ,(   ,(   ,(   ,(   ,(   ,(
+`-'  `-'  `-'  `-'  `-'  `-'  `-'  `-'  `
+   _________________________
+ / "Don't be a malloc-hater  \
+|   Use the pool alligator!"  |
+ \     _____________________ / 
+  |  /
+  |/       .-._   _ _ _ _ _ _ _ _
+.-''-.__.-'00  '-' ' ' ' ' ' ' ' '-.
+'.___ '    .   .--_'-' '-' '-' _'-' '._
+ V: V 'vv-'   '_   '.       .'  _..' '.'.
+   '=.____.=_.--'   :_.__.__:_   '.   : :
+           (((____.-'        '-.  /   : :
+                             (((-'\ .' /
+                           _____..'  .'
+                          '-._____.-'
+   ,(   ,(   ,(   ,(   ,(   ,(   ,(   ,(
+`-'  `-'  `-'  `-'  `-'  `-'  `-'  `-'  `
 ```
 
-To disable the pool allocator, simply call `yakl::init()` without any parameters.
+**Author:** Matt Norman, Oak Ridge National Laboratory
+
+#### Features
+
+* Fortran bindings for integer, integer(8), real, real(8), and logical
+* Fortran bindings for arrays of one to seven dimensions
+* Able to call cudaMallocManaged under the hood with prefetching and memset
+* Able to support arbitrary lower bounds for Fortran allocations
+* Simple and efficient pool allocator implementation that's easy to compile and automatically grows as needed
+* The pool allocator responds to environment variables to control the initial allocation size, growth size, and block size
+* No segmentation for stack-like allocations and deallocations for efficient use of limited memory space.
+* Warns the user if allocations are left allocated after the pool is destroyed to help the user debug the infamous "double free" error.
+
+#### Why Use A Memory Pool?
+
+In most of our codes in weather and climate, the reason we need a pool allocator on GPUs is that the native `cudaMalloc` and `hipMalloc` for Nvidia and AMD GPUs (presumably Intel will fall into this category as well) have extremely large runtimes that scale with the size of the allocation. This is for two reasons: (1) `cudaMalloc` is basically a system-level call, and (2) there is no Operating System layer on GPUs to manage a pool for us like we have in the Linux kernel in main system memory. Further, `cudaFree` and `hipFree` are synchronizing calls because they cannot deallocate memory while kernels are still using that memory. These issues combined make frequent intermittent malloc and free operations prohibitively expensive on GPUs, and the speed-up is usually reduced by at least 5x in our strong-scaled codes.
+
+#### What Does "Stack-Like" Allocations and Deallocations Mean?
+
+In weather and climate, we tend to allocate local data dynamically at the beginning of subroutines and then deallocate that data at the end of the subroutines. It ends up lookng like this:
+
+```Fortran
+subroutine parent()
+   allocate(parent_a(...))
+   allocate(parent_b(...))
+   call child1()
+   call child2()
+   ! do work
+   deallocate(parent_a))
+   deallocate(parent_b))
+end subroutine parent
+
+subroutine child1()
+   allocate(child1_data(...))
+   ! do work
+   deallocate(child1_data)
+end subroutine child1
+
+subroutine child2()
+   allocate(child2_data(...))
+   ! do work
+   call grandchild()
+   deallocate(child2_data)
+end subroutine child2
+
+subroutine grandchild()
+   allocate(grandchild_data(...))
+   ! do work
+   deallocate(grandchild_data)
+end subroutine randchild
+```
+
+If you follow the order of allocations and deallocations in that code, it's very close to a stack:
+
+* `allocate(parent_a(...))`
+* `allocate(parent_b(...))`
+  * `allocate(child1_data(...))`
+  * `deallocate(child1_data)`
+  * `allocate(child2_data(...))`
+    * `allocate(grandchild_data(...))`
+    * `deallocate(grandchild_data)`
+  * `deallocate(child2_data)`
+* `deallocate(parent_a))`
+* `deallocate(parent_b))`
+
+You push allocations onto the back of the stack, and then your free allocations from the back of the stack (First In, Last Out). The most efficient memory allocator in terms of space efficiency and speed is, in fact, a stack. However, a stack **requires** you to deallocate in the reverse order that you allocate, and it can't be thread-safe. A stack-like allocator is more flexible. It allows you to allocate and deallocate in any order you want, and it can be made thread safe.
+
+However, unlike a more general allocator like a Buddy Allocator (https://en.wikipedia.org/wiki/Buddy_memory_allocation), the stack-like allocator here assumes the allocations and deallocations are **close** to stack-like behavior, and it optimizes for that case. In essence, new allocations can only be pushed to the end of the allocation list (there is no searching for gaps between previous allocations in the list), and when a pointer is deallocated, the search for the allocation for that pointer begins at the end of the allocation list and traverses backward.
+
+With this assumption, any violation of stack-like behavior will incur linear search costs and additional segmentation. But for most of weather and climate, the behavior is very close to that of a stack.
+
+#### Automatically Growing
+
+Gator automatically allocates more space whenever it runs out of space for a requested allocation. This is done by adding additional pools to a list. The behavior is still the same as it was with a single pool in terms of allocation and deallcation searching. The new pools will remain in place for the duration of the simulation. Therefore, once a pool has grown, it does not need to grow again until the memory requirements reach a new memory high-water mark, which they rarely do in weather and climate after the first time step.
+
+#### Informative
+
+Gator keeps track of the memory high-water mark in the pool automatically and informs the user at the end of the simulation.
+
+Error messages are made as helpful as possible to help the user know what to do in the event of a pool overflow. Sometimes, it is necessary to create a larger initial pool to use a limited memory space more effectively, and this guidance is given in error messages as errors occur.
+
+Also, all allocations can be labeled with an optional string parameter upon allocation. This allows tracking of timestamped and labeled allocations that are written to a file in debug mode (**soon to be implemented**).
+
+#### Environment variables 
+
+You control the behavior of Gator's pool management through the following environment variables:
+
+* `GATOR_INITIAL_MB`: The initial pool size in MB
+* `GATOR_GROW_MB`: The size of each new pool in MB once the initial pool is out of memory
+* `GATOR_BLOCK_BYTES`: The size of a byte. I can't imagine why you'd want to change this, but you can
+
+Environment variables are advantageous because they allow easier adaptation to critical metrics like the number of processes per node or per GPU, which are easiest to calculate outside of the executable itself.
+
+#### GPUs and Managed Memory
+
+The following CPP defines control Gator's behavior as well:
+
+* `-D__USE_CUDA__`: Enable CUDA allcoations (`cudaMalloc` and `cudaFree` are used to create and destroy the pools)
+* `-D__USE_HIP__`: Enable HIP allocations (`hipMalloc` and `hipFree` are used to create and destroy the pools)
+* `-D__MANAGED__`: Enable managed memory (`cudaMallocManaged` and `hipMallocHost` are used for CUDA and HIP, respectively, and the pools are pre-fetched to the GPU ahead of time for you), and inform OpenMP and OpenACC runtimes of this memory's Managed status whenever OpenACC or OpenMP are enabled. This is done automatically for OpenACC, but for OpenMP45, you'll need to specify a CPP define
+* `-D_OPENMP45 -D__MANAGED__`: Tell the OpenMP4.5 runtime that your allocations are managed so that OpenMP doesn't try to copy the data for you (i.e., this lets the underlying CUDA runtime handle it for you instead). This only does anything if `-D__MANAGED__` is also specified.
 
 ### Synchronization
 
@@ -416,6 +535,41 @@ pmin.deviceReduce( dt3d.data() , dtDev );
 ```
 
 As a rule, if you ever see a scalar on the left-hand and right-hand sides of an `=`, then it's a race condition in parallel that you will need to resolve by using a reduction.
+
+### `ScalarLiveOut`
+
+When you write to a scalar in a device kernel and need to subsequently read that value on the host, you encounter a "scalar live-out" scenario, and some compilers even tell you when this happens (though some do not). This happens most often in the following scenario:
+
+* __Testing routines__: You pass through some data and determine whether it's realistic or not, assigning this to a `bool` that is read on the host later to report the error.
+
+These situations are reductions in nature, but often it's not convenient or efficient to express them as reductions. 
+
+In these cases, the scalar must be explicitly allocated in device memory, the initial scalar value transferred from host to device memory, the scalar value altered in the kernel, and the scalar value transferred from device to host memory after the kernel. `ScalarLiveOut` handles all of this for you as follows:
+
+```C++
+// Creates a bool scalar that is allocated in device memory
+// and has an initial value of false (which is transferred
+// to device memory for you in the constructor)
+yakl::ScalarLiveOut<bool> dataIsBad(false);
+
+yakl::c::parallel_for( yakl::c::Bounds<2>(ny,nx) ,
+                       YAKL_LAMBDA (int j, int i) {
+  // The ScalarLiveOut class overloads operator=, so you can
+  // simply assign to it like any other scalar inside a kernel
+  if (density(j,i) < 0 || pressure(j,i) < 0) {
+    dataIsBad = true;
+  }
+});
+
+// To read on the host after a kernel, use the hostRead()
+// member function, which transfers the value to the host for you
+if (dataIsBad.hostRead()) {
+  std::cout << "ERROR: Invalid density or pressure!\n";
+  throw ...
+}
+```
+
+**When to not use `ScalarLiveOut`:** If you find yourself wanting to use atomics on a scalar, often times you're better off using a reduction instead, because all of the data is being reduced to a single scalar value. To facilitate this, it's best to create a temporary array with all necessary calculations (e.g., `dt3d` for the stable time step at each cell in a 3-D grid), and then perform a reduction on that array. While there is an `operator()` to expose the scalar for reading on the GPU, if you're needing to do this, there is usually an easier solution to you problem.
 
 ### Fortran - C++ interoperability with YAKL: `Array` and `gator_mod.F90`
 
