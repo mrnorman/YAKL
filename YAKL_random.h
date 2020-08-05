@@ -1,22 +1,21 @@
 
 #pragma once
 
-////////////////////////////////////////////////////////////////////////////////
-// Simple, low-overhead random numbers (only a 64-bit internal state)
-// 
-// Adapted from:
-// Thomas, D. B. "The MWC64X Random Number Generator.(2011)."
-// URL: http://cas.ee.ic.ac.uk/people/dt10/research/rngs-gpu-mwc64x.html
-// html (2011).
-////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////
+// Simple, low-overhead random numbers
+////////////////////////////////////////
 
 class Random {
 public:
-  uint64_t state;
+  size_t m = 4294967296UL;
+  size_t a = 1664525UL;
+  size_t c = 1013904223UL;
+
+  size_t state;
 
   // No seed (1.5 billion-th prime number)
-  YAKL_INLINE Random()                            { this->state = (uint64_t) 3121238909U;}
-  YAKL_INLINE Random(uint64_t state)              { this->state = state; warmup(); }
+  YAKL_INLINE Random()                            { this->state = (size_t) 3121238909UL;}
+  YAKL_INLINE Random(size_t state)                { this->state = state*3121238909UL; warmup(2); }
   YAKL_INLINE Random(Random const            &in) { this->state = in.state; }
   YAKL_INLINE Random(Random                 &&in) { this->state = in.state; }
   YAKL_INLINE Random &operator=(Random const &in) { this->state = in.state; return *this; }
@@ -29,15 +28,13 @@ public:
 
   // Return a random unsigned 32-bit integer
   YAKL_INLINE uint32_t gen() {
-      uint32_t c = state>>32;
-      uint32_t x = state&0xFFFFFFFF;
-      state = x*((uint64_t)4294883355U) + c;
-      return x^c;
+    state = (a*state + c) % m;
+    return state;
   }
 
   // Return floating point value: domain \in (0,1]
   template <class T> YAKL_INLINE T genFP() {
-    return ( (T) gen() + 1 ) / ( (T) 4294967295U );
+    return ( (T) gen() + 1 ) / ( (T) 4294967296UL );
   }
 
   // Return a floating point value with custom bounds
