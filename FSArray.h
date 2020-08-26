@@ -42,34 +42,34 @@ public :
   YAKL_INLINE T &operator()(int const i0) const {
     static_assert(rank==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef YAKL_DEBUG
-      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); exit(-1); }
+      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); throw ""; }
     #endif
     return myData[i0-L0];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1) const {
     static_assert(rank==2,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef YAKL_DEBUG
-      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); exit(-1); }
-      if (i1<L1 || i1>U1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); exit(-1); }
+      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); throw ""; }
+      if (i1<L1 || i1>U1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); throw ""; }
     #endif
     return myData[(i1-L1)*OFF1 + i0-L0];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
     static_assert(rank==3,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef YAKL_DEBUG
-      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); exit(-1); }
-      if (i1<L1 || i1>U1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); exit(-1); }
-      if (i2<L2 || i2>U2) { printf("Array i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); exit(-1); }
+      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); throw ""; }
+      if (i1<L1 || i1>U1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); throw ""; }
+      if (i2<L2 || i2>U2) { printf("Array i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); throw ""; }
     #endif
     return myData[(i2-L2)*OFF2 + (i1-L1)*OFF1 + i0-L0];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3) const {
     static_assert(rank==4,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef YAKL_DEBUG
-      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); exit(-1); }
-      if (i1<L1 || i1>U1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); exit(-1); }
-      if (i2<L2 || i2>U2) { printf("Array i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); exit(-1); }
-      if (i3<L3 || i3>U3) { printf("Array i3 out of bounds (i3: %d; lb3: %d; ub3: %d",i3,L3,U3); exit(-1); }
+      if (i0<L0 || i0>U0) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); throw ""; }
+      if (i1<L1 || i1>U1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); throw ""; }
+      if (i2<L2 || i2>U2) { printf("Array i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); throw ""; }
+      if (i3<L3 || i3>U3) { printf("Array i3 out of bounds (i3: %d; lb3: %d; ub3: %d",i3,L3,U3); throw ""; }
     #endif
     return myData[(i3-L3)*OFF3 + (i2-L2)*OFF2 + (i1-L1)*OFF1 + i0-L0];
   }
