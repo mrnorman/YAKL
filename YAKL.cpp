@@ -7,6 +7,8 @@ namespace yakl {
 
   Gator pool;
 
+  bool yakl_is_initialized = false;
+
   // YAKL allocator and deallocator
   std::function<void *( size_t , char const *)> yaklAllocDeviceFunc = [] ( size_t bytes , char const *label ) -> void* {
     std::cout << "ERROR: attempting memory alloc before calling yakl::init()\n"; exit(-1);
