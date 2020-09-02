@@ -91,6 +91,8 @@ namespace yakl {
   extern std::function<void *( size_t , char const *)> yaklAllocHostFunc;
   extern std::function<void ( void * , char const *)>  yaklFreeHostFunc;
 
+  extern bool yakl_is_initialized;
+
   #ifdef __USE_HIP__
     YAKL_INLINE void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
     YAKL_INLINE void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
@@ -149,10 +151,16 @@ namespace yakl {
   }
 
 
+  inline bool isInitialized() {
+    return yakl_is_initialized;
+  }
+
+
 #include "YAKL_init.h"
 
 
   inline void finalize() {
+    yakl_is_initialized = false;
     size_t hwm = pool.highWaterMark();
     if        (hwm >= 1024*1024*1024) {
       std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024*1024) << " GB\n";

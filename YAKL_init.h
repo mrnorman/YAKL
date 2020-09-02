@@ -7,6 +7,8 @@
   inline void init() {
     bool use_pool = true;
 
+    yakl_is_initialized = true;
+
     // Check for pool allocator env var
     char * env = std::getenv("GATOR_DISABLE");
     if ( env != nullptr ) {
