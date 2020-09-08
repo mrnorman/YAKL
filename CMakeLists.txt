@@ -32,6 +32,8 @@ else()
 endif()
 
 add_library(yakl STATIC ${YAKL_SOURCE})
+target_compile_features(yakl PUBLIC cxx_std_14)
+
 if ("${ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 endif()
