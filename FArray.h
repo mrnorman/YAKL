@@ -7,8 +7,9 @@ public:
   index_t offsets  [rank];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
   int     lbounds  [rank];  // Lower bounds for each dimension
   index_t dimension[rank];  // Sizes of dimensions
-  T      * myData;         // Pointer to the flattened internal data
-  bool   owned;            // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
+  T       * myData;         // Pointer to the flattened internal data
+  int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
+  bool    owned;            // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef YAKL_DEBUG
     std::string myname; // Label for debug printing. Only stored if debugging is turned on
   #endif
@@ -739,7 +740,6 @@ public:
   }
 
 
-  int *refCount; // Pointer shared by multiple copies of this Array to keep track of allcation / free
 
   inline void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
     static_assert( myMem == memDevice || myMem == memHost ,

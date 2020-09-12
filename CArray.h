@@ -16,7 +16,7 @@ public:
 
   // Start off all constructors making sure the pointers are null
   YAKL_INLINE void nullify() {
-    owned = true;
+    owned    = true;
     myData   = nullptr;
     refCount = nullptr;
   }
