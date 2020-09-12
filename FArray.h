@@ -4,11 +4,12 @@
 template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
 public:
 
-  size_t offsets  [rank];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
-  int    lbounds  [rank];  // Lower bounds for each dimension
-  int    dimension[rank];  // Sizes of dimensions
-  T      * myData;         // Pointer to the flattened internal data
-  bool   owned;            // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
+  index_t offsets  [rank];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
+  int     lbounds  [rank];  // Lower bounds for each dimension
+  index_t dimension[rank];  // Sizes of dimensions
+  T       * myData;         // Pointer to the flattened internal data
+  int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
+  bool    owned;            // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef YAKL_DEBUG
     std::string myname; // Label for debug printing. Only stored if debugging is turned on
   #endif
@@ -346,7 +347,7 @@ public:
       if ( rank != 1 ) { yakl_throw("ERROR: Calling invalid function on rank 1 Array"); }
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
     #endif
-    int ind = i0-lbounds[0];
+    index_t ind = i0-lbounds[0];
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1) const {
@@ -355,8 +356,8 @@ public:
       this->check_index(0,i0,lbounds[0],lbounds[0]+dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
     #endif
-    int ind = (i1-lbounds[1])*offsets[1] +
-              (i0-lbounds[0]);
+    index_t ind = (i1-lbounds[1])*offsets[1] +
+                  (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
@@ -366,9 +367,9 @@ public:
       this->check_index(1,i1,lbounds[1],lbounds[1]+dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
     #endif
-    int ind = (i2-lbounds[2])*offsets[2] +
-              (i1-lbounds[1])*offsets[1] +
-              (i0-lbounds[0]);
+    index_t ind = (i2-lbounds[2])*offsets[2] +
+                  (i1-lbounds[1])*offsets[1] +
+                  (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3) const {
@@ -379,10 +380,10 @@ public:
       this->check_index(2,i2,lbounds[2],lbounds[2]+dimension[2]-1,__FILE__,__LINE__);
       this->check_index(3,i3,lbounds[3],lbounds[3]+dimension[3]-1,__FILE__,__LINE__);
     #endif
-    int ind = (i3-lbounds[3])*offsets[3] +
-              (i2-lbounds[2])*offsets[2] +
-              (i1-lbounds[1])*offsets[1] +
-              (i0-lbounds[0]);
+    index_t ind = (i3-lbounds[3])*offsets[3] +
+                  (i2-lbounds[2])*offsets[2] +
+                  (i1-lbounds[1])*offsets[1] +
+                  (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4) const {
@@ -394,11 +395,11 @@ public:
       this->check_index(3,i3,lbounds[3],lbounds[3]+dimension[3]-1,__FILE__,__LINE__);
       this->check_index(4,i4,lbounds[4],lbounds[4]+dimension[4]-1,__FILE__,__LINE__);
     #endif
-    int ind = (i4-lbounds[4])*offsets[4] +
-              (i3-lbounds[3])*offsets[3] +
-              (i2-lbounds[2])*offsets[2] +
-              (i1-lbounds[1])*offsets[1] +
-              (i0-lbounds[0]);
+    index_t ind = (i4-lbounds[4])*offsets[4] +
+                  (i3-lbounds[3])*offsets[3] +
+                  (i2-lbounds[2])*offsets[2] +
+                  (i1-lbounds[1])*offsets[1] +
+                  (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5) const {
@@ -411,12 +412,12 @@ public:
       this->check_index(4,i4,lbounds[4],lbounds[4]+dimension[4]-1,__FILE__,__LINE__);
       this->check_index(5,i5,lbounds[5],lbounds[5]+dimension[5]-1,__FILE__,__LINE__);
     #endif
-    int ind = (i5-lbounds[5])*offsets[5] +
-              (i4-lbounds[4])*offsets[4] +
-              (i3-lbounds[3])*offsets[3] +
-              (i2-lbounds[2])*offsets[2] +
-              (i1-lbounds[1])*offsets[1] +
-              (i0-lbounds[0]);
+    index_t ind = (i5-lbounds[5])*offsets[5] +
+                  (i4-lbounds[4])*offsets[4] +
+                  (i3-lbounds[3])*offsets[3] +
+                  (i2-lbounds[2])*offsets[2] +
+                  (i1-lbounds[1])*offsets[1] +
+                  (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6) const {
@@ -430,13 +431,13 @@ public:
       this->check_index(5,i5,lbounds[5],lbounds[5]+dimension[5]-1,__FILE__,__LINE__);
       this->check_index(6,i6,lbounds[6],lbounds[6]+dimension[6]-1,__FILE__,__LINE__);
     #endif
-    int ind = (i6-lbounds[6])*offsets[6] +
-              (i5-lbounds[5])*offsets[5] +
-              (i4-lbounds[4])*offsets[4] +
-              (i3-lbounds[3])*offsets[3] +
-              (i2-lbounds[2])*offsets[2] +
-              (i1-lbounds[1])*offsets[1] +
-              (i0-lbounds[0]);
+    index_t ind = (i6-lbounds[6])*offsets[6] +
+                  (i5-lbounds[5])*offsets[5] +
+                  (i4-lbounds[4])*offsets[4] +
+                  (i3-lbounds[3])*offsets[3] +
+                  (i2-lbounds[2])*offsets[2] +
+                  (i1-lbounds[1])*offsets[1] +
+                  (i0-lbounds[0]);
     return myData[ind];
   }
   YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3, int const i4, int const i5, int const i6, int const i7) const {
@@ -451,14 +452,14 @@ public:
       this->check_index(6,i6,lbounds[6],lbounds[6]+dimension[6]-1,__FILE__,__LINE__);
       this->check_index(7,i7,lbounds[7],lbounds[7]+dimension[7]-1,__FILE__,__LINE__);
     #endif
-    int ind = (i7-lbounds[7])*offsets[7] +
-              (i6-lbounds[6])*offsets[6] +
-              (i5-lbounds[5])*offsets[5] +
-              (i4-lbounds[4])*offsets[4] +
-              (i3-lbounds[3])*offsets[3] +
-              (i2-lbounds[2])*offsets[2] +
-              (i1-lbounds[1])*offsets[1] +
-              (i0-lbounds[0]);
+    index_t ind = (i7-lbounds[7])*offsets[7] +
+                  (i6-lbounds[6])*offsets[6] +
+                  (i5-lbounds[5])*offsets[5] +
+                  (i4-lbounds[4])*offsets[4] +
+                  (i3-lbounds[3])*offsets[3] +
+                  (i2-lbounds[2])*offsets[2] +
+                  (i1-lbounds[1])*offsets[1] +
+                  (i0-lbounds[0]);
     return myData[ind];
   }
 
@@ -484,7 +485,7 @@ public:
       ret.offsets  [i] = offsets  [i];
       ret.lbounds  [i] = lbounds  [i];
     }
-    size_t retOff = 0;
+    index_t retOff = 0;
     for (int i=N; i<rank; i++) {
       retOff += (dims.data[i]-lbounds[i])*offsets[i];
     }
@@ -500,7 +501,7 @@ public:
       store.offsets  [i] = offsets  [i];
       store.lbounds  [i] = lbounds  [i];
     }
-    size_t retOff = 0;
+    index_t retOff = 0;
     for (int i=N; i<rank; i++) {
       retOff += (dims.data[i]-lbounds[i])*offsets[i];
     }
@@ -520,7 +521,7 @@ public:
     #endif
     ret.allocate();
     if (myMem == memHost) {
-      for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
+      for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToHost,0);
@@ -529,7 +530,7 @@ public:
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
         hipDeviceSynchronize();
       #else
-        for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     }
     return ret;
@@ -555,7 +556,7 @@ public:
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
         hipDeviceSynchronize();
       #else
-        for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
@@ -565,7 +566,7 @@ public:
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
         hipDeviceSynchronize();
       #else
-        for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     }
     return ret;
@@ -574,14 +575,14 @@ public:
 
   inline void deep_copy_to(Array<T,rank,memHost,styleFortran> lhs) const {
     if (myMem == memHost) {
-      for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
+      for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToHost,0);
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
       #else
-        for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
   }
@@ -594,7 +595,7 @@ public:
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
       #else
-        for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
@@ -602,7 +603,7 @@ public:
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
       #else
-        for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
   }
@@ -620,7 +621,7 @@ public:
   T relNorm(Array<T,rank,myMem,styleFortran> &other) {
     double numer = 0;
     double denom = 0;
-    for (int i=0; i<this->totElems(); i++) {
+    for (index_t i=0; i<this->totElems(); i++) {
       numer += abs(this->myData[i] - other.myData[i]);
       denom += abs(this->myData[i]);
     }
@@ -633,7 +634,7 @@ public:
 
   T absNorm(Array<T,rank,myMem,styleFortran> &other) {
     T numer = 0;
-    for (int i=0; i<this->totElems(); i++) {
+    for (index_t i=0; i<this->totElems(); i++) {
       numer += abs(this->myData[i] - other.myData[i]);
     }
     return numer;
@@ -642,7 +643,7 @@ public:
 
   T maxAbs(Array<T,rank,myMem,styleFortran> &other) {
     T numer = abs(this->myData[0] - other.myData[0]);
-    for (int i=1; i<this->totElems(); i++) {
+    for (index_t i=1; i<this->totElems(); i++) {
       numer = max( numer , abs(this->myData[i] - other.myData[i]) );
     }
     return numer;
@@ -653,14 +654,14 @@ public:
   YAKL_INLINE int get_rank() const {
     return rank;
   }
-  YAKL_INLINE size_t totElems() const {
-    size_t totElems = dimension[0];
+  YAKL_INLINE index_t totElems() const {
+    index_t totElems = dimension[0];
     for (int i=1; i<rank; i++) {
       totElems *= dimension[i];
     }
     return totElems;
   }
-  YAKL_INLINE size_t get_totElems() const {
+  YAKL_INLINE index_t get_totElems() const {
     return totElems();
   }
   YAKL_INLINE FSArray<int,1,SB<rank>> get_dimensions() const {
@@ -689,15 +690,15 @@ public:
   YAKL_INLINE T *get_data() const {
     return myData;
   }
-  YAKL_INLINE int extent( int const dim ) const {
+  YAKL_INLINE index_t extent( int const dim ) const {
     return dimension[dim];
   }
   YAKL_INLINE int extent_int( int const dim ) const {
     return (int) dimension[dim];
   }
 
-  YAKL_INLINE int span_is_contiguous() const {
-    return 1;
+  YAKL_INLINE bool span_is_contiguous() const {
+    return true;
   }
   YAKL_INLINE int use_count() const {
     if (owned) {
@@ -731,7 +732,7 @@ public:
       os << v.dimension[i] << ", ";
     }
     os << "\n";
-    for (size_t i=0; i<v.totElems(); i++) {
+    for (index_t i=0; i<v.totElems(); i++) {
       os << v.myData[i] << " ";
     }
     os << "\n";
@@ -739,9 +740,6 @@ public:
   }
 
 
-  // This is stuff the user has no business messing with
-
-  int *refCount; // Pointer shared by multiple copies of this Array to keep track of allcation / free
 
   inline void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
     static_assert( myMem == memDevice || myMem == memHost ,

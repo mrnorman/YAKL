@@ -4,18 +4,19 @@
 template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
 public:
 
-  size_t offsets  [rank];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
-  size_t dimension[rank];  // Sizes of the 8 possible dimensions
-  T      * myData;      // Pointer to the flattened internal data
-  bool   owned;         // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
+  index_t offsets  [rank];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
+  index_t dimension[rank];  // Sizes of the 8 possible dimensions
+  T       * myData;         // Pointer to the flattened internal data
+  int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
+  bool    owned;            // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef YAKL_DEBUG
-    std::string myname; // Label for debug printing. Only stored if debugging is turned on
+    std::string myname;     // Label for debug printing. Only stored if debugging is turned on
   #endif
 
 
   // Start off all constructors making sure the pointers are null
   YAKL_INLINE void nullify() {
-    owned = true;
+    owned    = true;
     myData   = nullptr;
     refCount = nullptr;
   }
@@ -39,56 +40,56 @@ public:
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  Array(char const * label, size_t const d1) {
+  Array(char const * label, index_t const d1) {
     #ifdef YAKL_DEBUG
       if( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
     #endif
     nullify();
     setup(label,d1);
   }
-  Array(char const * label, size_t const d1, size_t const d2) {
+  Array(char const * label, index_t const d1, index_t const d2) {
     #ifdef YAKL_DEBUG
       if( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
     #endif
     nullify();
     setup(label,d1,d2);
   }
-  Array(char const * label, size_t const d1, size_t const d2, size_t const d3) {
+  Array(char const * label, index_t const d1, index_t const d2, index_t const d3) {
     #ifdef YAKL_DEBUG
       if( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
     #endif
     nullify();
     setup(label,d1,d2,d3);
   }
-  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
+  Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
     #ifdef YAKL_DEBUG
       if( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
     #endif
     nullify();
     setup(label,d1,d2,d3,d4);
   }
-  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
+  Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
     #ifdef YAKL_DEBUG
       if( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
     #endif
     nullify();
     setup(label,d1,d2,d3,d4,d5);
   }
-  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
+  Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
     #ifdef YAKL_DEBUG
       if( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
     #endif
     nullify();
     setup(label,d1,d2,d3,d4,d5,d6);
   }
-  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
+  Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
     #ifdef YAKL_DEBUG
       if( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
     #endif
     nullify();
     setup(label,d1,d2,d3,d4,d5,d6,d7);
   }
-  Array(char const * label, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
+  Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
     #ifdef YAKL_DEBUG
       if( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
     #endif
@@ -115,7 +116,7 @@ public:
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Non-owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  Array(char const * label, T * data, size_t const d1) {
+  Array(char const * label, T * data, index_t const d1) {
     #ifdef YAKL_DEBUG
       if ( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
     #endif
@@ -124,7 +125,7 @@ public:
     setup(label,d1);
     myData = data;
   }
-  Array(char const * label, T * data, size_t const d1, size_t const d2) {
+  Array(char const * label, T * data, index_t const d1, index_t const d2) {
     #ifdef YAKL_DEBUG
       if ( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
     #endif
@@ -133,7 +134,7 @@ public:
     setup(label,d1,d2);
     myData = data;
   }
-  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3) {
+  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3) {
     #ifdef YAKL_DEBUG
       if ( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
     #endif
@@ -142,7 +143,7 @@ public:
     setup(label,d1,d2,d3);
     myData = data;
   }
-  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4) {
+  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
     #ifdef YAKL_DEBUG
       if ( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
     #endif
@@ -151,7 +152,7 @@ public:
     setup(label,d1,d2,d3,d4);
     myData = data;
   }
-  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5) {
+  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
     #ifdef YAKL_DEBUG
       if ( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
     #endif
@@ -160,7 +161,7 @@ public:
     setup(label,d1,d2,d3,d4,d5);
     myData = data;
   }
-  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6) {
+  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
     #ifdef YAKL_DEBUG
       if ( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
     #endif
@@ -169,7 +170,7 @@ public:
     setup(label,d1,d2,d3,d4,d5,d6);
     myData = data;
   }
-  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7) {
+  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
     #ifdef YAKL_DEBUG
       if ( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
     #endif
@@ -178,7 +179,7 @@ public:
     setup(label,d1,d2,d3,d4,d5,d6,d7);
     myData = data;
   }
-  Array(char const * label, T * data, size_t const d1, size_t const d2, size_t const d3, size_t const d4, size_t const d5, size_t const d6, size_t const d7, size_t const d8) {
+  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
     #ifdef YAKL_DEBUG
       if ( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
     #endif
@@ -306,34 +307,34 @@ public:
   /* ARRAY INDEXERS (FORTRAN index ordering)
   Return the element at the given index (either read-only or read-write)
   */
-  YAKL_INLINE T &operator()(size_t const i0) const {
+  YAKL_INLINE T &operator()(index_t const i0) const {
     #ifdef YAKL_DEBUG
       if ( rank != 1 ) { yakl_throw("ERROR: Calling invalid function on rank 1 Array"); }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = i0;
+    index_t ind = i0;
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1) const {
+  YAKL_INLINE T &operator()(index_t const i0, index_t const i1) const {
     #ifdef YAKL_DEBUG
       if ( rank != 2 ) { yakl_throw("ERROR: Calling invalid function on rank 2 Array"); }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = i0*offsets[0] + i1;
+    index_t ind = i0*offsets[0] + i1;
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2) const {
+  YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2) const {
     #ifdef YAKL_DEBUG
       if ( rank != 3 ) { yakl_throw("ERROR: Calling invalid function on rank 3 Array"); }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
       this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = i0*offsets[0] + i1*offsets[1] + i2;
+    index_t ind = i0*offsets[0] + i1*offsets[1] + i2;
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3) const {
+  YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3) const {
     #ifdef YAKL_DEBUG
       if ( rank != 4 ) { yakl_throw("ERROR: Calling invalid function on rank 4 Array"); }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -341,10 +342,10 @@ public:
       this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
       this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3;
+    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3;
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4) const {
+  YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3, index_t const i4) const {
     #ifdef YAKL_DEBUG
       if ( rank != 5 ) { yakl_throw("ERROR: Calling invalid function on rank 5 Array"); }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -353,10 +354,10 @@ public:
       this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
       this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4;
+    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4;
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5) const {
+  YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3, index_t const i4, index_t const i5) const {
     #ifdef YAKL_DEBUG
       if ( rank != 6 ) { yakl_throw("ERROR: Calling invalid function on rank 6 Array"); }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -366,10 +367,10 @@ public:
       this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
       this->check_index(5,i5,0,dimension[5]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5;
+    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5;
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6) const {
+  YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3, index_t const i4, index_t const i5, index_t const i6) const {
     #ifdef YAKL_DEBUG
       if ( rank != 7 ) { yakl_throw("ERROR: Calling invalid function on rank 7 Array"); }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -380,10 +381,10 @@ public:
       this->check_index(5,i5,0,dimension[5]-1,__FILE__,__LINE__);
       this->check_index(6,i6,0,dimension[6]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6;
+    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6;
     return myData[ind];
   }
-  YAKL_INLINE T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3, size_t const i4, size_t const i5, size_t const i6, size_t const i7) const {
+  YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3, index_t const i4, index_t const i5, index_t const i6, index_t const i7) const {
     #ifdef YAKL_DEBUG
       if ( rank != 8 ) { yakl_throw("ERROR: Calling invalid function on rank 8 Array"); }
       this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
@@ -395,7 +396,7 @@ public:
       this->check_index(6,i6,0,dimension[6]-1,__FILE__,__LINE__);
       this->check_index(7,i7,0,dimension[7]-1,__FILE__,__LINE__);
     #endif
-    size_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6*offsets[6] + i7;
+    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6*offsets[6] + i7;
     return myData[ind];
   }
 
@@ -424,7 +425,7 @@ public:
     #endif
     ret.allocate();
     if (myMem == memHost) {
-      for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
+      for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToHost,0);
@@ -433,7 +434,7 @@ public:
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
         hipDeviceSynchronize();
       #else
-        for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     }
     return ret;
@@ -458,7 +459,7 @@ public:
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
         hipDeviceSynchronize();
       #else
-        for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
@@ -468,7 +469,7 @@ public:
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
         hipDeviceSynchronize();
       #else
-        for (size_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     }
     return ret;
@@ -477,14 +478,14 @@ public:
 
   inline void deep_copy_to(Array<T,rank,memHost,styleC> lhs) {
     if (myMem == memHost) {
-      for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
+      for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToHost,0);
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
       #else
-        for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
   }
@@ -497,7 +498,7 @@ public:
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
       #else
-        for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
@@ -505,7 +506,7 @@ public:
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
       #else
-        for (size_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
+        for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     }
   }
@@ -524,15 +525,15 @@ public:
   YAKL_INLINE int get_rank() const {
     return rank;
   }
-  YAKL_INLINE size_t get_totElems() const {
-    size_t tot = dimension[0];
+  YAKL_INLINE index_t get_totElems() const {
+    index_t tot = dimension[0];
     for (int i=1; i<rank; i++) { tot *= dimension[i]; }
     return tot;
   }
-  YAKL_INLINE size_t totElems() const {
+  YAKL_INLINE index_t totElems() const {
     return get_totElems();
   }
-  YAKL_INLINE size_t const *get_dimensions() const {
+  YAKL_INLINE index_t const *get_dimensions() const {
     return dimension;
   }
   YAKL_INLINE T *data() const {
@@ -541,15 +542,15 @@ public:
   YAKL_INLINE T *get_data() const {
     return myData;
   }
-  YAKL_INLINE size_t extent( int const dim ) const {
+  YAKL_INLINE index_t extent( int const dim ) const {
     return dimension[dim];
   }
   YAKL_INLINE int extent_int( int const dim ) const {
     return (int) dimension[dim];
   }
 
-  YAKL_INLINE int span_is_contiguous() const {
-    return 1;
+  YAKL_INLINE bool span_is_contiguous() const {
+    return true;
   }
   YAKL_INLINE int use_count() const {
     if (owned) {
@@ -576,12 +577,12 @@ public:
       std::cout << "For Array labeled: " << myname << "\n";
     #endif
     if (rank == 1) {
-      for (size_t i=0; i<dimension[0]; i++) {
+      for (index_t i=0; i<dimension[0]; i++) {
         std::cout << std::setw(12) << (*this)(i) << "\n";
       }
     } else if (rank == 2) {
-      for (size_t j=0; j<dimension[0]; j++) {
-        for (size_t i=0; i<dimension[1]; i++) {
+      for (index_t j=0; j<dimension[0]; j++) {
+        for (index_t i=0; i<dimension[1]; i++) {
           std::cout << std::setw(12) << (*this)(i,j) << " ";
         }
         std::cout << "\n";
@@ -589,7 +590,7 @@ public:
     } else if (rank == 0) {
       std::cout << "Empty Array\n\n";
     } else {
-      for (size_t i=0; i<totElems(); i++) {
+      for (index_t i=0; i<totElems(); i++) {
         std::cout << std::setw(12) << myData[i] << " ";
       }
       std::cout << "\n";
@@ -611,7 +612,7 @@ public:
       os << v.dimension[i] << ", ";
     }
     os << "\n";
-    for (size_t i=0; i<v.totElems(); i++) {
+    for (index_t i=0; i<v.totElems(); i++) {
       os << v.myData[i] << " ";
     }
     os << "\n";
@@ -619,12 +620,9 @@ public:
   }
 
 
-  // This is stuff the user has no business messing with
-
-  int *refCount; // Pointer shared by multiple copies of this Array to keep track of allcation / free
 
   // It would be dangerous for the user to call this directly rather than through the constructors, so we're "hiding" it :)
-  inline void setup(char const * label, size_t d0, size_t d1=1, size_t d2=1, size_t d3=1, size_t d4=1, size_t d5=1, size_t d6=1, size_t d7=1) {
+  inline void setup(char const * label, index_t d0, index_t d1=1, index_t d2=1, index_t d3=1, index_t d4=1, index_t d5=1, index_t d6=1, index_t d7=1) {
     #ifdef YAKL_DEBUG
       myname = std::string(label);
     #endif

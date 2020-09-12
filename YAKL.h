@@ -46,6 +46,8 @@
 
 namespace yakl {
 
+  typedef unsigned int index_t;
+
   template <class T> inline void yakl_throw(T &exc) {
     std::cout << "YAKL FATAL ERROR:\n";
     std::cout << exc << std::endl;

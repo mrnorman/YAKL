@@ -25,7 +25,7 @@ public:
 
   // assignment on the GPU for integral types
   template <class TLOC , typename std::enable_if< std::is_arithmetic<TLOC>::value , int >::type = 0>
-  YAKL_INLINE T &operator= (TLOC rhs) const { data(0) = rhs; return data(0); };
+  YAKL_INLINE T &operator= (TLOC rhs) const { data(0) = rhs; return data(0); }
 
   // Access on the GPU
   YAKL_INLINE T &operator() () const {
