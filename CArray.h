@@ -99,7 +99,7 @@ public:
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
   Array(char const * label, std::vector<INT> const dims) {
     #ifdef YAKL_DEBUG
-      if ( dims.size() <= rank ) { yakl_throw("ERROR: dims < rank"); }
+      if ( dims.size() < rank ) { yakl_throw("ERROR: dims < rank"); }
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
     #endif
     nullify();
@@ -191,7 +191,7 @@ public:
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
   Array(char const * label, T * data, std::vector<INT> const dims) {
     #ifdef YAKL_DEBUG
-      if ( dims.size() <= rank ) { yakl_throw("ERROR: dims < rank"); }
+      if ( dims.size() < rank ) { yakl_throw("ERROR: dims < rank"); }
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
     #endif
     nullify();
