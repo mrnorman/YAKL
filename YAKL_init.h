@@ -37,7 +37,9 @@
           alloc   = [] ( size_t bytes , char const *label ) -> void* {
             void *ptr;
             cudaMallocManaged(&ptr,bytes);
+            check_last_error();
             cudaMemPrefetchAsync(ptr,bytes,0);
+            check_last_error();
             #ifdef _OPENMP45
               omp_target_associate_ptr(ptr,ptr,bytes,0,0);
             #endif
@@ -48,24 +50,43 @@
           };
           dealloc = [] ( void *ptr    , char const *label ) {
             cudaFree(ptr);
+            check_last_error();
           };
         #else
           alloc   = [] ( size_t bytes , char const *label ) -> void* {
             void *ptr;
             cudaMalloc(&ptr,bytes);
+            check_last_error();
             return ptr;
           };
           dealloc = [] ( void *ptr    , char const *label ) {
             cudaFree(ptr);
+            check_last_error();
           };
         #endif
       #elif defined(__USE_HIP__)
         #if defined (__MANAGED__)
-          alloc   = [] ( size_t bytes , char const *label ) -> void* { void *ptr; hipMallocHost(&ptr,bytes); return ptr; };
-          dealloc = [] ( void *ptr    , char const *label )          { hipFree(ptr); };
+          alloc = [] ( size_t bytes , char const *label ) -> void* {
+            void *ptr;
+            hipMallocHost(&ptr,bytes);
+            check_last_error();
+            return ptr;
+          };
+          dealloc = [] ( void *ptr    , char const *label ) {
+            hipFree(ptr);
+            check_last_error();
+          };
         #else
-          alloc   = [] ( size_t bytes , char const *label ) -> void* { void *ptr; hipMalloc(&ptr,bytes); return ptr; };
-          dealloc = [] ( void *ptr    , char const *label )          { hipFree(ptr); };
+          alloc = [] ( size_t bytes , char const *label ) -> void* { 
+            void *ptr;
+            hipMalloc(&ptr,bytes);
+            check_last_error();
+            return ptr;
+          };
+          dealloc = [] ( void *ptr    , char const *label ) {
+            hipFree(ptr);
+            check_last_error();
+          };
         #endif
       #else
         alloc   = [] ( size_t bytes , char const *label ) -> void* { return ::malloc(bytes); };

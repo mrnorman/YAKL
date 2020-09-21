@@ -503,10 +503,14 @@ public:
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToHost,0);
+        check_last_error();
         cudaDeviceSynchronize();
+        check_last_error();
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
+        check_last_error();
         hipDeviceSynchronize();
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
@@ -528,20 +532,28 @@ public:
     if (myMem == memHost) {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyHostToDevice,0);
+        check_last_error();
         cudaDeviceSynchronize();
+        check_last_error();
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
+        check_last_error();
         hipDeviceSynchronize();
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToDevice,0);
+        check_last_error();
         cudaDeviceSynchronize();
+        check_last_error();
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
+        check_last_error();
         hipDeviceSynchronize();
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
@@ -556,8 +568,10 @@ public:
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToHost,0);
+        check_last_error();
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
@@ -569,16 +583,20 @@ public:
     if (myMem == memHost) {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),cudaMemcpyHostToDevice,0);
+        check_last_error();
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
     } else {
       #ifdef __USE_CUDA__
         cudaMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),cudaMemcpyDeviceToDevice,0);
+        check_last_error();
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif

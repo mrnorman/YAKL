@@ -36,6 +36,7 @@
         T rslt;
         hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         hipMemcpyAsync(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost,0);       // Copy result to host
+        check_last_error();
         fence();
         return rslt;
       }
@@ -72,6 +73,7 @@
         T rslt;
         hipcub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         hipMemcpyAsync(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost,0);       // Copy result to host
+        check_last_error();
         fence();
         return rslt;
       }
@@ -108,6 +110,7 @@
         T rslt;
         hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         hipMemcpyAsync(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost,0);       // Copy result to host
+        check_last_error();
         fence();
         return rslt;
       }
@@ -146,6 +149,7 @@
         T rslt;
         cub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         cudaMemcpyAsync(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost,0);       // Copy result to host
+        check_last_error();
         fence();
         return rslt;
       }
@@ -182,6 +186,7 @@
         T rslt;
         cub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         cudaMemcpyAsync(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost,0);       // Copy result to host
+        check_last_error();
         fence();
         return rslt;
       }
@@ -218,6 +223,7 @@
         T rslt;
         cub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         cudaMemcpyAsync(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost,0);       // Copy result to host
+        check_last_error();
         fence();
         return rslt;
       }

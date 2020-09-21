@@ -48,11 +48,25 @@ namespace yakl {
 
   typedef unsigned int index_t;
 
-  template <class T> inline void yakl_throw(T &exc) {
+  template <class T> inline void yakl_throw(T const &exc) {
     std::cout << "YAKL FATAL ERROR:\n";
     std::cout << exc << std::endl;
     throw exc;
   }
+
+  #ifdef __USE_CUDA__
+    inline void check_last_error() {
+      auto ierr = cudaGetLastError();
+      if (ierr != cudaSuccess) { yakl_throw( cudaGetErrorString( ierr ) ); }
+    }
+  #elif defined(__USE_HIP__)
+    inline void check_last_error() {
+      auto ierr = hipGetLastError();
+      if (ierr != hipSuccess) { yakl_throw( hipGetErrorString( ierr ) ); }
+    }
+  #else
+    inline void check_last_error() { }
+  #endif
 
   // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;
@@ -214,9 +228,11 @@ namespace yakl {
   inline void fence() {
     #ifdef __USE_CUDA__
       cudaDeviceSynchronize();
+      check_last_error();
     #endif
     #ifdef __USE_HIP__
       hipDeviceSynchronize();
+      check_last_error();
     #endif
   }
 
@@ -242,6 +258,7 @@ namespace yakl {
     pool.finalize();
     #if defined(__USE_CUDA__)
       cudaFree(functorBuffer);
+      check_last_error();
     #endif
   }
 

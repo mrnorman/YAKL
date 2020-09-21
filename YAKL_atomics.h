@@ -82,9 +82,11 @@
     __device__ __forceinline__ void atomicMin(unsigned int &update , unsigned int value) {
       ::atomicMin( &update , value );
     }
-    __device__ __forceinline__ void atomicMin(unsigned long long int &update , unsigned long long int value) {
-      ::atomicMin( &update , value );
-    }
+    #if __CUDA_ARCH__ >= 350
+      __device__ __forceinline__ void atomicMin(unsigned long long int &update , unsigned long long int value) {
+        ::atomicMin( &update , value );
+      }
+    #endif
 
     ////////////////////////////////////////////////////////////
     // CUDA has HW atomics for atomicMax int, unsigned int, and unsigned long long int
@@ -95,9 +97,11 @@
     __device__ __forceinline__ void atomicMax(unsigned int &update , unsigned int value) {
       ::atomicMax( &update , value );
     }
-    __device__ __forceinline__ void atomicMax(unsigned long long int &update , unsigned long long int value) {
-      ::atomicMax( &update , value );
-    }
+    #if __CUDA_ARCH__ >= 350
+      __device__ __forceinline__ void atomicMax(unsigned long long int &update , unsigned long long int value) {
+        ::atomicMax( &update , value );
+      }
+    #endif
   #endif
 
   #ifdef __USE_HIP__

@@ -532,13 +532,16 @@ namespace c {
     template<class F , int N , bool simple , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0>
     void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
       cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , f );
+      check_last_error();
     }
 
     template<class F , int N , bool simple , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0>
     void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
       F *fp = (F *) functorBuffer;
       cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
+      check_last_error();
       cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , *fp );
+      check_last_error();
     }
   #endif
 
@@ -556,6 +559,7 @@ namespace c {
     void parallel_for_hip( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
       hipLaunchKernelGGL( hipKernel , dim3((bounds.nIter-1)/vectorSize+1) , dim3(vectorSize) ,
                           (std::uint32_t) 0 , (hipStream_t) 0 , bounds , f );
+      check_last_error();
     }
   #endif
 
