@@ -477,24 +477,12 @@ public:
   }
 
 
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( Dims const &dims ) const {
-    Array<T,N,myMem,styleFortran> ret;
-    ret.owned = false;
-    for (int i=0; i<N; i++) {
-      ret.dimension[i] = dimension[i];
-      ret.offsets  [i] = offsets  [i];
-      ret.lbounds  [i] = lbounds  [i];
-    }
-    index_t retOff = 0;
-    for (int i=N; i<rank; i++) {
-      retOff += (dims.data[i]-lbounds[i])*offsets[i];
-    }
-    ret.myData = &(this->myData[retOff]);
-    return ret;
-  }
-
-
   template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleFortran> &store ) const {
+    #ifdef YAKL_DEBUG
+      if (rank != dims.size()) {
+        yakl_throw( "ERROR: rank must be equal to dims.size()" );
+      }
+    #endif
     store.owned = false;
     for (int i=0; i<N; i++) {
       store.dimension[i] = dimension[i];
@@ -506,6 +494,61 @@ public:
       retOff += (dims.data[i]-lbounds[i])*offsets[i];
     }
     store.myData = &(this->myData[retOff]);
+  }
+  template <int N> YAKL_INLINE void slice( int i0 , Array<T,N,myMem,styleFortran> &store ) const {
+    slice( {i0} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1 , Array<T,N,myMem,styleFortran> &store ) const {
+    slice( {i0,i1} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, Array<T,N,myMem,styleFortran> &store ) const {
+    slice( {i0,i1,i2} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, Array<T,N,myMem,styleFortran> &store ) const {
+    slice( {i0,i1,i2,i3} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, Array<T,N,myMem,styleFortran> &store ) const {
+    slice( {i0,i1,i2,i3,i4} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, Array<T,N,myMem,styleFortran> &store ) const {
+    slice( {i0,i1,i2,i3,i4,i5} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, Array<T,N,myMem,styleFortran> &store ) const {
+    slice( {i0,i1,i2,i3,i4,i5,i6} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7, Array<T,N,myMem,styleFortran> &store ) const {
+    slice( {i0,i1,i2,i3,i4,i5,i6,i7} , store );
+  }
+
+
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( Dims const &dims ) const {
+    Array<T,N,myMem,styleFortran> ret;
+    slice( dims , ret );
+    return ret;
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0 ) const {
+    return slice<N>( {i0} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1 ) const {
+    return slice<N>( {i0,i1} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2 ) const {
+    return slice<N>( {i0,i1,i2} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3 ) const {
+    return slice<N>( {i0,i1,i2,i3} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3, int i4 ) const {
+    return slice<N>( {i0,i1,i2,i3,i4} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3, int i4, int i5 ) const {
+    return slice<N>( {i0,i1,i2,i3,i4,i5} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6 ) const {
+    return slice<N>( {i0,i1,i2,i3,i4,i5,i6} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7 ) const {
+    return slice<N>( {i0,i1,i2,i3,i4,i5,i6,i7} );
   }
 
 
@@ -609,63 +652,23 @@ public:
   }
 
 
-  void setRandom() {
-    Random rand;
-    rand.fillArray(this->data(),this->totElems());
-  }
-  void setRandom(Random &rand) {
-    rand.fillArray(this->data(),this->totElems());
-  }
-
-
-  T relNorm(Array<T,rank,myMem,styleFortran> &other) {
-    double numer = 0;
-    double denom = 0;
-    for (index_t i=0; i<this->totElems(); i++) {
-      numer += abs(this->myData[i] - other.myData[i]);
-      denom += abs(this->myData[i]);
-    }
-    if (denom > 0) {
-      numer /= denom;
-    }
-    return numer;
-  }
-
-
-  T absNorm(Array<T,rank,myMem,styleFortran> &other) {
-    T numer = 0;
-    for (index_t i=0; i<this->totElems(); i++) {
-      numer += abs(this->myData[i] - other.myData[i]);
-    }
-    return numer;
-  }
-
-
-  T maxAbs(Array<T,rank,myMem,styleFortran> &other) {
-    T numer = abs(this->myData[0] - other.myData[0]);
-    for (index_t i=1; i<this->totElems(); i++) {
-      numer = max( numer , abs(this->myData[i] - other.myData[i]) );
-    }
-    return numer;
-  }
-
-
   /* ACCESSORS */
   YAKL_INLINE int get_rank() const {
     return rank;
   }
-  YAKL_INLINE index_t totElems() const {
-    index_t totElems = dimension[0];
-    for (int i=1; i<rank; i++) {
-      totElems *= dimension[i];
-    }
-    return totElems;
-  }
   YAKL_INLINE index_t get_totElems() const {
-    return totElems();
+    index_t tot = dimension[0];
+    for (int i=1; i<rank; i++) { tot *= dimension[i]; }
+    return tot;
   }
-  YAKL_INLINE FSArray<int,1,SB<rank>> get_dimensions() const {
-    FSArray<int,1,SB<rank>> ret;
+  YAKL_INLINE index_t get_elem_count() const {
+    return get_totElems();
+  }
+  YAKL_INLINE index_t totElems() const {
+    return get_totElems();
+  }
+  YAKL_INLINE FSArray<index_t,1,SB<rank>> get_dimensions() const {
+    FSArray<index_t,1,SB<rank>> ret;
     for (int i=0; i<rank; i++) { ret(i+1) = dimension[i]; }
     return ret;
   }
@@ -679,11 +682,6 @@ public:
     for (int i=0; i<rank; i++) { ret(i+1) = lbounds[i]+dimension[i]-1; }
     return ret;
   }
-  YAKL_INLINE std::vector<Bnd> get_bounds() const {
-    std::vector<Bnd> ret(rank);
-    for (int i=0; i<rank; i++) { ret[i] = Bnd(lbounds[i],lbounds[i]+dimension[i]-1); }
-    return ret;
-  }
   YAKL_INLINE T *data() const {
     return myData;
   }
@@ -693,10 +691,6 @@ public:
   YAKL_INLINE index_t extent( int const dim ) const {
     return dimension[dim];
   }
-  YAKL_INLINE int extent_int( int const dim ) const {
-    return (int) dimension[dim];
-  }
-
   YAKL_INLINE bool span_is_contiguous() const {
     return true;
   }
@@ -742,8 +736,6 @@ public:
 
 
   inline void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
-    static_assert( myMem == memDevice || myMem == memHost ,
-                  "Error: memory space must be yakl::memDevice or yakl::MemHost" );
     #ifdef YAKL_DEBUG
       myname = std::string(label);
     #endif
@@ -763,12 +755,10 @@ public:
     for (int i=1; i<rank; i++) {
       offsets[i] = offsets[i-1] * dimension[i-1];
     }
-
     allocate(label);
   }
 
 
-  // This is *only* called from a constructor, so no need to test for existing refCount or myData
   inline void allocate(char const * label = "") {
     if (owned) {
       static_assert( std::is_arithmetic<T>() || myMem == memHost , 

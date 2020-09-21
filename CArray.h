@@ -414,6 +414,80 @@ public:
   }
 
 
+  template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleC> &store ) const {
+    #ifdef YAKL_DEBUG
+      if (rank != dims.size()) {
+        yakl_throw( "ERROR: rank must be equal to dims.size()" );
+      }
+    #endif
+    store.owned = false;
+    for (int i = rank-1; i > rank-1-N; i--) {
+      store.dimension[i-(rank-N)] = dimension[i];
+      store.offsets  [i-(rank-N)] = offsets  [i];
+    }
+    index_t retOff = 0;
+    for (int i = rank-1-N; i >= 0; i--) {
+      retOff += dims.data[i]*offsets[i];
+    }
+    store.myData = &(this->myData[retOff]);
+  }
+  template <int N> YAKL_INLINE void slice( int i0 , Array<T,N,myMem,styleC> &store ) const {
+    slice( {i0} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1 , Array<T,N,myMem,styleC> &store ) const {
+    slice( {i0,i1} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, Array<T,N,myMem,styleC> &store ) const {
+    slice( {i0,i1,i2} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, Array<T,N,myMem,styleC> &store ) const {
+    slice( {i0,i1,i2,i3} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, Array<T,N,myMem,styleC> &store ) const {
+    slice( {i0,i1,i2,i3,i4} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, Array<T,N,myMem,styleC> &store ) const {
+    slice( {i0,i1,i2,i3,i4,i5} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, Array<T,N,myMem,styleC> &store ) const {
+    slice( {i0,i1,i2,i3,i4,i5,i6} , store );
+  }
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7, Array<T,N,myMem,styleC> &store ) const {
+    slice( {i0,i1,i2,i3,i4,i5,i6,i7} , store );
+  }
+
+
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( Dims const &dims ) const {
+    Array<T,N,myMem,styleC> ret;
+    slice( dims , ret );
+    return ret;
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0 ) const {
+    return slice<N>( {i0} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1 ) const {
+    return slice<N>( {i0,i1} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2 ) const {
+    return slice<N>( {i0,i1,i2} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3 ) const {
+    return slice<N>( {i0,i1,i2,i3} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4 ) const {
+    return slice<N>( {i0,i1,i2,i3,i4} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5 ) const {
+    return slice<N>( {i0,i1,i2,i3,i4,i5} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6 ) const {
+    return slice<N>( {i0,i1,i2,i3,i4,i5,i6} );
+  }
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7 ) const {
+    return slice<N>( {i0,i1,i2,i3,i4,i5,i6,i7} );
+  }
+
+
   inline Array<T,rank,memHost,styleC> createHostCopy() const {
     Array<T,rank,memHost,styleC> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
@@ -512,15 +586,6 @@ public:
   }
 
 
-  void setRandom() {
-    Random rand;
-    rand.fillArray(this->data(),this->totElems());
-  }
-  void setRandom(Random &rand) {
-    rand.fillArray(this->data(),this->totElems());
-  }
-
-
   /* ACCESSORS */
   YAKL_INLINE int get_rank() const {
     return rank;
@@ -530,11 +595,16 @@ public:
     for (int i=1; i<rank; i++) { tot *= dimension[i]; }
     return tot;
   }
+  YAKL_INLINE index_t get_elem_count() const {
+    return get_totElems();
+  }
   YAKL_INLINE index_t totElems() const {
     return get_totElems();
   }
-  YAKL_INLINE index_t const *get_dimensions() const {
-    return dimension;
+  YAKL_INLINE SArray<index_t,1,rank> get_dimensions() const {
+    SArray<index_t,1,rank> ret;
+    for (int i=0; i<rank; i++) { ret(i) = dimension[i]; }
+    return ret;
   }
   YAKL_INLINE T *data() const {
     return myData;
@@ -545,10 +615,6 @@ public:
   YAKL_INLINE index_t extent( int const dim ) const {
     return dimension[dim];
   }
-  YAKL_INLINE int extent_int( int const dim ) const {
-    return (int) dimension[dim];
-  }
-
   YAKL_INLINE bool span_is_contiguous() const {
     return true;
   }
@@ -568,34 +634,6 @@ public:
     #else
       return "";
     #endif
-  }
-
-
-  /* INFORM */
-  inline void print_data() const {
-    #ifdef YAKL_DEBUG
-      std::cout << "For Array labeled: " << myname << "\n";
-    #endif
-    if (rank == 1) {
-      for (index_t i=0; i<dimension[0]; i++) {
-        std::cout << std::setw(12) << (*this)(i) << "\n";
-      }
-    } else if (rank == 2) {
-      for (index_t j=0; j<dimension[0]; j++) {
-        for (index_t i=0; i<dimension[1]; i++) {
-          std::cout << std::setw(12) << (*this)(i,j) << " ";
-        }
-        std::cout << "\n";
-      }
-    } else if (rank == 0) {
-      std::cout << "Empty Array\n\n";
-    } else {
-      for (index_t i=0; i<totElems(); i++) {
-        std::cout << std::setw(12) << myData[i] << " ";
-      }
-      std::cout << "\n";
-    }
-    std::cout << "\n";
   }
 
 
@@ -621,7 +659,6 @@ public:
 
 
 
-  // It would be dangerous for the user to call this directly rather than through the constructors, so we're "hiding" it :)
   inline void setup(char const * label, index_t d0, index_t d1=1, index_t d2=1, index_t d3=1, index_t d4=1, index_t d5=1, index_t d6=1, index_t d7=1) {
     #ifdef YAKL_DEBUG
       myname = std::string(label);
@@ -648,12 +685,14 @@ public:
 
   inline void allocate(char const * label = "") {
     if (owned) {
+      static_assert( std::is_arithmetic<T>() || myMem == memHost , 
+                     "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
       refCount = new int;
       *refCount = 1;
       if (myMem == memDevice) {
         myData = (T *) yaklAllocDevice( totElems()*sizeof(T) , label );
       } else {
-        myData = (T *) yaklAllocHost  ( totElems()*sizeof(T) , label );
+        myData = new T[totElems()];
       }
     }
   }
@@ -674,11 +713,7 @@ public:
               yaklFreeDevice(myData,"");
             #endif
           } else {
-            #ifdef YAKL_DEBUG
-              yaklFreeHost  (myData,myname.c_str());
-            #else
-              yaklFreeHost  (myData,"");
-            #endif
+            delete[] myData;
           }
           myData = nullptr;
         }
@@ -687,5 +722,5 @@ public:
     }
   }
 
-
 };
+
