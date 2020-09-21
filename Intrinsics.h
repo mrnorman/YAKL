@@ -249,7 +249,7 @@ namespace intrinsics {
   template <class F, class T, int rank, int myStyle>
   inline bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , F const &f , T val ) {
     yakl::ScalarLiveOut<bool> ret(false);
-    yakl::c::parallel_for( yakl::c::Bounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( f( arr.myData[i] , val ) ) { ret = true; }
     });
     return ret.hostRead();
@@ -299,7 +299,7 @@ namespace intrinsics {
   inline bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr ,
                    Array<bool,rank,yakl::memDevice,myStyle> const &mask , F const &f , T val ) {
     yakl::ScalarLiveOut<bool> ret(false);
-    yakl::c::parallel_for( yakl::c::Bounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && f( arr.myData[i] , val ) ) { ret = true; }
     });
     return ret.hostRead();
@@ -474,7 +474,7 @@ namespace intrinsics {
   template <int rank, int myStyle>
   inline int count( Array<bool,rank,memDevice,myStyle> const &mask ) {
     yakl::ScalarLiveOut<int> numTrue(0);
-    yakl::c::parallel_for( yakl::c::Bounds<1>( mask.totElems() ) , YAKL_LAMBDA (int i) {
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>( mask.totElems() ) , YAKL_LAMBDA (int i) {
       if (mask.myData[i]) { yakl::atomicAdd(numTrue(),1); }
     });
     return numTrue.hostRead();
