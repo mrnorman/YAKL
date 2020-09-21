@@ -275,9 +275,9 @@ namespace yakl {
 #include "YAKL_random.h"
 
 
-template <class T> YAKL_INLINE constexpr T max(T a, T b) { return a>b? a : b; }
-template <class T> YAKL_INLINE constexpr T min(T a, T b) { return a<b? a : b; }
-template <class T> YAKL_INLINE constexpr T abs(T a) { return a>0? a : -a; }
+  template <class T> YAKL_INLINE constexpr T max(T a, T b) { return a>b? a : b; }
+  template <class T> YAKL_INLINE constexpr T min(T a, T b) { return a<b? a : b; }
+  template <class T> YAKL_INLINE constexpr T abs(T a) { return a>0? a : -a; }
 
 
 #include "Array.h"
@@ -286,20 +286,20 @@ template <class T> YAKL_INLINE constexpr T abs(T a) { return a>0? a : -a; }
 #include "ScalarLiveOut.h"
 
 
-#include "FortranIntrinsics.h"
+#include "Intrinsics.h"
 
 
-template <class T, int rank, int myMem, int myStyle> void memset( Array<T,rank,myMem,myStyle> &arr , T val ) {
-  if (myMem == memDevice) {
-    c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
-      arr.myData[i] = val;
-    });
-  } else if (myMem == memHost) {
-    for (size_t i = 0; i < arr.totElems(); i++) {
-      arr.myData[i] = val;
+  template <class T, int rank, int myMem, int myStyle> void memset( Array<T,rank,myMem,myStyle> &arr , T val ) {
+    if (myMem == memDevice) {
+      c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
+        arr.myData[i] = val;
+      });
+    } else if (myMem == memHost) {
+      for (size_t i = 0; i < arr.totElems(); i++) {
+        arr.myData[i] = val;
+      }
     }
   }
-}
 
 
 }
