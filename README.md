@@ -301,21 +301,24 @@ The Fortran-style `Array` and `FSArray` classes allow any arbritrary lower bound
 
 **Fortran-style `Array`**:
 * `Array<float,2,yakl::memHost,yakl::styleFortran> arr( "label" , int dim1 , int dim2 )`
-  * Equivalent to Fortran: `real, allocatable :: arr(:,:); allocate(arr(dim1,dim2)`
+  * Equivalent to Fortran: `real, allocatable :: arr(:,:); allocate(arr(dim1,dim2))`
   * Creates an owned array
 * `Array<float,1,yakl::memHost,yakl::styleFortran> arr( "label" , float *data_p , int dim1 )`
+  * Equivalent to Fortran: `real, pointer :: arr(:); arr(:)->data(:)`
   * Same as before but non-owned (wraps an existing contiguous data pointer)
 * `Array<double,2,yakl::memHost,yakl::styleFortran> arr( "label" , {-1,52} , {0,43} )`
   * Equivalent to Fortran: `real(8), allocatable :: arr(:,:); allocate(arr(-1:52 , 0:43)`
-  * Lower and upper bounds are specified as integer initializer lists
+  * Lower and upper bounds are specified as C++ integer initializer lists
 * `Array<double,2,yakl::memHost,yakl::styleFortran> arr( "label" , double *data_p , {-1,52} , {0,43} )`
+  * Equivalent to Fortran: `real(8), pointer :: arr(:,:); arr(-1:,0:) -> data(:,:)`
   * Same as before but non-owned (wraps an existing contiguous data pointer)
-* **slice()**: `using yakl::COLON;  Array... arr;  arr.slice<2>({COLON,COLON,ind1,ind2})`
+* **slice()**: `using yakl::COLON;  Array... arr;  arr.slice<2>(COLON,COLON,ind1,ind2)`
   * Equivalent to Fortran array slicing: `arr(:,:,ind1,ind2)`
   * Only works on simple, *contiguous* array slices with *entire dimensions* (not partial dimensions) sliced out
     * E.g., `arr(0:5,4,7)`, though contiguous is not supported
   * If you want to **write** to the array slice passed to a function, you must save it as a temporary variable first and pass the temporary variable: E.g., `auto tmp = arr.slice<2>({COLON,COLON,ind1,ind2});  myfunc(tmp);`
-  * If you're reading from the array slice, you can pass it directly inline
+    * This is because C++ treats objects returned by value as `const`
+  * If you're only reading from the array slice, you can pass it directly inline because it obeys `const`
   * `slice()` always produces non-owned Fortran-style Arrays of the same type in the same memory space wrapping a contiguous portion of the host `Array`
 
 **`FSArray`**:
@@ -331,12 +334,12 @@ FSArray<type , num_dimensions , SB<ub_1> [ , SB<ub_2> , ...]> arrName;
 // Or specify some bounds as SB<lb,ub> and others as only SB<ub> in the same FSArray object
 ```
 
-While it looks sloppy, the `SB<lower_bound,upper_bound>` (or Static Bound) class is required to allow `FSArray` objects to have non-1 lower bounds, and C++ doesn't allow you to do this with prettier looking initializer lists like `{lb,ub}`. 
+While the `SB<>` syntax admittedly looks messy, the `SB<lower_bound,upper_bound>` (or Static Bound) class is required to allow `FSArray` objects to have non-1 lower bounds, and C++ does not allow you to do this with prettier looking initializer lists like `{lb,ub}`. 
 
 * Must template on the lower and upper bounds to place it on the stack.
 * `FSArray<float,SB<-hs,hs>> stencil;`
   * Equivalent to the Fortran "automatic" array: `real :: stencil(-hs:hs)`
-  * Low-overhead, placed ont he stack
+  * Low-overhead, placed on the stack, inherently thread-private in kernels
 
 **`parallel_for` (Fortran style)**:
 ```C++
@@ -356,6 +359,8 @@ do j=-1,30,3
 enddo
 ```
 
+Currently, backwards iterating is not supported, so `do` loops with a negative stride will need to be altered to have a positive stride.
+
 **Fortran Intrinsics**:
 
 There are a number of Fortran intrinsic functions available that can operate on Fortran-like `Array`s or `FSArray`s. For instance:
@@ -366,14 +371,16 @@ std::cout << shape(arr);
 std::cout << size(arr,2);
 std::cout << sum(arr);
 if (allocated(arr)) { ... }
+if (associated(arr)) { ... }
 // etc.
 ```
 
 ### Managed Memory
 
-To use CUDA Managed Memory or HIP pinned memory (which performs terribly but does make CPU data available to the GPU), add `-D__MANAGED__` to the compiler flags. This will make your life much easier when porting a Fortran code to a GPU-enabled C++ code because all data allocated with the Fortran hooks of YAKL will be avilable on the CPU and the GPU without having to transfer it explicitly.
+To use CUDA Managed Memory or HIP pinned memory, add `-D__MANAGED__` to the compiler flags. This will make your life much easier when porting a Fortran code to a GPU-enabled C++ code because all data allocated with the Fortran hooks of YAKL will be avilable on the CPU and the GPU without having to transfer it explicitly. However, it is always recommended to handle the transfers yourself eventually for improved efficiency. 
 
 ### Pool Allocator
+
 An easy-to-use, self-contained, automatically growing C++ pool allocator optimized for stack-like allocations and deallocations with fortran bindings and hooks into OpenMP offload and OpenACC, CUDA Managed memory, and HIP.
 
 ```
@@ -809,9 +816,10 @@ To use YAKL in another CMake project, insert the following into your CMakeLists.
 ```cmake
 add_subdirectory(/path/to/yakl  path/to/build/directory)
 include_directories(/path/to/yakl)
+include_directories(/path/to/build/directory)
 ```
 
-The following variables can be defined before the `add_subdirectory()` command: `${ARCH}`, `${CUDA_FLAGS}`, `${HIP_FLAGS}`
+The following variables can be defined before the `add_subdirectory()` command: `${ARCH}`, `${CUDA_FLAGS}`, `${HIP_FLAGS}`, and `${YAKL_CXX_FLAGS}`. 
 
 To compile YAKL for a device target, you'll need to specify `-DARCH="CUDA"` or `-DARCH="HIP"` for Nvidia and AMD GPUs, respectively. If you don't specify either of these, then YAKL will compile for the CPU in serial.
 
@@ -834,9 +842,16 @@ if ("${ARCH}" STREQUALS "CUDA")
 endif()
 ```
 
-Also, the YAKL source files are given to you in case you want to compile YAKL is a different way yourself, for instance, if the YAKL `CMakeLists.txt` isn't playing nicely with your own CMake build system for some reason.
+For all targets including source files that use yakl, you will need to have the following:
 
-To compile with **HIP** for AMD GPUs, you need to use `hipcc` as the C++ compiler. For MPI codes, if you're using OpenMPI, you can also set `OMPI_CXX=hipcc` for simplicity, and OpenMPI will use `hipcc` under the hood with `mpic++`.
+```cmake
+target_link_libraries(target_name yakl)
+target_compile_features(target_name cxx_std_14)
+```
+
+You can, of course, specified a higher C++ standard so long as the features from that standard are supported by the vendor's compiler for the desired hardware backend.
+
+Also, the YAKL source files are given to you in case you want to compile YAKL is a different way yourself, for instance, if the YAKL `CMakeLists.txt` isn't playing nicely with your own CMake build system for some reason. `add_subdirectory` will build the yakl library, but you're free to build a separate library with the YAKL source files in a different manner if you wish to.
 
 ### Traditional Makefile
 
@@ -850,7 +865,7 @@ You currently have three choices for a device backend: HIP, CUDA, and serial CPU
 
 Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array`, `SArray`, and `FSArray` objects. **Beware** that this only works on host code at the moment, so do not pass `-DARRAY_DEBUG` at the same time as passing `-D__USE_CUDA__` or `-D__USE_HIP__`. The reason is that the CUDA and HIP runtimes do not currently support exception throwing.
 
-Pasing `-D__MANAGED__` will trigger `cudaMallocManaged()` in tandem with `-D__USE_CUDA__` and `hipMallocHost()` in tandem with `-D__USE_HIP__`.
+Passing `-D__MANAGED__` will trigger `cudaMallocManaged()` in tandem with `-D__USE_CUDA__` and `hipMallocHost()` in tandem with `-D__USE_HIP__`.
 
 Passing `-D__AUTO_FENCE__` will automatically insert a `yakl::fence()` after every `yakl::parallel_for` launch.
 
@@ -858,11 +873,7 @@ You will have to explicitly pass `-I/path/to/cub` if you specify `-D__USE_CUDA__
 
 ## Future Work
 
-Plans for the future include:
-* Add a low-level backend for Intel accelerators when it become available
-* Improve the documentation, testing, and runtime error checking of YAKL
-* Improve the performance of the YAKL backends
-* Try to improve CPU code vectorization for host targets
+Please see the github Issues for planned future work on YAKL.
 
 ## Software Dependencies
 * For Nvidia GPUs, you'll need to clone [CUB](https://nvlabs.github.io/cub/)
