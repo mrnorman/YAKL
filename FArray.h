@@ -1,6 +1,19 @@
 
 #pragma once
 
+
+
+// Dynamic (runtime) Array Bounds
+class Bnd {
+public:
+  int l, u;
+  Bnd(                  ) { l = 1   ; u = 1   ; }
+  Bnd(          int u_in) { l = 1   ; u = u_in; }
+  Bnd(int l_in, int u_in) { l = l_in; u = u_in; }
+};
+
+
+
 template <class T, int rank, int myMem> class Array<T,rank,myMem,styleFortran> {
 public:
 

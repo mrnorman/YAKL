@@ -22,11 +22,7 @@ public:
   }
 
   /* CONSTRUCTORS
-  You can declare the array empty or with up to 8 dimensions
-  Like kokkos, you need to give a label for the array for debug printing
-  Always nullify before beginning so that myData == nullptr upon init. This allows the
-  setup() functions to keep from deallocating myData upon initialization, since
-  you don't know what "myData" will be when the object is created.
+  Always nullify before beginning so that myData == nullptr upon init.
   */
   YAKL_INLINE Array() {
     nullify();
@@ -43,74 +39,133 @@ public:
   Array(char const * label, index_t const d1) {
     #ifdef YAKL_DEBUG
       if( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
-    setup(label,d1);
+    deallocate();
+    dimension[0] = d1;
+    compute_offsets();
+    allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2) {
     #ifdef YAKL_DEBUG
       if( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
-    setup(label,d1,d2);
+    deallocate();
+    dimension[0] = d1;
+    dimension[1] = d2;
+    compute_offsets();
+    allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3) {
     #ifdef YAKL_DEBUG
       if( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
-    setup(label,d1,d2,d3);
+    deallocate();
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    compute_offsets();
+    allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
     #ifdef YAKL_DEBUG
       if( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
-    setup(label,d1,d2,d3,d4);
+    deallocate();
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    compute_offsets();
+    allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
     #ifdef YAKL_DEBUG
       if( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
-    setup(label,d1,d2,d3,d4,d5);
+    deallocate();
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    dimension[4] = d5;
+    compute_offsets();
+    allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
     #ifdef YAKL_DEBUG
       if( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
-    setup(label,d1,d2,d3,d4,d5,d6);
+    deallocate();
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    dimension[4] = d5;
+    dimension[5] = d6;
+    compute_offsets();
+    allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
     #ifdef YAKL_DEBUG
       if( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
-    setup(label,d1,d2,d3,d4,d5,d6,d7);
+    deallocate();
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    dimension[4] = d5;
+    dimension[5] = d6;
+    dimension[6] = d7;
+    compute_offsets();
+    allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
     #ifdef YAKL_DEBUG
       if( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
-    setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
+    deallocate();
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    dimension[4] = d5;
+    dimension[5] = d6;
+    dimension[6] = d7;
+    dimension[7] = d8;
+    compute_offsets();
+    allocate(label);
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
   Array(char const * label, std::vector<INT> const dims) {
     #ifdef YAKL_DEBUG
       if ( dims.size() < rank ) { yakl_throw("ERROR: dims < rank"); }
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
+      myname = std::string(label);
     #endif
     nullify();
-         if ( rank == 1 ) { setup(label,dims[0]); }
-    else if ( rank == 2 ) { setup(label,dims[0],dims[1]); }
-    else if ( rank == 3 ) { setup(label,dims[0],dims[1],dims[2]); }
-    else if ( rank == 4 ) { setup(label,dims[0],dims[1],dims[2],dims[3]); }
-    else if ( rank == 5 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4]); }
-    else if ( rank == 6 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]); }
-    else if ( rank == 7 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6]); }
-    else if ( rank == 8 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],dims[7]); }
+    deallocate();
+    for (int i=0; i < rank; i++) {
+      dimension[i] = dims[i];
+    }
+    compute_offsets();
+    allocate(label);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,74 +173,118 @@ public:
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   Array(char const * label, T * data, index_t const d1) {
     #ifdef YAKL_DEBUG
-      if ( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
+      if( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
     owned = false;
-    setup(label,d1);
+    dimension[0] = d1;
+    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2) {
     #ifdef YAKL_DEBUG
-      if ( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
+      if( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
     owned = false;
-    setup(label,d1,d2);
+    dimension[0] = d1;
+    dimension[1] = d2;
+    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3) {
     #ifdef YAKL_DEBUG
-      if ( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
+      if( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
     owned = false;
-    setup(label,d1,d2,d3);
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
     #ifdef YAKL_DEBUG
-      if ( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
+      if( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
     owned = false;
-    setup(label,d1,d2,d3,d4);
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
     #ifdef YAKL_DEBUG
-      if ( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
+      if( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
     owned = false;
-    setup(label,d1,d2,d3,d4,d5);
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    dimension[4] = d5;
+    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
     #ifdef YAKL_DEBUG
-      if ( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
+      if( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
     owned = false;
-    setup(label,d1,d2,d3,d4,d5,d6);
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    dimension[4] = d5;
+    dimension[5] = d6;
+    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
     #ifdef YAKL_DEBUG
-      if ( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
+      if( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
     owned = false;
-    setup(label,d1,d2,d3,d4,d5,d6,d7);
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    dimension[4] = d5;
+    dimension[5] = d6;
+    dimension[6] = d7;
+    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
     #ifdef YAKL_DEBUG
-      if ( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
+      if( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
+      myname = std::string(label);
     #endif
     nullify();
     owned = false;
-    setup(label,d1,d2,d3,d4,d5,d6,d7,d8);
+    dimension[0] = d1;
+    dimension[1] = d2;
+    dimension[2] = d3;
+    dimension[3] = d4;
+    dimension[4] = d5;
+    dimension[5] = d6;
+    dimension[6] = d7;
+    dimension[7] = d8;
+    compute_offsets();
     myData = data;
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
@@ -193,17 +292,14 @@ public:
     #ifdef YAKL_DEBUG
       if ( dims.size() < rank ) { yakl_throw("ERROR: dims < rank"); }
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
+      myname = std::string(label);
     #endif
     nullify();
     owned = false;
-         if ( rank == 1 ) { setup(label,dims[0]); }
-    else if ( rank == 2 ) { setup(label,dims[0],dims[1]); }
-    else if ( rank == 3 ) { setup(label,dims[0],dims[1],dims[2]); }
-    else if ( rank == 4 ) { setup(label,dims[0],dims[1],dims[2],dims[3]); }
-    else if ( rank == 5 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4]); }
-    else if ( rank == 6 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]); }
-    else if ( rank == 7 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6]); }
-    else if ( rank == 8 ) { setup(label,dims[0],dims[1],dims[2],dims[3],dims[4],dims[5],dims[6],dims[7]); }
+    for (int i=0; i < rank; i++) {
+      dimension[i] = dims[i];
+    }
+    compute_offsets();
     myData = data;
   }
 
@@ -677,27 +773,11 @@ public:
 
 
 
-  inline void setup(char const * label, index_t d0, index_t d1=1, index_t d2=1, index_t d3=1, index_t d4=1, index_t d5=1, index_t d6=1, index_t d7=1) {
-    #ifdef YAKL_DEBUG
-      myname = std::string(label);
-    #endif
-
-    deallocate();
-
-                     dimension[0] = d0;  
-    if (rank >= 2) { dimension[1] = d1; }
-    if (rank >= 3) { dimension[2] = d2; }
-    if (rank >= 4) { dimension[3] = d3; }
-    if (rank >= 5) { dimension[4] = d4; }
-    if (rank >= 6) { dimension[5] = d5; }
-    if (rank >= 7) { dimension[6] = d6; }
-    if (rank >= 8) { dimension[7] = d7; }
-
+  inline void compute_offsets() {
     offsets[rank-1] = 1;
     for (int i=rank-2; i>=0; i--) {
       offsets[i] = offsets[i+1] * dimension[i+1];
     }
-    allocate(label);
   }
 
 

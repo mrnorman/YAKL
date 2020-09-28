@@ -8,28 +8,7 @@
   #include "hip/hip_runtime.h"
 #endif
 
-
-
-#ifdef __USE_CUDA__
-  inline void check_last_error() {
-    auto ierr = cudaGetLastError();
-    if (ierr != cudaSuccess) {
-      std::cout << cudaGetErrorString( ierr );
-      throw "";
-    }
-  }
-#elif defined(__USE_HIP__)
-  inline void check_last_error() {
-    auto ierr = hipGetLastError();
-    if (ierr != hipSuccess) {
-      std::cout << hipGetErrorString( ierr );
-      throw "";
-    }
-  }
-#else
-  inline void check_last_error() { }
-#endif
-
+#include "YAKL_alloc_free.h"
 
 
 class Gator {
@@ -52,67 +31,7 @@ public:
   Gator() {
     std::function<void *( size_t )> alloc;
     std::function<void ( void * )>  dealloc;
-
-    #if   defined(__USE_CUDA__)
-      #if defined (__MANAGED__)
-        alloc   = [] ( size_t bytes ) -> void* {
-          void *ptr;
-          cudaMallocManaged(&ptr,bytes);
-          check_last_error();
-          cudaMemPrefetchAsync(ptr,bytes,0);
-          check_last_error();
-          #ifdef _OPENMP45
-            omp_target_associate_ptr(ptr,ptr,bytes,0,0);
-          #endif
-          #ifdef _OPENACC
-            acc_map_data(ptr,ptr,bytes);
-          #endif
-          return ptr;
-        };
-        dealloc = [] ( void *ptr    ) {
-          cudaFree(ptr);
-          check_last_error();
-        };
-      #else
-        alloc   = [] ( size_t bytes ) -> void* {
-          void *ptr;
-          cudaMalloc(&ptr,bytes);
-          check_last_error();
-          return ptr;
-        };
-        dealloc = [] ( void *ptr    ) {
-          cudaFree(ptr);
-          check_last_error();
-        };
-      #endif
-    #elif defined(__USE_HIP__)
-      #if defined (__MANAGED__)
-        alloc = [] ( size_t bytes ) -> void* {
-          void *ptr;
-          hipMallocHost(&ptr,bytes);
-          check_last_error();
-          return ptr;
-        };
-        dealloc = [] ( void *ptr    ) {
-          hipFree(ptr);
-          check_last_error();
-        };
-      #else
-        alloc = [] ( size_t bytes ) -> void* {
-          void *ptr;
-          hipMalloc(&ptr,bytes);
-          check_last_error();
-          return ptr;
-        };
-        dealloc = [] ( void *ptr ) {
-          hipFree(ptr);
-          check_last_error();
-        };
-      #endif
-    #else
-      alloc   = ::malloc;
-      dealloc = ::free;
-    #endif
+    yakl::set_alloc_free(alloc , dealloc);
     init(alloc,dealloc);
   }
 
