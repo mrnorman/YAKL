@@ -160,8 +160,7 @@ void applyTendencies(real4d &state2, real const c0, real4d const &state0,
                                c1 * state1(l,hs+k,hs+j,hs+i) +
                                ct * dom.dt * tend(l,k,j,i);
   }); 
-  yakl::ParallelSum<real,yakl::memDevice> psum( state2.get_elem_count() );
-  real tot = psum( state2.data() );
+  real tot = yakl::intrinsics::sum( state2 );
 }
 std::cout << state2.createHostCopy();
 std::cout << tot << std::endl;
@@ -534,6 +533,8 @@ yakl::parallel_for( Bounds<4>(nzm,ny,nx,ncrms) , YAKL_LAMBDA (int k, int j, int 
 As a rule, if you ever see anything on the left-hand-side of an `=` with **fewer indices than you have surrounding loops**, then you're going to have a race condition that requires an atomic access.
 
 ### Reductions (Min, Max, and Sum)
+
+The best way to do reductions is through the YAKL intrinsic functions `sum`, `max`, and `min`; which each take a single `Array` parameter of any memory space, style, type, or rank. E.g., `min(arr)`, where `arr` is an `Array` on the device will perform a minimum reduction of the data efficiently on the accelerator device and then pass the result back to the host. The routines below are available for performing reductions on general contiguous pointers of data OR if you need to keep the result of the reduction on the device and avoid the copy of the result back to the host.
 
 YAKL provides efficient min, max, and sum array reductions using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size (number of elements to reduce), type (`template <class T>`) of the array that will be reduced, and the memory space (via template parameter, `yakl::memHost` or `yakl::memDevice`) of the array to be reduced. The constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using `T operator()(T *data)`, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below:
 
