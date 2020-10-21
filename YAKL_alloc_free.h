@@ -62,6 +62,24 @@ namespace yakl {
           check_last_error();
         };
       #endif
+    #elif defined(__USE_OENMP45__)
+      alloc = [] ( size_t bytes ) -> void* {
+        void *ptr;
+        int device;
+        device = omp_get_default_device();
+        ptr = omp_target_alloc(bytes,device);
+        //Does nothing
+        check_last_error();
+        return ptr;
+      };
+      dealloc = [] (void *ptr) {
+        int device;
+        device = omp_get_default_device();
+        omp_target_free(ptr);
+        //Does nothing
+        check_last_error();
+      };
+      
     #else
       alloc   = ::malloc;
       dealloc = ::free;

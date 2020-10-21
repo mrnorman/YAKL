@@ -24,6 +24,10 @@
 #include <omp.h>
 #endif
 
+#ifdef __USE_OPENMP45__
+#include <omp.h>
+#endif
+
 #ifdef _OPENACC
 #include "openacc.h"
 #endif
