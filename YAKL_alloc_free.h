@@ -68,15 +68,15 @@ namespace yakl {
         int device;
         device = omp_get_default_device();
         ptr = omp_target_alloc(bytes,device);
-        //Does nothing
+        //check does nothing
         check_last_error();
         return ptr;
       };
       dealloc = [] (void *ptr) {
         int device;
         device = omp_get_default_device();
-        omp_target_free(ptr);
-        //Does nothing
+        omp_target_free(ptr,device);
+        //check does nothing
         check_last_error();
       };
       
