@@ -66,7 +66,6 @@ namespace yakl {
       alloc = [] ( size_t bytes ) -> void* {
         int device = omp_get_default_device();
         void *ptr = omp_target_alloc(bytes,device);
-        omp_target_associate_ptr(ptr,ptr,bytes,0,device);
         //check does nothing
         check_last_error();
         return ptr;
@@ -74,7 +73,6 @@ namespace yakl {
       dealloc = [] (void *ptr) {
         int device = omp_get_default_device();
         omp_target_free(ptr,device);
-        omp_target_disassociate_ptr(ptr,device);
         //check does nothing
         check_last_error();
       };
