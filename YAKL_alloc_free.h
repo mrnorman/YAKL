@@ -62,20 +62,19 @@ namespace yakl {
           check_last_error();
         };
       #endif
-    #elif defined(__USE_OENMP45__)
+    #elif defined(__USE_OPENMP45__)
       alloc = [] ( size_t bytes ) -> void* {
-        void *ptr;
-        int device;
-        device = omp_get_default_device();
-        ptr = omp_target_alloc(bytes,device);
+        int device = omp_get_default_device();
+        void *ptr = omp_target_alloc(bytes,device);
+        omp_target_associate_ptr(ptr,ptr,bytes,0,device);
         //check does nothing
         check_last_error();
         return ptr;
       };
       dealloc = [] (void *ptr) {
-        int device;
-        device = omp_get_default_device();
+        int device = omp_get_default_device();
         omp_target_free(ptr,device);
+        omp_target_disassociate_ptr(ptr,device);
         //check does nothing
         check_last_error();
       };

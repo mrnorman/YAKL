@@ -570,7 +570,7 @@ namespace c {
       parallel_for_cuda          ( bounds , f , vectorSize );
     #elif defined(__USE_HIP__)
       parallel_for_hip           ( bounds , f , vectorSize );
-    #elif defined(__USE_OPENMP_45__)
+    #elif defined(__USE_OPENMP45__)
       parallel_for_openmp_dev    ( bounds , f              );
     #elif defined(__USE_OPENMP__)
       parallel_for_openmp        ( bounds , f              );
@@ -673,7 +673,7 @@ namespace c {
   }
 
   template <class F> inline void parallel_for_openmp_dev( Bounds<1,true> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(1)
+    #pragma omp target teams distribute parallel for simd
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
       f( i0 );
     }
