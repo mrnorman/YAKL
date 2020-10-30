@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifdef __USE_CUDA__
+#include <nvtx3/nvToolsExt.h>
+#endif
+
 
 
 namespace c {
@@ -732,7 +736,13 @@ namespace c {
 
   template <class F, int N, bool simple>
   inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f, int vectorSize = 128 ) {
+    #ifdef __USE_CUDA__
+      nvtxRangePushA(str);
+    #endif
     parallel_for( bounds , f , vectorSize );
+    #ifdef __USE_CUDA__
+      nvtxRangePop();
+    #endif
   }
 
 
@@ -742,7 +752,13 @@ namespace c {
 
 
   template <class F> inline void parallel_for( char const * str , LBnd &bnd , F const &f , int vectorSize = 128 ) {
+    #ifdef __USE_CUDA__
+      nvtxRangePushA(str);
+    #endif
     parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+    #ifdef __USE_CUDA__
+      nvtxRangePop();
+    #endif
   }
 
 
@@ -754,7 +770,7 @@ namespace c {
 
   template <class F, class T, typename std::enable_if< std::is_integral<T>::value , int >::type = 0 >
   inline void parallel_for( char const * str , T bnd , F const &f , int vectorSize = 128 ) {
-    parallel_for( Bounds<1,true>(bnd) , f , vectorSize );
+    parallel_for( str , Bounds<1,true>(bnd) , f , vectorSize );
   }
 
 
