@@ -17,7 +17,7 @@ namespace yakl {
     #elif defined(__USE_HIP__)
       auto ierr = hipGetLastError();
       if (ierr != hipSuccess) { yakl_throw( hipGetErrorString( ierr ) ); }
-    #elif defined(__USE_OPENMP_45__)
+    #elif defined(__USE_OPENMP45__)
       //auto ierr = GetLastError();
     #endif
   }

@@ -231,7 +231,106 @@
         cub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
       }
     };
+  #elif defined(__USE_OPENMP45__)
 
+    template <class T> class ParallelSum<T,memDevice> {
+      int nItems;
+      public:
+      ParallelSum() {}
+      ParallelSum(int const nItems) {
+        this->nItems = nItems;
+      }
+      ~ParallelSum() { }
+      T operator() (T *data) {
+        T rslt = 0;
+        #pragma omp target teams distribute parallel for simd reduction(+:rslt) is_device_ptr(data)
+        for(int i=0; i<nItems; i++) {
+          rslt += data[i];
+        }
+        return rslt;
+      }
+      void deviceReduce(T *data, T *devP) {
+        T rslt = 0;
+        #pragma omp target teams distribute parallel for simd reduction(+:rslt) is_device_ptr(data)
+        for (int i=0; i<nItems; i++) {
+          rslt += data[i];
+        }
+        omp_target_memcpy(devP,&rslt,sizeof(T),0,0,omp_get_default_device(),omp_get_initial_device());
+        #pragma omp taskwait
+        check_last_error();
+      }
+    };  
+    template <class T> class ParallelMin<T,memDevice> {
+      int nItems;
+      public:
+      ParallelMin() {}
+      ParallelMin(int const nItems) {
+        this->nItems = nItems;
+      }
+      ~ParallelMin() { }
+      T operator() (T *data) {
+        //T rslt = data[0];
+        T rslt;
+        omp_target_memcpy(&rslt,data,sizeof(T),0,0,omp_get_initial_device(),omp_get_default_device());
+        #pragma omp taskwait
+        check_last_error();
+        #pragma omp target teams distribute parallel for simd reduction(min:rslt) is_device_ptr(data)
+        for(int i=1; i<nItems; i++) {
+          rslt = data[i] < rslt ? data[i] : rslt;
+        }
+        return rslt;
+      }
+      void deviceReduce(T *data, T *devP) {
+        T rslt;
+        omp_target_memcpy(&rslt,data,sizeof(T),0,0,omp_get_initial_device(),omp_get_default_device());
+        #pragma omp taskwait
+        check_last_error();
+        #pragma omp target teams distribute parallel for simd reduction(min:rslt) is_device_ptr(data)
+        for (int i=1; i<nItems; i++) {
+          rslt = data[i] < rslt ? data[i] : rslt;
+        }
+        omp_target_memcpy(devP,&rslt,sizeof(T),0,0,omp_get_default_device(),omp_get_initial_device());
+        #pragma omp taskwait
+        check_last_error();
+      }
+    };  
+    template <class T> class ParallelMax<T,memDevice> {
+      int nItems;
+      public:
+      ParallelMax() {}
+      ParallelMax(int const nItems) {
+        this->nItems = nItems;
+      }
+      ~ParallelMax() { }
+      T operator() (T *data) {
+        T rslt;
+        omp_target_memcpy(&rslt,data,sizeof(T),0,0,omp_get_initial_device(),omp_get_default_device());
+        #pragma omp taskwait
+        check_last_error();
+        #pragma omp target teams distribute parallel for simd reduction(max:rslt) is_device_ptr(data)
+        for(int i=1; i<nItems; i++) {
+          rslt = data[i] > rslt ? data[i] : rslt;
+        }
+        return rslt;
+      }
+      void deviceReduce(T *data, T *devP) {
+        //Bad implementation too much copying back and forth between host and device
+        //**************************************************************************
+        T rslt;
+        omp_target_memcpy(&rslt,data,sizeof(T),0,0,omp_get_initial_device(),omp_get_default_device());
+        #pragma omp taskwait
+        check_last_error();
+        #pragma omp target teams distribute parallel for simd reduction(max:rslt) is_device_ptr(data)
+        for (int i=1; i<nItems; i++) {
+          rslt = data[i] > rslt ? data[i] : rslt;
+        }
+        //rslt is now on host, memcpy back to device
+        omp_target_memcpy(devP,&rslt,sizeof(T),0,0,omp_get_default_device(),omp_get_initial_device());
+        #pragma omp taskwait
+        check_last_error();
+      }
+    };  
+    
   #else
 
     template <class T> class ParallelMin<T,memDevice> {

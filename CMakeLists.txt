@@ -34,11 +34,6 @@ elseif ("${ARCH}" STREQUAL "OPENMP45")
   set(YAKL_CXX_FLAGS "-D__USE_OPENMP45__ ${OPENMP45_FLAGS} ${YAKL_CXX_FLAGS}")
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
 
-elseif ("${ARCH}" STREQUAL "OPENMP")
-  set(YAKL_CXX_FLAGS "-D__USE_OPENMP__ ${OPENMP_FLAGS} ${YAKL_CXX_FLAGS}" PARENT_SCOPE)
-  set(YAKL_CXX_FLAGS "-D__USE_OPENMP__ ${OPENMP_FLAGS} ${YAKL_CXX_FLAGS}")
-  set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
-
 else()
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
 endif()
@@ -49,5 +44,9 @@ target_compile_features(yakl PUBLIC cxx_std_14)
 if ("${ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 endif()
+
+#if ("${ARCH}" STREQUAL "OPENMP45")
+#  set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CXX)
+#endif()
 
 
