@@ -1,236 +1,295 @@
 
 #pragma once
 
-#include "YAKL_defines.h"
+#include "YAKL.h"
 
+/*************************************************************************************************************
+**************************************************************************************************************
+YAKL RealFFT1D class
+Matt Norman, Oak Ridge National Laboratory, normanmr@ornl.gov
+
+This class provides a simple solution to performance portable real-to-complex 1-D FFTs. This is meant for
+small FFTs, and in CUDA, if you use > 2^14 data, you will run out of stack memory in the kernels.
+The data is assumed to be on the stack (the YAKL SArray class), but it can be on the heap as well (i.e., 
+the YAKL Array class). The data size must be a power of 2.
+
+The specific use case for this is when you have to do many 1-D FFTs (say, in a 3-D model). The call to
+RealFFT1D.forward(...) and RealFFT1D.inverse(...) is intended to be inside a parallel_for loop.
+
+The trig arrays are read-only and shared, so they are allocated when the class object is constructed and
+deallocated when the class object is destroyed.
+
+The class is templated on the size of the data because tmp data must be placed on the stack inside
+the parallel_for in order to make it thread-private, and CUDA and other GPUs do not allow flexible sized
+declarations of stack data during runtime.
+
+The data array passed to RealFFT1D.forward(...) and RealFFT1D.inverse(...) must be of size n+2, where n
+is the dimension of the data to be transformed. This is because we need to store n/2+1 Fourier modes.
+Even though the imaginary components of the first and last modes are zero, they are still stored.
+
+The FFTs are performed in place, overwriting the data.
+
+There are two different types of data scaling: FFT_SCALE_STANDARD, which is like numpy.fft.rfft
+                                               FFT_SCALE_ECMWF, taken from the ECMWF fft code
+
+You'll notice some headache with passing around the RealFFT Trig struct. This is required on GPUs because
+you cannot access internal class data on the GPU because the "this' pointer isn't valid in GPU memory.
+
+Example usage:
+
+  int constexpr nx = 128;
+  int constexpr ny = 64;
+  int constexpr nz = 72;
+
+  Array<double,3,memDevice,styleC> pressure("pressure",nz,ny+2,nx+2);
+
+  parallel_for( Bounds<3>(nz,ny,nx) , YAKL_LAMBDA (int k, int j, int i) {
+    pressure(k,j,i) = ...;
+  });
+
+  yakl::RealFFT1D<n,double> fft_x;
+  fft_x.init(fft_x.trig);
+
+  yakl::RealFFT1D<n,double> fft_y;
+  fft_y.init(fft_y.trig);
+
+  // x-direction forward FFTs
+  parallel_for( Bounds<2>(nz,ny) , YAKL_LAMBDA (int k, int j) {
+    SArray<real,1,nx+2> data;
+    for (int i=0; i < nx; i++) {
+      data(i) = pressure(k,j,i);
+    }
+    fft_x.forward(data,fft_x.trig,yakl::FFT_SCALE_ECMWF);
+    for (int i=0; i < nx+2; i++) {
+      pressure(k,j,i) = data(i);
+    }
+  });
+
+  // y-direction forward FFTs
+  parallel_for( Bounds<2>(nz,nx+2) , YAKL_LAMBDA (int k, int i) {
+    SArray<real,1,ny+2> data;
+    for (int j=0; j < ny; j++) {
+      data(j) = pressure(k,j,i);
+    }
+    fft_y.forward(data,fft_y.trig,yakl::FFT_SCALE_ECMWF);
+    for (int j=0; j < ny+2; j++) {
+      pressure(k,j,i) = data(j);
+    }
+  });
+
+  // Do stuff in Fourier space
+
+  // y-direction inverse FFTs
+  parallel_for( Bounds<2>(nz,nx+2) , YAKL_LAMBDA (int k, int i) {
+    SArray<real,1,ny+2> data;
+    for (int j=0; j < ny+2; j++) {
+      data(j) = pressure(k,j,i);
+    }
+    fft_y.inverse(data,fft_y.trig,yakl::FFT_SCALE_ECMWF);
+    for (int j=0; j < ny; j++) {
+      pressure(k,j,i) = data(j);
+    }
+  });
+
+  // x-direction inverse FFTs
+  parallel_for( Bounds<2>(nz,ny) , YAKL_LAMBDA (int k, int j) {
+    SArray<real,1,nx+2> data;
+    for (int i=0; i < nx+2; i++) {
+      data(i) = pressure(k,j,i);
+    }
+    fft_x.inverse(data,fft_x.trig,yakl::FFT_SCALE_ECMWF);
+    for (int i=0; i < nx; i++) {
+      pressure(k,j,i) = data(i);
+    }
+  });
+**************************************************************************************************************
+*************************************************************************************************************/
 
 namespace yakl {
 
+  int constexpr FFT_SCALE_STANDARD = 1;
+  int constexpr FFT_SCALE_ECMWF    = 2;
 
-  // Lower-level routine for FFTs
-  template<unsigned N, typename T=double> class DanielsonLanczos {
-  public:
-    static YAKL_INLINE void constexpr apply(T* data) {
-      DanielsonLanczos<N/2,T>::apply(data  );
-      DanielsonLanczos<N/2,T>::apply(data+N);
-   
-      // The compiler should have enough information to compute the sine
-      // and cosine at compile time. Use "nm objectfile.o | grep -i sin"
-      // to check is sin or cos are linked in. If you see them in the 
-      // output of nm, then this was *not* computed at compile time, and
-      // it will probably be expensive during runtime
-      T wtemp,tempr,tempi,wr,wi,wpr,wpi;
-      wtemp = sin(M_PI/N);
-      wpr = -2.0*wtemp*wtemp;
-      wpi = -sin(2*M_PI/N);
-      wr = 1.0;
-      wi = 0.0;
-      for (unsigned i=0; i<N; i+=2) {
-        tempr = data[i+N]*wr - data[i+N+1]*wi;
-        tempi = data[i+N]*wi + data[i+N+1]*wr;
-        data[i+N  ] = data[i  ]-tempr;
-        data[i+N+1] = data[i+1]-tempi;
-        data[i  ] += tempr;
-        data[i+1] += tempi;
-   
-        wtemp = wr;
-        wr += wr*wpr - wi   *wpi;
-        wi += wi*wpr + wtemp*wpi;
-      }
-    }
-  };
-  template<typename T> class DanielsonLanczos<1,T> {
-  public:
-    static YAKL_INLINE void constexpr apply(T* data) { }
-  };
+  template <unsigned int x> struct mylog2 { enum { value = 1 + mylog2<x/2>::value }; };
+  template <> struct mylog2<1> { enum { value = 0 }; };
 
+  template <unsigned int x> struct mypow2 { enum { value = 2*mypow2<x-1>::value }; };
+  template <> struct mypow2<0> { enum { value = 1 }; };
 
-  template <class T> YAKL_INLINE constexpr void swap(T &a, T &b) {
-    T tmp = a;
-    a = b;
-    b = tmp;
-  }
+  template <unsigned int SIZE, class real = double>
+  class RealFFT1D {
+    typedef yakl::Array<real,1,yakl::memDevice,yakl::styleC> real1d;
 
+    public:
 
-  // Pre-processing for complex FFTs
-  template <class T> YAKL_INLINE void scramble(T *data , unsigned N ) {
-    unsigned n = N<<1;
-    unsigned j=1;
-    for (unsigned i=1; i<n; i+=2) {
-      if (j>i) {
-        swap(data[j-1], data[i-1]);
-        swap(data[j  ], data[i  ]);
-      }
-      unsigned m = N;
-      while (m>=2 && j>m) {
-        j -= m;
-        m >>= 1;
-      }
-      j += m;
+    struct Trig {
+      real1d cos_expr1;
+      real1d sin_expr1;
+      real1d cos_expr2;
+      real1d sin_expr2;
     };
-  }
 
+    Trig trig;
 
-  // Process complex FFT output to compute the FFTs of real data
-  template <unsigned I, unsigned N, class T> class ProcessRealFFT {
-  public:
-    static YAKL_INLINE void constexpr process(T *data, T *tmp) {
-      T xrp = (tmp[2*I  ] + tmp[2*(N-I)  ])*0.5;
-      T xrm = (tmp[2*I  ] - tmp[2*(N-I)  ])*0.5;
-      T xip = (tmp[2*I+1] + tmp[2*(N-I)+1])*0.5;
-      T xim = (tmp[2*I+1] - tmp[2*(N-I)+1])*0.5;
-      // These should be computed at compile time
-      data[2*I  ] = ( xrp + cos(M_PI*I/N)*xip - sin(M_PI*I/N)*xrm )/(2*N);
-      data[2*I+1] = ( xim - sin(M_PI*I/N)*xip - cos(M_PI*I/N)*xrm )/(2*N);
-      ProcessRealFFT<I-1,N,T>::process(data,tmp);
+    RealFFT1D() {
+      trig.cos_expr1 = real1d("cos_expr1",mylog2<SIZE/2>::value);
+      trig.sin_expr1 = real1d("sin_expr1",mylog2<SIZE/2>::value);
+      trig.cos_expr2 = real1d("cos_expr2",SIZE/2);
+      trig.sin_expr2 = real1d("sin_expr2",SIZE/2);
     }
-  };
-  template <unsigned N, class T> class ProcessRealFFT<1,N,T> {
-  public:
-    static YAKL_INLINE void constexpr process(T *data, T *tmp) {
-      unsigned constexpr I = 1;
-      T xrp = (tmp[2*I  ] + tmp[2*(N-I)  ])*0.5;
-      T xrm = (tmp[2*I  ] - tmp[2*(N-I)  ])*0.5;
-      T xip = (tmp[2*I+1] + tmp[2*(N-I)+1])*0.5;
-      T xim = (tmp[2*I+1] - tmp[2*(N-I)+1])*0.5;
-      // These should be computed at compile time
-      data[2*I  ] = ( xrp + cos(M_PI*I/N)*xip - sin(M_PI*I/N)*xrm )/(2*N);
-      data[2*I+1] = ( xim - sin(M_PI*I/N)*xip - cos(M_PI*I/N)*xrm )/(2*N);
-    }
-  };
 
 
-  // Pre-process real FFTs for inverting to real data
-  template <unsigned I, unsigned N, class T> class ProcessRealInverseFFT {
-  public:
-    static YAKL_INLINE void constexpr process(T *data, T *tmp) {
-      T xrp = (data[2*I  ] + data[2*(N-I)  ]);
-      T xrm = (data[2*I  ] - data[2*(N-I)  ]);
-      T xip = (data[2*I+1] + data[2*(N-I)+1]);
-      T xim = (data[2*I+1] - data[2*(N-I)+1]);
-      // These should be computed at compile time
-      tmp[2*I  ] = xrp - cos(M_PI*I/N)*xip - sin(M_PI*I/N)*xrm;
-      tmp[2*I+1] = xim - sin(M_PI*I/N)*xip + cos(M_PI*I/N)*xrm;
-      ProcessRealInverseFFT<I-1,N,T>::process(data,tmp);
+    ~RealFFT1D() {
+      trig.cos_expr1 = real1d();
+      trig.sin_expr1 = real1d();
+      trig.cos_expr2 = real1d();
+      trig.sin_expr2 = real1d();
     }
-  };
-  template <unsigned N, class T> class ProcessRealInverseFFT<0,N,T> {
-  public:
-    static YAKL_INLINE void constexpr process(T *data, T *tmp) {
-      unsigned constexpr I = 0;
-      T xrp = (data[2*I  ] + data[2*(N-I)  ]);
-      T xrm = (data[2*I  ] - data[2*(N-I)  ]);
-      T xip = (data[2*I+1] + data[2*(N-I)+1]);
-      T xim = (data[2*I+1] - data[2*(N-I)+1]);
-      // These should be computed at compile time
-      tmp[2*I  ] = xrp - cos(M_PI*I/N)*xip - sin(M_PI*I/N)*xrm;
-      tmp[2*I+1] = xim - sin(M_PI*I/N)*xip + cos(M_PI*I/N)*xrm;
-    }
-  };
 
 
-  // Calculate the next power of two for a given unsigned integer
-  YAKL_INLINE constexpr unsigned nextPowerOfTwo(unsigned n) {
-    unsigned count = 0;  
-    // If n is zero or n is a power of 2, then return it
-    if (n && !(n & (n - 1))) { return n; }
-    while( n != 0) {
-      n >>= 1;  
-      count += 1;  
+    inline void init(Trig &trig) {
+      int constexpr log2_no2 = mylog2<SIZE/2>::value;
+      yakl::c::parallel_for( log2_no2 , YAKL_LAMBDA (int i) {
+        unsigned int m = 1;
+        for (int j=1; j <= i+1; j++) { m *= 2; }
+        trig.cos_expr1(i) = cos(2*M_PI/static_cast<real>(m));
+        trig.sin_expr1(i) = sin(2*M_PI/static_cast<real>(m));
+      });
+      yakl::c::parallel_for( SIZE/2 , YAKL_LAMBDA (int i) {
+        trig.cos_expr2(i) = cos(2*M_PI*i/static_cast<real>(SIZE));
+        trig.sin_expr2(i) = sin(2*M_PI*i/static_cast<real>(SIZE));
+      });
     }
-    return 1 << count; 
-  }
 
 
-  ///////////////////////////////////////////////////////////////////////////////////////
-  // Class to compute Fast Fourier Transforms on real data with a length that matches a
-  // power of two (e.g., 4, 16, 32, 64, ...). FFTs are serializeda in the dimension they
-  // are performed. User must allocate temporary data themselves because it might need
-  // to be valid in GPU memory
-  //
-  // Example usage:
-  //     unsigned constexpr N = 64; // FFTs are restricted to powers of 2 for now
-  //     FFT<N,double> fft;
-  //     double data[N+2];
-  //     double tmp[N];
-  //     // Initialize data
-  //     fft.forward(data,tmp);
-  //     // Manipulate data in Fourier space
-  //     fft.inverse(data,tmp);
-  //
-  // forward(T *data, T *tmp):
-  //       data: 1-D array of type T with SIZE+2 elements allocated. It is expected to
-  //             contain SIZE real values on input; and it will contain SIZE/2+1 complex
-  //             Fourier modes with complex numbers represented as:
-  //             [real,imag , real,imag , ...]
-  //       tmp: Temporary storage, 1-D array of type T with SIZE elements allocated
-  //
-  //       Computes a forward transform of SIZE real values and stores it into SIZE/2+1
-  //       complex Fourier modes. The transform is performed in place. The 0th and
-  //       (SIZE/2)th modes have no imaginary component (i.e., data[1] and
-  //       data[2*SIZE+1] are both zero)
-  //
-  //       Consider this the equivalent of:
-  //       fft[k] = sum( data[m]*exp(-I*2*pi*k*m/SIZE) , m=0..SIZE-1 ) / SIZE
-  //
-  //       Note the scaling by SIZE in the forward transform rather than in the inverse
-  //       transform. Also, only SIZE/2 transforms need to be computed because the rest
-  //       can be computed by symmetry since this is using an entirely real signal
-  //
-  // inverse(T *data, T *tmp):
-  //       data: 1-D array of type T with SIZE+2 elements allocated. It is expected to
-  //             contain SIZE/2+1 complex Fourier modes consuming all SIZE+2 indices on
-  //             input; and it will contain SIZE real values on output
-  //       tmp: Temporary storage, 1-D array of type T with SIZE elements allocated
-  //
-  //       Computes an inverse transform of SIZE/2+1 complex Fourier modes into SIZE
-  //       real values. The transform is performed in place. 
-  //
-  //       Consider this the equivalent of:
-  //       data[k] = sum( fft[n]*exp(I*2*pi*k*m/SIZE) , m=0..SIZE-1 )
-  //
-  //       Note that the scaling is done in the forward transform so it isn't needed in
-  //       the inverse. 
-  ///////////////////////////////////////////////////////////////////////////////////////
-  template<unsigned SIZE, typename T=double> class FFT {
-    static unsigned constexpr N = nextPowerOfTwo(SIZE)/2;
-    static_assert(SIZE-nextPowerOfTwo(SIZE) == 0,"ERROR: Running FFT with a non-power-of-two-size");
-    YAKL_INLINE void forwardComplex(T* data) const {
-      scramble(data,N);
-      DanielsonLanczos<N,T>::apply(data);
-    }
-    YAKL_INLINE void inverseComplex(T* data) const {
-      // Multiply complex components by -1
-      for (unsigned i=0; i<2*N; i+=2) { data[i+1] = -data[i+1]; }
-      forwardComplex(data);
-      // Multiply complex components by -1
-      for (unsigned i=0; i<2*N; i+=2) { data[i+1] = -data[i+1]; }
-    }
-  public:
-    YAKL_INLINE void forward(T *data, T *tmp) const {
-      // Copy to temporary buffer
-      for (unsigned i=0; i<2*N; i++) {
-        tmp[i] = data[i];
+    template <class ARR>
+    YAKL_INLINE void forward(ARR const &data, Trig const &trig, int scale = FFT_SCALE_STANDARD) const {
+      yakl::SArray<real,1,SIZE> tmp;
+      int constexpr n = SIZE;
+      bit_reverse_copy_real_forward(data,tmp);
+      fft_post_bit_reverse(tmp,trig);
+
+      // Post-process
+      data(0) = tmp(0) + tmp(1);
+      data(1) = 0;
+      for (int k=1; k < n/2; k++) {
+        real a = tmp(2*(    k)  );
+        real b = tmp(2*(    k)+1);
+        real c = tmp(2*(n/2-k)  );
+        real d = tmp(2*(n/2-k)+1);
+        real cterm = trig.cos_expr2(k);
+        real sterm = trig.sin_expr2(k);
+        data(2*k  ) = 0.5*( (b+d)*cterm + (c-a)*sterm + a + c );
+        data(2*k+1) = 0.5*( (c-a)*cterm - (b+d)*sterm + b - d );
       }
-      // Compute FFT assuming complex #s are even,I*odd; even,I*odd
-      forwardComplex(tmp);
-      data[0    ] = (tmp[0] + tmp[1])/(2*N);
-      data[1    ] = 0;
-      data[2*N  ] = (tmp[0] - tmp[1])/(2*N);
-      data[2*N+1] = 0;
-      // Transform the FFT into the true FFT for the real sequence
-      ProcessRealFFT<N-1,N,T>::process(data,tmp);
-    }
-    YAKL_INLINE void inverse(T* data, T *tmp) const {
-      // Transform FFTs into something whose inverse reproduces the original real signal
-      ProcessRealInverseFFT<N-1,N,T>::process(data,tmp);
-      inverseComplex(tmp);
-      for (unsigned i=0; i<2*N; i++) {
-        data[i] = tmp[i];
+      data(2*(n/2)  ) = tmp(0) - tmp(1);
+      data(2*(n/2)+1) = 0;
+      if (scale == FFT_SCALE_ECMWF) {
+        for (int k=0; k < n+2; k++) {
+          data(k) /= n;
+        }
       }
     }
-  };
 
+
+    template <class ARR>
+    YAKL_INLINE void inverse(ARR const &data, Trig const &trig, int scale = FFT_SCALE_STANDARD) const {
+      yakl::SArray<real,1,SIZE> tmp;
+      int constexpr  n = SIZE;
+      bit_reverse_copy_real_inverse(data,tmp,trig);
+      fft_post_bit_reverse(tmp,trig);
+
+      // Post-process
+      for (int k=0; k < n/2; k++) {
+        data(2*k  ) =  tmp(2*k  );
+        data(2*k+1) = -tmp(2*k+1);
+      }
+      if (scale == FFT_SCALE_STANDARD) {
+        for (int k=0; k < n; k++) {
+          data(k) /= (n/2);
+        }
+      } else if (scale == FFT_SCALE_ECMWF) {
+        for (int k=0; k < n; k++) {
+          data(k) *= 2;
+        }
+      }
+    }
+
+
+    private:
+
+    YAKL_INLINE unsigned int reverse_bits(unsigned int num) const {
+      int constexpr num_bits = mylog2<SIZE/2>::value;
+      unsigned int reverse_num = 0;
+      int i;
+      for (i = 0; i < num_bits; i++) {
+        if ((num & (1 << i)))
+          reverse_num |= 1 << ((num_bits - 1) - i);
+      }
+      return reverse_num;
+    }
+
+
+    template <class ARR_IN, class ARR_OUT>
+    YAKL_INLINE void bit_reverse_copy_real_forward(ARR_IN const &in, ARR_OUT &out) const {
+      int constexpr n = SIZE/2;
+      for (unsigned int k=0; k < n; k++) {
+        unsigned int br_ind = reverse_bits(k);
+        out(2*br_ind  ) = in(2*k  );
+        out(2*br_ind+1) = in(2*k+1);
+      }
+    }
+
+
+    template <class ARR_IN, class ARR_OUT>
+    YAKL_INLINE void bit_reverse_copy_real_inverse(ARR_IN const &in, ARR_OUT &out, Trig const &trig) const {
+      int constexpr n = SIZE/2;
+      for (unsigned int k=0; k < n; k++) {
+        real a = in(2*k  );
+        real b = in(2*k+1);
+        real c = in(2*(n-k)  );
+        real d = in(2*(n-k)+1);
+        real cterm = trig.cos_expr2(k);
+        real sterm = trig.sin_expr2(k);
+        real re = 0.5*( -(b+d)*cterm - (a-c)*sterm + a + c );
+        real im = 0.5*(  (a-c)*cterm - (b+d)*sterm + b - d );
+        unsigned int br_ind = reverse_bits(k);
+        out(2*br_ind  ) =  re;
+        out(2*br_ind+1) = -im;
+      }
+    }
+
+
+    template <class ARR>
+    YAKL_INLINE void fft_post_bit_reverse(ARR &data, Trig const &trig) const {
+      unsigned int m = 1;
+      int constexpr n = SIZE/2;
+      int constexpr log2_n = mylog2<n>::value;
+      for (unsigned int s = 1; s <= log2_n; s++) {
+        m *= 2;
+        real omega_m_re =  trig.cos_expr1(s-1);
+        real omega_m_im = -trig.sin_expr1(s-1);
+        for (unsigned int k = 0; k < n; k+=m) {
+          real omega_re = 1;
+          real omega_im = 0;
+          for (unsigned int j=0; j < m/2; j++) {
+            real a = data(2*(k+j+m/2)  );
+            real b = data(2*(k+j+m/2)+1);
+            real c = data(2*(k+j    )  );
+            real d = data(2*(k+j    )+1);
+            data(2*(k+j    )  ) = -b*omega_im + a*omega_re + c;
+            data(2*(k+j    )+1) =  a*omega_im + b*omega_re + d;
+            data(2*(k+j+m/2)  ) =  b*omega_im - a*omega_re + c;
+            data(2*(k+j+m/2)+1) = -a*omega_im - b*omega_re + d;
+            real omega_new_re = -omega_im*omega_m_im + omega_m_re*omega_re;
+            real omega_new_im =  omega_im*omega_m_re + omega_m_im*omega_re;
+            omega_re = omega_new_re;
+            omega_im = omega_new_im;
+          }
+        }
+      }
+    }
+
+  };
 
 }
-
