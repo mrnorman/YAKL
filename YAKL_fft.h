@@ -8,6 +8,13 @@
 YAKL RealFFT1D class
 Matt Norman, Oak Ridge National Laboratory, normanmr@ornl.gov
 
+Based off the Cooley-Tukey iterative algorithm here:
+https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
+
+Using real-to-complex optimizations described here:
+http://www.robinscheibler.org/2013/02/13/real-fft.html
+https://dsp.stackexchange.com/questions/30185/fft-of-a-n-length-real-sequence-via-fft-of-a-n-2-length-complex-sequence
+
 This class provides a simple solution to performance portable real-to-complex 1-D FFTs. This is meant for
 small FFTs, and in CUDA, if you use > 2^14 data, you will run out of stack memory in the kernels.
 The data is assumed to be on the stack (the YAKL SArray class), but it can be on the heap as well (i.e., 
