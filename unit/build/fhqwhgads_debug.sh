@@ -1,6 +1,8 @@
 #!/bin/bash
 
-export CXXFLAGS="-O0 -g -DYAKL_DEBUG --std=c++11"
+./cmakeclean.sh
+
+export CXXFLAGS="-O0 -g -DYAKL_DEBUG"
 
 cmake ..
 

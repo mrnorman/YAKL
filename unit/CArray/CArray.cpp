@@ -21,14 +21,14 @@ typedef Array<real,6,memHost,styleC> realHost6d;
 typedef Array<real,7,memHost,styleC> realHost7d;
 typedef Array<real,8,memHost,styleC> realHost8d;
 
-typedef Array<real,1,memHost,styleC> real1d;
-typedef Array<real,2,memHost,styleC> real2d;
-typedef Array<real,3,memHost,styleC> real3d;
-typedef Array<real,4,memHost,styleC> real4d;
-typedef Array<real,5,memHost,styleC> real5d;
-typedef Array<real,6,memHost,styleC> real6d;
-typedef Array<real,7,memHost,styleC> real7d;
-typedef Array<real,8,memHost,styleC> real8d;
+typedef Array<real,1,memDevice,styleC> real1d;
+typedef Array<real,2,memDevice,styleC> real2d;
+typedef Array<real,3,memDevice,styleC> real3d;
+typedef Array<real,4,memDevice,styleC> real4d;
+typedef Array<real,5,memDevice,styleC> real5d;
+typedef Array<real,6,memDevice,styleC> real6d;
+typedef Array<real,7,memDevice,styleC> real7d;
+typedef Array<real,8,memDevice,styleC> real8d;
 
 
 void die(std::string msg) {
