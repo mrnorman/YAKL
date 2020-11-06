@@ -15,6 +15,9 @@ Using real-to-complex optimizations described here:
 http://www.robinscheibler.org/2013/02/13/real-fft.html
 https://dsp.stackexchange.com/questions/30185/fft-of-a-n-length-real-sequence-via-fft-of-a-n-2-length-complex-sequence
 
+Inverse FFTs performed using method 4 of:
+https://www.dsprelated.com/showarticle/800.php
+
 This class provides a simple solution to performance portable real-to-complex 1-D FFTs. This is meant for
 small FFTs, and in CUDA, if you use > 2^14 data, you will run out of stack memory in the kernels.
 The data is assumed to be on the stack (the YAKL SArray class), but it can be on the heap as well (i.e., 
