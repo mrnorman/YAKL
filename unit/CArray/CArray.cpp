@@ -62,6 +62,15 @@ int main() {
     real7d test7d("test7d",d1,d2,d3,d4,d5,d6,d7);
     real8d test8d("test8d",d1,d2,d3,d4,d5,d6,d7,d8);
 
+    yakl::memset(test1d,0.f);
+    yakl::memset(test2d,0.f);
+    yakl::memset(test3d,0.f);
+    yakl::memset(test4d,0.f);
+    yakl::memset(test5d,0.f);
+    yakl::memset(test6d,0.f);
+    yakl::memset(test7d,0.f);
+    yakl::memset(test8d,0.f);
+
     parallel_for( Bounds<1>(d1) , YAKL_LAMBDA (int i1) {
       test1d(i1) = 1;
     });
@@ -95,6 +104,97 @@ int main() {
     if (yakl::intrinsics::sum(test6d) != d1*d2*d3*d4*d5*d6      ) { die("LOOPS: wrong sum for test6d"); }
     if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("LOOPS: wrong sum for test7d"); }
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("LOOPS: wrong sum for test8d"); }
+
+    if (test1d.get_rank() != 1) { die("Ranks: wrong rank for test1d"); }
+    if (test2d.get_rank() != 2) { die("Ranks: wrong rank for test2d"); }
+    if (test3d.get_rank() != 3) { die("Ranks: wrong rank for test3d"); }
+    if (test4d.get_rank() != 4) { die("Ranks: wrong rank for test4d"); }
+    if (test5d.get_rank() != 5) { die("Ranks: wrong rank for test5d"); }
+    if (test6d.get_rank() != 6) { die("Ranks: wrong rank for test6d"); }
+    if (test7d.get_rank() != 7) { die("Ranks: wrong rank for test7d"); }
+    if (test8d.get_rank() != 8) { die("Ranks: wrong rank for test8d"); }
+
+    if (test1d.get_elem_count() != d1                     ) { die("get_elem_count: wrong value for test1d"); }
+    if (test2d.get_elem_count() != d1*d2                  ) { die("get_elem_count: wrong value for test2d"); }
+    if (test3d.get_elem_count() != d1*d2*d3               ) { die("get_elem_count: wrong value for test3d"); }
+    if (test4d.get_elem_count() != d1*d2*d3*d4            ) { die("get_elem_count: wrong value for test4d"); }
+    if (test5d.get_elem_count() != d1*d2*d3*d4*d5         ) { die("get_elem_count: wrong value for test5d"); }
+    if (test6d.get_elem_count() != d1*d2*d3*d4*d5*d6      ) { die("get_elem_count: wrong value for test6d"); }
+    if (test7d.get_elem_count() != d1*d2*d3*d4*d5*d6*d7   ) { die("get_elem_count: wrong value for test7d"); }
+    if (test8d.get_elem_count() != d1*d2*d3*d4*d5*d6*d7*d8) { die("get_elem_count: wrong value for test8d"); }
+
+    if (yakl::intrinsics::sum(test1d.get_dimensions()) != d1                     ) { die("get_dimensions: wrong value for test1d"); }
+    if (yakl::intrinsics::sum(test2d.get_dimensions()) != d1+d2                  ) { die("get_dimensions: wrong value for test2d"); }
+    if (yakl::intrinsics::sum(test3d.get_dimensions()) != d1+d2+d3               ) { die("get_dimensions: wrong value for test3d"); }
+    if (yakl::intrinsics::sum(test4d.get_dimensions()) != d1+d2+d3+d4            ) { die("get_dimensions: wrong value for test4d"); }
+    if (yakl::intrinsics::sum(test5d.get_dimensions()) != d1+d2+d3+d4+d5         ) { die("get_dimensions: wrong value for test5d"); }
+    if (yakl::intrinsics::sum(test6d.get_dimensions()) != d1+d2+d3+d4+d5+d6      ) { die("get_dimensions: wrong value for test6d"); }
+    if (yakl::intrinsics::sum(test7d.get_dimensions()) != d1+d2+d3+d4+d5+d6+d7   ) { die("get_dimensions: wrong value for test7d"); }
+    if (yakl::intrinsics::sum(test8d.get_dimensions()) != d1+d2+d3+d4+d5+d6+d7+d8) { die("get_dimensions: wrong value for test8d"); }
+
+    if (test1d.extent(0) != d1) { die("extent: wrong value for test1d"); }
+    if (test2d.extent(1) != d2) { die("extent: wrong value for test2d"); }
+    if (test3d.extent(2) != d3) { die("extent: wrong value for test3d"); }
+    if (test4d.extent(3) != d4) { die("extent: wrong value for test4d"); }
+    if (test5d.extent(4) != d5) { die("extent: wrong value for test5d"); }
+    if (test6d.extent(5) != d6) { die("extent: wrong value for test6d"); }
+    if (test7d.extent(6) != d7) { die("extent: wrong value for test7d"); }
+    if (test8d.extent(7) != d8) { die("extent: wrong value for test8d"); }
+
+    ///////////////////////////////////////////////////////////
+    // Test unmanaged arrays
+    ///////////////////////////////////////////////////////////
+    real1d test1d_ptr("test1d",test1d.data(),d1);
+    real2d test2d_ptr("test2d",test2d.data(),d1,d2);
+    real3d test3d_ptr("test3d",test3d.data(),d1,d2,d3);
+    real4d test4d_ptr("test4d",test4d.data(),d1,d2,d3,d4);
+    real5d test5d_ptr("test5d",test5d.data(),d1,d2,d3,d4,d5);
+    real6d test6d_ptr("test6d",test6d.data(),d1,d2,d3,d4,d5,d6);
+    real7d test7d_ptr("test7d",test7d.data(),d1,d2,d3,d4,d5,d6,d7);
+    real8d test8d_ptr("test8d",test8d.data(),d1,d2,d3,d4,d5,d6,d7,d8);
+
+    yakl::memset(test1d_ptr,0.f);
+    yakl::memset(test2d_ptr,0.f);
+    yakl::memset(test3d_ptr,0.f);
+    yakl::memset(test4d_ptr,0.f);
+    yakl::memset(test5d_ptr,0.f);
+    yakl::memset(test6d_ptr,0.f);
+    yakl::memset(test7d_ptr,0.f);
+    yakl::memset(test8d_ptr,0.f);
+
+    parallel_for( Bounds<1>(d1) , YAKL_LAMBDA (int i1) {
+      test1d_ptr(i1) = 1;
+    });
+    parallel_for( Bounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
+      test2d_ptr(i1,i2) = 1;
+    });
+    parallel_for( Bounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
+      test3d_ptr(i1,i2,i3) = 1;
+    });
+    parallel_for( Bounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
+      test4d_ptr(i1,i2,i3,i4) = 1;
+    });
+    parallel_for( Bounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
+      test5d_ptr(i1,i2,i3,i4,i5) = 1;
+    });
+    parallel_for( Bounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
+      test6d_ptr(i1,i2,i3,i4,i5,i6) = 1;
+    });
+    parallel_for( Bounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+      test7d_ptr(i1,i2,i3,i4,i5,i6,i7) = 1;
+    });
+    parallel_for( Bounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
+      test8d_ptr(i1,i2,i3,i4,i5,i6,i7,i8) = 1;
+    });
+
+    if (yakl::intrinsics::sum(test1d) != d1                     ) { die("UNMANAGED: wrong sum for test1d"); }
+    if (yakl::intrinsics::sum(test2d) != d1*d2                  ) { die("UNMANAGED: wrong sum for test2d"); }
+    if (yakl::intrinsics::sum(test3d) != d1*d2*d3               ) { die("UNMANAGED: wrong sum for test3d"); }
+    if (yakl::intrinsics::sum(test4d) != d1*d2*d3*d4            ) { die("UNMANAGED: wrong sum for test4d"); }
+    if (yakl::intrinsics::sum(test5d) != d1*d2*d3*d4*d5         ) { die("UNMANAGED: wrong sum for test5d"); }
+    if (yakl::intrinsics::sum(test6d) != d1*d2*d3*d4*d5*d6      ) { die("UNMANAGED: wrong sum for test6d"); }
+    if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("UNMANAGED: wrong sum for test7d"); }
+    if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("UNMANAGED: wrong sum for test8d"); }
 
     ///////////////////////////////////////////////////////////
     // Test createHostCopy();
