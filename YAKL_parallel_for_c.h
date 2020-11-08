@@ -590,75 +590,75 @@ namespace c {
     }
   }
   template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f , int vectorSize = 128 ) {
-    for (int i0 = bnd.l; i0 < bnd.l+(bnd.u-bnd.l+1); i0+=bnd.s) {
+    for (int i0 = bnd.l; i0 < (int) (bnd.l+(bnd.u-bnd.l+1)); i0+=bnd.s) {
       f( i0 );
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<1,false> const &bounds , F const &f ) {
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
       f( i0 );
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<2,false> const &bounds , F const &f ) {
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
       f( i0 , i1 );
     } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<3,false> const &bounds , F const &f ) {
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
       f( i0 , i1 , i2 );
     } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<4,false> const &bounds , F const &f ) {
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
       f( i0 , i1 , i2 , i3 );
     } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<5,false> const &bounds , F const &f ) {
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < (int) (bounds.lbounds[4]+bounds.dims[4]*bounds.strides[4]); i4+=bounds.strides[4]) {
       f( i0 , i1 , i2 , i3 , i4 );
     } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<6,false> const &bounds , F const &f ) {
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
-    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
+    for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < (int) (bounds.lbounds[4]+bounds.dims[4]*bounds.strides[4]); i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < (int) (bounds.lbounds[5]+bounds.dims[5]*bounds.strides[5]); i5+=bounds.strides[5]) {
       f( i0 , i1 , i2 , i3 , i4 , i5 );
     } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<7,false> const &bounds , F const &f ) {
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
-    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
-    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6+=bounds.strides[6]) {
+    for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < (int) (bounds.lbounds[4]+bounds.dims[4]*bounds.strides[4]); i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < (int) (bounds.lbounds[5]+bounds.dims[5]*bounds.strides[5]); i5+=bounds.strides[5]) {
+    for (int i6 = bounds.lbounds[6]; i6 < (int) (bounds.lbounds[6]+bounds.dims[6]*bounds.strides[6]); i6+=bounds.strides[6]) {
       f( i0 , i1 , i2 , i3 , i4 , i5 , i6 );
     } } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<8,false> const &bounds , F const &f ) {
-    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
-    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
-    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
-    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
-    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
-    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
-    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6+=bounds.strides[6]) {
-    for (int i7 = bounds.lbounds[7]; i7 < bounds.lbounds[7]+bounds.dims[7]; i7+=bounds.strides[7]) {
+    for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < (int) (bounds.lbounds[4]+bounds.dims[4]*bounds.strides[4]); i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < (int) (bounds.lbounds[5]+bounds.dims[5]*bounds.strides[5]); i5+=bounds.strides[5]) {
+    for (int i6 = bounds.lbounds[6]; i6 < (int) (bounds.lbounds[6]+bounds.dims[6]*bounds.strides[6]); i6+=bounds.strides[6]) {
+    for (int i7 = bounds.lbounds[7]; i7 < (int) (bounds.lbounds[7]+bounds.dims[7]*bounds.strides[7]); i7+=bounds.strides[7]) {
       f( i0 , i1 , i2 , i3 , i4 , i5 , i6 , i7 );
     } } } } } } } }
   }

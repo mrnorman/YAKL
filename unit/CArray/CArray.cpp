@@ -259,6 +259,16 @@ int main() {
     ///////////////////////////////////////////////////////////
     auto slice = test8d.slice<3>(1,2,3,4,5,COLON,COLON,COLON);
     if (yakl::intrinsics::sum(slice) != d6*d7*d8) { die("slice: wrong sum for slice"); }
+
+    ///////////////////////////////////////////////////////////
+    // Test non-standard loop bounds
+    ///////////////////////////////////////////////////////////
+    yakl::memset(test3d,0.);
+    parallel_for( Bounds<3>(d1,{1,d2-1},{0,d3,2}) , YAKL_LAMBDA (int i, int j, int k) {
+      test3d(i,j,k) = 1;
+    });
+    if (yakl::intrinsics::sum(test3d) != 8) { die("non-standard loop: wrong sum for test3d"); }
+
   }
   yakl::finalize();
   
