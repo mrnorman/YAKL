@@ -264,8 +264,8 @@ int main() {
     // Test non-standard loop bounds
     ///////////////////////////////////////////////////////////
     yakl::memset(test3d,0.);
-    parallel_for( Bounds<3>(d1,{1,d2-1},{0,d3,2}) , YAKL_LAMBDA (int i, int j, int k) {
-      test3d(i,j,k) = 1;
+    parallel_for( Bounds<3>(d1,{-1,d2-3},{0,d3,2}) , YAKL_LAMBDA (int i, int j, int k) {
+      test3d(i,j+2,k) = 1;
     });
     if (yakl::intrinsics::sum(test3d) != 8) { die("non-standard loop: wrong sum for test3d"); }
 
