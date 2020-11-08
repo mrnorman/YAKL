@@ -8,6 +8,7 @@ using yakl::memHost;
 using yakl::memDevice;
 using yakl::c::parallel_for;
 using yakl::c::Bounds;
+using yakl::c::SimpleBounds;
 using yakl::COLON;
 
 typedef float real;
@@ -268,6 +269,52 @@ int main() {
       test3d(i,j+2,k) = 1;
     });
     if (yakl::intrinsics::sum(test3d) != 8) { die("non-standard loop: wrong sum for test3d"); }
+
+    ///////////////////////////////////////////////////////////
+    // Test SimpleBounds
+    ///////////////////////////////////////////////////////////
+    yakl::memset(test1d,0.f);
+    yakl::memset(test2d,0.f);
+    yakl::memset(test3d,0.f);
+    yakl::memset(test4d,0.f);
+    yakl::memset(test5d,0.f);
+    yakl::memset(test6d,0.f);
+    yakl::memset(test7d,0.f);
+    yakl::memset(test8d,0.f);
+
+    parallel_for( SimpleBounds<1>(d1) , YAKL_LAMBDA (int i1) {
+      test1d(i1) = 1;
+    });
+    parallel_for( SimpleBounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
+      test2d(i1,i2) = 1;
+    });
+    parallel_for( SimpleBounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
+      test3d(i1,i2,i3) = 1;
+    });
+    parallel_for( SimpleBounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
+      test4d(i1,i2,i3,i4) = 1;
+    });
+    parallel_for( SimpleBounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
+      test5d(i1,i2,i3,i4,i5) = 1;
+    });
+    parallel_for( SimpleBounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
+      test6d(i1,i2,i3,i4,i5,i6) = 1;
+    });
+    parallel_for( SimpleBounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+      test7d(i1,i2,i3,i4,i5,i6,i7) = 1;
+    });
+    parallel_for( SimpleBounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
+      test8d(i1,i2,i3,i4,i5,i6,i7,i8) = 1;
+    });
+
+    if (yakl::intrinsics::sum(test1d) != d1                     ) { die("SimpleBounds: wrong sum for test1d"); }
+    if (yakl::intrinsics::sum(test2d) != d1*d2                  ) { die("SimpleBounds: wrong sum for test2d"); }
+    if (yakl::intrinsics::sum(test3d) != d1*d2*d3               ) { die("SimpleBounds: wrong sum for test3d"); }
+    if (yakl::intrinsics::sum(test4d) != d1*d2*d3*d4            ) { die("SimpleBounds: wrong sum for test4d"); }
+    if (yakl::intrinsics::sum(test5d) != d1*d2*d3*d4*d5         ) { die("SimpleBounds: wrong sum for test5d"); }
+    if (yakl::intrinsics::sum(test6d) != d1*d2*d3*d4*d5*d6      ) { die("SimpleBounds: wrong sum for test6d"); }
+    if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("SimpleBounds: wrong sum for test7d"); }
+    if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("SimpleBounds: wrong sum for test8d"); }
 
   }
   yakl::finalize();
