@@ -3,7 +3,7 @@
 set(MYSRC CArray.cpp)
 
 add_executable(CArray ${MYSRC})
-target_compile_features(CArray PUBLIC cxx_std_11)
+target_compile_features(CArray PUBLIC cxx_std_14)
 include_directories(../..)
 target_link_libraries(CArray yakl)
 
