@@ -1,7 +1,9 @@
 # Running the YAKL unit tests
 
 ```bash
-cd build
+git clone git@github.com:mrnorman/YAKL.git
+git submodule update --init
+cd unit/build
 source machine_option.sh
 make -j8
 make test
