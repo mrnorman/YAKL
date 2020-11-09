@@ -813,16 +813,18 @@ public:
         if (*refCount == 0) {
           delete refCount;
           refCount = nullptr;
-          if (myMem == memDevice) {
-            #ifdef YAKL_DEBUG
-              yaklFreeDevice(myData,myname.c_str());
-            #else
-              yaklFreeDevice(myData,"");
-            #endif
-          } else {
-            delete[] myData;
+          if (totElems() > 0) {
+            if (myMem == memDevice) {
+              #ifdef YAKL_DEBUG
+                yaklFreeDevice(myData,myname.c_str());
+              #else
+                yaklFreeDevice(myData,"");
+              #endif
+            } else {
+              delete[] myData;
+            }
+            myData = nullptr;
           }
-          myData = nullptr;
         }
 
       }

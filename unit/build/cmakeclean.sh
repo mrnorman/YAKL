@@ -1,4 +1,4 @@
 #!/bin/bash
 
-rm -rf CArray  CMakeCache.txt  CMakeFiles  cmake_install.cmake  CTestTestfile.cmake  Makefile  Testing  yakl  FArray
+rm -rf CArray  CMakeCache.txt  CMakeFiles  cmake_install.cmake  CTestTestfile.cmake  Makefile  Testing  yakl  FArray  Gator
 

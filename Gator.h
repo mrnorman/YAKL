@@ -122,6 +122,9 @@ public:
     #ifdef MEMORY_DEBUG
       std::cout << "MEMORY DEBUG: Gator attempting to allocate " << label << " with " << bytes << " bytes\n";
     #endif
+    if (bytes == 0) {
+      return nullptr;
+    }
     // Loop through the pools and see if there's room. If so, allocate in one of them
     for (auto it = pools.begin() ; it != pools.end() ; it++) {
       if (it->iGotRoom(bytes)) {

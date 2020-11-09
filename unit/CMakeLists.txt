@@ -15,4 +15,5 @@ add_subdirectory(.. ./yakl)
 # Unit test directories
 add_subdirectory(CArray)
 add_subdirectory(FArray)
+add_subdirectory(Gator)
 
