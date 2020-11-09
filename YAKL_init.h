@@ -33,8 +33,8 @@
       std::function<void *( size_t)> alloc;
       std::function<void ( void *)>  dealloc;
       set_alloc_free(alloc , dealloc);
-      yaklAllocDeviceFunc = [&] (size_t bytes , char const *label) -> void * { return alloc(bytes); };
-      yaklFreeDeviceFunc  = [&] (void *ptr , char const *label)              { dealloc(ptr); };
+      yaklAllocDeviceFunc = [=] (size_t bytes , char const *label) -> void * { return alloc(bytes); };
+      yaklFreeDeviceFunc  = [=] (void *ptr , char const *label)              { dealloc(ptr); };
     }
 
     yaklAllocHostFunc = [] (size_t bytes , char const *label) -> void * { return malloc(bytes); };

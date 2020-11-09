@@ -63,8 +63,8 @@ namespace yakl {
         };
       #endif
     #else
-      alloc   = ::malloc;
-      dealloc = ::free;
+      alloc   = [] ( size_t bytes ) -> void* { return ::malloc(bytes); };
+      dealloc = [] ( void *ptr ) { ::free(ptr); };
     #endif
   }
 
