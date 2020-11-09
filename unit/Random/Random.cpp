@@ -13,7 +13,7 @@ using yakl::COLON;
 
 typedef double real;
 
-typedef Array<real,1,memHost,styleC> real1d;
+typedef Array<real,1,memDevice,styleC> real1d;
 
 void die(std::string msg) {
   std::cerr << msg << std::endl;
@@ -26,18 +26,18 @@ int main() {
   {
     int constexpr n = 1024*1024;
     real1d arr("arr",n);
-    for (int i=0; i < n; i++) {
+    parallel_for( n , YAKL_LAMBDA (int i) {
       yakl::Random rand(i);
       arr(i) = rand.genFP<real>();
-    }
+    });
     real avg = yakl::intrinsics::sum(arr) / n;
 
-    real var = 0;
-    for (int i=0; i < n; i++) {
+    real1d varArr("varArr",n);
+    parallel_for( n , YAKL_LAMBDA (int i) {
       real absdiff = abs(arr(i) - avg);
-      var += absdiff * absdiff;
-    }
-    var = var / n;
+      varArr(i) = absdiff * absdiff;
+    });
+    real var = yakl::intrinsics::sum(varArr) / n;
     if (abs(avg-0.5)/0.5 > 0.01) { die("ERROR: mean is wrong"); }
     if (abs(var-(1./12.))/(1./12.) > 0.01) { die("ERROR: variance is wrong"); }
   }
