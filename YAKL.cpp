@@ -3,6 +3,10 @@
 
 namespace yakl {
 
+  #ifdef __USE_SYCL__
+    sycl::queue sycl_default_stream;
+  #endif
+
   void *functorBuffer;
 
   Gator pool;

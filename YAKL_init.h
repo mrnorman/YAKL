@@ -8,6 +8,14 @@
   inline void init() {
     bool use_pool = true;
 
+    #ifdef __USE_SYCL__
+      sycl::default_selector device_selector;
+      sycl_default_stream = sycl::queue(device_selector);
+      std::cout << "Running on "
+                << sycl_default_stream.get_device().get_info<sycl::info::device::name>()
+                << "\n";
+    #endif
+
     yakl_is_initialized = true;
 
     // Check for pool allocator env var

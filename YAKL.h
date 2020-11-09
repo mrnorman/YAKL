@@ -7,6 +7,9 @@ namespace yakl {
 
   typedef unsigned int index_t;
 
+  #ifdef __USE_SYCL__
+    extern sycl::queue sycl_default_stream;
+  #endif
 
   // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;

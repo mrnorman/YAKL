@@ -62,6 +62,16 @@ namespace yakl {
           check_last_error();
         };
       #endif
+    #elif defined (__USE_SYCL__)
+        alloc = [] ( size_t bytes ) -> void* {
+          void *ptr = static_cast<int *>(sycl::malloc_device(bytes,sycl_default_stream));
+          check_last_error();
+          return ptr;
+        };
+        dealloc = [] ( void *ptr ) {
+          sycl::free(ptr, sycl_default_stream);
+          check_last_error();
+        };
     #else
       alloc   = [] ( size_t bytes ) -> void* { return ::malloc(bytes); };
       dealloc = [] ( void *ptr ) { ::free(ptr); };
