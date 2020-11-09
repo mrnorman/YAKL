@@ -16,4 +16,5 @@ add_subdirectory(.. ./yakl)
 add_subdirectory(CArray)
 add_subdirectory(FArray)
 add_subdirectory(Gator)
+add_subdirectory(Random)
 
