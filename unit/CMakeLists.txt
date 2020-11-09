@@ -19,4 +19,5 @@ add_subdirectory(Gator)
 add_subdirectory(Random)
 add_subdirectory(FFT)
 add_subdirectory(Reductions)
+add_subdirectory(Atomics)
 
