@@ -13,11 +13,21 @@ if ("${ARCH}" STREQUAL "CUDA")
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
   include_directories(cub)
 elseif ("${ARCH}" STREQUAL "HIP")
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/rocPRIM/rocprim/include/rocprim/rocprim_version.hpp.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/rocPRIM/rocprim/include/rocprim/rocprim_version.hpp"
+    @ONLY
+  )
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/hipCUB/hipcub/include/hipcub/hipcub_version.hpp.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/hipCUB/hipcub/include/hipcub/hipcub_version.hpp"
+    @ONLY
+  )
   set(YAKL_CXX_FLAGS "-D__USE_HIP__ ${HIP_FLAGS} ${YAKL_CXX_FLAGS}" PARENT_SCOPE)
   set(YAKL_CXX_FLAGS "-D__USE_HIP__ ${HIP_FLAGS} ${YAKL_CXX_FLAGS}"             )
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
-  include_directories(hipCUB)
-  include_directories(rocPRIM)
+  include_directories(hipCUB/hipcub/include)
+  include_directories(rocPRIM/rocprim/include)
 else()
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
 endif()
