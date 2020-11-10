@@ -55,7 +55,7 @@ namespace yakl {
   extern bool yakl_is_initialized;
 
 
-  #ifdef __USE_HIP__
+  #if defined(__USE_HIP__) || defined(__USE_SYCL__)
     YAKL_INLINE void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
     YAKL_INLINE void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
     YAKL_INLINE void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
@@ -103,6 +103,9 @@ namespace yakl {
     #if defined(__USE_CUDA__)
       cudaFree(functorBuffer);
       check_last_error();
+    #endif
+    #if defined(__USE_SYCL__)
+      sycl_default_stream = sycl::queue();
     #endif
   }
 

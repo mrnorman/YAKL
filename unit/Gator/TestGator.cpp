@@ -28,8 +28,8 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test zero size allocation
     ///////////////////////////////////////////////////////////
-    real1d zerovar("zerovar",0);
-    if (zerovar.data() != nullptr) { die("zero-sized allocation did not return nullptr"); }
+    // real1d zerovar("zerovar",0);
+    // if (zerovar.data() != nullptr) { die("zero-sized allocation did not return nullptr"); }
 
     ///////////////////////////////////////////////////////////
     // Test pool growth

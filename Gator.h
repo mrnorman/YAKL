@@ -7,6 +7,10 @@
 #if defined(__USE_HIP__)
   #include "hip/hip_runtime.h"
 #endif
+#if defined(__USE_SYCL__)
+  #include <CL/sycl.hpp>
+  namespace sycl = cl::sycl;
+#endif
 
 #include "YAKL_alloc_free.h"
 
@@ -19,6 +23,7 @@ protected:
   std::function<void( void *, size_t )> myzero;   // zero function
   size_t growSize;
   size_t blockSize;
+  bool   enabled;
 
   void die(std::string str="") {
     std::cerr << str << std::endl;
@@ -28,12 +33,7 @@ protected:
 
 public:
 
-  Gator() {
-    std::function<void *( size_t )> alloc;
-    std::function<void ( void * )>  dealloc;
-    yakl::set_alloc_free(alloc , dealloc);
-    init(alloc,dealloc);
-  }
+  Gator() {}
 
 
   Gator( std::function<void *( size_t )>       mymalloc ,
@@ -67,8 +67,16 @@ public:
     this->growSize     = initialSize;
     this->blockSize    = sizeof(size_t)*128;
 
+    char * env = std::getenv("GATOR_DISABLE");
+    if ( env != nullptr ) {
+      std::string resp(env);
+      if (resp == "yes" || resp == "YES" || resp == "1" || resp == "true" || resp == "TRUE" || resp == "T") {
+        enabled = false;
+      }
+    }
+
     // Check for GATOR_INITIAL_MB environment variable
-    char * env = std::getenv("GATOR_INITIAL_MB");
+    env = std::getenv("GATOR_INITIAL_MB");
     if ( env != nullptr ) {
       long int initial_mb = atol(env);
       if (initial_mb != 0) {
@@ -102,12 +110,16 @@ public:
       }
     }
 
-    pools.push_back(StackyAllocator(initialSize , mymalloc , myfree , blockSize , myzero));
+    if (enabled) {
+      pools.push_back(StackyAllocator(initialSize , mymalloc , myfree , blockSize , myzero));
+    }
   }
 
 
   void finalize() {
-    pools = std::list<StackyAllocator>();
+    if (enabled) {
+      pools = std::list<StackyAllocator>();
+    }
   }
 
 

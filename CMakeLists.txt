@@ -28,6 +28,10 @@ elseif ("${ARCH}" STREQUAL "HIP")
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
   include_directories(hipCUB/hipcub/include)
   include_directories(rocPRIM/rocprim/include)
+elseif ("${ARCH}" STREQUAL "SYCL")
+  set(YAKL_CXX_FLAGS "-D__USE_SYCL__ ${SYCL_FLAGS} ${YAKL_CXX_FLAGS}" PARENT_SCOPE)
+  set(YAKL_CXX_FLAGS "-D__USE_SYCL__ ${SYCL_FLAGS} ${YAKL_CXX_FLAGS}"             )
+  set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
 else()
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
 endif()
@@ -37,6 +41,10 @@ target_compile_features(yakl PUBLIC cxx_std_14)
 
 if ("${ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+endif()
+
+if ("${ARCH}" STREQUAL "SYCL")
+  target_link_libraries(yakl "--intel -fsycl")
 endif()
 
 
