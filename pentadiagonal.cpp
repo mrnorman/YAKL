@@ -19,14 +19,13 @@ void pentadiagonal(SArray<real,1,n> const &a,
 
 
 template <unsigned int n>
-void cyclic_pentadiagonal(SArray<real,1,n> const &a,
-                          SArray<real,1,n> const &b,
-                          SArray<real,1,n> const &c,
-                          SArray<real,1,n> const &d,
-                          SArray<real,1,n> const &e,
-                          SArray<real,1,n> &f,
-                          real cp1, real cp2, real cp3, real cp4, real cp5, real cp6,
-                          SArray<real,1,n> &x);
+void pentadiagonal_periodic(SArray<real,1,n> const &a,
+                            SArray<real,1,n> const &b,
+                            SArray<real,1,n> const &c,
+                            SArray<real,1,n> const &d,
+                            SArray<real,1,n> const &e,
+                            SArray<real,1,n> &f,
+                            SArray<real,1,n> &x);
 
 
 template <unsigned int n>
@@ -43,12 +42,14 @@ int main() {
   SArray<real,1,n> x;
   SArray<real,1,n> y;
 
+  // Set diagonal components
   a(0) = 0.0; a(1) = 0.0; a(2) = 0.2; a(3) = 0.9; a(4) = 4.0; a(5) = 2.2; a(6) = 1.1;
   b(0) = 0.0; b(1) = 3.6; b(2) = 2.8; b(3) = 3.1; b(4) = 6.7; b(5) = 1.2; b(6) = 0.1;
   c(0) = 4.1; c(1) = 2.2; c(2) = 6.2; c(3) = 8.5; c(4) = 3.8; c(5) = 3.7; c(6) = 2.1;
   d(0) = 0.4; d(1) = 1.0; d(2) = 5.0; d(3) = 4.9; d(4) = 2.3; d(5) = 5.1; d(6) = 0.0;
   e(0) = 0.5; e(1) = 6.1; e(2) = 2.9; e(3) = 4.5; e(4) = 0.7; e(5) = 0.0; e(6) = 0.0;
 
+  // Set RHS
   y(0) = 6.4;
   y(1) = 35.4;
   y(2) = 58.9;
@@ -63,13 +64,15 @@ int main() {
     std::cout << x(i) << "\n";
   }
 
-  real cp1 = 0.2;
-  real cp2 = 0.5;
-  real cp3 = 0.4;
-  real cp4 = 0.1;
-  real cp5 = 0.9;
-  real cp6 = 1.0;
+  // Add cyclic values
+  a(0) = 0.2;
+  b(0) = 0.5;
+  a(1) = 0.4;
+  e(5) = 0.1;
+  d(6) = 0.9;
+  e(6) = 1.0;
 
+  // Set RHS
   y(0) = 11.1;
   y(1) = 38.2;
   y(2) = 58.9;
@@ -78,7 +81,7 @@ int main() {
   y(5) = 72.8;
   y(6) = 23.7;
 
-  cyclic_pentadiagonal(a,b,c,d,e,y,cp1,cp2,cp3,cp4,cp5,cp6,x);
+  pentadiagonal_periodic(a,b,c,d,e,y,x);
 
   std::cout << "\n";
   for (int i=0; i < n; i++) {
@@ -91,18 +94,24 @@ int main() {
 
 
 template <unsigned int n>
-void cyclic_pentadiagonal(SArray<real,1,n> const &a,
-                          SArray<real,1,n> const &b,
-                          SArray<real,1,n> const &c,
-                          SArray<real,1,n> const &d,
-                          SArray<real,1,n> const &e,
-                          SArray<real,1,n> &f,
-                          real cp1, real cp2, real cp3, real cp4, real cp5, real cp6,
-                          SArray<real,1,n> &x) {
+void pentadiagonal_periodic(SArray<real,1,n> const &a,
+                            SArray<real,1,n> const &b,
+                            SArray<real,1,n> const &c,
+                            SArray<real,1,n> const &d,
+                            SArray<real,1,n> const &e,
+                            SArray<real,1,n> &f,
+                            SArray<real,1,n> &x) {
 
   SArray<real,1,n>   u1, u2, u3, u4, v1, v2, v3, v4, z1, z2, z3, z4, r, s, y;
   SArray<real,2,4,4> h, p;
   real               sum;
+
+  real cp1 = a(0);
+  real cp2 = b(0);
+  real cp3 = a(1);
+  real cp4 = e(n-2);
+  real cp5 = d(n-1);
+  real cp6 = e(n-1);
   
   for (int i=0; i < n; i++) {
     u1(i) = 0;   u2(i) = 0;   u3(i) = 0;   u4(i) = 0;
