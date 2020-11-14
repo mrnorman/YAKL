@@ -18,6 +18,21 @@ void pentadiagonal(SArray<real,1,n> const &a,
                    SArray<real,1,n> &u);
 
 
+template <unsigned int n>
+void cyclic_pentadiagonal(SArray<real,1,n> const &a,
+                          SArray<real,1,n> const &b,
+                          SArray<real,1,n> const &c,
+                          SArray<real,1,n> const &d,
+                          SArray<real,1,n> const &e,
+                          SArray<real,1,n> &f,
+                          real cp1, real cp2, real cp3, real cp4, real cp5, real cp6,
+                          SArray<real,1,n> &x);
+
+
+template <unsigned int n>
+real penta_sum(SArray<real,1,n> const &v, SArray<real,1,n> const &z);
+
+
 int main() {
   unsigned int constexpr n = 7;
   SArray<real,1,n> a;
@@ -48,7 +63,132 @@ int main() {
     std::cout << x(i) << "\n";
   }
 
+  real cp1 = 0.2;
+  real cp2 = 0.5;
+  real cp3 = 0.4;
+  real cp4 = 0.1;
+  real cp5 = 0.9;
+  real cp6 = 1.0;
+
+  y(0) = 11.1;
+  y(1) = 38.2;
+  y(2) = 58.9;
+  y(3) = 96.6;
+  y(4) = 76.5;
+  y(5) = 72.8;
+  y(6) = 23.7;
+
+  cyclic_pentadiagonal(a,b,c,d,e,y,cp1,cp2,cp3,cp4,cp5,cp6,x);
+
+  std::cout << "\n";
+  for (int i=0; i < n; i++) {
+    std::cout << x(i) << "\n";
+  }
+
 }
+
+
+
+
+template <unsigned int n>
+void cyclic_pentadiagonal(SArray<real,1,n> const &a,
+                          SArray<real,1,n> const &b,
+                          SArray<real,1,n> const &c,
+                          SArray<real,1,n> const &d,
+                          SArray<real,1,n> const &e,
+                          SArray<real,1,n> &f,
+                          real cp1, real cp2, real cp3, real cp4, real cp5, real cp6,
+                          SArray<real,1,n> &x) {
+
+  SArray<real,1,n>   u1, u2, u3, u4, v1, v2, v3, v4, z1, z2, z3, z4, r, s, y;
+  SArray<real,2,4,4> h, p;
+  real               sum;
+  
+  for (int i=0; i < n; i++) {
+    u1(i) = 0;   u2(i) = 0;   u3(i) = 0;   u4(i) = 0;
+    v1(i) = 0;   v2(i) = 0;   v3(i) = 0;   v4(i) = 0;
+    z1(i) = 0;   z2(i) = 0;   z3(i) = 0;   z4(i) = 0;
+  }
+
+  u1(0  ) = 1;
+  u2(1  ) = 1;
+  u3(n-2) = 1;
+  u4(n-1) = 1;
+
+  v1(n-2) = cp1;
+  v1(n-1) = cp2;
+  v2(n-1) = cp3;
+  v3(0  ) = cp4;
+  v4(0  ) = cp5;
+  v4(1  ) = cp6;
+
+  pentadiagonal(a,b,c,d,e,u1,z1);
+  pentadiagonal(a,b,c,d,e,u2,z2);
+  pentadiagonal(a,b,c,d,e,u3,z3);
+  pentadiagonal(a,b,c,d,e,u4,z4);
+  pentadiagonal(a,b,c,d,e,f ,y );
+
+  p(0,0) = penta_sum(v1,z1);
+  p(0,1) = penta_sum(v1,z2);
+  p(0,2) = penta_sum(v1,z3);
+  p(0,3) = penta_sum(v1,z4);
+
+  p(1,0) = penta_sum(v2,z1);
+  p(1,1) = penta_sum(v2,z2);
+  p(1,2) = penta_sum(v2,z3);
+  p(1,3) = penta_sum(v2,z4);
+
+  p(2,0) = penta_sum(v3,z1);
+  p(2,1) = penta_sum(v3,z2);
+  p(2,2) = penta_sum(v3,z3);
+  p(2,3) = penta_sum(v3,z4);
+
+  p(3,0) = penta_sum(v4,z1);
+  p(3,1) = penta_sum(v4,z2);
+  p(3,2) = penta_sum(v4,z3);
+  p(3,3) = penta_sum(v4,z4);
+
+  for (int i=0; i < 4; i++) {
+    p(i,i) = p(i,i) + 1;
+  }
+
+  matrix_inverse(p);
+
+  r(0) = 0;
+  r(1) = 0;
+  r(2) = 0;
+  r(3) = 0;
+  for (int k=0; k < n; k++) {
+    r(0) = r(0) + v1(k) * y(k);
+    r(1) = r(1) + v2(k) * y(k);
+    r(2) = r(2) + v3(k) * y(k);
+    r(3) = r(3) + v4(k) * y(k);
+  }
+
+  for (int j=0; j < 4; j++) {
+    s(j) = 0;
+    for (int k=0; k < 4; k++) {
+      s(j) = s(j) + p(j,k) * r(k);
+    }
+  }
+
+  for (int j=0; j < n; j++) {
+    real sum = z1(j)*s(0) + z2(j)*s(1) + z3(j)*s(2) + z4(j)*s(3);
+    x(j) = y(j) - sum;
+  }
+}
+
+
+template <unsigned int n>
+real penta_sum(SArray<real,1,n> const &v, SArray<real,1,n> const &z) {
+  real sum = 0;
+  for (int k=0; k < n; k++) {
+    sum += v(k)*z(k);
+  }
+  return sum;
+}
+
+
 
 
 template <unsigned int n>
