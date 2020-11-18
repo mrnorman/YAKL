@@ -38,7 +38,7 @@ int main() {
   yakl::pentadiagonal(a,b,c,d,e,y,x);
 
   for (int i=0; i < n; i++) {
-    if (x(i) - (i+1) > 1.e-13) {
+    if (abs(x(i) - (i+1)) > 1.e-13) {
       die("pentadiagonal: wrong answer");
     }
   }
@@ -63,8 +63,8 @@ int main() {
   yakl::pentadiagonal_periodic(a,b,c,d,e,y,x);
 
   for (int i=0; i < n; i++) {
-    if (x(i) - (i+1) > 1.e-13) {
-      die("pentadiagonal: wrong answer");
+    if (abs(x(i) - (i+1)) > 1.e-13) {
+      die("pentadiagonal_periodic: wrong answer");
     }
   }
 }
