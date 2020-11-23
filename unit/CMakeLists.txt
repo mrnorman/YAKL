@@ -22,4 +22,5 @@ add_subdirectory(Reductions)
 add_subdirectory(Atomics)
 add_subdirectory(Pentadiagonal)
 add_subdirectory(Tridiagonal)
+add_subdirectory(Lambda)
 
