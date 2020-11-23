@@ -321,7 +321,7 @@ public:
     #endif
     myData   = rhs.myData;
     refCount = rhs.refCount;
-    if (owned) { (*refCount)++; }
+    if (owned && refCount != nullptr) { (*refCount)++; }
   }
 
 
@@ -340,7 +340,7 @@ public:
     #endif
     myData   = rhs.myData;
     refCount = rhs.refCount;
-    if (owned) { (*refCount)++; }
+    if (owned && refCount != nullptr) { (*refCount)++; }
 
     return *this;
   }

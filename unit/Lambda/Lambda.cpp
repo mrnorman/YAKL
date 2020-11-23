@@ -15,7 +15,9 @@ typedef float real;
 
 typedef Array<real,1,memDevice,styleC> real1d;
 
-real1d a, b, c;
+namespace blah {
+  real1d a, b, c;
+}
 
 
 void die(std::string msg) {
@@ -28,9 +30,9 @@ int main() {
   yakl::init();
   {
     int constexpr n = 100;
-    auto &a = ::a;
-    auto &b = ::b;
-    auto &c = ::c;
+    auto a = blah::a;
+    auto b = blah::b;
+    auto c = blah::c;
 
     a = real1d("a",n);
     b = real1d("b",n);
@@ -44,9 +46,17 @@ int main() {
       a(i) = b(i) + c(i);
     });
 
-    if (abs(yakl::intrinsics::sum(a)/n - 5) < 1.e-6) {
+    blah::a = a;
+    blah::b = b;
+    blah::c = c;
+
+    if (abs(yakl::intrinsics::sum(blah::a)/n - 5) > 1.e-6) {
       die("ERROR: sum is incorrect");
     }
+
+    blah::a = real1d();
+    blah::b = real1d();
+    blah::c = real1d();
   }
   yakl::finalize();
   
