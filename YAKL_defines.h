@@ -13,7 +13,7 @@
   #include "hip/hip_runtime.h"
   #include <hipcub/hipcub.hpp>
 #else
-  #define YAKL_LAMBDA [&]
+  #define YAKL_LAMBDA [=]
   #define YAKL_INLINE inline
   #define YAKL_DEVICE inline
 #endif

@@ -2,6 +2,8 @@
 #include <iostream>
 #include "YAKL.h"
 
+// #define HIP_WORKAROUND
+
 using yakl::Array;
 using yakl::styleC;
 using yakl::memHost;
@@ -30,9 +32,15 @@ int main() {
   yakl::init();
   {
     int constexpr n = 100;
-    auto a = blah::a;
-    auto b = blah::b;
-    auto c = blah::c;
+    #ifdef HIP_WORKAROUND
+      auto a = blah::a;
+      auto b = blah::b;
+      auto c = blah::c;
+    #else
+      auto &a = blah::a;
+      auto &b = blah::b;
+      auto &c = blah::c;
+    #endif
 
     a = real1d("a",n);
     b = real1d("b",n);
@@ -46,9 +54,11 @@ int main() {
       a(i) = b(i) + c(i);
     });
 
-    blah::a = a;
-    blah::b = b;
-    blah::c = c;
+    #ifdef HIP_WORKAROUND
+      blah::a = a;
+      blah::b = b;
+      blah::c = c;
+    #endif
 
     if (abs(yakl::intrinsics::sum(blah::a)/n - 5) > 1.e-6) {
       die("ERROR: sum is incorrect");
