@@ -33,7 +33,9 @@ protected:
 
 public:
 
-  Gator() {}
+  Gator() {
+    enabled = false;
+  }
 
 
   Gator( std::function<void *( size_t )>       mymalloc ,
@@ -67,6 +69,7 @@ public:
     this->growSize     = initialSize;
     this->blockSize    = sizeof(size_t)*128;
 
+    enabled = true;
     char * env = std::getenv("GATOR_DISABLE");
     if ( env != nullptr ) {
       std::string resp(env);
