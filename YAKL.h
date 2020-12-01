@@ -15,7 +15,7 @@ namespace yakl {
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
   int constexpr memStack  = 3;
-  #if defined(__USE_CUDA__) || defined(__USE_HIP__)
+  #if defined(__USE_CUDA__) || defined(__USE_HIP__) || defined(__USE_SYCL__)
     int constexpr memDefault = memDevice;
   #else
     int constexpr memDefault = memHost;
@@ -76,6 +76,10 @@ namespace yakl {
     #endif
     #ifdef __USE_HIP__
       hipDeviceSynchronize();
+      check_last_error();
+    #endif
+    #ifdef __USE_SYCL__
+      sycl_default_stream.wait();
       check_last_error();
     #endif
   }
