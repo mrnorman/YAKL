@@ -2,7 +2,6 @@
 #include <iostream>
 #include "YAKL.h"
 
-// #define HIP_WORKAROUND
 
 using yakl::Array;
 using yakl::styleC;
@@ -32,15 +31,9 @@ int main() {
   yakl::init();
   {
     int constexpr n = 100;
-    #ifdef HIP_WORKAROUND
-      auto a = blah::a;
-      auto b = blah::b;
-      auto c = blah::c;
-    #else
-      auto &a = blah::a;
-      auto &b = blah::b;
-      auto &c = blah::c;
-    #endif
+    YAKL_SCOPE(a,blah::a);
+    YAKL_SCOPE(b,blah::b);
+    YAKL_SCOPE(c,blah::c);
 
     a = real1d("a",n);
     b = real1d("b",n);
@@ -53,12 +46,6 @@ int main() {
     parallel_for( Bounds<1>(n) , YAKL_LAMBDA (int i) {
       a(i) = b(i) + c(i);
     });
-
-    #ifdef HIP_WORKAROUND
-      blah::a = a;
-      blah::b = b;
-      blah::c = c;
-    #endif
 
     if (abs(yakl::intrinsics::sum(blah::a)/n - 5) > 1.e-6) {
       die("ERROR: sum is incorrect");
