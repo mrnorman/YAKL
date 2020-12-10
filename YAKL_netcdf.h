@@ -47,7 +47,11 @@ namespace yakl {
     }
 
 
-    template <class T, int rank, int myMem, int myStyle> void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
+    /***************************************************************************************************
+    Write an entire Array at once
+    ***************************************************************************************************/
+    template <class T, int rank, int myMem, int myStyle>
+    void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
       if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
       std::vector<NcDim> dims(rank); // List of dimensions for this variable
       // Make sure the dimensions are in there and are the right sizes
@@ -98,7 +102,11 @@ namespace yakl {
     }
 
 
-    template <class T, typename std::enable_if<std::is_arithmetic<T>::value,int>::type = 0 > void write1(T val , std::string varName , int ind , std::string ulDimName="unlim" ) {
+    /***************************************************************************************************
+    Write one entry of a scalar into the unlimited index
+    ***************************************************************************************************/
+    template <class T, typename std::enable_if<std::is_arithmetic<T>::value,int>::type = 0 >
+    void write1(T val , std::string varName , int ind , std::string ulDimName="unlim" ) {
       // Get the unlimited dimension or create it if it doesn't exist
       auto ulDim = file.getDim( ulDimName );
       if ( ulDim.isNull() ) {
@@ -119,7 +127,12 @@ namespace yakl {
     }
 
 
-    template <class T, int rank, int myMem, int myStyle> void write1(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames , int ind , std::string ulDimName="unlim" ) {
+    /***************************************************************************************************
+    Write one entry of an Array into the unlimited index
+    ***************************************************************************************************/
+    template <class T, int rank, int myMem, int myStyle>
+    void write1(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames ,
+                int ind , std::string ulDimName="unlim" ) {
       if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
       std::vector<NcDim> dims(rank+1); // List of dimensions for this variable
       // Get the unlimited dimension or create it if it doesn't exist
@@ -183,7 +196,11 @@ namespace yakl {
     }
 
 
-    template <class T, int rank, int myMem, int myStyle> void read(Array<T,rank,myMem,myStyle> &arr , std::string varName) {
+    /***************************************************************************************************
+    Read an entire Array
+    ***************************************************************************************************/
+    template <class T, int rank, int myMem, int myStyle>
+    void read(Array<T,rank,myMem,myStyle> &arr , std::string varName) {
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
       std::vector<int> dimSizes(rank);
@@ -231,14 +248,22 @@ namespace yakl {
     }
 
 
-    template <class T> void read(T &arr , std::string varName) {
+    /***************************************************************************************************
+    Read a single scalar value
+    ***************************************************************************************************/
+    template <class T>
+    void read(T &arr , std::string varName) {
       auto var = file.getVar(varName);
       if ( var.isNull() ) { yakl_throw("Variable does not exist"); }
       var.getVar(&arr);
     }
 
 
-    template <class T> void write(T arr , std::string varName) {
+    /***************************************************************************************************
+    Write a single scalar value
+    ***************************************************************************************************/
+    template <class T>
+    void write(T arr , std::string varName) {
       auto var = file.getVar(varName);
       if ( var.isNull() ) {
         var = file.addVar( varName , getType<T>() );
@@ -247,6 +272,9 @@ namespace yakl {
     }
 
 
+    /***************************************************************************************************
+    Determine the type of a template T
+    ***************************************************************************************************/
     template <class T> NcType getType() const {
            if ( std::is_same<T,          char>::value ) { return ncChar;   }
       else if ( std::is_same<T,unsigned  char>::value ) { return ncUbyte;  }
