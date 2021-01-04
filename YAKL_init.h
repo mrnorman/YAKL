@@ -29,6 +29,11 @@
 
     if (use_pool) {
 
+      std::function<void *( size_t )> alloc;
+      std::function<void ( void * )>  dealloc;
+      yakl::set_alloc_free(alloc , dealloc);
+      pool.init(alloc,dealloc);
+
       yaklAllocDeviceFunc = [] (size_t bytes , char const *label) -> void * {
         return pool.allocate( bytes , label );
       };
