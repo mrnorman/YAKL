@@ -571,11 +571,13 @@ namespace c {
   template <class F, int N, bool simple>
   inline void parallel_for( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
     #ifdef __USE_CUDA__
-      parallel_for_cuda( bounds , f , vectorSize );
+      parallel_for_cuda        ( bounds , f , vectorSize );
     #elif defined(__USE_HIP__)
-      parallel_for_hip ( bounds , f , vectorSize );
+      parallel_for_hip         ( bounds , f , vectorSize );
+    #elif defined(__USE_OPENMP_45__)
+      parallel_for_openmp45    ( bounds , f              );
     #else
-      parallel_for_cpu_serial( bounds , f );
+      parallel_for_cpu_serial  ( bounds , f );
     #endif
 
     #if defined(__AUTO_FENCE__)
@@ -583,6 +585,171 @@ namespace c {
     #endif
   }
 
+  template <class F> inline void parallel_for_openmp45( int ubnd , F const &f , int vectorSize = 128 ) {
+    #pragma omp target teams distribute parallel for collapse(1)
+    for (int i0 = 0; i0 < ubnd; i0++) {
+      f( i0 );
+    }
+  }
+  template <class F> inline void parallel_for_openmp45( LBnd &bnd , F const &f , int vectorSize = 128 ) {
+    #pragma omp target teams distribute parallel for collapse(1)
+    for (int i0 = bnd.l; i0 < bnd.l+(bnd.u-bnd.l+1); i0+=bnd.s) {
+      f( i0 );
+    }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<1,false> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(1)
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+      f( i0 );
+    }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<2,false> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(2)
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+      f( i0 , i1 );
+    } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<3,false> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(3)
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+      f( i0 , i1 , i2 );
+    } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<4,false> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(4)
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+      f( i0 , i1 , i2 , i3 );
+    } } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<5,false> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(5)
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+      f( i0 , i1 , i2 , i3 , i4 );
+    } } } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<6,false> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(6)
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
+      f( i0 , i1 , i2 , i3 , i4 , i5 );
+    } } } } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<7,false> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(7)
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
+    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6+=bounds.strides[6]) {
+      f( i0 , i1 , i2 , i3 , i4 , i5 , i6 );
+    } } } } } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<8,false> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(8)
+    for (int i0 = bounds.lbounds[0]; i0 < bounds.lbounds[0]+bounds.dims[0]; i0+=bounds.strides[0]) {
+    for (int i1 = bounds.lbounds[1]; i1 < bounds.lbounds[1]+bounds.dims[1]; i1+=bounds.strides[1]) {
+    for (int i2 = bounds.lbounds[2]; i2 < bounds.lbounds[2]+bounds.dims[2]; i2+=bounds.strides[2]) {
+    for (int i3 = bounds.lbounds[3]; i3 < bounds.lbounds[3]+bounds.dims[3]; i3+=bounds.strides[3]) {
+    for (int i4 = bounds.lbounds[4]; i4 < bounds.lbounds[4]+bounds.dims[4]; i4+=bounds.strides[4]) {
+    for (int i5 = bounds.lbounds[5]; i5 < bounds.lbounds[5]+bounds.dims[5]; i5+=bounds.strides[5]) {
+    for (int i6 = bounds.lbounds[6]; i6 < bounds.lbounds[6]+bounds.dims[6]; i6+=bounds.strides[6]) {
+    for (int i7 = bounds.lbounds[7]; i7 < bounds.lbounds[7]+bounds.dims[7]; i7+=bounds.strides[7]) {
+      f( i0 , i1 , i2 , i3 , i4 , i5 , i6 , i7 );
+    } } } } } } } }
+  }
+
+  template <class F> inline void parallel_for_openmp45( Bounds<1,true> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(1)
+    for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
+      f( i0 );
+    }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<2,true> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(2)
+    for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
+    for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
+      f( i0 , i1 );
+    } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<3,true> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(3)
+    for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
+    for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
+    for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
+      f( i0 , i1 , i2 );
+    } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<4,true> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(4)
+    for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
+    for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
+    for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
+    for (int i3 = 0; i3 < bounds.dims[3]; i3++) {
+      f( i0 , i1 , i2 , i3 );
+    } } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<5,true> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(5)
+    for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
+    for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
+    for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
+    for (int i3 = 0; i3 < bounds.dims[3]; i3++) {
+    for (int i4 = 0; i4 < bounds.dims[4]; i4++) {
+      f( i0 , i1 , i2 , i3 , i4 );
+    } } } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<6,true> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(6)
+    for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
+    for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
+    for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
+    for (int i3 = 0; i3 < bounds.dims[3]; i3++) {
+    for (int i4 = 0; i4 < bounds.dims[4]; i4++) {
+    for (int i5 = 0; i5 < bounds.dims[5]; i5++) {
+      f( i0 , i1 , i2 , i3 , i4 , i5 );
+    } } } } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<7,true> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(7)
+    for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
+    for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
+    for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
+    for (int i3 = 0; i3 < bounds.dims[3]; i3++) {
+    for (int i4 = 0; i4 < bounds.dims[4]; i4++) {
+    for (int i5 = 0; i5 < bounds.dims[5]; i5++) {
+    for (int i6 = 0; i6 < bounds.dims[6]; i6++) {
+      f( i0 , i1 , i2 , i3 , i4 , i5 , i6 );
+    } } } } } } }
+  }
+  template <class F> inline void parallel_for_openmp45( Bounds<8,true> const &bounds , F const &f ) {
+    #pragma omp target teams distribute parallel for collapse(8)
+    for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
+    for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
+    for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
+    for (int i3 = 0; i3 < bounds.dims[3]; i3++) {
+    for (int i4 = 0; i4 < bounds.dims[4]; i4++) {
+    for (int i5 = 0; i5 < bounds.dims[5]; i5++) {
+    for (int i6 = 0; i6 < bounds.dims[6]; i6++) {
+    for (int i7 = 0; i7 < bounds.dims[7]; i7++) {
+      f( i0 , i1 , i2 , i3 , i4 , i5 , i6 , i7 );
+    } } } } } } } }
+  }
 
   template <class F> inline void parallel_for_cpu_serial( int ubnd , F const &f , int vectorSize = 128 ) {
     for (int i0 = 0; i0 < ubnd; i0++) {
