@@ -7,6 +7,9 @@
 #if defined(__USE_HIP__)
   #include "hip/hip_runtime.h"
 #endif
+#if defined( __USE_OPENMP45__)
+#include <omp.h>
+#endif
 
 #include "YAKL_alloc_free.h"
 

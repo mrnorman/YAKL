@@ -72,6 +72,7 @@ int main() {
     yakl::memset(test7d,0.f);
     yakl::memset(test8d,0.f);
 
+
     parallel_for( Bounds<1>(d1) , YAKL_LAMBDA (int i1) {
       test1d(i1) = 1;
     });
