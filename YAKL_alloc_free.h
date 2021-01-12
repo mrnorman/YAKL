@@ -74,15 +74,17 @@ namespace yakl {
         };
     #elif defined(__USE_OPENMP45__)
       alloc = [] ( size_t bytes ) -> void* {
-        int device = omp_get_default_device();
-        std::cout << device << "\n";
-        void *ptr = omp_target_alloc(bytes,device);
+        void *ptr;
+        int device;
+        device = omp_get_default_device();
+        ptr = omp_target_alloc(bytes,device);
         //check does nothing
         check_last_error();
         return ptr;
       };
       dealloc = [] (void *ptr) {
-        int device = omp_get_default_device();
+        int device;
+        device = omp_get_default_device();
         omp_target_free(ptr,device);
         //check does nothing
         check_last_error();

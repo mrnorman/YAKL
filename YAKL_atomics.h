@@ -203,22 +203,31 @@
         update += value;
     }
     template <class T> inline void atomicMin(T&update, T value) {
-      T tmp;
-      #pragma omp atomic read
-        tmp = update;
-      if (tmp > value) {
-        #pragma omp atomic write
-          update = value;
+      #pragma omp critical
+      {
+        if (value < update){update = value;}
+
       }
+      //T tmp;
+      //#pragma omp atomic read
+      //  tmp = update;
+      //if (tmp > value) {
+      //  #pragma omp atomic write
+      //    update = value;
+      //}
     }
     template <class T> inline void atomicMax(T &update, T value) {
-      T tmp;
-      #pragma omp atomic read
-        tmp = update;
-      if (tmp < value) {
-        #pragma omp atomic write
-          update = value;
+      #pragma omp critical
+      {
+        if(value > update){update = value;}
       }
+      //T tmp;
+      //#pragma omp atomic read
+      //  tmp = update;
+      //if (tmp < value) {
+      //  #pragma omp atomic write
+      //    update = value;
+      //}
     }
   #else
     template <class T> inline void atomicAdd(T &update, T value) {
