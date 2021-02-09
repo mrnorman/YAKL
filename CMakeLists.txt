@@ -28,6 +28,8 @@ elseif ("${ARCH}" STREQUAL "HIP")
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
   include_directories(hipCUB/hipcub/include)
   include_directories(rocPRIM/rocprim/include)
+  target_include_directories(yakl PUBLIC hipCUB/hipcub/include)
+  target_include_directories(yakl PUBLIC rocPRIM/rocprim/include)
 else()
   set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
 endif()
@@ -39,6 +41,7 @@ target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if ("${ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+  target_include_directories(yakl PUBLIC cub)
 endif()
 
 
