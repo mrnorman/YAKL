@@ -50,7 +50,8 @@ int main() {
     memset(blah::b,2.f);
     memset(blah::c,3.f);
 
-    parallel_for( Bounds<1>(n) , [=,a=blah::a,b=blah::b,c=blah::c] (int i) {
+    //parallel_for( Bounds<1>(n) , [=,a=blah::a,b=blah::b,c=blah::c] (int i) {
+    parallel_for( Bounds<1>(n) , (int i) {
       a(i) = b(i) + c(i);
     });
 
