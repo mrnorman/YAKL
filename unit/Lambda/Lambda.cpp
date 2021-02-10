@@ -42,16 +42,26 @@ int main() {
     //   auto &c = blah::c;
     // #endif
 
-    blah::a = real1d("a",n);
-    blah::b = real1d("b",n);
-    blah::c = real1d("c",n);
+    YAKL_SCOPE(b,blah::a);
+    YAKL_SCOPE(b,blah::b);
+    YAKL_SCOPE(b,blah::b);
 
-    memset(blah::a,0.f);
-    memset(blah::b,2.f);
-    memset(blah::c,3.f);
+    //blah::a = real1d("a",n);
+    //blah::b = real1d("b",n);
+    //blah::c = real1d("c",n);
+    a = real1d("a",n);
+    b = real1d("b",n);
+    c = real1d("c",n);
+
+    //memset(blah::a,0.f);
+    //memset(blah::b,2.f);
+    //memset(blah::c,3.f);
+    memset(a,0.f);
+    memset(b,2.f);
+    memset(c,3.f);
 
     //parallel_for( Bounds<1>(n) , [=,a=blah::a,b=blah::b,c=blah::c] (int i) {
-    parallel_for( Bounds<1>(n) , (int i) {
+    parallel_for( Bounds<1>(n) , YAKL_LAMBDA(int i) {
       a(i) = b(i) + c(i);
     });
 
