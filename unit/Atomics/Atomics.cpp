@@ -49,8 +49,8 @@ int main() {
     });
     
     if ( abs(sum.hostRead()) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
-    //if ( abs(min.hostRead() + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
-    //if ( abs(max.hostRead() - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
+    if ( abs(min.hostRead() + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
+    if ( abs(max.hostRead() - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
 
   }
   yakl::finalize();
