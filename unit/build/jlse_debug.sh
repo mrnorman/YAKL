@@ -8,8 +8,9 @@ module load oneapi cmake
 
 unset GATOR_DISABLE
 
-export CC=icc
+export CC=icx
 export CXX=icpx
+export FC=ifx
 export CXXFLAGS="-O0 -g -DYAKL_DEBUG"
 export FFLAGS="-O0 -g"
 
