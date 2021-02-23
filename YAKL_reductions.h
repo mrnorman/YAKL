@@ -261,7 +261,7 @@
             cgh.parallel_for(cl::sycl::nd_range<1>{nItems, 32},
                              minReduction,
                              [=](cl::sycl::nd_item<1> idx, auto& min) {
-                                 min.combine(data[idx.get_global_id()]);
+			       min.combine(data[idx.get_global_id()]);
                              });
         }).wait();
       }
@@ -293,7 +293,7 @@
             cgh.parallel_for(cl::sycl::nd_range<1>{nItems, 32},
                              maxReduction,
                              [=](cl::sycl::nd_item<1> idx, auto& max) {
-                                 max.combine(data[idx.get_global_id()]);
+			       max.combine(data[idx.get_global_id()]);
                              });
         }).wait();
       }
@@ -325,7 +325,7 @@
           cgh.parallel_for(cl::sycl::nd_range<1>{nItems, 32},
                            sumReduction,
                            [=](cl::sycl::nd_item<1> idx, auto& sum) {
-                               sum += data[idx.get_global_id()];
+			     sum.combine(idx.get_global_id());
                            });
         }).wait();
       }
