@@ -570,6 +570,8 @@ namespace fortran {
   #ifdef __USE_SYCL__
     template<class F, int N, bool simple>
     void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+      isTriviallyCopyable<F>();
+
       sycl_default_stream.parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
         callFunctor( f , bounds , i );
       });
