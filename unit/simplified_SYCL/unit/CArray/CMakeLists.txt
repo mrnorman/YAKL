@@ -1,13 +1,13 @@
-cmake_minimum_required(VERSION 3.0)
-project(yakl_unit)
-enable_testing()
 
-enable_language(Fortran)
-enable_language(CXX)
-enable_language(C)
 
-# YAKL library
-add_subdirectory(.. ./yakl)
+set(MYSRC CArray.cpp)
 
-# Unit test directories
-add_subdirectory(CArray)
+add_executable(CArray ${MYSRC})
+target_compile_features(CArray PUBLIC cxx_std_14)
+include_directories(../..)
+target_link_libraries(CArray yakl)
+
+set_source_files_properties(${MYSRC} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
+
+add_test(NAME CArray_test COMMAND ./CArray)
+
