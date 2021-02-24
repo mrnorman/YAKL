@@ -4,7 +4,6 @@
 
 using yakl::Array;
 using yakl::styleC;
-using yakl::memHost;
 using yakl::memDevice;
 using yakl::c::parallel_for;
 using yakl::c::SimpleBounds;

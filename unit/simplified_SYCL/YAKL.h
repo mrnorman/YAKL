@@ -18,9 +18,6 @@
 #include <CL/sycl.hpp>
 namespace sycl = cl::sycl;
 
-//Contents added to namespace below
-//#include "YAKL_alloc_free"
-
 namespace yakl {
 
   typedef unsigned int index_t;
@@ -31,11 +28,7 @@ namespace yakl {
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
   int constexpr memStack  = 3;
-  #if defined(__USE_CUDA__) || defined(__USE_HIP__) || defined(__USE_SYCL__)
-    int constexpr memDefault = memDevice;
-  #else
-    int constexpr memDefault = memHost;
-  #endif
+  int constexpr memDefault = memDevice;
 
 
   int constexpr styleC       = 1;
@@ -45,9 +38,9 @@ namespace yakl {
 
   extern bool yakl_is_initialized;
 
-
-#include "YAKL_init.h"
-
+  inline void init() {
+    yakl_is_initialized = true;
+  }
 
   inline void finalize() {
     yakl_is_initialized = false;
@@ -55,7 +48,7 @@ namespace yakl {
   }
 
 
-#include "YAKL_parallel_for.h"
+#include "YAKL_parallel_for_c.h"
 
 #include "Array.h"
 
