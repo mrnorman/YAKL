@@ -205,7 +205,8 @@
     template <class T> inline void atomicMin(T&update, T value) {
       #pragma omp critical
       {
-        if (value < update){update = value;}
+        update = value < update ? value : update;
+        //if (value < update){update = value;}
 
       }
       //T tmp;
@@ -219,7 +220,8 @@
     template <class T> inline void atomicMax(T &update, T value) {
       #pragma omp critical
       {
-        if(value > update){update = value;}
+        update = value > update ? value : update;
+        //if(value > update){update = value;}
       }
       //T tmp;
       //#pragma omp atomic read

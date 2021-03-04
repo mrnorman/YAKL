@@ -624,7 +624,7 @@ public:
         hipDeviceSynchronize();
         check_last_error();
       #elif defined(__USE_OPENMP45__)
-        omp_target_memcpy(ret.myData,myData,totElems()*sizeof(T),0,0,omp_get_default_device(),omp_get_default_device());
+        omp_target_memcpy(ret.myData,myData,totElems()*sizeof(T),0,0,omp_get_default_device(),omp_get_initial_device());
         check_last_error();
         #pragma omp taskwait
         check_last_error();

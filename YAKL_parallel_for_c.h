@@ -585,32 +585,42 @@ namespace c {
 
 
   template <class F> inline void parallel_for_cpu_serial( int ubnd , F const &f ) {
-    #pragma omp target teams distribute parallel for simd
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for simd
+    #endif
     for (int i0 = 0; i0 < ubnd; i0++) {
       f( i0 );
     }
   }
   template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f ) {
-    #pragma omp target teams distribute parallel for simd
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for simd
+    #endif
     for (int i0 = bnd.l; i0 < (int) (bnd.l+(bnd.u-bnd.l+1)); i0+=bnd.s) {
       f( i0 );
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<1,false> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for simd
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for simd
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
       f( i0 );
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<2,false> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(2) 
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(2) 
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
       f( i0 , i1 );
     } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<3,false> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(3)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(3)
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
     for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
@@ -618,7 +628,9 @@ namespace c {
     } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<4,false> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(4)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(4)
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
     for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
@@ -627,7 +639,9 @@ namespace c {
     } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<5,false> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(5)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(5)
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
     for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
@@ -637,7 +651,9 @@ namespace c {
     } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<6,false> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(6)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(6)
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
     for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
@@ -648,7 +664,9 @@ namespace c {
     } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<7,false> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(7)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(7)
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
     for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
@@ -660,7 +678,9 @@ namespace c {
     } } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<8,false> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(8)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(8)
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
     for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
@@ -674,20 +694,26 @@ namespace c {
   }
 
   template <class F> inline void parallel_for_cpu_serial( Bounds<1,true> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for simd
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for simd
+    #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
       f( i0 );
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<2,true> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(2)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(2)
+    #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
     for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
       f( i0 , i1 );
     } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<3,true> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(3)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(3)
+    #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
     for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
     for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
@@ -695,7 +721,9 @@ namespace c {
     } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<4,true> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(4)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(4)
+    #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
     for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
     for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
@@ -704,7 +732,9 @@ namespace c {
     } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<5,true> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(5)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(5)
+    #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
     for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
     for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
@@ -714,7 +744,9 @@ namespace c {
     } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<6,true> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(6)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(6)
+    #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
     for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
     for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
@@ -725,7 +757,9 @@ namespace c {
     } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<7,true> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(7)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(7)
+    #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
     for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
     for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
@@ -737,7 +771,9 @@ namespace c {
     } } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<8,true> const &bounds , F const &f ) {
-    #pragma omp target teams distribute parallel for collapse(8)
+    #ifdef __USE_OPENMP45__
+      #pragma omp target teams distribute parallel for collapse(8)
+    #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
     for (int i1 = 0; i1 < bounds.dims[1]; i1++) {
     for (int i2 = 0; i2 < bounds.dims[2]; i2++) {
