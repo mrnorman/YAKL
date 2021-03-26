@@ -256,11 +256,11 @@
         return rslt;
       }
       void deviceReduce(T *data, T *devP) {
-        sycl_default_stream.submit([&](cl::sycl::handler& cgh) {
-          auto minReduction = cl::sycl::ONEAPI::reduction(devP, cl::sycl::ONEAPI::minimum<>());
-            cgh.parallel_for(cl::sycl::nd_range<1>{nItems, 32},
+        sycl_default_stream.submit([&](sycl::handler& cgh) {
+          auto minReduction = sycl::ONEAPI::reduction(devP, sycl::ONEAPI::minimum<>());
+            cgh.parallel_for(sycl::nd_range<1>{nItems, 32},
                              minReduction,
-                             [=](cl::sycl::nd_item<1> idx, auto& min) {
+                             [=](sycl::nd_item<1> idx, auto& min) {
 			       min.combine(data[idx.get_global_id()]);
                              });
         }).wait();
@@ -288,11 +288,11 @@
         return rslt;
       }
       void deviceReduce(T *data, T *devP) {
-        sycl_default_stream.submit([&](cl::sycl::handler& cgh) {
-          auto maxReduction = cl::sycl::ONEAPI::reduction(devP, cl::sycl::ONEAPI::maximum<>());
-            cgh.parallel_for(cl::sycl::nd_range<1>{nItems, 32},
+        sycl_default_stream.submit([&](sycl::handler& cgh) {
+          auto maxReduction = sycl::ONEAPI::reduction(devP, sycl::ONEAPI::maximum<>());
+            cgh.parallel_for(sycl::nd_range<1>{nItems, 32},
                              maxReduction,
-                             [=](cl::sycl::nd_item<1> idx, auto& max) {
+                             [=](sycl::nd_item<1> idx, auto& max) {
 			       max.combine(data[idx.get_global_id()]);
                              });
         }).wait();
@@ -320,11 +320,11 @@
         return rslt;
       }
       void deviceReduce(T *data, T *devP) {
-        sycl_default_stream.submit([&](cl::sycl::handler& cgh) {
-          auto sumReduction = cl::sycl::ONEAPI::reduction(devP, cl::sycl::ONEAPI::plus<>());
-          cgh.parallel_for(cl::sycl::nd_range<1>{nItems, 32},
+        sycl_default_stream.submit([&](sycl::handler& cgh) {
+          auto sumReduction = sycl::ONEAPI::reduction(devP, sycl::ONEAPI::plus<>());
+          cgh.parallel_for(sycl::nd_range<1>{nItems, 32},
                            sumReduction,
-                           [=](cl::sycl::nd_item<1> idx, auto& sum) {
+                           [=](sycl::nd_item<1> idx, auto& sum) {
 			     sum.combine(idx.get_global_id());
                            });
         }).wait();
