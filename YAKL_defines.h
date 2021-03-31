@@ -21,6 +21,12 @@
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
   #include <CL/sycl.hpp>
   namespace sycl = cl::sycl;
+#elif defined(__USE_OPENMP45__)
+  #define YAKL_LAMBDA [=] 
+  #define YAKL_INLINE inline 
+  #define YAKL_DEVICE inline 
+  #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
+  #include <omp.h>
 #else
   #define YAKL_LAMBDA [=]
   #define YAKL_INLINE inline

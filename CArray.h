@@ -611,6 +611,10 @@ public:
         sycl_default_stream.memcpy(ret.myData, myData, totElems()*sizeof(T));
         check_last_error();
         sycl_default_stream.wait();
+      #elif defined(__USE_OPENMP45__)
+        omp_target_memcpy(ret.myData,myData,totElems()*sizeof(T),0,0,omp_get_initial_device(),omp_get_default_device());
+        check_last_error();
+        #pragma omp taskwait
         check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
@@ -645,6 +649,10 @@ public:
         sycl_default_stream.memcpy(ret.myData, myData, totElems()*sizeof(T));
         check_last_error();
         sycl_default_stream.wait();
+      #elif defined(__USE_OPENMP45__)
+        omp_target_memcpy(ret.myData,myData,totElems()*sizeof(T),0,0,omp_get_default_device(),omp_get_initial_device());
+        check_last_error();
+        #pragma omp taskwait
         check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
@@ -664,6 +672,10 @@ public:
         sycl_default_stream.memcpy(ret.myData, myData, totElems()*sizeof(T));
         check_last_error();
         sycl_default_stream.wait();
+      #elif defined(__USE_OPENMP45__)
+        omp_target_memcpy(ret.myData,myData,totElems()*sizeof(T),0,0,omp_get_default_device(),omp_get_default_device());
+        check_last_error();
+        #pragma omp taskwait
         check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
@@ -685,6 +697,9 @@ public:
         check_last_error();
       #elif defined (__USE_SYCL__)
         sycl_default_stream.memcpy(lhs.myData, myData, totElems()*sizeof(T));
+      #elif defined(__USE_OPENMP45__)
+        omp_target_memcpy(lhs.myData,myData,totElems()*sizeof(T),0,0,omp_get_initial_device(),omp_get_default_device());
+        #pragma omp taskwait
         check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
@@ -703,6 +718,9 @@ public:
         check_last_error();
       #elif defined (__USE_SYCL__)
         sycl_default_stream.memcpy(lhs.myData, myData, totElems()*sizeof(T));
+      #elif defined(__USE_OPENMP45__)
+        omp_target_memcpy(lhs.myData,myData,totElems()*sizeof(T),0,0,omp_get_default_device(),omp_get_initial_device());
+        #pragma omp taskwait
         check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
@@ -716,6 +734,9 @@ public:
         check_last_error();
       #elif defined (__USE_SYCL__)
         sycl_default_stream.memcpy(lhs.myData, myData, totElems()*sizeof(T));
+      #elif defined(__USE_OPENMP45__)
+        omp_target_memcpy(lhs.myData,myData,totElems()*sizeof(T),0,0,omp_get_default_device(),omp_get_default_device());
+        #pragma omp taskwait
         check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }

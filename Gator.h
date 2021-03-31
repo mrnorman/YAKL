@@ -11,6 +11,9 @@
   #include <CL/sycl.hpp>
   namespace sycl = cl::sycl;
 #endif
+#if defined( __USE_OPENMP45__)
+  #include <omp.h>
+#endif
 
 #include "YAKL_alloc_free.h"
 

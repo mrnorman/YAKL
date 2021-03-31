@@ -18,6 +18,8 @@ namespace yakl {
       auto ierr = hipGetLastError();
       if (ierr != hipSuccess) { yakl_throw( hipGetErrorString( ierr ) ); }
     #elif defined(__USE_SYCL__)
+    #elif defined(__USE_OPENMP45__)
+      //auto ierr = GetLastError();
     #endif
   }
 
