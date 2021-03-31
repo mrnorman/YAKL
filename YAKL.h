@@ -9,6 +9,20 @@ namespace yakl {
 
   #ifdef __USE_SYCL__
     extern sycl::queue sycl_default_stream;
+
+    template <class Fctor>
+    constexpr void isTriviallyCopyable() {
+      static_assert(std::is_trivially_copyable<Fctor>::value,
+                    "Fctor not copyable");
+
+      static_assert(std::is_trivially_copy_constructible<Fctor>::value ||
+                    !std::is_copy_constructible<Fctor>::value,
+                    "Fctor not trivially copy constructible");
+
+      static_assert(std::is_trivially_copy_assignable<Fctor>::value ||
+                    !std::is_copy_assignable<Fctor>::value,
+                    "Fctor not trivially copy assignable");
+    }
   #endif
 
   // Memory space specifiers for YAKL Arrays
@@ -172,6 +186,3 @@ namespace yakl {
   }
 
 }
-
-
-

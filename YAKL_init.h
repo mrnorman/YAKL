@@ -3,14 +3,26 @@
 
 #include "YAKL_alloc_free.h"
 
-
   // Initialize the YAKL framework
   inline void init() {
     bool use_pool = true;
 
-    #ifdef __USE_SYCL__
+    #ifdef __USE_SYCL_
+      auto asyncHandler = [&](sycl::exception_list eL) {
+        for (auto& e : eL) {
+          try {
+            std::rethrow_exception(e);
+          } catch (sycl::exception& e) {
+            std::cout << e.what() << std::endl;
+            std::cout << "fail" << std::endl;
+            std::terminate();
+          }
+        }
+      };
+
       sycl::default_selector device_selector;
-      sycl_default_stream = sycl::queue(device_selector);
+      sycl_default_stream = sycl::queue(device_selector, asyncHandler,
+                                        sycl::property_list{sycl::property::queue::in_order{}});
       std::cout << "Running on "
                 << sycl_default_stream.get_device().get_info<sycl::info::device::name>()
                 << "\n";
@@ -69,4 +81,4 @@
       std::cout << "WARNING: Automatically inserting fence() after every parallel_for" << std::endl;
     #endif
 
-  } // 
+  } //

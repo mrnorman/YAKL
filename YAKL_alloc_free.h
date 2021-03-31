@@ -67,6 +67,18 @@ namespace yakl {
         };
       #endif
     #elif defined (__USE_SYCL__)
+      #if defined (__MANAGED__)
+        alloc = [] ( size_t bytes ) -> void* {
+          void *ptr = sycl::malloc_shared(bytes,sycl_default_stream);
+          check_last_error();
+          sycl_default_stream.prefetch(ptr,bytes);
+          return ptr;
+        };
+        dealloc = [] ( void *ptr ) {
+          sycl::free(ptr, sycl_default_stream).wait();
+          check_last_error();
+        };
+      #else
         alloc = [] ( size_t bytes ) -> void* {
           void *ptr = sycl::malloc_device(bytes,sycl_default_stream);
           std::cout << "ALLOC: " << ptr << "\n";
@@ -81,10 +93,9 @@ namespace yakl {
           sycl_default_stream.wait();
           sycl::free(ptr, sycl_default_stream);
           sycl_default_stream.wait();
-          std::cout << "got here\n";
-          sycl_default_stream.wait();
           check_last_error();
         };
+      #endif
     #else
       alloc   = [] ( size_t bytes ) -> void* { return ::malloc(bytes); };
       dealloc = [] ( void *ptr ) { ::free(ptr); };
