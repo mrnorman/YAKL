@@ -607,6 +607,11 @@ public:
         check_last_error();
         hipDeviceSynchronize();
         check_last_error();
+      #elif defined (__USE_SYCL__)
+        sycl_default_stream.memcpy(ret.myData, myData, totElems()*sizeof(T));
+        check_last_error();
+        sycl_default_stream.wait();
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
@@ -636,6 +641,11 @@ public:
         check_last_error();
         hipDeviceSynchronize();
         check_last_error();
+      #elif defined (__USE_SYCL__)
+        sycl_default_stream.memcpy(ret.myData, myData, totElems()*sizeof(T));
+        check_last_error();
+        sycl_default_stream.wait();
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
       #endif
@@ -649,6 +659,11 @@ public:
         hipMemcpyAsync(ret.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
         check_last_error();
         hipDeviceSynchronize();
+        check_last_error();
+      #elif defined (__USE_SYCL__)
+        sycl_default_stream.memcpy(ret.myData, myData, totElems()*sizeof(T));
+        check_last_error();
+        sycl_default_stream.wait();
         check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { ret.myData[i] = myData[i]; }
@@ -668,6 +683,9 @@ public:
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToHost,0);
         check_last_error();
+      #elif defined (__USE_SYCL__)
+        sycl_default_stream.memcpy(lhs.myData, myData, totElems()*sizeof(T));
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
@@ -683,6 +701,9 @@ public:
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyHostToDevice,0);
         check_last_error();
+      #elif defined (__USE_SYCL__)
+        sycl_default_stream.memcpy(lhs.myData, myData, totElems()*sizeof(T));
+        check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }
       #endif
@@ -692,6 +713,9 @@ public:
         check_last_error();
       #elif defined(__USE_HIP__)
         hipMemcpyAsync(lhs.myData,myData,totElems()*sizeof(T),hipMemcpyDeviceToDevice,0);
+        check_last_error();
+      #elif defined (__USE_SYCL__)
+        sycl_default_stream.memcpy(lhs.myData, myData, totElems()*sizeof(T));
         check_last_error();
       #else
         for (index_t i=0; i<totElems(); i++) { lhs.myData[i] = myData[i]; }

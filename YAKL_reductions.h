@@ -232,6 +232,105 @@
       }
     };
 
+  #elif defined(__USE_SYCL__)
+
+    template <class T> class ParallelMin<T,memDevice> {
+      int    nItems; // Number of items in the array that will be reduced
+      T      *rsltP; // Device pointer for reduction result
+      public:
+      ParallelMin() { }
+      ParallelMin(int const nItems) { setup(nItems); }
+      ~ParallelMin() { finalize(); }
+      void setup(int const nItems) {
+        finalize();
+        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
+        this->nItems = nItems;
+      }
+
+      void finalize() {
+        yaklFreeDevice(rsltP,"");
+      }
+      T operator() (T *data) {
+        T rslt;
+        sycl_default_stream.memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
+        return rslt;
+      }
+      void deviceReduce(T *data, T *devP) {
+        sycl_default_stream.submit([&](sycl::handler& cgh) {
+          auto minReduction = sycl::ONEAPI::reduction(devP, sycl::ONEAPI::minimum<>());
+            cgh.parallel_for(sycl::nd_range<1>{nItems, 32},
+                             minReduction,
+                             [=](sycl::nd_item<1> idx, auto& min) {
+			       min.combine(data[idx.get_global_id()]);
+                             });
+        }).wait();
+      }
+    };
+
+    template <class T> class ParallelMax<T,memDevice> {
+      int    nItems; // Number of items in the array that will be reduced
+      T      *rsltP; // Device pointer for reduction result
+      public:
+      ParallelMax() { }
+      ParallelMax(int const nItems) { setup(nItems); }
+      ~ParallelMax() { finalize(); }
+      void setup(int const nItems) {
+        finalize();
+        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
+        this->nItems = nItems;
+      }
+      void finalize() {
+        yaklFreeDevice(rsltP,"");
+      }
+      T operator() (T *data) {
+        T rslt;
+        sycl_default_stream.memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
+        return rslt;
+      }
+      void deviceReduce(T *data, T *devP) {
+        sycl_default_stream.submit([&](sycl::handler& cgh) {
+          auto maxReduction = sycl::ONEAPI::reduction(devP, sycl::ONEAPI::maximum<>());
+            cgh.parallel_for(sycl::nd_range<1>{nItems, 32},
+                             maxReduction,
+                             [=](sycl::nd_item<1> idx, auto& max) {
+			       max.combine(data[idx.get_global_id()]);
+                             });
+        }).wait();
+      }
+    };
+
+    template <class T> class ParallelSum<T,memDevice> {
+      int    nItems; // Number of items in the array that will be reduced
+      T      *rsltP; // Device pointer for reduction result
+      public:
+      ParallelSum() { }
+      ParallelSum(int const nItems) { setup(nItems); }
+      ~ParallelSum() { finalize(); }
+      void setup(int const nItems) {
+        finalize();
+        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
+        this->nItems = nItems;
+      }
+      void finalize() {
+        yaklFreeDevice(rsltP,"");
+      }
+      T operator() (T *data) {
+        T rslt;
+        sycl_default_stream.memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
+        return rslt;
+      }
+      void deviceReduce(T *data, T *devP) {
+        sycl_default_stream.submit([&](sycl::handler& cgh) {
+          auto sumReduction = sycl::ONEAPI::reduction(devP, sycl::ONEAPI::plus<>());
+          cgh.parallel_for(sycl::nd_range<1>{nItems, 32},
+                           sumReduction,
+                           [=](sycl::nd_item<1> idx, auto& sum) {
+			     sum.combine(idx.get_global_id());
+                           });
+        }).wait();
+      }
+    };
+
   #else
 
     template <class T> class ParallelMin<T,memDevice> {

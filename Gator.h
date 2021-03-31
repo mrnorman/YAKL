@@ -7,6 +7,10 @@
 #if defined(__USE_HIP__)
   #include "hip/hip_runtime.h"
 #endif
+#if defined(__USE_SYCL__)
+  #include <CL/sycl.hpp>
+  namespace sycl = cl::sycl;
+#endif
 
 #include "YAKL_alloc_free.h"
 

@@ -566,12 +566,28 @@ namespace fortran {
   #endif
 
 
+
+  #ifdef __USE_SYCL__
+    template<class F, int N, bool simple>
+    void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+      isTriviallyCopyable<F>();
+
+      sycl_default_stream.parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
+        callFunctor( f , bounds , i );
+      });
+      check_last_error();
+    }
+  #endif
+
+
   template <class F, int N, bool simple>
   inline void parallel_for( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
     #ifdef __USE_CUDA__
       parallel_for_cuda( bounds , f , vectorSize );
     #elif defined(__USE_HIP__)
       parallel_for_hip ( bounds , f , vectorSize );
+    #elif defined(__USE_SYCL__)
+      parallel_for_sycl( bounds , f , vectorSize );
     #else
       parallel_for_cpu_serial( bounds , f );
     #endif

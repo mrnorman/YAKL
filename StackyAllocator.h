@@ -56,6 +56,7 @@ public:
                    std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); } ,
                    unsigned                              blockSize = 128*sizeof(size_t) ,
                    std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
+    std::cout << "Create Pool\n";
     if (blockSize%sizeof(size_t) != 0) { die("Error: blockSize must be a multiple of sizeof(size_t)"); }
     this->highWater = 0;
     this->blockSize = blockSize;
@@ -151,6 +152,9 @@ public:
 
 
   ~StackyAllocator() {
+    if (pool != nullptr) {
+      std::cout << "Destroy Pool\n";
+    }
     finalize();
   }
 

@@ -2,7 +2,6 @@
 #include <iostream>
 #include "YAKL.h"
 
-
 using yakl::Array;
 using yakl::styleC;
 using yakl::memHost;
@@ -31,23 +30,25 @@ int main() {
   yakl::init();
   {
     int constexpr n = 100;
-    YAKL_SCOPE(a,blah::a);
-    YAKL_SCOPE(b,blah::b);
-    YAKL_SCOPE(c,blah::c);
 
-    a = real1d("a",n);
-    b = real1d("b",n);
-    c = real1d("c",n);
+    blah::a = real1d("a",n);
+    blah::b = real1d("b",n);
+    blah::c = real1d("c",n);
 
-    memset(a,0.f);
-    memset(b,2.f);
-    memset(c,3.f);
+    memset(blah::a,0.f);
+    memset(blah::b,2.f);
+    memset(blah::c,3.f);
+
+    YAKL_SCOPE(a,::blah::a);
+    YAKL_SCOPE(b,::blah::b);
+    YAKL_SCOPE(c,::blah::c);
 
     parallel_for( Bounds<1>(n) , YAKL_LAMBDA (int i) {
       a(i) = b(i) + c(i);
     });
 
     if (abs(yakl::intrinsics::sum(blah::a)/n - 5) > 1.e-6) {
+      std::cout << yakl::intrinsics::sum(blah::a)/n << "\n";
       die("ERROR: sum is incorrect");
     }
 

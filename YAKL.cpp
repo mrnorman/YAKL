@@ -30,7 +30,7 @@ namespace yakl {
   };
 
 
-  #ifdef __USE_HIP__
+  #if defined(__USE_HIP__) || defined(__USE_SYCL__)
   #else
     void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
     void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }

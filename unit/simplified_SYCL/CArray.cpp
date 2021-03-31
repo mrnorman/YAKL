@@ -7,9 +7,7 @@ using yakl::styleC;
 using yakl::memHost;
 using yakl::memDevice;
 using yakl::c::parallel_for;
-using yakl::c::Bounds;
 using yakl::c::SimpleBounds;
-using yakl::COLON;
 
 typedef float real;
 
@@ -25,18 +23,17 @@ void die(std::string msg) {
 int main() {
   yakl::init();
   {
-    ///////////////////////////////////////////////////////////
-    // Test zero size allocation
-    ///////////////////////////////////////////////////////////
-    // real1d zerovar("zerovar",0);
-    // if (zerovar.data() != nullptr) { die("zero-sized allocation did not return nullptr"); }
+    int constexpr d1 = 2;
 
     ///////////////////////////////////////////////////////////
-    // Test pool growth
+    // Test operator()
     ///////////////////////////////////////////////////////////
-    real1d large1("large",1024*1024*1024/4);
-    real1d large2("large",1024*1024*1024/4);
 
+    real1d test1d("test1d",d1);
+
+    parallel_for( SimpleBounds<1>(d1) , YAKL_LAMBDA (int i1) {
+      test1d(i1) = 1;
+    });
 
   }
   yakl::finalize();

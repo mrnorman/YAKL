@@ -9,13 +9,27 @@ namespace yakl {
 
   #ifdef __USE_SYCL__
     extern sycl::queue sycl_default_stream;
+
+    template <class Fctor>
+    constexpr void isTriviallyCopyable() {
+      static_assert(std::is_trivially_copyable<Fctor>::value,
+                    "Fctor not copyable");
+
+      static_assert(std::is_trivially_copy_constructible<Fctor>::value ||
+                    !std::is_copy_constructible<Fctor>::value,
+                    "Fctor not trivially copy constructible");
+
+      static_assert(std::is_trivially_copy_assignable<Fctor>::value ||
+                    !std::is_copy_assignable<Fctor>::value,
+                    "Fctor not trivially copy assignable");
+    }
   #endif
 
   // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
   int constexpr memStack  = 3;
-  #if defined(__USE_CUDA__) || defined(__USE_HIP__)
+  #if defined(__USE_CUDA__) || defined(__USE_HIP__) || defined(__USE_SYCL__)
     int constexpr memDefault = memDevice;
   #else
     int constexpr memDefault = memHost;
@@ -55,7 +69,7 @@ namespace yakl {
   extern bool yakl_is_initialized;
 
 
-  #ifdef __USE_HIP__
+  #if defined(__USE_HIP__) || defined(__USE_SYCL__)
     YAKL_INLINE void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
     YAKL_INLINE void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
     YAKL_INLINE void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
@@ -76,6 +90,10 @@ namespace yakl {
     #endif
     #ifdef __USE_HIP__
       hipDeviceSynchronize();
+      check_last_error();
+    #endif
+    #ifdef __USE_SYCL__
+      sycl_default_stream.wait();
       check_last_error();
     #endif
   }
@@ -103,6 +121,9 @@ namespace yakl {
     #if defined(__USE_CUDA__)
       cudaFree(functorBuffer);
       check_last_error();
+    #endif
+    #if defined(__USE_SYCL__)
+      sycl_default_stream = sycl::queue();
     #endif
   }
 
@@ -165,6 +186,3 @@ namespace yakl {
   }
 
 }
-
-
-
