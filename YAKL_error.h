@@ -3,7 +3,7 @@
 
 namespace yakl {
 
-  template <class T> inline void yakl_throw(T const &exc) {
+  inline void yakl_throw(std::string exc) {
     std::cout << "YAKL FATAL ERROR:\n";
     std::cout << exc << std::endl;
     throw exc;
