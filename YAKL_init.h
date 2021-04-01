@@ -7,7 +7,7 @@
   inline void init() {
     bool use_pool = true;
 
-    #ifdef __USE_SYCL_
+    #ifdef __USE_SYCL__
       auto asyncHandler = [&](sycl::exception_list eL) {
         for (auto& e : eL) {
           try {
