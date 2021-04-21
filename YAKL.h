@@ -148,6 +148,9 @@ namespace yakl {
   template <class T> YAKL_INLINE constexpr T abs(T a) { return a>0? a : -a; }
 
 
+#include "YAKL_mem_transfers.h"
+
+
 #include "Array.h"
 
 
