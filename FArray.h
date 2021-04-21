@@ -577,9 +577,9 @@ public:
     #endif
     ret.allocate();
     if (myMem == memHost) {
-      yakl_deepcopy_host_to_host( ret.myData , myData , totElems() );
+      memcpy_host_to_host( ret.myData , myData , totElems() );
     } else {
-      yakl_deepcopy_device_to_host( ret.myData , myData , totElems() );
+      memcpy_device_to_host( ret.myData , myData , totElems() );
     }
     fence();
     return ret;
@@ -597,9 +597,9 @@ public:
     #endif
     ret.allocate();
     if (myMem == memHost) {
-      yakl_deepcopy_host_to_device( ret.myData , myData , totElems() );
+      memcpy_host_to_device( ret.myData , myData , totElems() );
     } else {
-      yakl_deepcopy_device_to_device( ret.myData , myData , totElems() );
+      memcpy_device_to_device( ret.myData , myData , totElems() );
     }
     fence();
     return ret;
@@ -608,18 +608,18 @@ public:
 
   inline void deep_copy_to(Array<T,rank,memHost,styleFortran> lhs) const {
     if (myMem == memHost) {
-      yakl_deepcopy_host_to_host( lhs.myData , myData , totElems() );
+      memcpy_host_to_host( lhs.myData , myData , totElems() );
     } else {
-      yakl_deepcopy_device_to_host( lhs.myData , myData , totElems() );
+      memcpy_device_to_host( lhs.myData , myData , totElems() );
     }
   }
 
 
   inline void deep_copy_to(Array<T,rank,memDevice,styleFortran> lhs) const {
     if (myMem == memHost) {
-      yakl_deepcopy_host_to_device( lhs.myData , myData , totElems() );
+      memcpy_host_to_device( lhs.myData , myData , totElems() );
     } else {
-      yakl_deepcopy_device_to_device( lhs.myData , myData , totElems() );
+      memcpy_device_to_device( lhs.myData , myData , totElems() );
     }
   }
 
