@@ -515,7 +515,7 @@ When you need atomic operations in YAKL, you can use the `atomicAdd`, `atomicMin
 
 ```C++
 yakl::Array<real,4,memDevice> :: arrLarge("arrLarge",nz,ny,nx,ncrm);
-yakl::Array<real,2,memDevice> :: arrSmall("arrLarge",nz,ncrm);
+yakl::Array<real,2,memDevice> :: arrSmall("arrSmall",nz,ncrm);
 
 ...
 
