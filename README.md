@@ -774,23 +774,91 @@ The following table can help you convert Fortran parameter types to Fortran inte
 
 ### Interoperating with Kokkos
 
-YAKL can interoperate with Kokkos in a number of ways. The YAKL `Array` is interoperable with the Kokkos `View` in the following contexts:
+YAKL can wrap a Kokkos pointer the same way unmanaged Kokkos `View` objects operate and with the same syntax. To explain Kokkos-YAKL interoperability in an intuitive manner, it is easiest to demonstrate it with the following loops, which are all equivalent:
 
-* `Array<T,memHost>` with neither `-D__USE_CUDA__` nor `-D__USE_HIP__`
-  * This can be compatible with any dimension of Kokkos `View` in `HostSpace` with `LayoutRight` such as `View<T*,LayoutRight,HostSpace>` or `View<real****,LayoutRight,HostSpace>`
-  * A good practice is to try to `typedef` YAKL `Array` objects to `real1d`, `real2d`, etc. and to try to keep those correct to the actual data being used. If you do this, you can easily map it to a Kokkos `View` of the correct dimension later, and you will get compile-time or run-time errors if you didn't do the dimensionality correctly.
-* `Array<T,memDevice>` with `-D__USE_CUDA__`
-  * This is compatible with any dimension of Kokkos `View<T*,LayoutRight,CudaSpace>`
-* `Array<T,memDevice>` with `-D__USE_CUDA__ -D__MANAGED__`
-  * This is compatible with any dimension of Kokkos `View<T*,LayoutRight,CudaUVMSpace>`
+```C++
+{ // Kokkos LayoutRight
+  // YAKL can only directly interact with explicitly LayoutRight or LayoutLeft Kokkos View objects
+  View<double **, LayoutRight, CudaSpace> view_dev   ("view_dev" ,ny,nx);
+  View<double **, LayoutRight, HostSpace> view_host  ("view_host",ny,nx);
+  // C-style YAKL arrays are indexed identically to Kokkos LayoutRight Views
+  Array<double,2,memDevice,styleC>       array_dev_c ("array_dev_c" ,view_dev .data(),ny,nx);
+  // Fortran-style YAKL arrays have indices permuted compated to Kokkos LayoutRight Views
+  Array<double,2,memDevice,styleFortran> array_dev_f ("array_dev_f" ,view_dev .data(),nx,ny);
+  Array<double,2,memDevice,styleFortran> array_dev_f2("array_dev_f" ,view_dev .data(),{2,nx+1},{-1,ny-2});
+  Array<double,2,memHost,styleC>         array_host_c("array_host_c",view_host.data(),ny,nx);
+
+  // for (int j=0; j < ny; j++) {
+  //   for (int i=0; i < nx; i++) {
+  yakl::c::parallel_for( yakl::c::Bounds<2>(ny,nx) , YAKL_LAMBDA (int j, int i) {
+    // C's fastest varying index is the right-most
+    view_dev   (j,i) = 0;
+    array_dev_c(j,i) = 0;
+  });
+
+  // do j = 1 , ny
+  //   do i = 1 , nx
+  yakl::fortran::parallel_for( yakl::fortran::Bounds<2>(ny,nx) , YAKL_LAMBDA (int j, int i) {
+    // Fortran's fastest varying index is the left-most
+    array_dev_f(i,j) = 0;
+  });
+
+  // do j = -1 , ny-2
+  //   do i = 2 , nx+1
+  yakl::fortran::parallel_for( yakl::fortran::Bounds<2>({-1,ny-2},{2,nx+1}) , YAKL_LAMBDA (int j, int i) {
+    // Fortran's fastest varying index is the left-most
+    array_dev_f2(i,j) = 0;
+  });
+
+  for (int j=0; j < ny; j++) {
+    for (int i=0; i < nx; i++) {
+      view_host   (j,i) = 0;
+      array_host_c(j,i) = 0;
+    }
+  }
+
+  // If we wanted all of the device arrays in the *same* parallel_for, then the equivalent lines are
+  // as follows, though I'm not sure you'd ever do this in practice
+  // for (int j=0; j < ny; j++) {
+  //   for (int i=0; i < nx; i++) {
+  yakl::c::parallel_for( yakl::c::Bounds<2>(ny,nx) , YAKL_LAMBDA (int j, int i) {
+    // C's fastest varying index is the right-most
+    view_dev    (j,i) = 0;
+    array_dev_c (j,i) = 0;
+    array_dev_f (i+1,j+1) = 0;
+    array_dev_f2(i+2,j-1) = 0;
+  });
+} // Kokkos LayoutRight
+
+{ // Kokkos LayoutLeft
+  // Kokkos's LayoutLeft View means that its left-most index is varying the fastest
+  // just like Fortran's
+  View<double **, LayoutLeft, CudaSpace> view_left_dev("view_left_dev" ,nx,ny);
+  Array<double,2,memDevice,styleC>       array_dev_c ("array_dev_c" ,view_left_dev.data(),ny,nx);
+  Array<double,2,memDevice,styleFortran> array_dev_f ("array_dev_f" ,view_left_dev.data(),nx,ny);
+
+  // do j = 1 , ny
+  //   do i = 1 , nx
+  yakl::fortran::parallel_for( yakl::fortran::Bounds<2>(ny,nx) , YAKL_LAMBDA (int j, int i) {
+    // Fortran's fastest varying index is the left-most
+    view_left_dev(i,j) = 0;
+    array_dev_f  (i,j) = 0;
+  });
+
+  // for (int j=0; j < ny; j++) {
+  //   for (int i=0; i < nx; i++) {
+  yakl::c::parallel_for( yakl::c::Bounds<2>(ny,nx) , YAKL_LAMBDA (int j, int i) {
+    // C's fastest varying index is the right-most
+    array_dev_c(j,i) = 0;
+  });
+} // Kokkos LayoutLeft
+```
+
+In all of the cases, each `View` and `Array` object is simply wrapping an allocation of contiguous memory where some dimension (`nx` in this case) is varying the fastest. Therefore, you can simply wrap the pointers in different objects and then index appropriately. The Fortran-style YAKL `Array` object is by default indexed starting at one. Therefore, the Fortran-style `Array` object (just like the Fortran compiler) internally subtracts the lower bound from the index before computing offsets into the contiguous allocated data. For instance, a Kokkos 1-D `View` at index zero is the same memory as a YAKL Fortran-style (with default lower bounds) `Array` at index 1.
   
-YAKL Fortran-style `Array` objects are compatible with Kokkos `View` objects in the same way that `Array` objects are, except that the lower bounds will be changed to zero, and the order of indexing will be reversed.
-
 Both Kokkos and YAKL have unmanaged / un-owned multi-dimensional arrays, so you can wrap equivalent types using the data pointer, which each expose via `Array::data()` and `View::data()`
 
 YAKL `parallel_for` launchers can use Kokkos `Views` without issue, and Kokkos `parallel_for` and `parallel_reduce` launchers can use YAKL `Array` objects without issue.
-
-You can use Kokkos View data in YAKL's reductions via the `View::data()` pointer so long as the Kokkos `View` is congiguous, which you can determine via the `View::span_is_contiguous()` member function. It's prefereable for performance that the Kokkos `View` also have the `LayoutRight` attribute when interoperating with C-style YAKL `Array`s and the `LayoutLeft` attribute when interoperating with Fortran-style YAKL `Array`s
 
 You can use YAKL atomic functions inside Kokkos `parallel_for` launchers. 
 
@@ -798,15 +866,10 @@ You can use YAKL `SArray` and `FSArray` objects inside Kokkos `parallel_for` lau
 
 YAKL and Kokkos `fence()` operations are pretty much equivalent and can be used in either framework.
 
-YAKL's `YAKL_INLINE` is equivalent to Kokkos's `KOKKOS_INLINE_FUNCTION`.
+YAKL's `YAKL_INLINE` is similar (likely equivalent) to Kokkos's `KOKKOS_INLINE_FUNCTION`.
 
 YAKL's `YAKL_LAMBDA` is similar to the Kokkos `KOKKOS_LAMBDA`, but there are important differences:
 * In CUDA, YAKL specifies `#define YAKL_LAMBDA [=] __device__`, whereas Kokkos specifies `#define KOKKOS_LAMBDA [=] __host__ __device__`. YAKL differs here because of issues with calling atomics, which are only `__device__` functions in the hardware supported API. This will be a problem if trying to run `YAKL_LAMBDA` functions on the host, but that situation seems unlikely because explicitly creating a `YAKL_INLINE` function would seemingly suffice better in that case.
-* On the host, YAKL specifies `#define YAKL_LAMBDA [&]`, wherease Kokkos specifies `#define KOKKOS_LAMBDA [=]`. This means that on the CPU, YAKL lambdas can capture by reference, but Kokkos lambdas cannot. In Kokkos, this is a benefit because it forces you to deal with GPU-specific annoyances from the start. In YAKL, it's a benefit because you can ignore that annoyance at first if you wish.
-
-YAKL's build system in CMake simply takes the C++ files and tells CMake to compile them as if they were CUDA. You don't need to change the C++ compiler.
-
-The Kokkos build system is more invasive and complex, requiring you to change the `CMAKE_CXX_COMPILER` for all files in the project to use the `nvcc_wrapper` shipped with the Kokkos repo, and compiling different source files depending upon CMake options you pass before adding the library. Theoretically, a CMake system using the Kokkos build requirements should handle the YAKL source files, but you probably can't use YAKL's normal CMake library. Integrating YAKL into a larger project should be very simple because YAKL's C++ interface only has two source files: `BuddyAllocator.cpp` and `YAKL.cpp`, and its Fortran interface only has one: `gator_mod.F90`.
 
 ## Compiling with YAKL
 
