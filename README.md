@@ -774,7 +774,7 @@ The following table can help you convert Fortran parameter types to Fortran inte
 
 ### Interoperating with Kokkos
 
-YAKL can wrap a Kokkos pointer the same way unmanaged Kokkos `View` objects operate and with the same syntax. To explain Kokkos-YAKL interoperability in an intuitive manner, it is easiest to demonstrate it with the following loops, which are all equivalent:
+YAKL `Array` objects can wrap a Kokkos `View` pointer the same way unmanaged Kokkos `View` constructors wrap existing pointers. To explain Kokkos-YAKL interoperability in an intuitive manner, it is easiest to demonstrate it with the following loops, which are all equivalent:
 
 ```C++
 { // Kokkos LayoutRight
@@ -788,6 +788,8 @@ YAKL can wrap a Kokkos pointer the same way unmanaged Kokkos `View` objects oper
   Array<double,2,memDevice,styleFortran> array_dev_f2("array_dev_f" ,view_dev .data(),{2,nx+1},{-1,ny-2});
   Array<double,2,memHost,styleC>         array_host_c("array_host_c",view_host.data(),ny,nx);
 
+  // C-style for loops go from 0,bnd-1
+  // The implied loop ordering is always right-most index is the innermost loop
   // for (int j=0; j < ny; j++) {
   //   for (int i=0; i < nx; i++) {
   yakl::c::parallel_for( yakl::c::Bounds<2>(ny,nx) , YAKL_LAMBDA (int j, int i) {
@@ -796,6 +798,8 @@ YAKL can wrap a Kokkos pointer the same way unmanaged Kokkos `View` objects oper
     array_dev_c(j,i) = 0;
   });
 
+  // Fortran-style for loops go (by default) from 1,bnd
+  // The implied loop ordering is always right-most index is the innermost loop
   // do j = 1 , ny
   //   do i = 1 , nx
   yakl::fortran::parallel_for( yakl::fortran::Bounds<2>(ny,nx) , YAKL_LAMBDA (int j, int i) {
@@ -803,6 +807,7 @@ YAKL can wrap a Kokkos pointer the same way unmanaged Kokkos `View` objects oper
     array_dev_f(i,j) = 0;
   });
 
+  // This is an example of a Fortran-style loop nest with non-standard loop bounds
   // do j = -1 , ny-2
   //   do i = 2 , nx+1
   yakl::fortran::parallel_for( yakl::fortran::Bounds<2>({-1,ny-2},{2,nx+1}) , YAKL_LAMBDA (int j, int i) {
@@ -853,6 +858,8 @@ YAKL can wrap a Kokkos pointer the same way unmanaged Kokkos `View` objects oper
   });
 } // Kokkos LayoutLeft
 ```
+
+Further, with the above example, the indexed arrays `view_dev(0,3)`, `array_dev_c(0,3)`, and `array_dev_f(4,1)` all point to the same memory location.
 
 In all of the cases, each `View` and `Array` object is simply wrapping an allocation of contiguous memory where some dimension (`nx` in this case) is varying the fastest. Therefore, you can simply wrap the pointers in different objects and then index appropriately. The Fortran-style YAKL `Array` object is by default indexed starting at one. Therefore, the Fortran-style `Array` object (just like the Fortran compiler) internally subtracts the lower bound from the index before computing offsets into the contiguous allocated data. For instance, a Kokkos 1-D `View` at index zero is the same memory as a YAKL Fortran-style (with default lower bounds) `Array` at index 1.
   
