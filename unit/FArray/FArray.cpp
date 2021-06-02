@@ -41,14 +41,14 @@ void die(std::string msg) {
 int main() {
   yakl::init();
   {
-    int constexpr d1 = 2;
-    int constexpr d2 = 3;
-    int constexpr d3 = 4;
-    int constexpr d4 = 5;
-    int constexpr d5 = 6;
-    int constexpr d6 = 7;
-    int constexpr d7 = 8;
-    int constexpr d8 = 9;
+    int constexpr d8 = 2;
+    int constexpr d7 = 3;
+    int constexpr d6 = 4;
+    int constexpr d5 = 5;
+    int constexpr d4 = 6;
+    int constexpr d3 = 7;
+    int constexpr d2 = 8;
+    int constexpr d1 = 9;
 
     ///////////////////////////////////////////////////////////
     // Test operator()
@@ -259,15 +259,17 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test slice
     ///////////////////////////////////////////////////////////
-    auto slice = test8d.slice<3>(COLON,COLON,COLON,1,2,3,4,5);
-    if (yakl::intrinsics::sum(slice) != d1*d2*d3) { die("slice: wrong sum for slice"); }
+    yakl::memset(test8d,0.f);
+    auto slice = test8d.slice<3>(COLON,COLON,COLON,6,5,4,3,2);
+    yakl::memset(slice,1.f);
+    if (yakl::intrinsics::sum(test8d) != d1*d2*d3) { die("slice: wrong sum for slice"); }
 
     ///////////////////////////////////////////////////////////
     // Test non-1 lower bounds and non-standard loops
     ///////////////////////////////////////////////////////////
     real3d lower("lower",{-1,2},5,{0,4} );
     yakl::memset(lower,0.f);
-    parallel_for( Bounds<3>({-2,1,2},5,{0,4}) , YAKL_LAMBDA (int i, int j, int k) {
+    parallel_for( Bounds<3>({-1,2,2},5,{0,4}) , YAKL_LAMBDA (int i, int j, int k) {
       lower(i+1,j,k) = 1;
     });
     if (yakl::intrinsics::sum(lower) != 50) { die("lower bounds: incorrect sum for lower"); }
@@ -325,6 +327,22 @@ int main() {
     if (yakl::intrinsics::sum(test6d) != d1*d2*d3*d4*d5*d6      ) { die("LOOPS: wrong sum for test6d"); }
     if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("LOOPS: wrong sum for test7d"); }
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("LOOPS: wrong sum for test8d"); }
+
+
+    ///////////////////////////////////////////////////////////
+    // Test reshape
+    ///////////////////////////////////////////////////////////
+    auto reshaped = test8d.reshape<3>({{2,21},16,{-1,1132}});
+    memset(reshaped,2.f);
+    if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8*2) { die("SimpleBounds: wrong sum for reshaped test8d"); }
+
+
+    ///////////////////////////////////////////////////////////
+    // Test collapse
+    ///////////////////////////////////////////////////////////
+    auto collapsed = test8d.collapse(-1);
+    memset(collapsed,3.f);
+    if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8*3) { die("SimpleBounds: wrong sum for collapsed test8d"); }
 
   }
   yakl::finalize();

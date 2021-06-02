@@ -258,8 +258,10 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test slice
     ///////////////////////////////////////////////////////////
+    yakl::memset(test8d,0.f);
     auto slice = test8d.slice<3>(1,2,3,4,5,COLON,COLON,COLON);
-    if (yakl::intrinsics::sum(slice) != d6*d7*d8) { die("slice: wrong sum for slice"); }
+    yakl::memset(slice,1.f);
+    if (yakl::intrinsics::sum(test8d) != d6*d7*d8) { die("slice: wrong sum for slice"); }
 
     ///////////////////////////////////////////////////////////
     // Test non-standard loop bounds
@@ -316,6 +318,23 @@ int main() {
     if (yakl::intrinsics::sum(test6d) != d1*d2*d3*d4*d5*d6      ) { die("SimpleBounds: wrong sum for test6d"); }
     if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("SimpleBounds: wrong sum for test7d"); }
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("SimpleBounds: wrong sum for test8d"); }
+
+
+    ///////////////////////////////////////////////////////////
+    // Test reshape
+    ///////////////////////////////////////////////////////////
+    auto reshaped = test8d.reshape<3>({20,16,1134});
+    memset(reshaped,2.f);
+    if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8*2) { die("SimpleBounds: wrong sum for reshaped test8d"); }
+
+
+    ///////////////////////////////////////////////////////////
+    // Test collapse
+    ///////////////////////////////////////////////////////////
+    auto collapsed = test8d.collapse();
+    memset(collapsed,3.f);
+    if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8*3) { die("SimpleBounds: wrong sum for collapsed test8d"); }
+
 
   }
   yakl::finalize();

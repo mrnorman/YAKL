@@ -13,6 +13,7 @@ namespace yakl {
     #if   defined(__USE_CUDA__)
       #if defined (__MANAGED__)
         alloc   = [] ( size_t bytes ) -> void* {
+          if (bytes == 0) return nullptr;
           void *ptr;
           cudaMallocManaged(&ptr,bytes);
           check_last_error();
@@ -32,6 +33,7 @@ namespace yakl {
         };
       #else
         alloc   = [] ( size_t bytes ) -> void* {
+          if (bytes == 0) return nullptr;
           void *ptr;
           cudaMalloc(&ptr,bytes);
           check_last_error();
@@ -45,6 +47,7 @@ namespace yakl {
     #elif defined(__USE_HIP__)
       #if defined (__MANAGED__)
         alloc = [] ( size_t bytes ) -> void* {
+          if (bytes == 0) return nullptr;
           void *ptr;
           hipMallocHost(&ptr,bytes);
           check_last_error();
@@ -56,6 +59,7 @@ namespace yakl {
         };
       #else
         alloc = [] ( size_t bytes ) -> void* {
+          if (bytes == 0) return nullptr;
           void *ptr;
           hipMalloc(&ptr,bytes);
           check_last_error();
@@ -69,6 +73,7 @@ namespace yakl {
     #elif defined (__USE_SYCL__)
       #if defined (__MANAGED__)
         alloc = [] ( size_t bytes ) -> void* {
+          if (bytes == 0) return nullptr;
           void *ptr = sycl::malloc_shared(bytes,sycl_default_stream);
           check_last_error();
           sycl_default_stream.prefetch(ptr,bytes);
@@ -80,6 +85,7 @@ namespace yakl {
         };
       #else
         alloc = [] ( size_t bytes ) -> void* {
+          if (bytes == 0) return nullptr;
           void *ptr = sycl::malloc_device(bytes,sycl_default_stream);
           std::cout << "ALLOC: " << ptr << "\n";
           check_last_error();
@@ -98,6 +104,7 @@ namespace yakl {
       #endif
     #elif defined(__USE_OPENMP45__)
       alloc = [] ( size_t bytes ) -> void* {
+        if (bytes == 0) return nullptr;
         void *ptr;
         int device;
         device = omp_get_default_device();
@@ -114,7 +121,7 @@ namespace yakl {
         check_last_error();
       };
     #else
-      alloc   = [] ( size_t bytes ) -> void* { return ::malloc(bytes); };
+      alloc   = [] ( size_t bytes ) -> void* { if (bytes == 0) return nullptr; return ::malloc(bytes); };
       dealloc = [] ( void *ptr ) { ::free(ptr); };
     #endif
   }

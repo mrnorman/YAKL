@@ -78,6 +78,144 @@ public:
 
 
 
+// Dynamic (runtime) Array Bounds
+class Bnd {
+public:
+  int l, u;
+  Bnd(                  ) { l = 1   ; u = 1   ; }
+  Bnd(          int u_in) { l = 1   ; u = u_in; }
+  Bnd(int l_in, int u_in) { l = l_in; u = u_in; }
+};
+
+
+
+class Bnds {
+public:
+  int l[8];
+  int u[8];
+  int rank;
+
+  Bnds() {rank = 0;}
+  Bnds(Bnd b0) {
+    l[0] = b0.l;
+
+    u[0] = b0.u;
+
+    rank = 1;
+  }
+  Bnds(Bnd b0, Bnd b1) {
+    l[0] = b0.l;
+    l[1] = b1.l;
+
+    u[0] = b0.u;
+    u[1] = b1.u;
+
+    rank = 2;
+  }
+  Bnds(Bnd b0, Bnd b1, Bnd b2) {
+    l[0] = b0.l;
+    l[1] = b1.l;
+    l[2] = b2.l;
+
+    u[0] = b0.u;
+    u[1] = b1.u;
+    u[2] = b2.u;
+
+    rank = 3;
+  }
+  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3) {
+    l[0] = b0.l;
+    l[1] = b1.l;
+    l[2] = b2.l;
+    l[3] = b3.l;
+
+    u[0] = b0.u;
+    u[1] = b1.u;
+    u[2] = b2.u;
+    u[3] = b3.u;
+
+    rank = 4;
+  }
+  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4) {
+    l[0] = b0.l;
+    l[1] = b1.l;
+    l[2] = b2.l;
+    l[3] = b3.l;
+    l[4] = b4.l;
+
+    u[0] = b0.u;
+    u[1] = b1.u;
+    u[2] = b2.u;
+    u[3] = b3.u;
+    u[4] = b4.u;
+
+    rank = 5;
+  }
+  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5) {
+    l[0] = b0.l;
+    l[1] = b1.l;
+    l[2] = b2.l;
+    l[3] = b3.l;
+    l[4] = b4.l;
+    l[5] = b5.l;
+
+    u[0] = b0.u;
+    u[1] = b1.u;
+    u[2] = b2.u;
+    u[3] = b3.u;
+    u[4] = b4.u;
+    u[5] = b5.u;
+
+    rank = 6;
+  }
+  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6) {
+    l[0] = b0.l;
+    l[1] = b1.l;
+    l[2] = b2.l;
+    l[3] = b3.l;
+    l[4] = b4.l;
+    l[5] = b5.l;
+    l[6] = b6.l;
+
+    u[0] = b0.u;
+    u[1] = b1.u;
+    u[2] = b2.u;
+    u[3] = b3.u;
+    u[4] = b4.u;
+    u[5] = b5.u;
+    u[6] = b6.u;
+
+    rank = 7;
+  }
+  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7) {
+    l[0] = b0.l;
+    l[1] = b1.l;
+    l[2] = b2.l;
+    l[3] = b3.l;
+    l[4] = b4.l;
+    l[5] = b5.l;
+    l[6] = b6.l;
+    l[7] = b7.l;
+
+    u[0] = b0.u;
+    u[1] = b1.u;
+    u[2] = b2.u;
+    u[3] = b3.u;
+    u[4] = b4.u;
+    u[5] = b5.u;
+    u[6] = b6.u;
+    u[7] = b7.u;
+
+    rank = 8;
+  }
+
+  int size() const {
+    return rank;
+  }
+};
+
+
+
 // [S]tatic (compile-time) Array [B]ounds (templated)
 // It's only used for Fortran, so it takes on Fortran defaults
 // with lower bound default to 1

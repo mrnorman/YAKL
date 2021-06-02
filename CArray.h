@@ -4,10 +4,9 @@
 template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
 public:
 
-  index_t offsets  [rank];  // Precomputed dimension offsets for efficient data access into a 1-D pointer
-  index_t dimension[rank];  // Sizes of the 8 possible dimensions
   T       * myData;         // Pointer to the flattened internal data
   int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
+  index_t dimension[rank];  // Sizes of the 8 possible dimensions
   bool    owned;            // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef YAKL_DEBUG
     std::string myname;     // Label for debug printing. Only stored if debugging is turned on
@@ -44,7 +43,6 @@ public:
     nullify();
     deallocate();
     dimension[0] = d1;
-    compute_offsets();
     allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2) {
@@ -56,7 +54,6 @@ public:
     deallocate();
     dimension[0] = d1;
     dimension[1] = d2;
-    compute_offsets();
     allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3) {
@@ -69,7 +66,6 @@ public:
     dimension[0] = d1;
     dimension[1] = d2;
     dimension[2] = d3;
-    compute_offsets();
     allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
@@ -83,7 +79,6 @@ public:
     dimension[1] = d2;
     dimension[2] = d3;
     dimension[3] = d4;
-    compute_offsets();
     allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
@@ -98,7 +93,6 @@ public:
     dimension[2] = d3;
     dimension[3] = d4;
     dimension[4] = d5;
-    compute_offsets();
     allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
@@ -114,7 +108,6 @@ public:
     dimension[3] = d4;
     dimension[4] = d5;
     dimension[5] = d6;
-    compute_offsets();
     allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
@@ -131,7 +124,6 @@ public:
     dimension[4] = d5;
     dimension[5] = d6;
     dimension[6] = d7;
-    compute_offsets();
     allocate(label);
   }
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
@@ -149,7 +141,6 @@ public:
     dimension[5] = d6;
     dimension[6] = d7;
     dimension[7] = d8;
-    compute_offsets();
     allocate(label);
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
@@ -164,7 +155,6 @@ public:
     for (int i=0; i < rank; i++) {
       dimension[i] = dims[i];
     }
-    compute_offsets();
     allocate(label);
   }
 
@@ -179,7 +169,6 @@ public:
     nullify();
     owned = false;
     dimension[0] = d1;
-    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2) {
@@ -191,7 +180,6 @@ public:
     owned = false;
     dimension[0] = d1;
     dimension[1] = d2;
-    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3) {
@@ -204,7 +192,6 @@ public:
     dimension[0] = d1;
     dimension[1] = d2;
     dimension[2] = d3;
-    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
@@ -218,7 +205,6 @@ public:
     dimension[1] = d2;
     dimension[2] = d3;
     dimension[3] = d4;
-    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
@@ -233,7 +219,6 @@ public:
     dimension[2] = d3;
     dimension[3] = d4;
     dimension[4] = d5;
-    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
@@ -249,7 +234,6 @@ public:
     dimension[3] = d4;
     dimension[4] = d5;
     dimension[5] = d6;
-    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
@@ -266,7 +250,6 @@ public:
     dimension[4] = d5;
     dimension[5] = d6;
     dimension[6] = d7;
-    compute_offsets();
     myData = data;
   }
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
@@ -284,7 +267,6 @@ public:
     dimension[5] = d6;
     dimension[6] = d7;
     dimension[7] = d8;
-    compute_offsets();
     myData = data;
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
@@ -299,7 +281,6 @@ public:
     for (int i=0; i < rank; i++) {
       dimension[i] = dims[i];
     }
-    compute_offsets();
     myData = data;
   }
 
@@ -313,7 +294,6 @@ public:
     nullify();
     owned    = rhs.owned;
     for (int i=0; i<rank; i++) {
-      offsets  [i] = rhs.offsets  [i];
       dimension[i] = rhs.dimension[i];
     }
     #ifdef YAKL_DEBUG
@@ -332,7 +312,6 @@ public:
     owned    = rhs.owned;
     deallocate();
     for (int i=0; i<rank; i++) {
-      offsets  [i] = rhs.offsets  [i];
       dimension[i] = rhs.dimension[i];
     }
     #ifdef YAKL_DEBUG
@@ -356,7 +335,6 @@ public:
     nullify();
     owned    = rhs.owned;
     for (int i=0; i<rank; i++) {
-      offsets  [i] = rhs.offsets  [i];
       dimension[i] = rhs.dimension[i];
     }
     #ifdef YAKL_DEBUG
@@ -375,7 +353,6 @@ public:
     owned    = rhs.owned;
     deallocate();
     for (int i=0; i<rank; i++) {
-      offsets  [i] = rhs.offsets  [i];
       dimension[i] = rhs.dimension[i];
     }
     #ifdef YAKL_DEBUG
@@ -405,125 +382,136 @@ public:
   */
   YAKL_INLINE T &operator()(index_t const i0) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 1 ) { yakl_throw("ERROR: Calling invalid function on rank 1 Array"); }
-      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
+      if ( rank != 1 || i0 >= dimension[0] ) { indexing_check(1,i0); };
     #endif
     index_t ind = i0;
     return myData[ind];
   }
   YAKL_INLINE T &operator()(index_t const i0, index_t const i1) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 2 ) { yakl_throw("ERROR: Calling invalid function on rank 2 Array"); }
-      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
+      if ( rank != 2 || i0 >= dimension[0] ||
+                        i1 >= dimension[1] ) { indexing_check(2,i0,i1); };
     #endif
-    index_t ind = i0*offsets[0] + i1;
+    index_t ind = i0*dimension[1] + i1;
     return myData[ind];
   }
   YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 3 ) { yakl_throw("ERROR: Calling invalid function on rank 3 Array"); }
-      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
+      if ( rank != 3 || i0 >= dimension[0] ||
+                        i1 >= dimension[1] ||
+                        i2 >= dimension[2] ) { indexing_check(3,i0,i1,i2); };
     #endif
-    index_t ind = i0*offsets[0] + i1*offsets[1] + i2;
+    index_t ind = (i0*dimension[1] + i1)*dimension[2] + i2;
     return myData[ind];
   }
   YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 4 ) { yakl_throw("ERROR: Calling invalid function on rank 4 Array"); }
-      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
+      if ( rank != 4 || i0 >= dimension[0] ||
+                        i1 >= dimension[1] ||
+                        i2 >= dimension[2] ||
+                        i3 >= dimension[3] ) { indexing_check(4,i0,i1,i2,i3); };
     #endif
-    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3;
+    index_t ind = ((i0*dimension[1] + i1)*dimension[2] + i2)*dimension[3] + i3;
     return myData[ind];
   }
   YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3, index_t const i4) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 5 ) { yakl_throw("ERROR: Calling invalid function on rank 5 Array"); }
-      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
-      this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
+      if ( rank != 5 || i0 >= dimension[0] ||
+                        i1 >= dimension[1] ||
+                        i2 >= dimension[2] ||
+                        i3 >= dimension[3] ||
+                        i4 >= dimension[4] ) { indexing_check(5,i0,i1,i2,i3,i4); };
     #endif
-    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4;
+    index_t ind = (((i0*dimension[1] + i1)*dimension[2] + i2)*dimension[3] + i3)*dimension[4] + i4;
     return myData[ind];
   }
   YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3, index_t const i4, index_t const i5) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 6 ) { yakl_throw("ERROR: Calling invalid function on rank 6 Array"); }
-      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
-      this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
-      this->check_index(5,i5,0,dimension[5]-1,__FILE__,__LINE__);
+      if ( rank != 6 || i0 >= dimension[0] ||
+                        i1 >= dimension[1] ||
+                        i2 >= dimension[2] ||
+                        i3 >= dimension[3] ||
+                        i4 >= dimension[4] ||
+                        i5 >= dimension[5] ) { indexing_check(6,i0,i1,i2,i3,i4,i5); };
     #endif
-    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5;
+    index_t ind = ((((i0*dimension[1] + i1)*dimension[2] + i2)*dimension[3] + i3)*dimension[4] + i4)*dimension[5] + i5;
     return myData[ind];
   }
   YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3, index_t const i4, index_t const i5, index_t const i6) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 7 ) { yakl_throw("ERROR: Calling invalid function on rank 7 Array"); }
-      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
-      this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
-      this->check_index(5,i5,0,dimension[5]-1,__FILE__,__LINE__);
-      this->check_index(6,i6,0,dimension[6]-1,__FILE__,__LINE__);
+      if ( rank != 7 || i0 >= dimension[0] ||
+                        i1 >= dimension[1] ||
+                        i2 >= dimension[2] ||
+                        i3 >= dimension[3] ||
+                        i4 >= dimension[4] ||
+                        i5 >= dimension[5] ||
+                        i6 >= dimension[6] ) { indexing_check(7,i0,i1,i2,i3,i4,i5,i6); };
     #endif
-    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6;
+    index_t ind = (((((i0*dimension[1] + i1)*dimension[2] + i2)*dimension[3] + i3)*dimension[4] + i4)*dimension[5] + i5)*dimension[6] + i6;
     return myData[ind];
   }
   YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3, index_t const i4, index_t const i5, index_t const i6, index_t const i7) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 8 ) { yakl_throw("ERROR: Calling invalid function on rank 8 Array"); }
-      this->check_index(0,i0,0,dimension[0]-1,__FILE__,__LINE__);
-      this->check_index(1,i1,0,dimension[1]-1,__FILE__,__LINE__);
-      this->check_index(2,i2,0,dimension[2]-1,__FILE__,__LINE__);
-      this->check_index(3,i3,0,dimension[3]-1,__FILE__,__LINE__);
-      this->check_index(4,i4,0,dimension[4]-1,__FILE__,__LINE__);
-      this->check_index(5,i5,0,dimension[5]-1,__FILE__,__LINE__);
-      this->check_index(6,i6,0,dimension[6]-1,__FILE__,__LINE__);
-      this->check_index(7,i7,0,dimension[7]-1,__FILE__,__LINE__);
+      if ( rank != 8 || i0 >= dimension[0] ||
+                        i1 >= dimension[1] ||
+                        i2 >= dimension[2] ||
+                        i3 >= dimension[3] ||
+                        i4 >= dimension[4] ||
+                        i5 >= dimension[5] ||
+                        i6 >= dimension[6] ||
+                        i7 >= dimension[7] ) { indexing_check(8,i0,i1,i2,i3,i4,i5,i6,i7); };
     #endif
-    index_t ind = i0*offsets[0] + i1*offsets[1] + i2*offsets[2] + i3*offsets[3] + i4*offsets[4] + i5*offsets[5] + i6*offsets[6] + i7;
+    index_t ind = ((((((i0*dimension[1] + i1)*dimension[2] + i2)*dimension[3] + i3)*dimension[4] + i4)*dimension[5] + i5)*dimension[6] + i6)*dimension[7] + i7;
     return myData[ind];
   }
 
 
-  inline void check_index(int const dim, long const ind, long const lb, long const ub, char const *file, int const line) const {
-    if (ind < lb || ind > ub) {
-      #ifdef YAKL_DEBUG
-        std::cout << "For Array labeled: " << myname << "\n";
-      #endif
-      std::cout << "Index " << dim+1 << " of " << rank << " out of bounds\n";
-      std::cout << "File, Line: " << file << ", " << line << "\n";
-      std::cout << "Index: " << ind << ". Bounds: (" << lb << "," << ub << ")\n";
-      throw "";
-    }
+  // if this function gets called, then there was definitely an error
+  inline void indexing_check(int rank_in, index_t i0 ,
+                                          index_t i1=INDEX_MAX ,
+                                          index_t i2=INDEX_MAX ,
+                                          index_t i3=INDEX_MAX ,
+                                          index_t i4=INDEX_MAX ,
+                                          index_t i5=INDEX_MAX ,
+                                          index_t i6=INDEX_MAX ,
+                                          index_t i7=INDEX_MAX ) const {
+    #ifdef YAKL_DEBUG
+      std::cerr << "For Array labeled: " << myname << ":" << std::endl;
+    #endif
+    if (rank_in != rank) { std::cerr << "Indexing with the incorrect number of dimensions. " << std::endl; }
+    if (rank >= 1 && i0 >= dimension[0]) { std::cerr << "Index 1 of " << rank << " is out of bounds. Value: " << i0 << "; Bound: " << dimension[0]-1 << std::endl; }
+    if (rank >= 2 && i1 >= dimension[1]) { std::cerr << "Index 2 of " << rank << " is out of bounds. Value: " << i1 << "; Bound: " << dimension[1]-1 << std::endl; }
+    if (rank >= 3 && i2 >= dimension[2]) { std::cerr << "Index 3 of " << rank << " is out of bounds. Value: " << i2 << "; Bound: " << dimension[2]-1 << std::endl; }
+    if (rank >= 4 && i3 >= dimension[3]) { std::cerr << "Index 4 of " << rank << " is out of bounds. Value: " << i3 << "; Bound: " << dimension[3]-1 << std::endl; }
+    if (rank >= 5 && i4 >= dimension[4]) { std::cerr << "Index 5 of " << rank << " is out of bounds. Value: " << i4 << "; Bound: " << dimension[4]-1 << std::endl; }
+    if (rank >= 6 && i5 >= dimension[5]) { std::cerr << "Index 6 of " << rank << " is out of bounds. Value: " << i5 << "; Bound: " << dimension[5]-1 << std::endl; }
+    if (rank >= 7 && i6 >= dimension[6]) { std::cerr << "Index 7 of " << rank << " is out of bounds. Value: " << i6 << "; Bound: " << dimension[6]-1 << std::endl; }
+    if (rank >= 8 && i7 >= dimension[7]) { std::cerr << "Index 8 of " << rank << " is out of bounds. Value: " << i7 << "; Bound: " << dimension[7]-1 << std::endl; }
+    yakl_throw("");
   }
 
 
   template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleC> &store ) const {
     #ifdef YAKL_DEBUG
       if (rank != dims.size()) {
-        yakl_throw( "ERROR: rank must be equal to dims.size()" );
+        yakl_throw( "ERROR: slice rank must be equal to dims.size()" );
+      }
+      for (int i = rank-1-N; i >= 0; i--) {
+        if (dims.data[i] >= dimension[i]) {
+          yakl_throw( "ERROR: One of the slicing dimension dimensions is out of bounds" );
+        }
       }
     #endif
     store.owned = false;
+    index_t offset = 1;
     for (int i = rank-1; i > rank-1-N; i--) {
       store.dimension[i-(rank-N)] = dimension[i];
-      store.offsets  [i-(rank-N)] = offsets  [i];
+      offset *= dimension[i];
     }
     index_t retOff = 0;
     for (int i = rank-1-N; i >= 0; i--) {
-      retOff += dims.data[i]*offsets[i];
+      retOff += dims.data[i]*offset;
+      offset *= dimension[i];
     }
     store.myData = &(this->myData[retOff]);
   }
@@ -587,7 +575,6 @@ public:
   inline Array<T,rank,memHost,styleC> createHostCopy() const {
     Array<T,rank,memHost,styleC> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
-      ret.offsets  [i] = offsets  [i];
       ret.dimension[i] = dimension[i];
     }
     #ifdef YAKL_DEBUG
@@ -607,7 +594,6 @@ public:
   inline Array<T,rank,memDevice,styleC> createDeviceCopy() const {
     Array<T,rank,memDevice,styleC> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
-      ret.offsets  [i] = offsets  [i];
       ret.dimension[i] = dimension[i];
     }
     #ifdef YAKL_DEBUG
@@ -620,6 +606,44 @@ public:
       memcpy_device_to_device( ret.myData , myData , totElems() );
     }
     fence();
+    return ret;
+  }
+
+
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> reshape(Dims const &dims) const {
+    #ifdef YAKL_DEBUG
+      if (dims.size() != N) { yakl_throw("ERROR: new number of reshaped array dimensions does not match the templated rank"); }
+      index_t totelems = 1;
+      for (int i=0; i < N; i++) {
+        totelems *= dims.data[i];
+      }
+      if (totelems != this->totElems()) { yakl_throw("ERROR: Total reshaped array elements is not consistent with this array"); }
+    #endif
+    Array<T,N,myMem,styleC> ret;
+    ret.owned = owned;
+    for (int i=0; i < N; i++) {
+      ret.dimension[i] = dims.data[i];
+    }
+    #ifdef YAKL_DEBUG
+      ret.myname = myname;
+    #endif
+    ret.myData = myData;
+    ret.refCount = refCount;
+    if (owned && refCount != nullptr) { (*refCount)++; }
+    return ret;
+  }
+
+
+  YAKL_INLINE Array<T,1,myMem,styleC> collapse() {
+    Array<T,1,myMem,styleC> ret;
+    ret.owned = owned;
+    ret.dimension[0] = totElems();
+    #ifdef YAKL_DEBUG
+      ret.myname = myname;
+    #endif
+    ret.myData = myData;
+    ret.refCount = refCount;
+    if (owned && refCount != nullptr) { (*refCount)++; }
     return ret;
   }
 
@@ -713,14 +737,6 @@ public:
     return os;
   }
 
-
-
-  inline void compute_offsets() {
-    offsets[rank-1] = 1;
-    for (int i=rank-2; i>=0; i--) {
-      offsets[i] = offsets[i+1] * dimension[i+1];
-    }
-  }
 
 
   inline void allocate(char const * label = "") {

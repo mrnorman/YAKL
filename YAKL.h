@@ -6,6 +6,7 @@
 namespace yakl {
 
   typedef unsigned int index_t;
+  index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 
   #ifdef __USE_SYCL__
     extern sycl::queue sycl_default_stream;
