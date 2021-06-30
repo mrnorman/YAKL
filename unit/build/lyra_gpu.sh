@@ -10,6 +10,7 @@ unset GATOR_DISABLE
 
 export CC=hipcc
 export CXX=hipcc
+unset CXXFLAGS
 export FFLAGS="-O3"
 
 cmake -DYAKL_ARCH="HIP"      \
