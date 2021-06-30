@@ -12,7 +12,7 @@ public:
   int     lbounds  [rank];  // Lower bounds for each dimension
   bool    owned;            // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef YAKL_DEBUG
-    std::string myname; // Label for debug printing. Only stored if debugging is turned on
+    char const * myname;          // Label for debug printing. Only stored if debugging is turned on
   #endif
 
 
@@ -36,7 +36,7 @@ public:
   Array(char const * label) {
     nullify();
     #ifdef YAKL_DEBUG
-      myname = std::string(label);
+      myname = label;
     #endif
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -454,7 +454,7 @@ public:
 
 
   // if this function gets called, then there was definitely an error
-  inline void indexing_check(int rank_in, index_t i0 ,
+  YAKL_INLINE void indexing_check(int rank_in, index_t i0 ,
                                           index_t i1=INDEX_MAX ,
                                           index_t i2=INDEX_MAX ,
                                           index_t i3=INDEX_MAX ,
@@ -463,36 +463,38 @@ public:
                                           index_t i6=INDEX_MAX ,
                                           index_t i7=INDEX_MAX ) const {
     #ifdef YAKL_DEBUG
-      std::cerr << "For Array labeled: " << myname << ":" << std::endl;
+      #ifndef YAKL_SEPARATE_MEMORY_SPACE
+        std::cerr << "For Array labeled: " << myname << ":" << std::endl;
+        std::string msg1 = " is out of bounds. Value: ";
+        std::string msg2 = "; Bounds: (";
+        if (rank_in != rank) { std::cerr << "Indexing with the incorrect number of dimensions. " << std::endl; }
+        if (rank >= 1 && (i0 < lbounds[0] || i0 >= lbounds[0]+dimension[0])) {
+          std::cerr << "Index 1 of " << rank << msg1 << i0 << msg2 << lbounds[0] << "," << lbounds[0]+dimension[0]-1 << ")" << std::endl;
+        }
+        if (rank >= 2 && (i1 < lbounds[1] || i1 >= lbounds[1]+dimension[1])) {
+          std::cerr << "Index 2 of " << rank << msg1 << i1 << msg2 << lbounds[1] << "," << lbounds[1]+dimension[1]-1 << ")" << std::endl;
+        }
+        if (rank >= 3 && (i2 < lbounds[2] || i2 >= lbounds[2]+dimension[2])) {
+          std::cerr << "Index 3 of " << rank << msg1 << i2 << msg2 << lbounds[2] << "," << lbounds[2]+dimension[2]-1 << ")" << std::endl;
+        }
+        if (rank >= 4 && (i3 < lbounds[3] || i3 >= lbounds[3]+dimension[3])) {
+          std::cerr << "Index 4 of " << rank << msg1 << i3 << msg2 << lbounds[3] << "," << lbounds[3]+dimension[3]-1 << ")" << std::endl;
+        }
+        if (rank >= 5 && (i4 < lbounds[4] || i4 >= lbounds[4]+dimension[4])) {
+          std::cerr << "Index 5 of " << rank << msg1 << i4 << msg2 << lbounds[4] << "," << lbounds[4]+dimension[4]-1 << ")" << std::endl;
+        }
+        if (rank >= 6 && (i5 < lbounds[5] || i5 >= lbounds[5]+dimension[5])) {
+          std::cerr << "Index 6 of " << rank << msg1 << i5 << msg2 << lbounds[5] << "," << lbounds[5]+dimension[5]-1 << ")" << std::endl;
+        }
+        if (rank >= 7 && (i6 < lbounds[6] || i6 >= lbounds[6]+dimension[6])) {
+          std::cerr << "Index 7 of " << rank << msg1 << i6 << msg2 << lbounds[6] << "," << lbounds[6]+dimension[6]-1 << ")" << std::endl;
+        }
+        if (rank >= 8 && (i7 < lbounds[7] || i7 >= lbounds[7]+dimension[7])) {
+          std::cerr << "Index 8 of " << rank << msg1 << i7 << msg2 << lbounds[7] << "," << lbounds[7]+dimension[7]-1 << ")" << std::endl;
+        }
+      #endif
+      yakl_throw("Invalid Array Index Encountered");
     #endif
-    std::string msg1 = " is out of bounds. Value: ";
-    std::string msg2 = "; Bounds: (";
-    if (rank_in != rank) { std::cerr << "Indexing with the incorrect number of dimensions. " << std::endl; }
-    if (rank >= 1 && (i0 < lbounds[0] || i0 >= lbounds[0]+dimension[0])) {
-      std::cerr << "Index 1 of " << rank << msg1 << i0 << msg2 << lbounds[0] << "," << lbounds[0]+dimension[0]-1 << ")" << std::endl;
-    }
-    if (rank >= 2 && (i1 < lbounds[1] || i1 >= lbounds[1]+dimension[1])) {
-      std::cerr << "Index 2 of " << rank << msg1 << i1 << msg2 << lbounds[1] << "," << lbounds[1]+dimension[1]-1 << ")" << std::endl;
-    }
-    if (rank >= 3 && (i2 < lbounds[2] || i2 >= lbounds[2]+dimension[2])) {
-      std::cerr << "Index 3 of " << rank << msg1 << i2 << msg2 << lbounds[2] << "," << lbounds[2]+dimension[2]-1 << ")" << std::endl;
-    }
-    if (rank >= 4 && (i3 < lbounds[3] || i3 >= lbounds[3]+dimension[3])) {
-      std::cerr << "Index 4 of " << rank << msg1 << i3 << msg2 << lbounds[3] << "," << lbounds[3]+dimension[3]-1 << ")" << std::endl;
-    }
-    if (rank >= 5 && (i4 < lbounds[4] || i4 >= lbounds[4]+dimension[4])) {
-      std::cerr << "Index 5 of " << rank << msg1 << i4 << msg2 << lbounds[4] << "," << lbounds[4]+dimension[4]-1 << ")" << std::endl;
-    }
-    if (rank >= 6 && (i5 < lbounds[5] || i5 >= lbounds[5]+dimension[5])) {
-      std::cerr << "Index 6 of " << rank << msg1 << i5 << msg2 << lbounds[5] << "," << lbounds[5]+dimension[5]-1 << ")" << std::endl;
-    }
-    if (rank >= 7 && (i6 < lbounds[6] || i6 >= lbounds[6]+dimension[6])) {
-      std::cerr << "Index 7 of " << rank << msg1 << i6 << msg2 << lbounds[6] << "," << lbounds[6]+dimension[6]-1 << ")" << std::endl;
-    }
-    if (rank >= 8 && (i7 < lbounds[7] || i7 >= lbounds[7]+dimension[7])) {
-      std::cerr << "Index 8 of " << rank << msg1 << i7 << msg2 << lbounds[7] << "," << lbounds[7]+dimension[7]-1 << ")" << std::endl;
-    }
-    yakl_throw("");
   }
 
 
@@ -729,7 +731,7 @@ public:
   }
   const char* label() const {
     #ifdef YAKL_DEBUG
-      return myname.c_str();
+      return myname;
     #else
       return "";
     #endif
@@ -760,7 +762,7 @@ public:
 
   inline void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
     #ifdef YAKL_DEBUG
-      myname = std::string(label);
+      myname = label;
     #endif
 
     deallocate();
@@ -804,7 +806,7 @@ public:
           if (totElems() > 0) {
             if (myMem == memDevice) {
               #ifdef YAKL_DEBUG
-                yaklFreeDevice(myData,myname.c_str());
+                yaklFreeDevice(myData,myname);
               #else
                 yaklFreeDevice(myData,"");
               #endif

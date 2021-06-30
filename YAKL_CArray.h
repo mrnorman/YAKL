@@ -9,7 +9,7 @@ public:
   index_t dimension[rank];  // Sizes of the 8 possible dimensions
   bool    owned;            // Whether is is owned (owned = allocated,ref_counted,deallocated) or not
   #ifdef YAKL_DEBUG
-    std::string myname;     // Label for debug printing. Only stored if debugging is turned on
+    char const * myname;          // Label for debug printing. Only stored if debugging is turned on
   #endif
 
 
@@ -29,7 +29,7 @@ public:
   YAKL_INLINE Array(char const * label) {
     nullify();
     #ifdef YAKL_DEBUG
-      myname = std::string(label);
+      myname = label;
     #endif
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,7 +38,7 @@ public:
   Array(char const * label, index_t const d1) {
     #ifdef YAKL_DEBUG
       if( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     deallocate();
@@ -48,7 +48,7 @@ public:
   Array(char const * label, index_t const d1, index_t const d2) {
     #ifdef YAKL_DEBUG
       if( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     deallocate();
@@ -59,7 +59,7 @@ public:
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3) {
     #ifdef YAKL_DEBUG
       if( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     deallocate();
@@ -71,7 +71,7 @@ public:
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
     #ifdef YAKL_DEBUG
       if( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     deallocate();
@@ -84,7 +84,7 @@ public:
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
     #ifdef YAKL_DEBUG
       if( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     deallocate();
@@ -98,7 +98,7 @@ public:
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
     #ifdef YAKL_DEBUG
       if( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     deallocate();
@@ -113,7 +113,7 @@ public:
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
     #ifdef YAKL_DEBUG
       if( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     deallocate();
@@ -129,7 +129,7 @@ public:
   Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
     #ifdef YAKL_DEBUG
       if( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     deallocate();
@@ -148,7 +148,7 @@ public:
     #ifdef YAKL_DEBUG
       if ( dims.size() < rank ) { yakl_throw("ERROR: dims < rank"); }
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     deallocate();
@@ -164,7 +164,7 @@ public:
   Array(char const * label, T * data, index_t const d1) {
     #ifdef YAKL_DEBUG
       if( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     owned = false;
@@ -174,7 +174,7 @@ public:
   Array(char const * label, T * data, index_t const d1, index_t const d2) {
     #ifdef YAKL_DEBUG
       if( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     owned = false;
@@ -185,7 +185,7 @@ public:
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3) {
     #ifdef YAKL_DEBUG
       if( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     owned = false;
@@ -197,7 +197,7 @@ public:
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
     #ifdef YAKL_DEBUG
       if( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     owned = false;
@@ -210,7 +210,7 @@ public:
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
     #ifdef YAKL_DEBUG
       if( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     owned = false;
@@ -224,7 +224,7 @@ public:
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
     #ifdef YAKL_DEBUG
       if( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     owned = false;
@@ -239,7 +239,7 @@ public:
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
     #ifdef YAKL_DEBUG
       if( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     owned = false;
@@ -255,7 +255,7 @@ public:
   Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
     #ifdef YAKL_DEBUG
       if( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     owned = false;
@@ -274,7 +274,7 @@ public:
     #ifdef YAKL_DEBUG
       if ( dims.size() < rank ) { yakl_throw("ERROR: dims < rank"); }
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
-      myname = std::string(label);
+      myname = label;
     #endif
     nullify();
     owned = false;
@@ -476,18 +476,20 @@ public:
                                           index_t i6=INDEX_MAX ,
                                           index_t i7=INDEX_MAX ) const {
     #ifdef YAKL_DEBUG
-      std::cerr << "For Array labeled: " << myname << ":" << std::endl;
+      #ifndef YAKL_SEPARATE_MEMORY_SPACE
+        std::cerr << "For Array labeled: " << myname << ":" << std::endl;
+        if (rank_in != rank) { std::cerr << "Indexing with the incorrect number of dimensions. " << std::endl; }
+        if (rank >= 1 && i0 >= dimension[0]) { std::cerr << "Index 1 of " << rank << " is out of bounds. Value: " << i0 << "; Bound: " << dimension[0]-1 << std::endl; }
+        if (rank >= 2 && i1 >= dimension[1]) { std::cerr << "Index 2 of " << rank << " is out of bounds. Value: " << i1 << "; Bound: " << dimension[1]-1 << std::endl; }
+        if (rank >= 3 && i2 >= dimension[2]) { std::cerr << "Index 3 of " << rank << " is out of bounds. Value: " << i2 << "; Bound: " << dimension[2]-1 << std::endl; }
+        if (rank >= 4 && i3 >= dimension[3]) { std::cerr << "Index 4 of " << rank << " is out of bounds. Value: " << i3 << "; Bound: " << dimension[3]-1 << std::endl; }
+        if (rank >= 5 && i4 >= dimension[4]) { std::cerr << "Index 5 of " << rank << " is out of bounds. Value: " << i4 << "; Bound: " << dimension[4]-1 << std::endl; }
+        if (rank >= 6 && i5 >= dimension[5]) { std::cerr << "Index 6 of " << rank << " is out of bounds. Value: " << i5 << "; Bound: " << dimension[5]-1 << std::endl; }
+        if (rank >= 7 && i6 >= dimension[6]) { std::cerr << "Index 7 of " << rank << " is out of bounds. Value: " << i6 << "; Bound: " << dimension[6]-1 << std::endl; }
+        if (rank >= 8 && i7 >= dimension[7]) { std::cerr << "Index 8 of " << rank << " is out of bounds. Value: " << i7 << "; Bound: " << dimension[7]-1 << std::endl; }
+      #endif
+      yakl_throw("Invalid Array Index Encountered");
     #endif
-    if (rank_in != rank) { std::cerr << "Indexing with the incorrect number of dimensions. " << std::endl; }
-    if (rank >= 1 && i0 >= dimension[0]) { std::cerr << "Index 1 of " << rank << " is out of bounds. Value: " << i0 << "; Bound: " << dimension[0]-1 << std::endl; }
-    if (rank >= 2 && i1 >= dimension[1]) { std::cerr << "Index 2 of " << rank << " is out of bounds. Value: " << i1 << "; Bound: " << dimension[1]-1 << std::endl; }
-    if (rank >= 3 && i2 >= dimension[2]) { std::cerr << "Index 3 of " << rank << " is out of bounds. Value: " << i2 << "; Bound: " << dimension[2]-1 << std::endl; }
-    if (rank >= 4 && i3 >= dimension[3]) { std::cerr << "Index 4 of " << rank << " is out of bounds. Value: " << i3 << "; Bound: " << dimension[3]-1 << std::endl; }
-    if (rank >= 5 && i4 >= dimension[4]) { std::cerr << "Index 5 of " << rank << " is out of bounds. Value: " << i4 << "; Bound: " << dimension[4]-1 << std::endl; }
-    if (rank >= 6 && i5 >= dimension[5]) { std::cerr << "Index 6 of " << rank << " is out of bounds. Value: " << i5 << "; Bound: " << dimension[5]-1 << std::endl; }
-    if (rank >= 7 && i6 >= dimension[6]) { std::cerr << "Index 7 of " << rank << " is out of bounds. Value: " << i6 << "; Bound: " << dimension[6]-1 << std::endl; }
-    if (rank >= 8 && i7 >= dimension[7]) { std::cerr << "Index 8 of " << rank << " is out of bounds. Value: " << i7 << "; Bound: " << dimension[7]-1 << std::endl; }
-    yakl_throw("");
   }
 
 
@@ -710,7 +712,7 @@ public:
   }
   const char* label() const {
     #ifdef YAKL_DEBUG
-      return myname.c_str();
+      return myname;
     #else
       return "";
     #endif
@@ -765,7 +767,7 @@ public:
           if (totElems() > 0) {
             if (myMem == memDevice) {
               #ifdef YAKL_DEBUG
-                yaklFreeDevice(myData,myname.c_str());
+                yaklFreeDevice(myData,myname);
               #else
                 yaklFreeDevice(myData,"");
               #endif
