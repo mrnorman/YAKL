@@ -170,6 +170,9 @@ namespace yakl {
       c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
         arr.myData[i] = val;
       });
+      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+        fence();
+      #endif
     } else if (myMem == memHost) {
       for (index_t i = 0; i < arr.totElems(); i++) {
         arr.myData[i] = val;

@@ -11,7 +11,7 @@ namespace yakl {
 
   inline void set_alloc_free(std::function<void *( size_t )> &alloc , std::function<void ( void * )> &dealloc) {
     #if   defined(YAKL_ARCH_CUDA)
-      #if defined (__MANAGED__)
+      #if defined (YAKL_MANAGED_MEMORY)
         alloc   = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
           void *ptr;
@@ -45,7 +45,7 @@ namespace yakl {
         };
       #endif
     #elif defined(YAKL_ARCH_HIP)
-      #if defined (__MANAGED__)
+      #if defined (YAKL_MANAGED_MEMORY)
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
           void *ptr;
@@ -71,7 +71,7 @@ namespace yakl {
         };
       #endif
     #elif defined (YAKL_ARCH_SYCL)
-      #if defined (__MANAGED__)
+      #if defined (YAKL_MANAGED_MEMORY)
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
           void *ptr = sycl::malloc_shared(bytes,sycl_default_stream);

@@ -592,7 +592,7 @@ namespace fortran {
       parallel_for_cpu_serial( bounds , f );
     #endif
 
-    #if defined(__AUTO_FENCE__)
+    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
       fence();
     #endif
   }

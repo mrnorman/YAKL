@@ -24,6 +24,9 @@
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #endif
+    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+      fence();
+    #endif
   }
 
 
@@ -44,6 +47,9 @@
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #endif
+    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+      fence();
+    #endif
   }
 
 
@@ -63,6 +69,9 @@
       check_last_error();
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
+    #endif
+    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+      fence();
     #endif
   }
 

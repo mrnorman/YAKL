@@ -77,8 +77,8 @@
       std::cout << props.name << std::endl;
     #endif
 
-    #if defined(__AUTO_FENCE__)
-      std::cout << "WARNING: Automatically inserting fence() after every parallel_for" << std::endl;
+    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+      std::cout << "INFORM: Automatically inserting fence() after every parallel_for" << std::endl;
     #endif
 
   } //

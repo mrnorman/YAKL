@@ -42,6 +42,9 @@
       }
       void deviceReduce(T *data, T *devP) {
         hipcub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
+        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+          fence();
+        #endif
       }
     };
 
@@ -79,6 +82,9 @@
       }
       void deviceReduce(T *data, T *devP) {
         hipcub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
+        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+          fence();
+        #endif
       }
     };
 
@@ -116,6 +122,9 @@
       }
       void deviceReduce(T *data, T *devP) {
         hipcub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
+        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+          fence();
+        #endif
       }
     };
 
@@ -155,6 +164,9 @@
       }
       void deviceReduce(T *data, T *devP) {
         cub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
+        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+          fence();
+        #endif
       }
     };
 
@@ -192,6 +204,9 @@
       }
       void deviceReduce(T *data, T *devP) {
         cub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
+        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+          fence();
+        #endif
       }
     };
 
@@ -229,6 +244,9 @@
       }
       void deviceReduce(T *data, T *devP) {
         cub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
+        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+          fence();
+        #endif
       }
     };
 

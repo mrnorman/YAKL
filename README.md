@@ -39,14 +39,14 @@ The YAKL API is similar to Kokkos in many ways, but is quite simplified and has 
   * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
   * CUDA Managed memory also calls `cudaMemPrefetchAsync` on the entire pool
   * If the pool allocator is not used, YAKL still maintains internal host and device allocators with the afforementioned options
-  * Specify `-D__MANAGED__` to turn on `cudaMallocManaged` for Nvidia GPUs and `hipMallocHost` for AMD GPUs
+  * Specify `-DYAKL_MANAGED_MEMORY` to turn on `cudaMallocManaged` for Nvidia GPUs and `hipMallocHost` for AMD GPUs
   * Controllable via environment variables (initial size, grow size, and to turn it on or off)
 * **Fortran Bindings**: Fortran bindings for the YAKL internal / pool device allocators
   * For `real(4)`, `real(8)`, `int(4)`, `int(8)`, and `logical` arrays up to seven dimensions
   * Using Fortran bindings for Managed memory makes porting from Fortran to C++ on the GPU significantly easier
   * You can call `gator_init()` from `gator_mod` to initialize YAKL's pool allocator from Fortran code.
   * Call `gator_finalize()` to deallocate YAKL's runtime pool and other miscellaneous data
-  * When you specify `-D__MANAGED__ -DYAKL_ARCH_CUDA`, all `gator_allocate(...)` calls will not only use CUDA Managed Memory but will also map that data in OpenACC and OpenMP offload runtimes so that the data will be left alone in the offload runtimes and left for the CUDA runtime to manage instead.
+  * When you specify `-DYAKL_MANAGED_MEMORY -DYAKL_ARCH_CUDA`, all `gator_allocate(...)` calls will not only use CUDA Managed Memory but will also map that data in OpenACC and OpenMP offload runtimes so that the data will be left alone in the offload runtimes and left for the CUDA runtime to manage instead.
     * This allows you to use OpenACC and OpenMP offload without any data statements and still get efficient runtime and correct results.
     * This is accomplished with `acc_map_data(...)` in OpenACC and `omp_target_associate_ptr(...)` in OpenMP 4.5+
     * With OpenACC, this happens automatically, but with OpenMP offload, you need to also specify `-D_OPEMP45`
@@ -88,7 +88,7 @@ The YAKL API is similar to Kokkos in many ways, but is quite simplified and has 
     * FOrtran-style defaults to: `parallel_for( nx , YAKL_LAMBDA (int i) {` --> `for (int i=1; i <= nx; i++) {`, which is the same as a Fortran `do`-loop
   * Supports CUDA, CPU serial, and HIP backends at the moment
   * `parallel_for` launchers on the device are by default asynchronous in the CUDA and HIP default streams
-  * There is an automatic `fence()` option specified at compile time with `-D__AUTO_FENCE__` to insert fences after every `parallel_for` launch
+  * There is an automatic `fence()` option specified at compile time with `-DYAKL_AUTO_FENCE` to insert fences after every `parallel_for` launch
 * **NetCDF I/O and Parallel NetCDF I/O**:
   * Simplified NetCDF reading and writing utilities to get dimension sizes, tell if dimensions and variables exist, and write data either as entire varaibles or as a single entry with an `unlimited` NetCDF dimension.
   * You can write an entire variable at once, or you can write just one entry in an unlimited (typically time) dimension
@@ -380,7 +380,7 @@ if (associated(arr)) { ... }
 
 ### Managed Memory
 
-To use CUDA Managed Memory or HIP pinned memory, add `-D__MANAGED__` to the compiler flags. This will make your life much easier when porting a Fortran code to a GPU-enabled C++ code because all data allocated with the Fortran hooks of YAKL will be avilable on the CPU and the GPU without having to transfer it explicitly. However, it is always recommended to handle the transfers yourself eventually for improved efficiency. 
+To use CUDA Managed Memory or HIP pinned memory, add `-DYAKL_MANAGED_MEMORY` to the compiler flags. This will make your life much easier when porting a Fortran code to a GPU-enabled C++ code because all data allocated with the Fortran hooks of YAKL will be avilable on the CPU and the GPU without having to transfer it explicitly. However, it is always recommended to handle the transfers yourself eventually for improved efficiency. 
 
 ### Pool Allocator
 
@@ -506,8 +506,8 @@ The following CPP defines control Gator's behavior as well:
 
 * `-DYAKL_ARCH_CUDA`: Enable CUDA allcoations (`cudaMalloc` and `cudaFree` are used to create and destroy the pools)
 * `-DYAKL_ARCH_HIP`: Enable HIP allocations (`hipMalloc` and `hipFree` are used to create and destroy the pools)
-* `-D__MANAGED__`: Enable managed memory (`cudaMallocManaged` and `hipMallocHost` are used for CUDA and HIP, respectively, and the pools are pre-fetched to the GPU ahead of time for you), and inform OpenMP and OpenACC runtimes of this memory's Managed status whenever OpenACC or OpenMP are enabled. This is done automatically for OpenACC, but for OpenMP45, you'll need to specify a CPP define
-* `-D_OPENMP45 -D__MANAGED__`: Tell the OpenMP4.5 runtime that your allocations are managed so that OpenMP doesn't try to copy the data for you (i.e., this lets the underlying CUDA runtime handle it for you instead). This only does anything if `-D__MANAGED__` is also specified.
+* `-DYAKL_MANAGED_MEMORY`: Enable managed memory (`cudaMallocManaged` and `hipMallocHost` are used for CUDA and HIP, respectively, and the pools are pre-fetched to the GPU ahead of time for you), and inform OpenMP and OpenACC runtimes of this memory's Managed status whenever OpenACC or OpenMP are enabled. This is done automatically for OpenACC, but for OpenMP45, you'll need to specify a CPP define
+* `-D_OPENMP45 -DYAKL_MANAGED_MEMORY`: Tell the OpenMP4.5 runtime that your allocations are managed so that OpenMP doesn't try to copy the data for you (i.e., this lets the underlying CUDA runtime handle it for you instead). This only does anything if `-DYAKL_MANAGED_MEMORY` is also specified.
 
 ### Synchronization
 
