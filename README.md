@@ -886,7 +886,7 @@ YAKL's `YAKL_LAMBDA` is similar to the Kokkos `KOKKOS_LAMBDA`, but there are imp
 
 ### CMake
 
-To use YAKL in another CMake project, the following is a template workflow to use in your CMakeLists.txt, assuming a target called TARGET and a list of C++ source files called ${CXX_SRC}, and a yakl clone in the directory ${YAKL_HOME}.
+To use YAKL in another CMake project, the following is a template workflow to use in your CMakeLists.txt, assuming a target called TARGET and a list of C++ source files called `${CXX_SRC}`, and a yakl clone in the directory `${YAKL_HOME}`.
 
 ```cmake
 # YAKL_ARCH can be CUDA, HIP, SYCL, OPENMP45, or empty (for serial CPU backend)
