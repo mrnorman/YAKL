@@ -5,12 +5,12 @@
 
 namespace yakl {
 
-#ifdef __USE_SYCL__
+#ifdef YAKL_ARCH_SYCL
   extern sycl::queue sycl_default_stream;
 #endif
 
   inline void set_alloc_free(std::function<void *( size_t )> &alloc , std::function<void ( void * )> &dealloc) {
-    #if   defined(__USE_CUDA__)
+    #if   defined(YAKL_ARCH_CUDA)
       #if defined (__MANAGED__)
         alloc   = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
@@ -44,7 +44,7 @@ namespace yakl {
           check_last_error();
         };
       #endif
-    #elif defined(__USE_HIP__)
+    #elif defined(YAKL_ARCH_HIP)
       #if defined (__MANAGED__)
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
@@ -70,7 +70,7 @@ namespace yakl {
           check_last_error();
         };
       #endif
-    #elif defined (__USE_SYCL__)
+    #elif defined (YAKL_ARCH_SYCL)
       #if defined (__MANAGED__)
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
@@ -102,7 +102,7 @@ namespace yakl {
           check_last_error();
         };
       #endif
-    #elif defined(__USE_OPENMP45__)
+    #elif defined(YAKL_ARCH_OPENMP45)
       alloc = [] ( size_t bytes ) -> void* {
         if (bytes == 0) return nullptr;
         void *ptr;

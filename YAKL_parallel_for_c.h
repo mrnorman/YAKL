@@ -1,7 +1,7 @@
 
 #pragma once
 
-#ifdef __USE_CUDA__
+#ifdef YAKL_ARCH_CUDA
 #include <nvtx3/nvToolsExt.h>
 #endif
 
@@ -518,7 +518,7 @@ namespace c {
 
 
 
-  #ifdef __USE_CUDA__
+  #ifdef YAKL_ARCH_CUDA
     template <class F, int N, bool simple> __global__ void cudaKernelVal( Bounds<N,simple> bounds , F f ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
       if (i < bounds.nIter) {
@@ -551,7 +551,7 @@ namespace c {
 
 
 
-  #ifdef __USE_HIP__
+  #ifdef YAKL_ARCH_HIP
     template <class F, int N, bool simple> __global__ void hipKernel( Bounds<N,simple> bounds , F f ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
       if (i < bounds.nIter) {
@@ -569,7 +569,7 @@ namespace c {
 
 
 
-  #ifdef __USE_SYCL__
+  #ifdef YAKL_ARCH_SYCL
     template<class F, int N, bool simple>
     void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
       isTriviallyCopyable<F>();
@@ -584,11 +584,11 @@ namespace c {
 
   template <class F, int N, bool simple>
   inline void parallel_for( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
-    #ifdef __USE_CUDA__
+    #ifdef YAKL_ARCH_CUDA
       parallel_for_cuda( bounds , f , vectorSize );
-    #elif defined(__USE_HIP__)
+    #elif defined(YAKL_ARCH_HIP)
       parallel_for_hip ( bounds , f , vectorSize );
-    #elif defined(__USE_SYCL__)
+    #elif defined(YAKL_ARCH_SYCL)
       parallel_for_sycl( bounds , f , vectorSize );
     #else
       parallel_for_cpu_serial( bounds , f );
@@ -601,7 +601,7 @@ namespace c {
 
 
   template <class F> inline void parallel_for_cpu_serial( int ubnd , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for simd
     #endif
     for (int i0 = 0; i0 < ubnd; i0++) {
@@ -609,7 +609,7 @@ namespace c {
     }
   }
   template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for simd
     #endif
     for (int i0 = bnd.l; i0 < (int) (bnd.l+(bnd.u-bnd.l+1)); i0+=bnd.s) {
@@ -617,7 +617,7 @@ namespace c {
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<1,false> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for simd
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
@@ -625,7 +625,7 @@ namespace c {
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<2,false> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(2) 
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
@@ -634,7 +634,7 @@ namespace c {
     } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<3,false> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(3)
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
@@ -644,7 +644,7 @@ namespace c {
     } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<4,false> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(4)
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
@@ -655,7 +655,7 @@ namespace c {
     } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<5,false> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(5)
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
@@ -667,7 +667,7 @@ namespace c {
     } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<6,false> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(6)
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
@@ -680,7 +680,7 @@ namespace c {
     } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<7,false> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(7)
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
@@ -694,7 +694,7 @@ namespace c {
     } } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<8,false> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(8)
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
@@ -710,7 +710,7 @@ namespace c {
   }
 
   template <class F> inline void parallel_for_cpu_serial( Bounds<1,true> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for simd
     #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
@@ -718,7 +718,7 @@ namespace c {
     }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<2,true> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(2)
     #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
@@ -727,7 +727,7 @@ namespace c {
     } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<3,true> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(3)
     #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
@@ -737,7 +737,7 @@ namespace c {
     } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<4,true> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(4)
     #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
@@ -748,7 +748,7 @@ namespace c {
     } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<5,true> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(5)
     #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
@@ -760,7 +760,7 @@ namespace c {
     } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<6,true> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(6)
     #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
@@ -773,7 +773,7 @@ namespace c {
     } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<7,true> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(7)
     #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
@@ -787,7 +787,7 @@ namespace c {
     } } } } } } }
   }
   template <class F> inline void parallel_for_cpu_serial( Bounds<8,true> const &bounds , F const &f ) {
-    #ifdef __USE_OPENMP45__
+    #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(8)
     #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
@@ -804,11 +804,11 @@ namespace c {
 
   template <class F, int N, bool simple>
   inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f, int vectorSize = 128 ) {
-    #ifdef __USE_CUDA__
+    #ifdef YAKL_ARCH_CUDA
       nvtxRangePushA(str);
     #endif
     parallel_for( bounds , f , vectorSize );
-    #ifdef __USE_CUDA__
+    #ifdef YAKL_ARCH_CUDA
       nvtxRangePop();
     #endif
   }
@@ -820,11 +820,11 @@ namespace c {
 
 
   template <class F> inline void parallel_for( char const * str , LBnd &bnd , F const &f , int vectorSize = 128 ) {
-    #ifdef __USE_CUDA__
+    #ifdef YAKL_ARCH_CUDA
       nvtxRangePushA(str);
     #endif
     parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
-    #ifdef __USE_CUDA__
+    #ifdef YAKL_ARCH_CUDA
       nvtxRangePop();
     #endif
   }

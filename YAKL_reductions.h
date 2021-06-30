@@ -6,7 +6,7 @@
   template <class T, int myMem> class ParallelMax;
   template <class T, int myMem> class ParallelSum;
 
-  #ifdef __USE_HIP__
+  #ifdef YAKL_ARCH_HIP
 
     template <class T> class ParallelMin<T,memDevice> {
       void   *tmp;   // Temporary storage
@@ -119,7 +119,7 @@
       }
     };
 
-  #elif defined(__USE_CUDA__)
+  #elif defined(YAKL_ARCH_CUDA)
 
     template <class T> class ParallelMin<T,memDevice> {
       void   *tmp;   // Temporary storage
@@ -232,7 +232,7 @@
       }
     };
 
-  #elif defined(__USE_SYCL__)
+  #elif defined(YAKL_ARCH_SYCL)
 
     template <class T> class ParallelMin<T,memDevice> {
       int    nItems; // Number of items in the array that will be reduced
@@ -331,7 +331,7 @@
       }
     };
 
-  #elif defined(__USE_OPENMP45__)
+  #elif defined(YAKL_ARCH_OPENMP45)
 
     template <class T> class ParallelSum<T,memDevice> {
       int nItems;

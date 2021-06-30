@@ -10,8 +10,8 @@ unset GATOR_DISABLE
 
 export CC=mpicc
 export CXX=mpic++
-export CXXFLAGS="-O0 -g -DYAKL_DEBUG"
+unset CXXFLAGS
 export FFLAGS="-O0 -g"
 
-cmake ..
+cmake -DYAKL_CXX_FLAGS="-O0 -g -DYAKL_DEBUG" ..
 

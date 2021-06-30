@@ -10,7 +10,7 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
-#include "Gator.h"
+#include "YAKL_Gator.h"
 #include "stdlib.h"
 
 #ifdef YAKL_DEBUG
@@ -25,7 +25,7 @@
 #include <omp.h>
 #endif
 
-#ifdef __USE_OPENMP45__
+#ifdef YAKL_ARCH_OPENMP45
 #include <omp.h>
 #endif
 

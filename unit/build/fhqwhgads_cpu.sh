@@ -6,8 +6,8 @@ unset GATOR_DISABLE
 
 export CC=gcc
 export CXX=g++
-export CXXFLAGS="-O3"
+unset CXXFLAGS
 export FFLAGS="-O3"
 
-cmake ..
+cmake -DYAKL_CXX_FLAGS="-O3" ..
 

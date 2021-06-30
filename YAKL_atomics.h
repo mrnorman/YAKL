@@ -2,7 +2,7 @@
 #pragma once
 
 
-  #ifdef __USE_CUDA__
+  #ifdef YAKL_ARCH_CUDA
     __device__ __forceinline__ void atomicMin(float &update , float value) {
       int oldval, newval, readback;
       oldval = __float_as_int(update);
@@ -103,7 +103,7 @@
       }
     #endif
 
-  #elif defined(__USE_SYCL__)
+  #elif defined(YAKL_ARCH_SYCL)
     template <typename T, sycl::access::address_space addressSpace =
 	      sycl::access::address_space::global_space>
     using relaxed_atomic_ref =
@@ -186,7 +186,7 @@
       relaxed_atomic_ref<T, addressSpace>( update ).fetch_max( value );
     }
 
-  #elif defined(__USE_HIP__)
+  #elif defined(YAKL_ARCH_HIP)
     __device__ __forceinline__ void atomicMin(float &update , float value) {
       int oldval, newval, readback;
       oldval = __float_as_int(update);
@@ -279,7 +279,7 @@
     }
   #endif
 
-  #ifdef __USE_OPENMP45__
+  #ifdef YAKL_ARCH_OPENMP45
     template <class T> inline void atomicAdd(T &update, T value) {
       #pragma omp atomic update 
         update += value;

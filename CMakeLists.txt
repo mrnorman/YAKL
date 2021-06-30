@@ -1,19 +1,10 @@
 
-set(YAKL_SOURCE YAKL.cpp gator_mod.F90 PARENT_SCOPE)
-set(YAKL_SOURCE YAKL.cpp gator_mod.F90             )
-set(YAKL_CXX_SOURCE YAKL.cpp PARENT_SCOPE)
-set(YAKL_CXX_SOURCE YAKL.cpp             )
-set(YAKL_F90_SOURCE gator_mod.F90 PARENT_SCOPE)
-set(YAKL_F90_SOURCE gator_mod.F90             )
+set(YAKL_SOURCE YAKL.cpp YAKL_gator_mod.F90)
+set(YAKL_CXX_SOURCE YAKL.cpp               )
+set(YAKL_F90_SOURCE YAKL_gator_mod.F90     )
 
-if ("${ARCH}" STREQUAL "CUDA")
-  enable_language(CUDA)
-  set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES LANGUAGE CUDA)
-  set(YAKL_CXX_FLAGS "-D__USE_CUDA__ --expt-extended-lambda --expt-relaxed-constexpr ${CUDA_FLAGS} ${YAKL_CXX_FLAGS}" PARENT_SCOPE)
-  set(YAKL_CXX_FLAGS "-D__USE_CUDA__ --expt-extended-lambda --expt-relaxed-constexpr ${CUDA_FLAGS} ${YAKL_CXX_FLAGS}"             )
-  set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
-  include_directories(cub)
-elseif ("${ARCH}" STREQUAL "HIP")
+# Have to ensure HIP configure has happened
+if ("${YAKL_ARCH}" STREQUAL "HIP")
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/rocPRIM/rocprim/include/rocprim/rocprim_version.hpp.in"
     "${CMAKE_CURRENT_SOURCE_DIR}/rocPRIM/rocprim/include/rocprim/rocprim_version.hpp"
@@ -24,39 +15,33 @@ elseif ("${ARCH}" STREQUAL "HIP")
     "${CMAKE_CURRENT_SOURCE_DIR}/hipCUB/hipcub/include/hipcub/hipcub_version.hpp"
     @ONLY
   )
-  set(YAKL_CXX_FLAGS "-D__USE_HIP__ ${HIP_FLAGS} ${YAKL_CXX_FLAGS}" PARENT_SCOPE)
-  set(YAKL_CXX_FLAGS "-D__USE_HIP__ ${HIP_FLAGS} ${YAKL_CXX_FLAGS}"             )
-  set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
-  include_directories(hipCUB/hipcub/include)
-  include_directories(rocPRIM/rocprim/include)
-elseif ("${ARCH}" STREQUAL "SYCL")
-  set(YAKL_CXX_FLAGS "-D__USE_SYCL__ ${SYCL_FLAGS} ${YAKL_CXX_FLAGS}" PARENT_SCOPE)
-  set(YAKL_CXX_FLAGS "-D__USE_SYCL__ ${SYCL_FLAGS} ${YAKL_CXX_FLAGS}"             )
-elseif ("${ARCH}" STREQUAL "OPENMP45")
-  set(YAKL_CXX_FLAGS "-D__USE_OPENMP45__ ${OPENMP45_FLAGS} ${YAKL_CXX_FLAGS}" PARENT_SCOPE)
-  set(YAKL_CXX_FLAGS "-D__USE_OPENMP45__ ${OPENMP45_FLAGS} ${YAKL_CXX_FLAGS}")
-  set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
-else()
-  set_source_files_properties(${YAKL_CXX_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
 endif()
+
+include(process_cxx_source_files.cmake)
+
+process_cxx_source_files(${YAKL_CXX_SOURCE})
 
 add_library(yakl STATIC ${YAKL_SOURCE})
 target_compile_features(yakl PUBLIC cxx_std_14)
 
 target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-if ("${ARCH}" STREQUAL "CUDA")
+if ("${YAKL_ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
   target_include_directories(yakl PUBLIC cub)
 endif()
 
-if ("${ARCH}" STREQUAL "HIP")
+if ("${YAKL_ARCH}" STREQUAL "HIP")
   target_include_directories(yakl PUBLIC hipCUB/hipcub/include)
   target_include_directories(yakl PUBLIC rocPRIM/rocprim/include)
 endif()
 
-if ("${ARCH}" STREQUAL "SYCL")
-  target_link_libraries(yakl "--intel -fsycl")
+if ("${YAKL_ARCH}" STREQUAL "SYCL")
+  target_link_libraries(yakl "${YAKL_SYCL_FLAGS}")
+endif()
+
+if ("${YAKL_ARCH}" STREQUAL "OPENMP45")
+  target_link_libraries(yakl "${YAKL_OPENMP45_FLAGS}")
 endif()
 
 

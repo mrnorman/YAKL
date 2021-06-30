@@ -10,11 +10,10 @@ unset GATOR_DISABLE
 
 export CC=mpicc
 export CXX=mpic++
-export CXXFLAGS="-O3 -qsmp=omp -qoffload"
+unset CXXFLAGS
 export FFLAGS="-O3"
 
-
-cmake -DARCH="OPENMP45" \
-      -DOPENMP45_FLAGS="" \
+cmake -DYAKL_ARCH="OPENMP45" \
+      -DYAKL_OPENMP45_FLAGS="-O3 -qsmp=omp -qoffload" \
       ..
 

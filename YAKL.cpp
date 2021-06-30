@@ -3,7 +3,7 @@
 
 namespace yakl {
 
-  #ifdef __USE_SYCL__
+  #ifdef YAKL_ARCH_SYCL
     sycl::queue sycl_default_stream;
   #endif
 
@@ -30,7 +30,7 @@ namespace yakl {
   };
 
 
-  #if defined(__USE_HIP__) || defined(__USE_SYCL__)
+  #if defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL)
   #else
     void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
     void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }

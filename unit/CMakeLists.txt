@@ -5,7 +5,7 @@ enable_testing()
 enable_language(Fortran)
 enable_language(CXX)
 enable_language(C)
-if ("${ARCH}" STREQUAL "CUDA")
+if ("${YAKL_ARCH}" STREQUAL "CUDA")
   enable_language(CUDA)
 endif()
 

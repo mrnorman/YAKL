@@ -11,14 +11,14 @@ namespace yakl {
 
 
   inline void check_last_error() {
-    #ifdef __USE_CUDA__
+    #ifdef YAKL_ARCH_CUDA
       auto ierr = cudaGetLastError();
       if (ierr != cudaSuccess) { yakl_throw( cudaGetErrorString( ierr ) ); }
-    #elif defined(__USE_HIP__)
+    #elif defined(YAKL_ARCH_HIP)
       auto ierr = hipGetLastError();
       if (ierr != hipSuccess) { yakl_throw( hipGetErrorString( ierr ) ); }
-    #elif defined(__USE_SYCL__)
-    #elif defined(__USE_OPENMP45__)
+    #elif defined(YAKL_ARCH_SYCL)
+    #elif defined(YAKL_ARCH_OPENMP45)
       //auto ierr = GetLastError();
     #endif
   }

@@ -7,7 +7,7 @@
   inline void init() {
     bool use_pool = true;
 
-    #ifdef __USE_SYCL__
+    #ifdef YAKL_ARCH_SYCL
       auto asyncHandler = [&](sycl::exception_list eL) {
         for (auto& e : eL) {
           try {
@@ -65,11 +65,11 @@
     yaklAllocHostFunc = [] (size_t bytes , char const *label) -> void * { return malloc(bytes); };
     yaklFreeHostFunc  = [] (void *ptr , char const *label) { free(ptr); };
 
-    #if defined(__USE_CUDA__)
+    #if defined(YAKL_ARCH_CUDA)
       cudaMalloc(&functorBuffer,functorBufSize);
     #endif
 
-    #if defined(__USE_HIP__)
+    #if defined(YAKL_ARCH_HIP)
       int id;
       hipGetDevice(&id);
       hipDeviceProp_t props;
