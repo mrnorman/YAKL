@@ -33,7 +33,7 @@ Contributors:
 
 ## Overview
 
-The YAKL API is similar to Kokkos in many ways, but is fairly simplified and has must stronger Fortran interoperability and Fortran-like options. YAKL currently has backends for CPUs (serial), Nvidia GPUs, and AMD GPUs. With around 6K lines of code, YAKL provides the following:
+The YAKL API is similar to Kokkos in many ways, but is quite simplified and has much stronger Fortran interoperability and Fortran-like options. YAKL currently has backends for CPUs (serial), CUDA, HIP, SYCL (in progress), and OpenMP offload (in progress). YAKL provides the following:
 
 * **Pool Allocator**: A pool allocator for all `memDevice` `Array`s in accelerator memory
   * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
@@ -50,8 +50,8 @@ The YAKL API is similar to Kokkos in many ways, but is fairly simplified and has
     * This allows you to use OpenACC and OpenMP offload without any data statements and still get efficient runtime and correct results.
     * This is accomplished with `acc_map_data(...)` in OpenACC and `omp_target_associate_ptr(...)` in OpenMP 4.5+
     * With OpenACC, this happens automatically, but with OpenMP offload, you need to also specify `-D_OPEMP45`
-* **Fortran Intrinsics**: To help the code look more like Fortran when desired
-  * A library of Fortran intrinsic functions (a reduced set, not all Fortran intrinsics)
+* **Limited Fortran Intrinsics**: To help the code look more like Fortran when desired
+  * A limited library of Fortran intrinsic functions (a reduced set, not all Fortran intrinsics)
   * Most intrinsics operator on Fortran-style and C-style arrays on the heap and on the stack
   * Some intrinsics (like `pack`) only operate in host memory
 * **Multi-Dimensional Arrays**: A C-style `Array` class for allocated multi-dimensional array data
@@ -89,7 +89,7 @@ The YAKL API is similar to Kokkos in many ways, but is fairly simplified and has
   * Supports CUDA, CPU serial, and HIP backends at the moment
   * `parallel_for` launchers on the device are by default asynchronous in the CUDA and HIP default streams
   * There is an automatic `fence()` option specified at compile time with `-D__AUTO_FENCE__` to insert fences after every `parallel_for` launch
-* **NetCDF I/O**:
+* **NetCDF I/O and Parallel NetCDF I/O**:
   * Simplified NetCDF reading and writing utilities to get dimension sizes, tell if dimensions and variables exist, and write data either as entire varaibles or as a single entry with an `unlimited` NetCDF dimension.
   * You can write an entire variable at once, or you can write just one entry in an unlimited (typically time) dimension
 * **Atomics**: Atomic instructions
@@ -538,7 +538,7 @@ As a rule, if you ever see anything on the left-hand-side of an `=` with **fewer
 
 ### Reductions (Min, Max, and Sum)
 
-The best way to do reductions is through the YAKL intrinsic functions `sum`, `max`, and `min`; which each take a single `Array` parameter of any memory space, style, type, or rank. E.g., `min(arr)`, where `arr` is an `Array` on the device will perform a minimum reduction of the data efficiently on the accelerator device and then pass the result back to the host. The routines below are available for performing reductions on general contiguous pointers of data OR if you need to keep the result of the reduction on the device and avoid the copy of the result back to the host.
+The best way to do reductions is through the YAKL intrinsic functions `sum`, `maxval`, and `minval`; which each take a single `Array` parameter of any memory space, style, type, or rank. E.g., `minval(arr)`, where `arr` is an `Array` on the device will perform a minimum reduction of the data efficiently on the accelerator device and then pass the result back to the host. The routines below are available for performing reductions on general contiguous pointers of data OR if you need to keep the result of the reduction on the device and avoid the copy of the result back to the host.
 
 YAKL provides efficient min, max, and sum array reductions using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size (number of elements to reduce), type (`template <class T>`) of the array that will be reduced, and the memory space (via template parameter, `yakl::memHost` or `yakl::memDevice`) of the array to be reduced. The constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using `T operator()(T *data)`, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below:
 
@@ -886,65 +886,32 @@ YAKL's `YAKL_LAMBDA` is similar to the Kokkos `KOKKOS_LAMBDA`, but there are imp
 
 ### CMake
 
-To use YAKL in another CMake project, insert the following into your CMakeLists.txt
+To use YAKL in another CMake project, the following is a template workflow to use in your CMakeLists.txt, assuming a target called TARGET and a list of C++ source files called ${CXX_SRC}, and a yakl clone in the directory ${YAKL_HOME}.
 
 ```cmake
-add_subdirectory(/path/to/yakl  path/to/build/directory)
-include_directories(/path/to/yakl)
-include_directories(/path/to/build/directory)
+# YAKL_ARCH can be CUDA, HIP, SYCL, OPENMP45, or empty (for serial CPU backend)
+set(YAKL_ARCH "CUDA")  
+# Set YAKL_[ARCH_NAME]_FLAGS where ARCH_NAME is CUDA, HIP, SYCL, OPENMP45, or CXX (for CPU targets)
+set(YAKL_CUDA_FLAGS "-O3 -arch sm_70 -ccbin mpic++")
+# Add the YAKL library and perform other needed target tasks
+add_subdirectory(${YAKL_HOME} ./yakl)
+# Set YAKL properties on the source files using YAKL
+include(${YAKL_HOME}/process_cxx_source_files.cmake)
+process_cxx_source_files(${CXX_SRC})
+message(STATUS "YAKL Compiler Flags: ${YAKL_COMPILER_FLAGS}")
+# Link the yakl target
+target_link_libraries(TARGET yakl)
 ```
 
-The following variables can be defined before the `add_subdirectory()` command: `${YAKL_ARCH}`, `${CUDA_FLAGS}`, `${HIP_FLAGS}`, and `${YAKL_CXX_FLAGS}`. 
+YAKL's `process_cxx_source_files` macro will also define a `${YAKL_COMPILER_FLAGS}` variable in your scope to use or print out in your CMake project. 
 
-To compile YAKL for a device target, you'll need to specify `-DARCH="CUDA"` or `-DARCH="HIP"` for Nvidia and AMD GPUs, respectively. If you don't specify either of these, then YAKL will compile for the CPU in serial.
+You must use a `cxx_std_14` or higher when compiling with YAKL because the cub library used for efficient reductions requires it.
 
-You can further specify `-DCUDA_FLAGS="-D__MANAGED__ -arch sm_70"` or other flags if you wish. if you omit these flags, YAKL will compile without Managed Memory and without a specific GPU target. If you use double precision `atomicAdd`, and you're using a modern Nvidia GPU (`sm_60` or greater), you will want to specify `-arch` to ensure good performance. Again, specify these before running the CMake `add_subdirectory` command.
-
-You can specify `-DHIP_FLAGS="..."` to pass in more options to AMD's `hipcc` compiler.
-
-If you specify `-DARCH="CUDA"`, then you **must** specify `-DYAKL_CUB_HOME=/path/to/cub`.
-
-If you specify `-DARCH="HIP"`, then you **must** specify `-DYAKL_HIPCUB_HOME=/path/to/hipCUB -DYAKL_ROCPRIM_HOME=/path/to/rocPRIM`
-
-After running the `add_subdirectory()` command, YAKL will export four variables into parent scope for you to use: `${YAKL_CXX_SOURCE}`, `${YAKL_F90_SOURCE}`, `${YAKL_SOURCE}`, and `${YAKL_CXX_FLAGS}`. The C++ flags are given to you since it's almost certain you'll need to compile C++ source files that link in YAKL headers, and these will needs those flags.
-
-You can compile C++ files that use YAKL header files with the following:
-
-```cmake
-set_source_files_properties(whatever.cpp PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
-if ("${YAKL_ARCH}" STREQUALS "CUDA")
-  set_source_files_properties(whatever.cpp PROPERTIES LANGUAGE CUDA)
-endif()
-```
-
-For all targets including source files that use yakl, you will need to have the following:
-
-```cmake
-target_link_libraries(target_name yakl)
-target_compile_features(target_name cxx_std_14)
-```
-
-You can, of course, specified a higher C++ standard so long as the features from that standard are supported by the vendor's compiler for the desired hardware backend.
-
-Also, the YAKL source files are given to you in case you want to compile YAKL is a different way yourself, for instance, if the YAKL `CMakeLists.txt` isn't playing nicely with your own CMake build system for some reason. `add_subdirectory` will build the yakl library, but you're free to build a separate library with the YAKL source files in a different manner if you wish to.
+If you're compiling on the CPU (i.e. `YAKL_ARCH` is empty in CMake), you can add `-DYAKL_DEBUG` to the `YAKL_CXX_FLAGS` CMake variable to get array bounds checking and other debugging checks in YAKL.
 
 ### Traditional Makefile
 
-You currently have three choices for a device backend: HIP, CUDA, and serial CPU. To use different hardware backends, add the following CPP defines in your code. You may only use one, no mixing of the backends. 
-
-| Hardware      | CPP Flag       | 
-| --------------|----------------| 
-| AMD GPU       |`-DYAKL_ARCH_HIP` | 
-| Nvidia GPU    |`-DYAKL_ARCH_CUDA`| 
-| CPU Serial    | neither of the above two | 
-
-Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array`, `SArray`, and `FSArray` objects. **Beware** that this only works on host code at the moment, so do not pass `-DARRAY_DEBUG` at the same time as passing `-DYAKL_ARCH_CUDA` or `-DYAKL_ARCH_HIP`. The reason is that the CUDA and HIP runtimes do not currently support exception throwing.
-
-Passing `-D__MANAGED__` will trigger `cudaMallocManaged()` in tandem with `-DYAKL_ARCH_CUDA` and `hipMallocHost()` in tandem with `-DYAKL_ARCH_HIP`.
-
-Passing `-D__AUTO_FENCE__` will automatically insert a `yakl::fence()` after every `yakl::parallel_for` launch.
-
-You will have to explicitly pass `-I/path/to/cub` if you specify `-DYAKL_ARCH_CUDA`  and  `-I/path/to/hipCUB -I/path/to/rocPRIM` if you specify `-DYAKL_ARCH_HIP`.
+To compile in a traditional make file, you need to handle the backend-specific flags yourself. For different hardware backens, you need to specify `-DYAKL_ARCH_[BACKEND]` where `[BACKEND] is CUDA, HIP, SYCL, OpenMP45`. If you do not specify any `-DYAKL_ARCH_`, then it will compile for a serial CPU backend.
 
 ## Future Work
 
