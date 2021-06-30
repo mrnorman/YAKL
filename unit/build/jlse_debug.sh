@@ -14,5 +14,5 @@ export FC=ifx
 export CXXFLAGS="-O0 -g -DYAKL_DEBUG"
 export FFLAGS="-O0 -g"
 
-cmake ..
+cmake -DYAKL_CXX_FLAGS="$CXXFLAGS" ..
 

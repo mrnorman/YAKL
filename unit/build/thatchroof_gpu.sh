@@ -11,7 +11,7 @@ export FFLAGS="-O3"
 
 export CXXFLAGS="-O3"
 
-cmake -DARCH="CUDA"                             \
-      -DCUDA_FLAGS="-O3 -arch sm_35 -ccbin g++ -DTHRUST_IGNORE_CUB_VERSION_CHECK" \
+cmake -DYAKL_ARCH="CUDA"                             \
+      -DYAKL_CUDA_FLAGS="-O3 -arch sm_35 -ccbin g++ -DTHRUST_IGNORE_CUB_VERSION_CHECK" \
       ..
 

@@ -8,7 +8,7 @@ namespace yakl {
   typedef unsigned int index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 
-  #ifdef __USE_SYCL__
+  #ifdef YAKL_ARCH_SYCL
     extern sycl::queue sycl_default_stream;
 
     template <class Fctor>
@@ -30,7 +30,7 @@ namespace yakl {
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
   int constexpr memStack  = 3;
-  #if defined(__USE_CUDA__) || defined(__USE_HIP__) || defined(__USE_SYCL__)
+  #if defined(YAKL_ARCH_CUDA) || defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL)
     int constexpr memDefault = memDevice;
   #else
     int constexpr memDefault = memHost;
@@ -46,7 +46,7 @@ namespace yakl {
   int constexpr NOSPEC = std::numeric_limits<int>::min()+1;
 
 
-  #ifdef __USE_CUDA__
+  #ifdef YAKL_ARCH_CUDA
     // Size of the buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
     int constexpr functorBufSize = 1024*128;
     // Buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
@@ -70,7 +70,7 @@ namespace yakl {
   extern bool yakl_is_initialized;
 
 
-  #if defined(__USE_HIP__) || defined(__USE_SYCL__)
+  #if defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL)
     YAKL_INLINE void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
     YAKL_INLINE void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
     YAKL_INLINE void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
@@ -85,15 +85,15 @@ namespace yakl {
 
   // Block the CPU code until the device code and data transfers are all completed
   inline void fence() {
-    #ifdef __USE_CUDA__
+    #ifdef YAKL_ARCH_CUDA
       cudaDeviceSynchronize();
       check_last_error();
     #endif
-    #ifdef __USE_HIP__
+    #ifdef YAKL_ARCH_HIP
       hipDeviceSynchronize();
       check_last_error();
     #endif
-    #ifdef __USE_SYCL__
+    #ifdef YAKL_ARCH_SYCL
       sycl_default_stream.wait();
       check_last_error();
     #endif
@@ -119,11 +119,11 @@ namespace yakl {
       std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
     }
     pool.finalize();
-    #if defined(__USE_CUDA__)
+    #if defined(YAKL_ARCH_CUDA)
       cudaFree(functorBuffer);
       check_last_error();
     #endif
-    #if defined(__USE_SYCL__)
+    #if defined(YAKL_ARCH_SYCL)
       sycl_default_stream = sycl::queue();
     #endif
   }
@@ -152,13 +152,13 @@ namespace yakl {
 #include "YAKL_mem_transfers.h"
 
 
-#include "Array.h"
+#include "YAKL_Array.h"
 
 
-#include "ScalarLiveOut.h"
+#include "YAKL_ScalarLiveOut.h"
 
 
-#include "Intrinsics.h"
+#include "YAKL_Intrinsics.h"
 
 
   /////////////////////////////////////////////////

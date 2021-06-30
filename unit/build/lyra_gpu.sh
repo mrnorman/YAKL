@@ -10,11 +10,10 @@ unset GATOR_DISABLE
 
 export CC=hipcc
 export CXX=hipcc
-export CXXFLAGS="-O3"
 export FFLAGS="-O3"
 
-cmake -DARCH="HIP"                  \
-      -DHIP_FLAGS="-O3" \
-      -Wno-dev  \
+cmake -DYAKL_ARCH="HIP"      \
+      -DYAKL_HIP_FLAGS="-O3" \
+      -Wno-dev               \
       ..
 

@@ -1,17 +1,17 @@
 
 #pragma once
 
-#include "StackyAllocator.h"
+#include "YAKL_StackyAllocator.h"
 #include <list>
 #include <functional>
-#if defined(__USE_HIP__)
+#if defined(YAKL_ARCH_HIP)
   #include "hip/hip_runtime.h"
 #endif
-#if defined(__USE_SYCL__)
+#if defined(YAKL_ARCH_SYCL)
   #include <CL/sycl.hpp>
   namespace sycl = cl::sycl;
 #endif
-#if defined( __USE_OPENMP45__)
+#if defined( YAKL_ARCH_OPENMP45)
   #include <omp.h>
 #endif
 

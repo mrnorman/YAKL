@@ -46,7 +46,7 @@ The YAKL API is similar to Kokkos in many ways, but is fairly simplified and has
   * Using Fortran bindings for Managed memory makes porting from Fortran to C++ on the GPU significantly easier
   * You can call `gator_init()` from `gator_mod` to initialize YAKL's pool allocator from Fortran code.
   * Call `gator_finalize()` to deallocate YAKL's runtime pool and other miscellaneous data
-  * When you specify `-D__MANAGED__ -D__USE_CUDA__`, all `gator_allocate(...)` calls will not only use CUDA Managed Memory but will also map that data in OpenACC and OpenMP offload runtimes so that the data will be left alone in the offload runtimes and left for the CUDA runtime to manage instead.
+  * When you specify `-D__MANAGED__ -DYAKL_ARCH_CUDA`, all `gator_allocate(...)` calls will not only use CUDA Managed Memory but will also map that data in OpenACC and OpenMP offload runtimes so that the data will be left alone in the offload runtimes and left for the CUDA runtime to manage instead.
     * This allows you to use OpenACC and OpenMP offload without any data statements and still get efficient runtime and correct results.
     * This is accomplished with `acc_map_data(...)` in OpenACC and `omp_target_associate_ptr(...)` in OpenMP 4.5+
     * With OpenACC, this happens automatically, but with OpenMP offload, you need to also specify `-D_OPEMP45`
@@ -116,7 +116,6 @@ The YAKL API is similar to Kokkos in many ways, but is fairly simplified and has
 The following loop would be ported to general accelerators with YAKL as follows:
 
 ```C++
-#include "Array.h"
 #include "YAKL.h"
 #include <iostream>
 typedef float real;
@@ -147,7 +146,6 @@ will become:
 
 
 ```C++
-#include "Array.h"
 #include "YAKL.h"
 #include <iostream>
 typedef float real;
@@ -506,8 +504,8 @@ Environment variables are advantageous because they allow easier adaptation to c
 
 The following CPP defines control Gator's behavior as well:
 
-* `-D__USE_CUDA__`: Enable CUDA allcoations (`cudaMalloc` and `cudaFree` are used to create and destroy the pools)
-* `-D__USE_HIP__`: Enable HIP allocations (`hipMalloc` and `hipFree` are used to create and destroy the pools)
+* `-DYAKL_ARCH_CUDA`: Enable CUDA allcoations (`cudaMalloc` and `cudaFree` are used to create and destroy the pools)
+* `-DYAKL_ARCH_HIP`: Enable HIP allocations (`hipMalloc` and `hipFree` are used to create and destroy the pools)
 * `-D__MANAGED__`: Enable managed memory (`cudaMallocManaged` and `hipMallocHost` are used for CUDA and HIP, respectively, and the pools are pre-fetched to the GPU ahead of time for you), and inform OpenMP and OpenACC runtimes of this memory's Managed status whenever OpenACC or OpenMP are enabled. This is done automatically for OpenACC, but for OpenMP45, you'll need to specify a CPP define
 * `-D_OPENMP45 -D__MANAGED__`: Tell the OpenMP4.5 runtime that your allocations are managed so that OpenMP doesn't try to copy the data for you (i.e., this lets the underlying CUDA runtime handle it for you instead). This only does anything if `-D__MANAGED__` is also specified.
 
@@ -896,7 +894,7 @@ include_directories(/path/to/yakl)
 include_directories(/path/to/build/directory)
 ```
 
-The following variables can be defined before the `add_subdirectory()` command: `${ARCH}`, `${CUDA_FLAGS}`, `${HIP_FLAGS}`, and `${YAKL_CXX_FLAGS}`. 
+The following variables can be defined before the `add_subdirectory()` command: `${YAKL_ARCH}`, `${CUDA_FLAGS}`, `${HIP_FLAGS}`, and `${YAKL_CXX_FLAGS}`. 
 
 To compile YAKL for a device target, you'll need to specify `-DARCH="CUDA"` or `-DARCH="HIP"` for Nvidia and AMD GPUs, respectively. If you don't specify either of these, then YAKL will compile for the CPU in serial.
 
@@ -914,7 +912,7 @@ You can compile C++ files that use YAKL header files with the following:
 
 ```cmake
 set_source_files_properties(whatever.cpp PROPERTIES COMPILE_FLAGS "${YAKL_CXX_FLAGS}")
-if ("${ARCH}" STREQUALS "CUDA")
+if ("${YAKL_ARCH}" STREQUALS "CUDA")
   set_source_files_properties(whatever.cpp PROPERTIES LANGUAGE CUDA)
 endif()
 ```
@@ -936,17 +934,17 @@ You currently have three choices for a device backend: HIP, CUDA, and serial CPU
 
 | Hardware      | CPP Flag       | 
 | --------------|----------------| 
-| AMD GPU       |`-D__USE_HIP__` | 
-| Nvidia GPU    |`-D__USE_CUDA__`| 
+| AMD GPU       |`-DYAKL_ARCH_HIP` | 
+| Nvidia GPU    |`-DYAKL_ARCH_CUDA`| 
 | CPU Serial    | neither of the above two | 
 
-Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array`, `SArray`, and `FSArray` objects. **Beware** that this only works on host code at the moment, so do not pass `-DARRAY_DEBUG` at the same time as passing `-D__USE_CUDA__` or `-D__USE_HIP__`. The reason is that the CUDA and HIP runtimes do not currently support exception throwing.
+Passing `-DARRAY_DEBUG` will turn on array index debugging for `Array`, `SArray`, and `FSArray` objects. **Beware** that this only works on host code at the moment, so do not pass `-DARRAY_DEBUG` at the same time as passing `-DYAKL_ARCH_CUDA` or `-DYAKL_ARCH_HIP`. The reason is that the CUDA and HIP runtimes do not currently support exception throwing.
 
-Passing `-D__MANAGED__` will trigger `cudaMallocManaged()` in tandem with `-D__USE_CUDA__` and `hipMallocHost()` in tandem with `-D__USE_HIP__`.
+Passing `-D__MANAGED__` will trigger `cudaMallocManaged()` in tandem with `-DYAKL_ARCH_CUDA` and `hipMallocHost()` in tandem with `-DYAKL_ARCH_HIP`.
 
 Passing `-D__AUTO_FENCE__` will automatically insert a `yakl::fence()` after every `yakl::parallel_for` launch.
 
-You will have to explicitly pass `-I/path/to/cub` if you specify `-D__USE_CUDA__`  and  `-I/path/to/hipCUB -I/path/to/rocPRIM` if you specify `-D__USE_HIP__`.
+You will have to explicitly pass `-I/path/to/cub` if you specify `-DYAKL_ARCH_CUDA`  and  `-I/path/to/hipCUB -I/path/to/rocPRIM` if you specify `-DYAKL_ARCH_HIP`.
 
 ## Future Work
 
