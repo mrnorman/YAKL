@@ -11,8 +11,7 @@ namespace yakl {
       std::cerr << msg << std::endl;
       throw msg;
     #else
-      printf(msg);
-      printf("\n");
+      printf("%s\n",msg);
       // Intentionally cause a segfault to kill the run if you're on a GPU
       int *segfault = nullptr;
       *segfault = 10;
