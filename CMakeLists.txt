@@ -19,7 +19,7 @@ endif()
 
 include(process_cxx_source_files.cmake)
 
-process_cxx_source_files(${YAKL_CXX_SOURCE})
+process_cxx_source_files("${YAKL_CXX_SOURCE}")
 
 add_library(yakl STATIC ${YAKL_SOURCE})
 target_compile_features(yakl PUBLIC cxx_std_14)

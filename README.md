@@ -897,7 +897,8 @@ set(YAKL_CUDA_FLAGS "-O3 -arch sm_70 -ccbin mpic++")
 add_subdirectory(${YAKL_HOME} ./yakl)
 # Set YAKL properties on the source files using YAKL
 include(${YAKL_HOME}/process_cxx_source_files.cmake)
-process_cxx_source_files(${CXX_SRC})
+# Have to use quotes around a file list to pass it into a macro
+process_cxx_source_files("${CXX_SRC}")
 message(STATUS "YAKL Compiler Flags: ${YAKL_COMPILER_FLAGS}")
 # Link the yakl target
 target_link_libraries(TARGET yakl)
