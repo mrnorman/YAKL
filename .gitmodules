@@ -1,9 +1,9 @@
 [submodule "cub"]
 	path = cub
-	url = https://github.com/NVIDIA/cub.git
+	url = git@github.com:NVIDIA/cub.git
 [submodule "hipCUB"]
 	path = hipCUB
-	url = https://github.com/ROCmSoftwarePlatform/hipCUB.git
+	url = git@github.com:ROCmSoftwarePlatform/hipCUB.git
 [submodule "rocPRIM"]
 	path = rocPRIM
-	url = https://github.com/ROCmSoftwarePlatform/rocPRIM.git
+	url = git@github.com:ROCmSoftwarePlatform/rocPRIM.git
