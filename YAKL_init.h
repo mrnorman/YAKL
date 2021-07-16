@@ -5,6 +5,10 @@
 
   // Initialize the YAKL framework
   inline void init() {
+    #ifdef YAKL_PROFILE
+      std::cout << "Using YAKL Timers via GPTL\n";
+      GPTLinitialize();
+    #endif
     bool use_pool = true;
 
     #ifdef YAKL_ARCH_SYCL

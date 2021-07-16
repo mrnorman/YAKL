@@ -99,6 +99,8 @@ namespace yakl {
     #endif
   }
 
+  #include "YAKL_timers.h"
+
 
   inline bool isInitialized() {
     return yakl_is_initialized;
@@ -125,6 +127,10 @@ namespace yakl {
     #endif
     #if defined(YAKL_ARCH_SYCL)
       sycl_default_stream = sycl::queue();
+    #endif
+    #ifdef YAKL_PROFILE
+      GPTLpr_file("");
+      GPTLpr_file("yakl_timer_output.txt");
     #endif
   }
 
