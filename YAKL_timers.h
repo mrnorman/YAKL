@@ -5,14 +5,14 @@
 
 
 inline void timer_start(char const * label) {
-  #ifdef YAKL_PROFILE
+  #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
     fence();
     GPTLstart(label);
   #endif
 }
 
 inline void timer_stop(char const * label) {
-  #ifdef YAKL_PROFILE
+  #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
     fence();
     GPTLstop(label);
   #endif

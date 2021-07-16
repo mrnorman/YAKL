@@ -801,7 +801,21 @@ namespace fortran {
 
   template <class F, int N, bool simple>
   inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f, int vectorSize = 128 ) {
+    #ifdef YAKL_ARCH_CUDA
+      nvtxRangePushA(str);
+    #endif
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start(str);
+    #endif
+
     parallel_for( bounds , f , vectorSize );
+
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop(str);
+    #endif
+    #ifdef YAKL_ARCH_CUDA
+      nvtxRangePop();
+    #endif
   }
 
 
@@ -811,7 +825,21 @@ namespace fortran {
 
 
   template <class F> inline void parallel_for( char const * str , LBnd &bnd , F const &f , int vectorSize = 128 ) {
+    #ifdef YAKL_ARCH_CUDA
+      nvtxRangePushA(str);
+    #endif
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start(str);
+    #endif
+
     parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop(str);
+    #endif
+    #ifdef YAKL_ARCH_CUDA
+      nvtxRangePop();
+    #endif
   }
 
 

@@ -807,7 +807,15 @@ namespace c {
     #ifdef YAKL_ARCH_CUDA
       nvtxRangePushA(str);
     #endif
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start(str);
+    #endif
+
     parallel_for( bounds , f , vectorSize );
+
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop(str);
+    #endif
     #ifdef YAKL_ARCH_CUDA
       nvtxRangePop();
     #endif
@@ -823,7 +831,15 @@ namespace c {
     #ifdef YAKL_ARCH_CUDA
       nvtxRangePushA(str);
     #endif
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start(str);
+    #endif
+
     parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop(str);
+    #endif
     #ifdef YAKL_ARCH_CUDA
       nvtxRangePop();
     #endif

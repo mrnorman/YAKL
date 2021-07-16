@@ -128,7 +128,7 @@ namespace yakl {
     #if defined(YAKL_ARCH_SYCL)
       sycl_default_stream = sycl::queue();
     #endif
-    #ifdef YAKL_PROFILE
+    #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
       GPTLpr_file("");
       GPTLpr_file("yakl_timer_output.txt");
     #endif
