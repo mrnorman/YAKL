@@ -28,6 +28,7 @@ Contributors:
   * [Fortran - C++ Interoperability with YAKL: `Array` and `gator_mod.F90`](#fortran---c-interoperability-with-yakl-array-and-gator_modf90)
   * [Interoperating with Kokkos](#interoperating-with-kokkos)
 * [Compiling with YAKL](#compiling-with-yakl)
+* [YAKL Timers](#yakl-timers)
 * [Future Work](#future-work)
 * [Software Dependencies](#software-dependencies)
 
@@ -913,6 +914,22 @@ If you're compiling on the CPU (i.e. `YAKL_ARCH` is empty in CMake), you can add
 ### Traditional Makefile
 
 To compile in a traditional make file, you need to handle the backend-specific flags yourself. For different hardware backens, you need to specify `-DYAKL_ARCH_[BACKEND]` where `[BACKEND] is CUDA, HIP, SYCL, OpenMP45`. If you do not specify any `-DYAKL_ARCH_`, then it will compile for a serial CPU backend.
+
+## YAKL Timers
+
+YAKL includes performance timers based on the General Purpose Timing Library (GPTL) by Jim Rosinski (https://github.com/jmrosinski/GPTL). To use timers, simple place these calls around the code you want to time:
+
+```C++
+yakl::timer_start("mylabel")
+...
+yakl::timer_stop("mylabel")
+```
+
+YAKL handles the initialization and output internally, but you do have to pass `-DYAKL_PROFILE` as a command line argument. At the end of the run, the timer data is printed to `stdout`, and it is written to a file `yakl_timer_output.txt`. GPTL automatically keeps track of nested timer calls and gives easy to read output that gives the total walltime as well as the min and max walltime among the calls.
+
+To make profiling easier, you can also pass `-DYAKL_AUTO_PROFILE`, and YAKL will wrap GPTL timer calls around every named `parallel_for` call in the code. Since calls without string labels wouldn't be very informative in a set of timers, those are not included. 
+
+**Important:** All timer calls involve an `fence()` operation to ensure GPU kernels are accurately timed. This can add significant overhead to latency-sensitive (small-workload) applications. Also, if you do not specify either `-DYAKL_PROFILE` or `-DYAKL_AUTO_PROFILE`, then all timer calls will become no-ops.
 
 ## Future Work
 
