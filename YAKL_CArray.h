@@ -743,8 +743,8 @@ public:
 
   inline void allocate(char const * label = "") {
     if (owned) {
-      static_assert( std::is_arithmetic<T>() || myMem == memHost , 
-                     "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
+      // static_assert( std::is_arithmetic<T>() || myMem == memHost , 
+      //                "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
       refCount = new int;
       *refCount = 1;
       if (myMem == memDevice) {
