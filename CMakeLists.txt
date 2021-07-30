@@ -46,4 +46,8 @@ if ("${YAKL_ARCH}" STREQUAL "OPENMP45")
   target_link_libraries(yakl "${YAKL_OPENMP45_FLAGS}")
 endif()
 
+if ("${YAKL_ARCH}" STREQUAL "OPENMP")
+  target_link_libraries(yakl "${YAKL_OPENMP_FLAGS}")
+endif()
+
 

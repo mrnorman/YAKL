@@ -601,6 +601,9 @@ namespace fortran {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for simd
     #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for
+    #endif
     for (int i0 = 1; i0 < ubnd; i0++) {
       f( i0 );
     }
@@ -608,6 +611,9 @@ namespace fortran {
   template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for simd
+    #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for
     #endif
     for (int i0 = bnd.l; i0 < (int) (bnd.l+(bnd.u-bnd.l+1)); i0+=bnd.s) {
       f( i0 );
@@ -617,6 +623,9 @@ namespace fortran {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for simd
     #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
       f( i0 );
     }
@@ -624,6 +633,9 @@ namespace fortran {
   template <class F> inline void parallel_for_cpu_serial( Bounds<2,false> const &bounds , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(2) 
+    #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(2) 
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
@@ -634,6 +646,9 @@ namespace fortran {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(3)
     #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(3)
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
     for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
@@ -643,6 +658,9 @@ namespace fortran {
   template <class F> inline void parallel_for_cpu_serial( Bounds<4,false> const &bounds , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(4)
+    #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(4)
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
@@ -655,6 +673,9 @@ namespace fortran {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(5)
     #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(5)
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
     for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
@@ -666,6 +687,9 @@ namespace fortran {
   template <class F> inline void parallel_for_cpu_serial( Bounds<6,false> const &bounds , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(6)
+    #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(6)
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
@@ -680,6 +704,9 @@ namespace fortran {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(7)
     #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(7)
+    #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
     for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
@@ -693,6 +720,9 @@ namespace fortran {
   template <class F> inline void parallel_for_cpu_serial( Bounds<8,false> const &bounds , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(8)
+    #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(8)
     #endif
     for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
     for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
@@ -710,6 +740,9 @@ namespace fortran {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for simd
     #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for
+    #endif
     for (int i0 = 1; i0 <= bounds.dims[0]; i0++) {
       f( i0 );
     }
@@ -717,6 +750,9 @@ namespace fortran {
   template <class F> inline void parallel_for_cpu_serial( Bounds<2,true> const &bounds , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(2)
+    #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(2)
     #endif
     for (int i0 = 1; i0 <= bounds.dims[0]; i0++) {
     for (int i1 = 1; i1 <= bounds.dims[1]; i1++) {
@@ -727,6 +763,9 @@ namespace fortran {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(3)
     #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(3)
+    #endif
     for (int i0 = 1; i0 <= bounds.dims[0]; i0++) {
     for (int i1 = 1; i1 <= bounds.dims[1]; i1++) {
     for (int i2 = 1; i2 <= bounds.dims[2]; i2++) {
@@ -736,6 +775,9 @@ namespace fortran {
   template <class F> inline void parallel_for_cpu_serial( Bounds<4,true> const &bounds , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(4)
+    #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(4)
     #endif
     for (int i0 = 1; i0 <= bounds.dims[0]; i0++) {
     for (int i1 = 1; i1 <= bounds.dims[1]; i1++) {
@@ -748,6 +790,9 @@ namespace fortran {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(5)
     #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(5)
+    #endif
     for (int i0 = 1; i0 <= bounds.dims[0]; i0++) {
     for (int i1 = 1; i1 <= bounds.dims[1]; i1++) {
     for (int i2 = 1; i2 <= bounds.dims[2]; i2++) {
@@ -759,6 +804,9 @@ namespace fortran {
   template <class F> inline void parallel_for_cpu_serial( Bounds<6,true> const &bounds , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(6)
+    #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(6)
     #endif
     for (int i0 = 1; i0 <= bounds.dims[0]; i0++) {
     for (int i1 = 1; i1 <= bounds.dims[1]; i1++) {
@@ -773,6 +821,9 @@ namespace fortran {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(7)
     #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(7)
+    #endif
     for (int i0 = 1; i0 <= bounds.dims[0]; i0++) {
     for (int i1 = 1; i1 <= bounds.dims[1]; i1++) {
     for (int i2 = 1; i2 <= bounds.dims[2]; i2++) {
@@ -786,6 +837,9 @@ namespace fortran {
   template <class F> inline void parallel_for_cpu_serial( Bounds<8,true> const &bounds , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(8)
+    #endif
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for collapse(8)
     #endif
     for (int i0 = 1; i0 <= bounds.dims[0]; i0++) {
     for (int i1 = 1; i1 <= bounds.dims[1]; i1++) {
