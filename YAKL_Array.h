@@ -257,11 +257,11 @@ using FSArray = Array< FSPEC< T , B0 , B1 , B2 , B3 > , rank , memStack , styleF
 
 
 ///////////////////////////////////////////////////////////
-// operator* for stack arrays only
+// Matrix multiplication routines for column-row format
 ///////////////////////////////////////////////////////////
 template <class T, index_t COL_L, index_t ROW_L, index_t COL_R>
 YAKL_INLINE SArray<T,2,COL_R,ROW_L>
-operator* ( SArray<T,2,COL_L,ROW_L> const &left ,
+matmul_cr ( SArray<T,2,COL_L,ROW_L> const &left ,
             SArray<T,2,COL_R,COL_L> const &right ) {
   SArray<T,2,COL_R,ROW_L> ret;
   for (index_t i=0; i < COL_R; i++) {
@@ -276,9 +276,10 @@ operator* ( SArray<T,2,COL_L,ROW_L> const &left ,
   return ret;
 }
 
+
 template<class T, index_t COL_L, index_t ROW_L>
 YAKL_INLINE SArray<T,1,ROW_L>
-operator* ( SArray<T,2,COL_L,ROW_L> const &left ,
+matmul_cr ( SArray<T,2,COL_L,ROW_L> const &left ,
             SArray<T,1,COL_L>       const &right ) {
   SArray<T,1,ROW_L> ret;
   for (index_t j=0; j < ROW_L; j++) {
@@ -291,16 +292,17 @@ operator* ( SArray<T,2,COL_L,ROW_L> const &left ,
   return ret;
 }
 
-template <class T, int D0_L, int D1_L, int D1_R>
-YAKL_INLINE FSArray<T,2,SB<D0_L>,SB<D1_R>>
-operator*( FSArray<T,2,SB<D0_L>,SB<D1_L>> const &a1 ,
-           FSArray<T,2,SB<D1_L>,SB<D1_R>> const &a2 ) {
-  FSArray<T,2,SB<D0_L>,SB<D1_R>> ret;
-  for (int i=1; i <= D0_L; i++) {
-    for (int j=1; j <= D1_R; j++) {
+
+template <class T, index_t COL_L, index_t ROW_L, index_t COL_R>
+YAKL_INLINE FSArray<T,2,SB<COL_R>,SB<ROW_L>>
+matmul_cr ( FSArray<T,2,SB<COL_L>,SB<ROW_L>> const &left ,
+            FSArray<T,2,SB<COL_R>,SB<COL_L>> const &right ) {
+  FSArray<T,2,SB<COL_R>,SB<ROW_L>> ret;
+  for (index_t i=0; i < COL_R; i++) {
+    for (index_t j=0; j < ROW_L; j++) {
       T tmp = 0;
-      for (int k=1; k <= D1_L; k++) {
-        tmp += a1(i,k) * a2(k,j);
+      for (index_t k=0; k < COL_L; k++) {
+        tmp += left(k,j) * right(i,k);
       }
       ret(i,j) = tmp;
     }
@@ -308,19 +310,212 @@ operator*( FSArray<T,2,SB<D0_L>,SB<D1_L>> const &a1 ,
   return ret;
 }
 
-template <class T, int D0_L, int D1_L>
-YAKL_INLINE FSArray<T,1,SB<D0_L>>
-operator*( FSArray<T,2,SB<D0_L>,SB<D1_L>> const &a1 ,
-           FSArray<T,1,SB<D1_L>>          const &a2 ) {
-  FSArray<T,1,SB<D0_L>> ret;
-  for (int i=1; i <= D0_L; i++) {
+
+template<class T, index_t COL_L, index_t ROW_L>
+YAKL_INLINE FSArray<T,1,SB<ROW_L>>
+matmul_cr ( FSArray<T,2,SB<COL_L>,SB<ROW_L>> const &left ,
+            FSArray<T,1,SB<COL_L>>           const &right ) {
+  FSArray<T,1,SB<ROW_L>> ret;
+  for (index_t j=0; j < ROW_L; j++) {
     T tmp = 0;
-    for (int k=1; k <= D1_L; k++) {
-      tmp += a1(i,k) * a2(k);
+    for (index_t k=0; k < COL_L; k++) {
+      tmp += left(k,j) * right(k);
     }
-    ret(i) = tmp;
+    ret(j) = tmp;
   }
   return ret;
 }
+
+
+///////////////////////////////////////////////////////////
+// Matrix multiplication routines for row-column format
+///////////////////////////////////////////////////////////
+template <class T, index_t COL_L, index_t ROW_L, index_t COL_R>
+YAKL_INLINE SArray<T,2,ROW_L,COL_R>
+matmul_rc ( SArray<T,2,ROW_L,COL_L> const &left ,
+            SArray<T,2,COL_L,COL_R> const &right ) {
+  SArray<T,2,ROW_L,COL_R> ret;
+  for (index_t i=0; i < COL_R; i++) {
+    for (index_t j=0; j < ROW_L; j++) {
+      T tmp = 0;
+      for (index_t k=0; k < COL_L; k++) {
+        tmp += left(j,k) * right(k,i);
+      }
+      ret(j,i) = tmp;
+    }
+  }
+  return ret;
+}
+
+
+template<class T, index_t COL_L, index_t ROW_L>
+YAKL_INLINE SArray<T,1,ROW_L>
+matmul_rc ( SArray<T,2,ROW_L,COL_L> const &left ,
+            SArray<T,1,COL_L>       const &right ) {
+  SArray<T,1,ROW_L> ret;
+  for (index_t j=0; j < ROW_L; j++) {
+    T tmp = 0;
+    for (index_t k=0; k < COL_L; k++) {
+      tmp += left(j,k) * right(k);
+    }
+    ret(j) = tmp;
+  }
+  return ret;
+}
+
+
+template <class T, index_t COL_L, index_t ROW_L, index_t COL_R>
+YAKL_INLINE FSArray<T,2,SB<ROW_L>,SB<COL_R>>
+matmul_rc ( FSArray<T,2,SB<ROW_L>,SB<COL_L>> const &left ,
+            FSArray<T,2,SB<COL_L>,SB<COL_R>> const &right ) {
+  FSArray<T,2,SB<ROW_L>,SB<COL_R>> ret;
+  for (index_t i=0; i < COL_R; i++) {
+    for (index_t j=0; j < ROW_L; j++) {
+      T tmp = 0;
+      for (index_t k=0; k < COL_L; k++) {
+        tmp += left(j,k) * right(k,i);
+      }
+      ret(j,i) = tmp;
+    }
+  }
+  return ret;
+}
+
+
+template<class T, index_t COL_L, index_t ROW_L>
+YAKL_INLINE FSArray<T,1,SB<ROW_L>>
+matmul_rc ( FSArray<T,2,SB<ROW_L>,SB<COL_L>> const &left ,
+            FSArray<T,1,SB<COL_L>>           const &right ) {
+  FSArray<T,1,SB<ROW_L>> ret;
+  for (index_t j=0; j < ROW_L; j++) {
+    T tmp = 0;
+    for (index_t k=0; k < COL_L; k++) {
+      tmp += left(j,k) * right(k);
+    }
+    ret(j) = tmp;
+  }
+  return ret;
+}
+
+
+
+
+/////////////////////////////////////////////////////////////////
+// Matrix multiplication with Gaussian Elimination (no pivoting)
+// for column-row format
+/////////////////////////////////////////////////////////////////
+template <unsigned int n, class real>
+YAKL_INLINE SArray<real,2,n,n> matinv_ge_cr(SArray<real,2,n,n> &a) {
+  SArray<real,2,n,n> inv;
+
+  // Initialize inverse as identity
+  for (int icol = 0; icol < n; icol++) {
+    for (int irow = 0; irow < n; irow++) {
+      if (icol == irow) {
+        inv(icol,irow) = 1;
+      } else {
+        inv(icol,irow) = 0;
+      }
+    }
+  }
+
+  // Gaussian elimination to zero out lower
+  for (int idiag = 0; idiag < n; idiag++) {
+    // Divide out the diagonal component from the first row
+    real factor = static_cast<real>(1)/a(idiag,idiag);
+    for (int icol = idiag; icol < n; icol++) {
+      a(icol,idiag) *= factor;
+    }
+    for (int icol = 0; icol < n; icol++) {
+      inv(icol,idiag) *= factor;
+    }
+    for (int irow = idiag+1; irow < n; irow++) {
+      real factor = a(idiag,irow);
+      for (int icol = idiag; icol < n; icol++) {
+        a  (icol,irow) -= factor * a  (icol,idiag);
+      }
+      for (int icol = 0; icol < n; icol++) {
+        inv(icol,irow) -= factor * inv(icol,idiag);
+      }
+    }
+  }
+
+  // Gaussian elimination to zero out upper
+  for (int idiag = n-1; idiag >= 1; idiag--) {
+    for (int irow = 0; irow < idiag; irow++) {
+      real factor = a(idiag,irow);
+      for (int icol = irow+1; icol < n; icol++) {
+        a  (icol,irow) -= factor * a  (icol,idiag);
+      }
+      for (int icol = 0; icol < n; icol++) {
+        inv(icol,irow) -= factor * inv(icol,idiag);
+      }
+    }
+  }
+
+  return inv;
+}
+
+
+/////////////////////////////////////////////////////////////////
+// Matrix multiplication with Gaussian Elimination (no pivoting)
+// for row-column format
+/////////////////////////////////////////////////////////////////
+template <unsigned int n, class real>
+YAKL_INLINE SArray<real,2,n,n> matinv_ge_rc(SArray<real,2,n,n> &a) {
+  SArray<real,2,n,n> inv;
+
+  // Initialize inverse as identity
+  for (int icol = 0; icol < n; icol++) {
+    for (int irow = 0; irow < n; irow++) {
+      if (icol == irow) {
+        inv(irow,icol) = 1;
+      } else {
+        inv(irow,icol) = 0;
+      }
+    }
+  }
+
+  // Gaussian elimination to zero out lower
+  for (int idiag = 0; idiag < n; idiag++) {
+    // Divide out the diagonal component from the first row
+    real factor = static_cast<real>(1)/a(idiag,idiag);
+    for (int icol = idiag; icol < n; icol++) {
+      a(idiag,icol) *= factor;
+    }
+    for (int icol = 0; icol < n; icol++) {
+      inv(idiag,icol) *= factor;
+    }
+    for (int irow = idiag+1; irow < n; irow++) {
+      real factor = a(irow,idiag);
+      for (int icol = idiag; icol < n; icol++) {
+        a  (irow,icol) -= factor * a  (idiag,icol);
+      }
+      for (int icol = 0; icol < n; icol++) {
+        inv(irow,icol) -= factor * inv(idiag,icol);
+      }
+    }
+  }
+
+  // Gaussian elimination to zero out upper
+  for (int idiag = n-1; idiag >= 1; idiag--) {
+    for (int irow = 0; irow < idiag; irow++) {
+      real factor = a(irow,idiag);
+      for (int icol = irow+1; icol < n; icol++) {
+        a  (irow,icol) -= factor * a  (idiag,icol);
+      }
+      for (int icol = 0; icol < n; icol++) {
+        inv(irow,icol) -= factor * inv(idiag,icol);
+      }
+    }
+  }
+
+  return inv;
+}
+
+
+
+
+
 
 
