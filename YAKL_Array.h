@@ -401,7 +401,7 @@ matmul_rc ( FSArray<T,2,SB<ROW_L>,SB<COL_L>> const &left ,
 
 
 /////////////////////////////////////////////////////////////////
-// Matrix multiplication with Gaussian Elimination (no pivoting)
+// Matrix inverse with Gaussian Elimination (no pivoting)
 // for column-row format
 /////////////////////////////////////////////////////////////////
 template <unsigned int n, class real>
@@ -458,7 +458,7 @@ YAKL_INLINE SArray<real,2,n,n> matinv_ge_cr(SArray<real,2,n,n> &a) {
 
 
 /////////////////////////////////////////////////////////////////
-// Matrix multiplication with Gaussian Elimination (no pivoting)
+// Matrix inverse with Gaussian Elimination (no pivoting)
 // for row-column format
 /////////////////////////////////////////////////////////////////
 template <unsigned int n, class real>
