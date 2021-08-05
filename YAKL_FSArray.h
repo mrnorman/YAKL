@@ -85,6 +85,37 @@ public :
     return os;
   }
 
+
+  template <int D1_R , int myrank=rank , typename std::enable_if<myrank==2,bool>::type = false >
+  YAKL_INLINE Array< FSPEC<T,SB<D0>,SB<D1_R>> , 2 , memStack , styleFortran >
+  operator* ( Array< FSPEC<T,SB<D1>,SB<D1_R>> , 2 , memStack , styleFortran > const &rhs ) {
+    Array< FSPEC<T,SB<D0>,SB<D1_R>> , 2 , memStack , styleFortran > ret;
+    for (int i=1; i <= D0; i++) {
+      for (int j=1; j <= D1_R; j++) {
+        T tmp = 0;
+        for (int k=1; k <= D1; k++) {
+          tmp += (*this)(i,k) * rhs(k,j);
+        }
+        ret(i,j) = tmp;
+      }
+    }
+    return ret;
+  }
+
+
+  template < int myrank=rank , typename std::enable_if<myrank==2,bool>::type = false >
+  YAKL_INLINE Array< FSPEC<T,SB<D0>> , 1 , memStack , styleFortran > operator* ( Array< FSPEC<T,SB<D1>> , 1 , memStack , styleFortran > const &rhs ) {
+    Array< FSPEC<T,SB<D0>> , 1 , memStack , styleFortran > ret;
+    for (int i=1; i <= D0; i++) {
+      T tmp = 0;
+      for (int k=1; k <= D1; k++) {
+        tmp += (*this)(i,k) * rhs(k);
+      }
+      ret(i) = tmp;
+    }
+    return ret;
+  }
+
   
   YAKL_INLINE Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> get_dimensions() const {
     Array<FSPEC<int,SB<rank>>,1,memStack,styleFortran> ret;
