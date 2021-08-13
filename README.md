@@ -30,6 +30,7 @@ Contributors:
 * [Compiling with YAKL](#compiling-with-yakl)
 * [YAKL Timers](#yakl-timers)
 * [`YAKL SCOPE`](#yakl_scope)
+* [Handling Class Methods Called from Kernels](#handling-class-methods-called-from-kernels)
 * [Future Work](#future-work)
 * [Software Dependencies](#software-dependencies)
 
@@ -950,6 +951,10 @@ class Chicken {
 ```
 
 What the `YAKL_SCOPE()` macro does is create a local reference to the variable, e.g., `auto &var = this->var;`
+
+## Handling Class Methods Called from Kernels
+
+If you have a class method prefixed with `YAKL_INLINE`, meaning you intend to potentially call it from a `parallel_for` kenel, you must delcare it as `static`. This is not a firm requirement in CUDA, but it is in HIP and likely SYCL as well. Also, it makes sense from a C++ perspective. `static` member functions belong to the class itself, not any particular object or instantiation of that class. Therefore, it does not use the `this->` pointer. This idea is moot if you plan on inlining the function; however, strictly speaking, you shouln't open yourself up to the possibility of calling a function via the `this->` pointer. Therefore the function should be static.
 
 ## Future Work
 
