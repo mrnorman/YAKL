@@ -931,6 +931,10 @@ To make profiling easier, you can also pass `-DYAKL_AUTO_PROFILE`, and YAKL will
 
 **Important:** All timer calls involve an `fence()` operation to ensure GPU kernels are accurately timed. This can add significant overhead to latency-sensitive (small-workload) applications. Also, if you do not specify either `-DYAKL_PROFILE` or `-DYAKL_AUTO_PROFILE`, then all timer calls will become no-ops.
 
+## `YAKL_SCOPE`
+
+In C++, lambdas only capture by value variables defined in **local** scope. This is a problem in two separate cases: `this->var` and `::var`. In each of these cases, since they are not in local scope, C++ lambdas access them by referencing them from the CPU. This will cause an invalid memory address error inside a device kernel. To alleviate this, please use `YAKL_SCOPE( var , this->var );`  or  `YAKL_SCOPE( var , ::var );` to place the variable into local scope so that C++ lambdas copy it by value, making it valid in device memory when used in a device kernel.
+
 ## Future Work
 
 Please see the github Issues for planned future work on YAKL.
