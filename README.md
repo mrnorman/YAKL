@@ -29,6 +29,7 @@ Contributors:
   * [Interoperating with Kokkos](#interoperating-with-kokkos)
 * [Compiling with YAKL](#compiling-with-yakl)
 * [YAKL Timers](#yakl-timers)
+* [`YAKL SCOPE`](#yakl_scope)
 * [Future Work](#future-work)
 * [Software Dependencies](#software-dependencies)
 
