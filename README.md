@@ -943,7 +943,7 @@ class Chicken {
   
   void peck() {
     YAKL_SCOPE( liver , this->liver );
-    parallel_for( Bounds<2>(num_grains,num_seeds) , YAKL_LABMDA (int ng, int ns) {
+    parallel_for( 1 , YAKL_LABMDA (int dummy) {
       liver++;
     });
   }
