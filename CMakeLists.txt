@@ -20,7 +20,7 @@ endif()
 
 include(yakl_utils.cmake)
 
-process_cxx_source_files("${YAKL_CXX_SOURCE}")
+yakl_process_cxx_source_files("${YAKL_CXX_SOURCE}")
 
 set_source_files_properties(${YAKL_C_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_C_FLAGS}")
 set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")

@@ -1,6 +1,6 @@
 
 
-function(get_lang_from_list files lang langfiles)
+function(yakl_get_lang_from_list files lang langfiles)
   set(lang_files_loc "")
   foreach(file ${files})
     get_source_file_property(lang_loc ${file} LANGUAGE)
@@ -14,7 +14,7 @@ endfunction()
 
 
 
-macro(process_cxx_source_files files)
+macro(yakl_process_cxx_source_files files)
   if ("${YAKL_ARCH}" STREQUAL "CUDA")
     set_source_files_properties(${files} PROPERTIES LANGUAGE CUDA)
     set(YAKL_COMPILER_FLAGS "-DYAKL_ARCH_CUDA --expt-extended-lambda --expt-relaxed-constexpr ${YAKL_CUDA_FLAGS}")
@@ -31,16 +31,16 @@ macro(process_cxx_source_files files)
   endif()
 
   set_source_files_properties(${files} PROPERTIES COMPILE_FLAGS "${YAKL_COMPILER_FLAGS}")
-endmacro(process_cxx_source_files)
+endmacro(yakl_process_cxx_source_files)
 
 
 
 
-macro(process_target tname)
+macro(yakl_process_target tname)
   get_target_property(files ${tname} SOURCES)
-  get_lang_from_list("${files}" "CXX" cxxfiles)
+  yakl_get_lang_from_list("${files}" "CXX" cxxfiles)
 
-  process_cxx_source_files("${cxxfiles}")
+  yakl_process_cxx_source_files("${cxxfiles}")
 
   if ("${YAKL_ARCH}" STREQUAL "CUDA")
     set_property(TARGET ${tname} PROPERTY CUDA_STANDARD 14)
@@ -48,7 +48,7 @@ macro(process_target tname)
   set_property(TARGET ${tname} PROPERTY CXX_STANDARD 14)
 
   target_link_libraries(${tname} yakl)
-endmacro(process_target)
+endmacro(yakl_process_target)
 
 
 
