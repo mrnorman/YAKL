@@ -18,9 +18,12 @@ if ("${YAKL_ARCH}" STREQUAL "HIP")
   )
 endif()
 
-include(process_cxx_source_files.cmake)
+include(yakl_utils.cmake)
 
 process_cxx_source_files("${YAKL_CXX_SOURCE}")
+
+set_source_files_properties(${YAKL_C_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_C_FLAGS}")
+set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
 
 add_library(yakl STATIC ${YAKL_SOURCE})
 target_compile_features(yakl PUBLIC cxx_std_14)
