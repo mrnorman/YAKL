@@ -889,7 +889,7 @@ YAKL's `YAKL_LAMBDA` is similar to the Kokkos `KOKKOS_LAMBDA`, but there are imp
 
 ### CMake
 
-To use YAKL in another CMake project, the following is a template workflow to use in your CMakeLists.txt, assuming a target called TARGET and a list of C++ source files called `${CXX_SRC}`, and a yakl clone in the directory `${YAKL_HOME}`.
+To use YAKL in another CMake project, the following is a template workflow to use in your CMakeLists.txt, assuming a target called `TARGET` and a list of C++ source files called `${CXX_SRC}`, and a yakl clone in the directory `${YAKL_HOME}`.
 
 ```cmake
 # YAKL_ARCH can be CUDA, HIP, SYCL, OPENMP45, or empty (for serial CPU backend)
@@ -898,20 +898,19 @@ set(YAKL_ARCH "CUDA")
 set(YAKL_CUDA_FLAGS "-O3 -arch sm_70 -ccbin mpic++")
 # Add the YAKL library and perform other needed target tasks
 add_subdirectory(${YAKL_HOME} ./yakl)
-# Set YAKL properties on the source files using YAKL
-include(${YAKL_HOME}/process_cxx_source_files.cmake)
-# Have to use quotes around a file list to pass it into a macro
-process_cxx_source_files("${CXX_SRC}")
+# Set YAKL properties on the C++ source files in a target
+include(${YAKL_HOME}/yakl_utils.cmake)
+yakl_process_target(TARGET)
 message(STATUS "YAKL Compiler Flags: ${YAKL_COMPILER_FLAGS}")
-# Link the yakl target
-target_link_libraries(TARGET yakl)
 ```
 
-YAKL's `process_cxx_source_files` macro will also define a `${YAKL_COMPILER_FLAGS}` variable in your scope to use or print out in your CMake project. 
+YAKL's `yakl_process_target()` macro processes the target's C++ source files, and it will automtaically link the `yakl` library target into the `TARGET` you pass in. It also sets the CXX and CUDA (if `YAKL_ARCH == "CUDA"`) C++ standards to C++14 for the target, and it defines a `${YAKL_COMPILER_FLAGS}` variable you can query for the C++ flags applied to the target's C++ source files. 
 
-You must use a `cxx_std_14` or higher when compiling with YAKL because the cub library used for efficient reductions requires it.
+You can add `-DYAKL_DEBUG` to enable some YAKL compiler flags options, and this is valid on both the CPU and the GPU.
 
-If you're compiling on the CPU (i.e. `YAKL_ARCH` is empty in CMake), you can add `-DYAKL_DEBUG` to the `YAKL_CXX_FLAGS` CMake variable to get array bounds checking and other debugging checks in YAKL.
+When setting flags for YAKL and targets' C++ files that use YAKL, you need to specify `YAKL_<LANG>_FLAGS` before processing the target, where `<LANG>` is currently: `CUDA`, `HIP`, `SYCL`, `OPENMP45`, `OPENMP`, or `CXX`. YAKL also has some internal Fortran and C files for `gator_mod.F90` and `gptl*.c`. You can specify flags for these files with `YAKL_C_FLAGS` and `YAKL_F90_FLAGS`.
+
+If you'd rather deal with a list of C++ source files, you can use `yakl_process_cxx_source_files("${files_list}")`, where `${files_list}` is a list of C++ source files you want to process with YAKL flags and cmake attributes. Be sure not to forget the **quotations** around the variable, or the list will not properly make its way to the macro.
 
 ### Traditional Makefile
 
