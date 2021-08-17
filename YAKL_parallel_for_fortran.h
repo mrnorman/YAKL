@@ -417,9 +417,7 @@ namespace fortran {
   template<> class Bounds<2,true> {
   public:
     index_t nIter;
-    int     lbounds[2];
     index_t dims[2];
-    index_t strides[2];
     Bounds( index_t b0 , index_t b1 ) {
       dims[0] = b0;
       dims[1] = b1;
