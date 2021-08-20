@@ -8,8 +8,8 @@ target_compile_features(Fortran_Link PUBLIC cxx_std_14)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/../yakl)
 target_link_libraries(Fortran_Link yakl)
 set_target_properties(Fortran_Link PROPERTIES LINKER_LANGUAGE Fortran)
-include(../../process_cxx_source_files.cmake)
-process_cxx_source_files(${CXX_SRC})
+include(../../yakl_utils.cmake)
+yakl_process_cxx_source_files(${CXX_SRC})
 
 add_test(NAME Fortran_Link_test COMMAND ./Fortran_Link)
 

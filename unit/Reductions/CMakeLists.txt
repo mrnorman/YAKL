@@ -4,9 +4,8 @@ set(MYSRC Reductions.cpp)
 
 add_executable(Reductions ${MYSRC})
 target_compile_features(Reductions PUBLIC cxx_std_14)
-include(../../process_cxx_source_files.cmake)
-process_cxx_source_files(${MYSRC})
-target_link_libraries(Reductions yakl)
+include(../../yakl_utils.cmake)
+yakl_process_target(Reductions)
 
 add_test(NAME Reductions_test COMMAND ./Reductions)
 
