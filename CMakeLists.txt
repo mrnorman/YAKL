@@ -4,6 +4,22 @@ set(YAKL_CXX_SOURCE YAKL.cpp)
 set(YAKL_F90_SOURCE YAKL_gator_mod.F90)
 set(YAKL_SOURCE ${YAKL_C_SOURCE} ${YAKL_CXX_SOURCE} ${YAKL_F90_SOURCE})
 
+if ("${YAKL_ARCH}" STREQUAL "CUDA")
+  message(STATUS "** Building YAKL for a CUDA backend **")
+elseif ("${YAKL_ARCH}" STREQUAL "HIP")
+  message(STATUS "** Building YAKL for a HIP backend **")
+elseif ("${YAKL_ARCH}" STREQUAL "OPENMP")
+  message(STATUS "** Building YAKL for a CPU OPENMP threading backend **")
+elseif ("${YAKL_ARCH}" STREQUAL "OPENMP45")
+  message(STATUS "** Building YAKL for an OPENMP offload backend **")
+elseif ("${YAKL_ARCH}" STREQUAL "SYCL")
+  message(STATUS "** Building YAKL for an SYCL offload backend **")
+elseif ("${YAKL_ARCH}" STREQUAL "")
+  message(STATUS "** YAKL_ARCH not set. Building YAKL for a serial CPU backend **")
+else()
+  message(FATAL_ERROR "** YAKL_ARCH set to an invalid backend target: ${YAKL_ARCH} **")
+endif()
+
 # Have to ensure HIP configure has happened
 if ("${YAKL_ARCH}" STREQUAL "HIP")
   configure_file(
@@ -21,6 +37,7 @@ endif()
 include(yakl_utils.cmake)
 
 yakl_process_cxx_source_files("${YAKL_CXX_SOURCE}")
+message(STATUS "** YAKL is using the following C++ flags: ${YAKL_COMPILER_FLAGS} **")
 
 set_source_files_properties(${YAKL_C_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_C_FLAGS}")
 set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
