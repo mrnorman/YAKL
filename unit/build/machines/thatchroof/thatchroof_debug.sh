@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./cmakeclean.sh
+../../cmakeclean.sh
 
 unset GATOR_DISABLE
 
@@ -13,5 +13,5 @@ unset FFLAGS
 cmake -DYAKL_CXX_FLAGS="-O0 -g -DYAKL_DEBUG" \
       -DYAKL_C_FLAGS="-O3"                   \
       -DYAKL_F90_FLAGS="-O3"                 \
-      ..
+      ../../..
 

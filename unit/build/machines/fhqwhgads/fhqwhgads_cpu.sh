@@ -9,5 +9,6 @@ export CXX=g++
 unset CXXFLAGS
 export FFLAGS="-O3"
 
-cmake -DYAKL_CXX_FLAGS="-O3" ..
+cmake -DYAKL_CXX_FLAGS="-O3"  \
+      ..
 

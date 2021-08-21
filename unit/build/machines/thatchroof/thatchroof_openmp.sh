@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./cmakeclean.sh
+../../cmakeclean.sh
 
 unset GATOR_DISABLE
 export OMP_NUM_THREADS=24
@@ -15,5 +15,5 @@ cmake -DYAKL_ARCH="OPENMP"               \
       -DYAKL_OPENMP_FLAGS="-O3 -fopenmp" \
       -DYAKL_C_FLAGS="-O3"               \
       -DYAKL_F90_FLAGS="-O3"             \
-      ..
+      ../../..
 

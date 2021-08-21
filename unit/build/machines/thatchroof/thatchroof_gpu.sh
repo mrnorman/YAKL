@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./cmakeclean.sh
+../../cmakeclean.sh
 
 unset GATOR_DISABLE
 
@@ -14,5 +14,5 @@ cmake -DYAKL_ARCH="CUDA"                                                        
       -DYAKL_CUDA_FLAGS="-O3 -arch sm_35 --use_fast_math -ccbin g++ -DTHRUST_IGNORE_CUB_VERSION_CHECK" \
       -DYAKL_C_FLAGS="-O3"                                                                             \
       -DYAKL_F90_FLAGS="-O3"                                                                           \
-      ..
+      ../../..
 
