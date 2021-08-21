@@ -7,6 +7,9 @@ enable_language(CXX)
 enable_language(C)
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   enable_language(CUDA)
+  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+    set(CMAKE_CUDA_ARCHITECTURES OFF)
+  endif()
 endif()
 
 # YAKL library

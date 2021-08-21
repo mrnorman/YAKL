@@ -793,7 +793,7 @@ namespace c {
     #ifdef YAKL_ARCH_OPENMP45
       #pragma omp target teams distribute parallel for collapse(5)
     #endif
-    #ifdef YAKL_ARCH_OPENMP45
+    #ifdef YAKL_ARCH_OPENMP
       #pragma omp parallel for collapse(5)
     #endif
     for (int i0 = 0; i0 < bounds.dims[0]; i0++) {
