@@ -140,30 +140,33 @@ public:
     #ifdef MEMORY_DEBUG
       std::cout << "MEMORY DEBUG: Gator attempting to allocate " << label << " with " << bytes << " bytes\n";
     #endif
-    if (bytes == 0) {
-      return nullptr;
-    }
+    if (bytes == 0) return nullptr;
     // Loop through the pools and see if there's room. If so, allocate in one of them
-    for (auto it = pools.begin() ; it != pools.end() ; it++) {
-      if (it->iGotRoom(bytes)) {
-        void *ptr = it->allocate(bytes,label);
-        if (ptr != nullptr) {
-          return ptr;
-        } else {
-          die("StackyAllocator said it has room, but it apparently does not. This indicates a bug in StackyAllocator::iGotRoom(size_t bytes)");
+    bool room_found = false;
+    bool stacky_bug = false;
+    void *ptr;
+    #pragma omp critical
+    {
+      for (auto it = pools.begin() ; it != pools.end() ; it++) {
+        if (it->iGotRoom(bytes)) {
+          ptr = it->allocate(bytes,label);
+          room_found = true;
+          if (ptr == nullptr) stacky_bug = true;
         }
       }
+      if (!room_found) {
+        #ifdef MEMORY_DEBUG
+          std::cout << "MEMORY DEBUG: Current pools are not large enough. Adding a new pool of size " << growSize << " bytes\n";
+        #endif
+        if (bytes > growSize) {
+          std::cerr << "ERROR: Trying to allocate " << bytes << " bytes, but the current pool is too small, and growSize is only " << 
+                       growSize << " bytes. Thus, the allocation will never fit in pool memory.\n";
+          die("You need to increase GATOR_GROW_MB and probably GATOR_INITIAL_MB as well\n");
+        }
+        pools.push_back( StackyAllocator(growSize , mymalloc , myfree , blockSize , myzero) );
+        ptr = pools.back().allocate(bytes,label);
+      }
     }
-    #ifdef MEMORY_DEBUG
-      std::cout << "MEMORY DEBUG: Current pools are not large enough. Adding a new pool of size " << growSize << " bytes\n";
-    #endif
-    if (bytes > growSize) {
-      std::cerr << "ERROR: Trying to allocate " << bytes << " bytes, but the current pool is too small, and growSize is only " << 
-                   growSize << " bytes. Thus, the allocation will never fit in pool memory.\n";
-      die("You need to increase GATOR_GROW_MB and probably GATOR_INITIAL_MB as well\n");
-    }
-    pools.push_back( StackyAllocator(growSize , mymalloc , myfree , blockSize , myzero) );
-    void *ptr = pools.back().allocate(bytes,label);
     if (ptr != nullptr) {
       return ptr;
     } else {
@@ -177,11 +180,19 @@ public:
     #ifdef MEMORY_DEBUG
       std::cout << "MEMORY DEBUG: Gator attempting to free " << label << " with the pointer: " << ptr << "\n";
     #endif
-    // Iterate backwards. It's assumed accesses are stack-like
-    for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
-      if (it->thisIsMyPointer(ptr)) { it->free(ptr,label); return; }
+    bool pointer_valid = false;
+    #pragma omp critical
+    {
+      // Iterate backwards. It's assumed accesses are stack-like
+      for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
+        if (it->thisIsMyPointer(ptr)) {
+          it->free(ptr,label);
+          pointer_valid = true;
+          break;
+        }
+      }
     }
-    die("Error: Trying to free an invalid pointer");
+    if (!pointer_valid) die("Error: Trying to free an invalid pointer");
   };
 
 

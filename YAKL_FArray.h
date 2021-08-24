@@ -259,7 +259,10 @@ public:
     #endif
     myData   = rhs.myData;
     refCount = rhs.refCount;
-    if (owned) { (*refCount)++; }
+    if (owned) {
+      #pragma omp atomic update
+      (*refCount)++;
+    }
   }
 
 
@@ -276,7 +279,10 @@ public:
     #endif
     myData   = rhs.myData;
     refCount = rhs.refCount;
-    if (owned) { (*refCount)++; }
+    if (owned) {
+      #pragma omp atomic update
+      (*refCount)++;
+    }
 
     return *this;
   }
@@ -639,7 +645,10 @@ public:
     #endif
     ret.myData = myData;
     ret.refCount = refCount;
-    if (owned && refCount != nullptr) { (*refCount)++; }
+    if (owned && refCount != nullptr) {
+      #pragma omp atomic update
+      (*refCount)++;
+    }
     return ret;
   }
 
@@ -654,7 +663,10 @@ public:
     #endif
     ret.myData = myData;
     ret.refCount = refCount;
-    if (owned && refCount != nullptr) { (*refCount)++; }
+    if (owned && refCount != nullptr) {
+      #pragma omp atomic update
+      (*refCount)++;
+    }
     return ret;
   }
 
@@ -798,6 +810,7 @@ public:
   YAKL_INLINE void deallocate() {
     if (owned) {
       if (refCount != nullptr) {
+        #pragma omp atomic update
         (*refCount)--;
 
         if (*refCount == 0) {
