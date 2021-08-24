@@ -11,9 +11,7 @@ using yakl::c::Bounds;
 using yakl::c::SimpleBounds;
 using yakl::COLON;
 
-typedef Array<size_t,1,memHost,styleC> intHost1d;
-
-typedef Array<size_t,1,memDevice,styleC> int1d;
+typedef Array<size_t,1,memHost,styleC> int1d;
 
 
 void die(std::string msg) {
@@ -35,17 +33,20 @@ int main() {
       int1d a("a",n2);
       int1d b("b",n2);
       int1d c("c",n2);
+      auto copy_a = a;
+      auto copy_b = b;
+      auto copy_c = c;
       for (int i2=0; i2 < n2; i2++) {
-        a(i2) = i1 + 1;
-        b(i2) = i1 + 2;
-        c(i2) = i1 + i2;
+        copy_a(i2) = i1 + 1;
+        copy_b(i2) = i1 + 2;
+        copy_c(i2) = i1 + i2;
       }
-      sum_a(i1) = yakl::intrinsics::minval(a);
-      sum_b(i1) = yakl::intrinsics::minval(b);
-      sum_c(i1) = yakl::intrinsics::minval(c);
+      sum_a(i1) = yakl::intrinsics::sum(a);
+      sum_b(i1) = yakl::intrinsics::sum(b);
+      sum_c(i1) = yakl::intrinsics::sum(c);
     }
     for (int i1=0; i1 < n1; i1++) {
-      std::cout << i1 << sum_a(i1) << " , " << sum_b(i1) << " , " << sum_c(i1) << "\n";
+      std::cout << i1 << " , " << sum_a(i1) << " , " << sum_b(i1) << " , " << sum_c(i1) << "\n";
     }
   }
   yakl::finalize();
