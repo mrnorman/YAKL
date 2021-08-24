@@ -41,9 +41,12 @@ int main() {
         copy_b(i2) = i1 + 2;
         copy_c(i2) = i1 + i2;
       }
-      sum_a(i1) = yakl::intrinsics::sum(a);
-      sum_b(i1) = yakl::intrinsics::sum(b);
-      sum_c(i1) = yakl::intrinsics::sum(c);
+      auto copy_sum_a = sum_a;
+      auto copy_sum_b = sum_b;
+      auto copy_sum_c = sum_c;
+      copy_sum_a(i1) = yakl::intrinsics::sum(a);
+      copy_sum_b(i1) = yakl::intrinsics::sum(b);
+      copy_sum_c(i1) = yakl::intrinsics::sum(c);
     }
     for (int i1=0; i1 < n1; i1++) {
       std::cout << i1 << " , " << sum_a(i1) << " , " << sum_b(i1) << " , " << sum_c(i1) << "\n";
