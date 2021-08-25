@@ -38,6 +38,7 @@ cd ${YAKL_CTEST_SRC}
 git fetch origin
 git checkout master
 git reset --hard origin/master
+git submodule update --init --recursive
 
 rm -rf /home/imn/yakl_ctest/scratch/*
 
