@@ -11,7 +11,7 @@ curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/thatch
 curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/thatchroof/master-cuda-opt.sh
 curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/thatchroof/master-serial-opt.sh
 
-chmod 744 master*.sh
+chmod 744 *.sh
 
 ./run_all.sh
 
