@@ -7,5 +7,7 @@ target_compile_features(Reductions PUBLIC cxx_std_14)
 include(../../yakl_utils.cmake)
 yakl_process_target(Reductions)
 
-add_test(NAME Reductions_test COMMAND ${MPI_COMMAND} ./Reductions)
+separate_arguments(REAL_MPI_COMMAND UNIX_COMMAND ${MPI_COMMAND})
+
+add_test(NAME Reductions_test COMMAND ${REAL_MPI_COMMAND} ./Reductions)
 

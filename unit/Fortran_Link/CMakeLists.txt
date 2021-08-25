@@ -11,5 +11,7 @@ set_target_properties(Fortran_Link PROPERTIES LINKER_LANGUAGE Fortran)
 include(../../yakl_utils.cmake)
 yakl_process_cxx_source_files(${CXX_SRC})
 
-add_test(NAME Fortran_Link_test COMMAND ${MPI_COMMAND} ./Fortran_Link)
+separate_arguments(REAL_MPI_COMMAND UNIX_COMMAND ${MPI_COMMAND})
+
+add_test(NAME Fortran_Link_test COMMAND ${REAL_MPI_COMMAND} ./Fortran_Link)
 
