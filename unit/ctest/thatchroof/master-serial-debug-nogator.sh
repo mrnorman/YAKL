@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CTEST_BUILD_NAME=master-serial-debug-nogator
+export CTEST_BUILD_NAME=master-serial-gnu-debug-nogator
 
 unset GATOR_DISABLE
 unset OMP_NUM_THREADS

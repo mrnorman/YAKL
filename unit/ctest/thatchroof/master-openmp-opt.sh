@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CTEST_BUILD_NAME=master-openmp-opt
+export CTEST_BUILD_NAME=master-openmp-gnu-opt
 
 unset GATOR_DISABLE
 unset OMP_NUM_THREADS

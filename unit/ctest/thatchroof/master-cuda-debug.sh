@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CTEST_BUILD_NAME=master-cuda-debug
+export CTEST_BUILD_NAME=master-cuda-gnu-debug
 
 unset GATOR_DISABLE
 unset OMP_NUM_THREADS

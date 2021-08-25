@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CTEST_BUILD_NAME=master-serial-opt
+export CTEST_BUILD_NAME=master-serial-gnu-opt
 
 unset GATOR_DISABLE
 unset OMP_NUM_THREADS
