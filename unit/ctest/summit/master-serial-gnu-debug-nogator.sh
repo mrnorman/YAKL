@@ -4,7 +4,7 @@ source $MODULESHOME/init/bash
 module purge
 module load DefApps gcc/9.3.0 cmake
 
-export CTEST_BUILD_NAME=master-serial-debug
+export CTEST_BUILD_NAME=master-serial-gnu-debug-nogator
 
 unset GATOR_DISABLE
 unset OMP_NUM_THREADS
@@ -18,6 +18,8 @@ unset CUDAFLAGS
 unset CUDAHOSTCXX
 unset HIPCXX
 unset HIPFLAGS
+
+export GATOR_DISABLE=1
 
 export CC=gcc
 export CXX=g++
@@ -47,5 +49,5 @@ rm -rf /gpfs/alpine/stf006/scratch/imn/yakl_ctest/scratch/*
 
 cd ${ctest_dir}
 
-ctest -vv -S ctest_script.cmake
+ctest -S ctest_script.cmake
 
