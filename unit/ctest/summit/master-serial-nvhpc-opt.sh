@@ -23,7 +23,7 @@ export CC=nvc
 export CXX=nvc++
 export FC=nvfortran
 
-test_home=/gpfs/alpine/stf006/scratch/imn/yakl_ctest
+test_home=/gpfs/alpine/stf006/scratch/imn/yakl_ctest/summit
 
 export YAKL_CTEST_SRC=${test_home}/YAKL
 export YAKL_CTEST_BIN=${test_home}/scratch
@@ -43,7 +43,7 @@ git checkout master
 git reset --hard origin/master
 git submodule update --init --recursive
 
-rm -rf /gpfs/alpine/stf006/scratch/imn/yakl_ctest/scratch/*
+rm -rf /gpfs/alpine/stf006/scratch/imn/yakl_ctest/summit/scratch/*
 
 cd ${ctest_dir}
 

@@ -6,7 +6,9 @@
 #BSUB -o yakl_summit_unit.%J
 #BSUB -e yakl_summit_unit.%J
 
-cd /ccs/home/imn/yakl_ctest/scripts
+cd /ccs/home/imn/yakl_ctest/scripts/summit
+
+source /ccs/home/imn/.bash_profile
 
 curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/ctest_script.cmake
 curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/master-cuda-gnu-opt.sh
