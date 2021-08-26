@@ -34,5 +34,5 @@ endif()
 if ( "$ENV{CTEST_VALGRIND}" STREQUAL "1" )
   ctest_memcheck()
 endif()
-#ctest_submit()
+ctest_submit()
 
