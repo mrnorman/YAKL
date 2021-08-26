@@ -2,6 +2,8 @@
 
 cd /home/imn/yakl_ctest/scripts
 
+source /home/imn/.profile
+
 curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/thatchroof/master-serial-debug.sh
 curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/thatchroof/master-serial-debug-nogator.sh
 curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/thatchroof/master-openmp-opt.sh
