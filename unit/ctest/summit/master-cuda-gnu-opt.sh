@@ -25,7 +25,7 @@ export FC=gfortran
 
 test_home=/gpfs/alpine/stf006/scratch/imn/yakl_ctest/summit
 
-export YAKL_CTEST_SRC=${test_home}/YAKL
+export YAKL_CTEST_SRC=${test_home}/../YAKL
 export YAKL_CTEST_BIN=${test_home}/scratch
 export CTEST_YAKL_ARCH="CUDA"
 export CTEST_CUDA_FLAGS="-O3 --use_fast_math -arch sm_70 -ccbin g++ -DTHRUST_IGNORE_CUB_VERSION_CHECK"

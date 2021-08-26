@@ -25,7 +25,7 @@ export FC=gfortran
 
 test_home=/gpfs/alpine/stf006/scratch/imn/yakl_ctest/summit
 
-export YAKL_CTEST_SRC=${test_home}/YAKL
+export YAKL_CTEST_SRC=${test_home}/../YAKL
 export YAKL_CTEST_BIN=${test_home}/scratch
 export CTEST_YAKL_ARCH=""
 export CTEST_CXX_FLAGS="-O0 -fprofile-arcs -ftest-coverage -g -DYAKL_DEBUG"
