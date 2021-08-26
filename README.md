@@ -904,11 +904,15 @@ yakl_process_target(TARGET)
 message(STATUS "YAKL Compiler Flags: ${YAKL_COMPILER_FLAGS}")
 ```
 
-YAKL's `yakl_process_target()` macro processes the target's C++ source files, and it will automtaically link the `yakl` library target into the `TARGET` you pass in. It also sets the CXX and CUDA (if `YAKL_ARCH == "CUDA"`) C++ standards to C++14 for the target, and it defines a `${YAKL_COMPILER_FLAGS}` variable you can query for the C++ flags applied to the target's C++ source files. 
+YAKL's `yakl_process_target()` macro processes the target's C++ source files, and it will automtaically link the `yakl` library target into the `TARGET` you pass in. It also sets the CXX and CUDA (if `YAKL_ARCH == "CUDA"`) C++ standards to C++14 for the target, and it defines a `${YAKL_COMPILER_FLAGS}` variable you can query for the C++ flags applied to the target's C++ source files.
 
 You can add `-DYAKL_DEBUG` to enable some YAKL compiler flags options, and this is valid on both the CPU and the GPU.
 
 When setting flags for YAKL and targets' C++ files that use YAKL, you need to specify `YAKL_<LANG>_FLAGS` before processing the target, where `<LANG>` is currently: `CUDA`, `HIP`, `SYCL`, `OPENMP45`, `OPENMP`, or `CXX`. YAKL also has some internal Fortran and C files for `gator_mod.F90` and `gptl*.c`. You can specify flags for these files with `YAKL_C_FLAGS` and `YAKL_F90_FLAGS`.
+
+**Important**:
+* **All** of the processed target's C++ files are processed with YAKL's flags and other tasks
+* **No other flags** are included in YAKL's C++ source files after they are processed. This is important for CUDA targets because the `nvcc` compiler cannot handle duplicate flags (for reasons I cannot understand). Therefore, to be clear, the **only** flags used for processed C++ source files come from `YAKL_<LANG>_FLAGS`. CMAKE_CXX_FLAGS, for instance, are not used for C++ files processed with YAKL's CMake macros.
 
 If you'd rather deal with a list of C++ source files, you can use `yakl_process_cxx_source_files("${files_list}")`, where `${files_list}` is a list of C++ source files you want to process with YAKL flags and cmake attributes. Be sure not to forget the **quotations** around the variable, or the list will not properly make its way to the macro.
 
