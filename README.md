@@ -912,7 +912,7 @@ When setting flags for YAKL and targets' C++ files that use YAKL, you need to sp
 
 **Important**:
 * **All** of the processed target's C++ files are processed with YAKL's flags and other tasks
-* **No other flags** are included in YAKL's C++ source files after they are processed. This is important for CUDA targets because the `nvcc` compiler cannot handle duplicate flags (for reasons I cannot understand). Therefore, to be clear, the **only** flags used for processed C++ source files come from `YAKL_<LANG>_FLAGS`. CMAKE_CXX_FLAGS, for instance, are not used for C++ files processed with YAKL's CMake macros.
+* **No other flags** are included in YAKL's C++ source files after they are processed. This is important for CUDA targets because the `nvcc` compiler cannot handle duplicate flags (for reasons I cannot understand). Therefore, to be clear, the **only** flags used for processed C++ source files come from `YAKL_<LANG>_FLAGS`. `CMAKE_CXX_FLAGS`, for instance, are not used for C++ files processed with YAKL's CMake macros.
 
 If you'd rather deal with a list of C++ source files, you can use `yakl_process_cxx_source_files("${files_list}")`, where `${files_list}` is a list of C++ source files you want to process with YAKL flags and cmake attributes. Be sure not to forget the **quotations** around the variable, or the list will not properly make its way to the macro.
 
