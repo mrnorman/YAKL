@@ -12,6 +12,7 @@ export CXX=CC
 export FC=$GCC_X86_64/bin/gfortran
 unset CXXFLAGS
 unset FFLAGS
+export LD_LIBRARY_PATH=$GCC_X86_64/lib64:$LD_LIBRARY_PATH
 
 cmake -DYAKL_ARCH="HIP"                                \
       -DYAKL_HIP_FLAGS="-O3 -D__HIP_ROCclr__ -D__HIP_ARCH_GFX908__=1 --rocm-path=${ROCM_PATH} --offload-arch=gfx908 -x hip" \
