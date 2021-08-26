@@ -94,6 +94,22 @@ public :
     if (rank >= 4) { ret(3) = D3; }
     return ret;
   }
+  YAKL_INLINE Array<CSPEC<int,rank>,1,memStack,styleC> get_lbounds() const {
+    Array<CSPEC<int,rank>,1,memStack,styleC> ret;
+                     ret(0) = 0;
+    if (rank >= 2) { ret(1) = 0; }
+    if (rank >= 3) { ret(2) = 0; }
+    if (rank >= 4) { ret(3) = 0; }
+    return ret;
+  }
+  YAKL_INLINE Array<CSPEC<int,rank>,1,memStack,styleC> get_ubounds() const {
+    Array<CSPEC<int,rank>,1,memStack,styleC> ret;
+                     ret(0) = D0-1;
+    if (rank >= 2) { ret(1) = D1-1; }
+    if (rank >= 3) { ret(2) = D2-1; }
+    if (rank >= 4) { ret(3) = D3-1; }
+    return ret;
+  }
 
 };
 

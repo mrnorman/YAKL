@@ -700,6 +700,16 @@ public:
     for (int i=0; i<rank; i++) { ret(i) = dimension[i]; }
     return ret;
   }
+  YAKL_INLINE SArray<index_t,1,rank> get_lbounds() const {
+    SArray<index_t,1,rank> ret;
+    for (int i=0; i<rank; i++) { ret(i) = 0; }
+    return ret;
+  }
+  YAKL_INLINE SArray<index_t,1,rank> get_ubounds() const {
+    SArray<index_t,1,rank> ret;
+    for (int i=0; i<rank; i++) { ret(i) = dimension[i]-1; }
+    return ret;
+  }
   YAKL_INLINE T *data() const {
     return myData;
   }
