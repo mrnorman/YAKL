@@ -462,27 +462,6 @@ int main() {
       if (adiff_A1_b_f  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_f  rc");
       if (adiff_A1_A2_f >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_f rc");
 
-      auto A1_inv_c = matinv_ge( A1_c );
-      auto identity_c = matmul_rc( A1_inv_c , A1_c );
-      auto A1_inv_f = matinv_ge( A1_f );
-      auto identity_f = matmul_rc( A1_inv_f , A1_f );
-
-      real adiff_inv_c = 0;
-      real adiff_inv_f = 0;
-      for (int j=0; j < 3; j++) {
-        for (int i=0; i < 3; i++) {
-          if (i == j) {
-            adiff_inv_c += abs( identity_c(j  ,i  ) - 1 );
-            adiff_inv_f += abs( identity_f(j+1,i+1) - 1 );
-          } else {
-            adiff_inv_c += abs( identity_c(j  ,i  )     );
-            adiff_inv_f += abs( identity_f(j+1,i+1)     );
-          }
-        }
-      }
-      if (adiff_inv_c >= 1.e-13) die("ERROR: incorrect adiff_inv_c");
-      if (adiff_inv_f >= 1.e-13) die("ERROR: incorrect adiff_inv_f");
-
       auto trans_A1_c = transpose( A1_c );
       auto trans_A2_c = transpose( A2_c );
       auto trans_A1_f = transpose( A1_f );
@@ -515,6 +494,48 @@ int main() {
       if (adiff_A1_A2_c >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_c cr");
       if (adiff_A1_b_f  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_f  cr");
       if (adiff_A1_A2_f >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_f cr");
+
+
+      A1_c(0,0) = 1;
+      A1_c(0,1) = 0;
+      A1_c(0,2) = 0;
+      A1_c(1,0) = 1;
+      A1_c(1,1) = 0.5;
+      A1_c(1,2) = 0.25;
+      A1_c(2,0) = 1;
+      A1_c(2,1) = 1;
+      A1_c(2,2) = 1;
+
+      A1_f(1,1) = 1;
+      A1_f(1,2) = 0;
+      A1_f(1,3) = 0;
+      A1_f(2,1) = 1;
+      A1_f(2,2) = 0.5;
+      A1_f(2,3) = 0.25;
+      A1_f(3,1) = 1;
+      A1_f(3,2) = 1;
+      A1_f(3,3) = 1;
+
+      auto A1_inv_c = matinv_ge( A1_c );
+      auto identity_c = matmul_rc( A1_inv_c , A1_c );
+      auto A1_inv_f = matinv_ge( A1_f );
+      auto identity_f = matmul_rc( A1_inv_f , A1_f );
+
+      real adiff_inv_c = 0;
+      real adiff_inv_f = 0;
+      for (int j=0; j < 3; j++) {
+        for (int i=0; i < 3; i++) {
+          if (i == j) {
+            adiff_inv_c += abs( identity_c(j  ,i  ) - 1 );
+            adiff_inv_f += abs( identity_f(j+1,i+1) - 1 );
+          } else {
+            adiff_inv_c += abs( identity_c(j  ,i  )     );
+            adiff_inv_f += abs( identity_f(j+1,i+1)     );
+          }
+        }
+      }
+      if (adiff_inv_c >= 1.e-13) die("ERROR: incorrect adiff_inv_c");
+      if (adiff_inv_f >= 1.e-13) die("ERROR: incorrect adiff_inv_f");
     }
 
 
