@@ -12,7 +12,6 @@ public:
     char const * myname;          // Label for debug printing. Only stored if debugging is turned on
   #endif
 
-
   // Start off all constructors making sure the pointers are null
   YAKL_INLINE void nullify() {
     owned    = true;
@@ -302,8 +301,9 @@ public:
     myData   = rhs.myData;
     refCount = rhs.refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
   }
 
@@ -323,8 +323,9 @@ public:
     myData   = rhs.myData;
     refCount = rhs.refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
 
     return *this;
@@ -378,7 +379,7 @@ public:
   DESTRUCTOR
   Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
-  YAKL_INLINE ~Array() {
+  ~Array() {
     deallocate();
   }
 
@@ -638,14 +639,15 @@ public:
     ret.myData = myData;
     ret.refCount = refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
     return ret;
   }
 
 
-  inline Array<T,1,myMem,styleC> collapse() {
+  inline Array<T,1,myMem,styleC> collapse() const {
     Array<T,1,myMem,styleC> ret;
     ret.owned = owned;
     ret.dimension[0] = totElems();
@@ -655,8 +657,9 @@ public:
     ret.myData = myData;
     ret.refCount = refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
     return ret;
   }
@@ -781,8 +784,9 @@ public:
   inline void deallocate() {
     if (owned) {
       if (refCount != nullptr) {
-        #pragma omp atomic update
+        yakl_mtx.lock();
         (*refCount)--;
+        yakl_mtx.unlock();
 
         if (*refCount == 0) {
           delete refCount;

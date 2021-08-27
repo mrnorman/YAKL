@@ -260,8 +260,9 @@ public:
     myData   = rhs.myData;
     refCount = rhs.refCount;
     if (owned) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
   }
 
@@ -280,8 +281,9 @@ public:
     myData   = rhs.myData;
     refCount = rhs.refCount;
     if (owned) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
 
     return *this;
@@ -337,7 +339,7 @@ public:
   DESTRUCTOR
   Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
-  YAKL_INLINE ~Array() {
+  ~Array() {
     deallocate();
   }
 
@@ -625,7 +627,7 @@ public:
   }
 
 
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> reshape(Bnds const &bnds) const {
+  template <int N> inline Array<T,N,myMem,styleFortran> reshape(Bnds const &bnds) const {
     #ifdef YAKL_DEBUG
       if (bnds.size() != N) { yakl_throw("ERROR: new number of reshaped array dimensions does not match the templated rank"); }
       index_t totelems = 1;
@@ -646,8 +648,9 @@ public:
     ret.myData = myData;
     ret.refCount = refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
     return ret;
   }
@@ -664,8 +667,9 @@ public:
     ret.myData = myData;
     ret.refCount = refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
     return ret;
   }
@@ -810,8 +814,9 @@ public:
   inline void deallocate() {
     if (owned) {
       if (refCount != nullptr) {
-        #pragma omp atomic update
+        yakl_mtx.lock();
         (*refCount)--;
+        yakl_mtx.unlock();
 
         if (*refCount == 0) {
           delete refCount;

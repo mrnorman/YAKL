@@ -5,6 +5,11 @@
 
 namespace yakl {
 
+  // This is to guard multiple threads incrementing and decrementing the CArray and FArray
+  // reference counters. Because the reference counter pointer is shared between separate
+  // objects, the only way to guarantee safety in arrays is to have a global mutex object
+  extern std::mutex yakl_mtx;
+
   typedef unsigned int index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 

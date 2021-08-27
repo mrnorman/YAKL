@@ -4,6 +4,7 @@
 
 using yakl::Array;
 using yakl::styleC;
+using yakl::styleFortran;
 using yakl::memHost;
 using yakl::memDevice;
 using yakl::c::parallel_for;
@@ -12,6 +13,7 @@ using yakl::c::SimpleBounds;
 using yakl::COLON;
 
 typedef Array<size_t,1,memHost,styleC> int1d;
+typedef Array<size_t,1,memHost,styleFortran> int1d_f;
 
 
 void die(std::string msg) {
@@ -198,8 +200,218 @@ int main() {
       b = int1d("b",n2);
       c = int1d("c",n2);
     }
+    #pragma omp parallel for
     for (int i1=0; i1 < n1; i1++) {
-      std::cout << i1 << " , " << sum_a(i1) << " , " << sum_b(i1) << " , " << sum_c(i1) << "\n";
+      auto copy_sum_a = sum_a;
+      auto copy_sum_b = sum_b;
+      auto copy_sum_c = sum_c;
+      auto copy2_sum_a = sum_a;
+      auto copy2_sum_b = sum_b;
+      auto copy2_sum_c = sum_c;
+      auto copy3_sum_a = sum_a;
+      auto copy3_sum_b = sum_b;
+      auto copy3_sum_c = sum_c;
+      auto copy4_sum_a = sum_a;
+      auto copy4_sum_b = sum_b;
+      auto copy4_sum_c = sum_c;
+      auto copy5_sum_a = sum_a;
+      auto copy5_sum_b = sum_b;
+      auto copy5_sum_c = sum_c;
+    }
+  }
+  {
+    int constexpr n1 = 100;
+    int constexpr n2 = 1024;
+    int1d_f sum_a("sum_a",n1);
+    int1d_f sum_b("sum_b",n1);
+    int1d_f sum_c("sum_c",n1);
+    #pragma omp parallel for
+    for (int i1=1; i1 <= n1; i1++) {
+      int1d_f a("a",n2);
+      int1d_f b("b",n2);
+      int1d_f c("c",n2);
+      auto copy_a = a;
+      auto copy_b = b;
+      auto copy_c = c;
+      for (int i2=1; i2 <= n2; i2++) {
+        copy_a(i2) = i1 + 1;
+        copy_b(i2) = i1 + 2;
+        copy_c(i2) = i1 + i2;
+      }
+      auto copy_sum_a = sum_a;
+      auto copy_sum_b = sum_b;
+      auto copy_sum_c = sum_c;
+      copy_sum_a(i1) = yakl::intrinsics::sum(a);
+      copy_sum_b(i1) = yakl::intrinsics::sum(b);
+      copy_sum_c(i1) = yakl::intrinsics::sum(c);
+    }
+    #pragma omp parallel for
+    for (int i1=1; i1 <= n1; i1++) {
+      int1d_f a("a",n2);
+      int1d_f b("b",n2);
+      int1d_f c("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+      a = int1d_f("a",n2);
+      b = int1d_f("b",n2);
+      c = int1d_f("c",n2);
+    }
+    #pragma omp parallel for
+    for (int i1=1; i1 <= n1; i1++) {
+      auto copy_sum_a = sum_a;
+      auto copy_sum_b = sum_b;
+      auto copy_sum_c = sum_c;
+      auto copy2_sum_a = sum_a;
+      auto copy2_sum_b = sum_b;
+      auto copy2_sum_c = sum_c;
+      auto copy3_sum_a = sum_a;
+      auto copy3_sum_b = sum_b;
+      auto copy3_sum_c = sum_c;
+      auto copy4_sum_a = sum_a;
+      auto copy4_sum_b = sum_b;
+      auto copy4_sum_c = sum_c;
+      auto copy5_sum_a = sum_a;
+      auto copy5_sum_b = sum_b;
+      auto copy5_sum_c = sum_c;
     }
   }
   yakl::finalize();
