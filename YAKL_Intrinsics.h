@@ -711,15 +711,15 @@ namespace intrinsics {
   }
 
 
-  template <class T, index_t COL_L, index_t ROW_L, index_t COL_R>
+  template <class T, int COL_L, int ROW_L, int COL_R>
   YAKL_INLINE FSArray<T,2,SB<COL_R>,SB<ROW_L>>
   matmul_cr ( FSArray<T,2,SB<COL_L>,SB<ROW_L>> const &left ,
               FSArray<T,2,SB<COL_R>,SB<COL_L>> const &right ) {
     FSArray<T,2,SB<COL_R>,SB<ROW_L>> ret;
-    for (index_t i=0; i < COL_R; i++) {
-      for (index_t j=0; j < ROW_L; j++) {
+    for (index_t i=1; i <= COL_R; i++) {
+      for (index_t j=1; j <= ROW_L; j++) {
         T tmp = 0;
-        for (index_t k=0; k < COL_L; k++) {
+        for (index_t k=1; k <= COL_L; k++) {
           tmp += left(k,j) * right(i,k);
         }
         ret(i,j) = tmp;
@@ -729,14 +729,14 @@ namespace intrinsics {
   }
 
 
-  template<class T, index_t COL_L, index_t ROW_L>
+  template<class T, int COL_L, int ROW_L>
   YAKL_INLINE FSArray<T,1,SB<ROW_L>>
   matmul_cr ( FSArray<T,2,SB<COL_L>,SB<ROW_L>> const &left ,
               FSArray<T,1,SB<COL_L>>           const &right ) {
     FSArray<T,1,SB<ROW_L>> ret;
-    for (index_t j=0; j < ROW_L; j++) {
+    for (index_t j=1; j <= ROW_L; j++) {
       T tmp = 0;
-      for (index_t k=0; k < COL_L; k++) {
+      for (index_t k=1; k <= COL_L; k++) {
         tmp += left(k,j) * right(k);
       }
       ret(j) = tmp;
@@ -782,15 +782,15 @@ namespace intrinsics {
   }
 
 
-  template <class T, index_t COL_L, index_t ROW_L, index_t COL_R>
+  template <class T, int COL_L, int ROW_L, int COL_R>
   YAKL_INLINE FSArray<T,2,SB<ROW_L>,SB<COL_R>>
   matmul_rc ( FSArray<T,2,SB<ROW_L>,SB<COL_L>> const &left ,
               FSArray<T,2,SB<COL_L>,SB<COL_R>> const &right ) {
     FSArray<T,2,SB<ROW_L>,SB<COL_R>> ret;
-    for (index_t i=0; i < COL_R; i++) {
-      for (index_t j=0; j < ROW_L; j++) {
+    for (index_t i=1; i <= COL_R; i++) {
+      for (index_t j=1; j <= ROW_L; j++) {
         T tmp = 0;
-        for (index_t k=0; k < COL_L; k++) {
+        for (index_t k=1; k <= COL_L; k++) {
           tmp += left(j,k) * right(k,i);
         }
         ret(j,i) = tmp;
@@ -800,14 +800,14 @@ namespace intrinsics {
   }
 
 
-  template<class T, index_t COL_L, index_t ROW_L>
+  template<class T, int COL_L, int ROW_L>
   YAKL_INLINE FSArray<T,1,SB<ROW_L>>
   matmul_rc ( FSArray<T,2,SB<ROW_L>,SB<COL_L>> const &left ,
               FSArray<T,1,SB<COL_L>>           const &right ) {
     FSArray<T,1,SB<ROW_L>> ret;
-    for (index_t j=0; j < ROW_L; j++) {
+    for (index_t j=1; j <= ROW_L; j++) {
       T tmp = 0;
-      for (index_t k=0; k < COL_L; k++) {
+      for (index_t k=1; k <= COL_L; k++) {
         tmp += left(j,k) * right(k);
       }
       ret(j) = tmp;
@@ -817,72 +817,12 @@ namespace intrinsics {
 
 
 
-
-  /////////////////////////////////////////////////////////////////
-  // Matrix inverse with Gaussian Elimination (no pivoting)
-  // for column-row format
-  /////////////////////////////////////////////////////////////////
-  template <unsigned int n, class real>
-  YAKL_INLINE SArray<real,2,n,n> matinv_ge_cr(SArray<real,2,n,n> const &a) {
-    SArray<real,2,n,n> scratch;
-    SArray<real,2,n,n> inv;
-
-    // Initialize inverse as identity
-    for (int icol = 0; icol < n; icol++) {
-      for (int irow = 0; irow < n; irow++) {
-        scratch(icol,irow) = a(icol,irow);
-        if (icol == irow) {
-          inv(icol,irow) = 1;
-        } else {
-          inv(icol,irow) = 0;
-        }
-      }
-    }
-
-    // Gaussian elimination to zero out lower
-    for (int idiag = 0; idiag < n; idiag++) {
-      // Divide out the diagonal component from the first row
-      real factor = static_cast<real>(1)/scratch(idiag,idiag);
-      for (int icol = idiag; icol < n; icol++) {
-        scratch(icol,idiag) *= factor;
-      }
-      for (int icol = 0; icol < n; icol++) {
-        inv(icol,idiag) *= factor;
-      }
-      for (int irow = idiag+1; irow < n; irow++) {
-        real factor = scratch(idiag,irow);
-        for (int icol = idiag; icol < n; icol++) {
-          scratch(icol,irow) -= factor * scratch(icol,idiag);
-        }
-        for (int icol = 0; icol < n; icol++) {
-          inv    (icol,irow) -= factor * inv    (icol,idiag);
-        }
-      }
-    }
-
-    // Gaussian elimination to zero out upper
-    for (int idiag = n-1; idiag >= 1; idiag--) {
-      for (int irow = 0; irow < idiag; irow++) {
-        real factor = scratch(idiag,irow);
-        for (int icol = irow+1; icol < n; icol++) {
-          scratch(icol,irow) -= factor * scratch(icol,idiag);
-        }
-        for (int icol = 0; icol < n; icol++) {
-          inv    (icol,irow) -= factor * inv    (icol,idiag);
-        }
-      }
-    }
-
-    return inv;
-  }
-
-
   /////////////////////////////////////////////////////////////////
   // Matrix inverse with Gaussian Elimination (no pivoting)
   // for row-column format
   /////////////////////////////////////////////////////////////////
   template <unsigned int n, class real>
-  YAKL_INLINE SArray<real,2,n,n> matinv_ge_rc(SArray<real,2,n,n> const &a) {
+  YAKL_INLINE SArray<real,2,n,n> matinv_ge(SArray<real,2,n,n> const &a) {
     SArray<real,2,n,n> scratch;
     SArray<real,2,n,n> inv;
 
@@ -935,7 +875,90 @@ namespace intrinsics {
     return inv;
   }
 
+  template <int n, class real>
+  YAKL_INLINE FSArray<real,2,SB<n>,SB<n>> matinv_ge(FSArray<real,2,SB<n>,SB<n>> const &a) {
+    FSArray<real,2,SB<n>,SB<n>> scratch;
+    FSArray<real,2,SB<n>,SB<n>> inv;
 
+    // Initialize inverse as identity
+    for (int icol = 1; icol <= n; icol++) {
+      for (int irow = 1; irow <= n; irow++) {
+        scratch(icol,irow) = a(icol,irow);
+        if (icol == irow) {
+          inv(irow,icol) = 1;
+        } else {
+          inv(irow,icol) = 0;
+        }
+      }
+    }
+
+    // Gaussian elimination to zero out lower
+    for (int idiag = 1; idiag <= n; idiag++) {
+      // Divide out the diagonal component from the first row
+      real factor = static_cast<real>(1)/scratch(idiag,idiag);
+      for (int icol = idiag; icol <= n; icol++) {
+        scratch(idiag,icol) *= factor;
+      }
+      for (int icol = 1; icol <= n; icol++) {
+        inv(idiag,icol) *= factor;
+      }
+      for (int irow = idiag+1; irow <= n; irow++) {
+        real factor = scratch(irow,idiag);
+        for (int icol = idiag; icol <= n; icol++) {
+          scratch(irow,icol) -= factor * scratch(idiag,icol);
+        }
+        for (int icol = 1; icol <= n; icol++) {
+          inv    (irow,icol) -= factor * inv    (idiag,icol);
+        }
+      }
+    }
+
+    // Gaussian elimination to zero out upper
+    for (int idiag = n; idiag >= 0; idiag--) {
+      for (int irow = 1; irow <= idiag; irow++) {
+        real factor = scratch(irow,idiag);
+        for (int icol = irow+1; icol <= n; icol++) {
+          scratch(irow,icol) -= factor * scratch(idiag,icol);
+        }
+        for (int icol = 1; icol <= n; icol++) {
+          inv    (irow,icol) -= factor * inv    (idiag,icol);
+        }
+      }
+    }
+
+    return inv;
+  }
+
+
+  /////////////////////////////////////////////////////////////////
+  // Transpose
+  /////////////////////////////////////////////////////////////////
+  template <unsigned int n1, unsigned int n2, class real>
+  YAKL_INLINE SArray<real,2,n2,n1> transpose(SArray<real,2,n1,n2> const &a) {
+    SArray<real,2,n2,n1> ret;
+    for (int j=0; j < n1; j++) {
+      for (int i=0; i < n2; i++) {
+        ret(j,i) = a(i,j);
+      }
+    }
+    return ret;
+  }
+  template <int n1, int n2, class real>
+  YAKL_INLINE FSArray<real,2,SB<n2>,SB<n1>> transpose(FSArray<real,2,SB<n1>,SB<n2>> const &a) {
+    FSArray<real,2,SB<n2>,SB<n1>> ret;
+    for (int j=1; j <= n1; j++) {
+      for (int i=1; i <= n2; i++) {
+        ret(j,i) = a(i,j);
+      }
+    }
+    return ret;
+  }
+
+
+
+  /////////////////////////////////////////////////////////////////
+  // Count
+  /////////////////////////////////////////////////////////////////
   template <int rank, int myStyle>
   inline int count( Array<bool,rank,memHost,myStyle> const &mask ) {
     int numTrue = 0;
@@ -971,6 +994,9 @@ namespace intrinsics {
 
 
 
+  /////////////////////////////////////////////////////////////////
+  // Pack
+  /////////////////////////////////////////////////////////////////
   template <class T, int rank, int myStyle> inline Array<T,1,memHost,myStyle> pack( Array<T,rank,memHost,myStyle> const &arr ,
                                                                                     Array<bool,rank,memHost,myStyle> const &mask = 
                                                                                                 Array<bool,rank,memHost,myStyle>() ) {

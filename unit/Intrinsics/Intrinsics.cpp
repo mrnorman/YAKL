@@ -15,7 +15,7 @@ using yakl::SArray;
 using yakl::FSArray;
 using yakl::SB;
 
-typedef float real;
+typedef double real;
 
 typedef Array<real,1,memDevice,styleC> real_c_1d;
 typedef Array<real,2,memDevice,styleC> real_c_2d;
@@ -373,12 +373,201 @@ int main() {
     }
 
 
-    ////////////////////////////////////////////////
-    // matmul_cr, matmul_rc, matinv_cr, matinv_rc
-    ////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////
+    // matmul_cr, matmul_rc, matinv, transpose
+    //////////////////////////////////////////////////////////
     {
+      using yakl::intrinsics::matmul_rc;
+      using yakl::intrinsics::matmul_cr;
+      using yakl::intrinsics::matinv_ge;
+      using yakl::intrinsics::transpose;
+      SArray<real,2,3,3> A1_c;
+      SArray<real,2,3,3> A2_c;
+      SArray<real,1,3> b_c;
+      FSArray<real,2,SB<3>,SB<3>> A1_f;
+      FSArray<real,2,SB<3>,SB<3>> A2_f;
+      FSArray<real,1,SB<3>> b_f;
+
+      SArray<real,1,3> A1_b_ref;
+      SArray<real,2,3,3> A1_A2_ref;
+      
+      A1_c(0,0) = 1;
+      A1_c(0,1) = 2;
+      A1_c(0,2) = 3;
+      A1_c(1,0) = 1.5;
+      A1_c(1,1) = 2.5;
+      A1_c(1,2) = 3.5;
+      A1_c(2,0) = 1.2;
+      A1_c(2,1) = 2.2;
+      A1_c(2,2) = 3.2;
+
+      A2_c(0,0) = 1.9;
+      A2_c(0,1) = 2.9;
+      A2_c(0,2) = 3.9;
+      A2_c(1,0) = 1.1;
+      A2_c(1,1) = 2.1;
+      A2_c(1,2) = 3.1;
+      A2_c(2,0) = 1.4;
+      A2_c(2,1) = 2.4;
+      A2_c(2,2) = 3.4;
+
+      b_c(0) = 0.3;
+      b_c(1) = 4.2;
+      b_c(2) = 1.9;
+
+      for (int j=0; j < 3; j++) {
+        for (int i=0; i < 3; i++) {
+          A1_f(j+1,i+1) = A1_c(j,i);
+          A2_f(j+1,i+1) = A2_c(j,i);
+          if (j == 0) b_f(i+1) = b_c(i);
+        }
+      }
+
+      A1_b_ref(0) = 14.4;
+      A1_b_ref(1) = 17.6;
+      A1_b_ref(2) = 15.68;
+
+      A1_A2_ref(0,0) = 8.3;
+      A1_A2_ref(0,1) = 14.3;
+      A1_A2_ref(0,2) = 20.3;
+      A1_A2_ref(1,0) = 10.5;
+      A1_A2_ref(1,1) = 18.0;
+      A1_A2_ref(1,2) = 25.5;
+      A1_A2_ref(2,0) = 9.18;
+      A1_A2_ref(2,1) = 15.78;
+      A1_A2_ref(2,2) = 22.38;
+
+      auto A1_b_c  = matmul_rc( A1_c , b_c  );
+      auto A1_A2_c = matmul_rc( A1_c , A2_c );
+      auto A1_b_f  = matmul_rc( A1_f , b_f  );
+      auto A1_A2_f = matmul_rc( A1_f , A2_f );
+
+      real adiff_A1_b_c  = 0;
+      real adiff_A1_A2_c = 0;
+      real adiff_A1_b_f  = 0;
+      real adiff_A1_A2_f = 0;
+      for (int i=0; i < 3; i++) {
+        adiff_A1_b_c += abs( A1_b_c(i  ) - A1_b_ref(i) );
+        adiff_A1_b_f += abs( A1_b_f(i+1) - A1_b_ref(i) );
+      }
+      for (int j=0; j < 3; j++) {
+        for (int i=0; i < 3; i++) {
+          adiff_A1_A2_c += abs( A1_A2_c(j  ,i  ) - A1_A2_ref(j  ,i) );
+          adiff_A1_A2_f += abs( A1_A2_f(j+1,i+1) - A1_A2_ref(j  ,i) );
+        }
+      }
+
+      if (adiff_A1_b_c  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_c  rc");
+      if (adiff_A1_A2_c >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_c rc");
+      if (adiff_A1_b_f  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_f  rc");
+      if (adiff_A1_A2_f >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_f rc");
+
+      auto A1_inv_c = matinv_ge( A1_c );
+      auto identity_c = matmul_rc( A1_inv_c , A1_c );
+      auto A1_inv_f = matinv_ge( A1_f );
+      auto identity_f = matmul_rc( A1_inv_f , A1_f );
+
+      real adiff_inv_c = 0;
+      real adiff_inv_f = 0;
+      for (int j=0; j < 3; j++) {
+        for (int i=0; i < 3; i++) {
+          if (i == j) {
+            adiff_inv_c += abs( identity_c(j  ,i  ) - 1 );
+            adiff_inv_f += abs( identity_f(j+1,i+1) - 1 );
+          } else {
+            adiff_inv_c += abs( identity_c(j  ,i  )     );
+            adiff_inv_f += abs( identity_f(j+1,i+1)     );
+          }
+        }
+      }
+      if (adiff_inv_c >= 1.e-13) die("ERROR: incorrect adiff_inv_c");
+      if (adiff_inv_f >= 1.e-13) die("ERROR: incorrect adiff_inv_f");
+
+      auto trans_A1_c = transpose( A1_c );
+      auto trans_A2_c = transpose( A2_c );
+      auto trans_A1_f = transpose( A1_f );
+      auto trans_A2_f = transpose( A2_f );
+
+      A1_b_c  = matmul_cr( trans_A1_c , b_c  );
+      A1_A2_c = matmul_cr( trans_A1_c , trans_A2_c );
+      A1_b_f  = matmul_cr( trans_A1_f , b_f  );
+      A1_A2_f = matmul_cr( trans_A1_f , trans_A2_f );
+
+      A1_A2_c = transpose( A1_A2_c );
+      A1_A2_f = transpose( A1_A2_f );
+
+      adiff_A1_b_c  = 0;
+      adiff_A1_A2_c = 0;
+      adiff_A1_b_f  = 0;
+      adiff_A1_A2_f = 0;
+      for (int i=0; i < 3; i++) {
+        adiff_A1_b_c += abs( A1_b_c(i  ) - A1_b_ref(i) );
+        adiff_A1_b_f += abs( A1_b_f(i+1) - A1_b_ref(i) );
+      }
+      for (int j=0; j < 3; j++) {
+        for (int i=0; i < 3; i++) {
+          adiff_A1_A2_c += abs( A1_A2_c(j  ,i  ) - A1_A2_ref(j  ,i) );
+          adiff_A1_A2_f += abs( A1_A2_f(j+1,i+1) - A1_A2_ref(j  ,i) );
+        }
+      }
+
+      if (adiff_A1_b_c  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_c  cr");
+      if (adiff_A1_A2_c >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_c cr");
+      if (adiff_A1_b_f  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_f  cr");
+      if (adiff_A1_A2_f >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_f cr");
     }
 
+
+
+    //////////////////////////////////////////////////////////
+    // count, pack
+    //////////////////////////////////////////////////////////
+    {
+      using yakl::intrinsics::count;
+      using yakl::intrinsics::pack;
+      bool_c_1d c("c",10);
+      bool_f_1d f("f",10);
+      SArray<bool,1,10> sc;
+      FSArray<bool,1,SB<10>> sf;
+      
+      parallel_for( 10 , YAKL_LAMBDA( int i ) {
+        c(i) = i%2 == 0;
+        f(i+1) = i%2 == 0;
+      });
+      for (int i=0; i < 10; i++) {
+        sc(i) = i%2 == 0;
+        sf(i+1) = i%2 == 0;
+      }
+
+      if (count(c)  != 5) die("ERROR: incorrect count c");
+      if (count(sc) != 5) die("ERROR: incorrect count sc");
+      if (count(f)  != 5) die("ERROR: incorrect count f");
+      if (count(sf) != 5) die("ERROR: incorrect count sf");
+
+      {
+        real_c_1d vals("vals",10);
+        auto vals_host = vals.createHostCopy();
+        for (int i=0; i < 10; i++) { vals_host(i) = i; }
+
+        auto packed        = pack(vals_host);
+        auto packed_masked = pack(vals_host,c.createHostCopy());
+
+        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: packed c");
+        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: packed masked c");
+      }
+
+      {
+        real_f_1d vals("vals",10);
+        auto vals_host = vals.createHostCopy();
+        for (int i=0; i < 10; i++) { vals_host(i+1) = i; }
+
+        auto packed        = pack(vals_host);
+        auto packed_masked = pack(vals_host,f.createHostCopy());
+
+        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: packed f");
+        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: packed masked f");
+      }
+    }
 
 
 
