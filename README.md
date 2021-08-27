@@ -181,7 +181,7 @@ Be sure to use `yakl::init(...)` at the beginning of the program and `yakl::fina
 
 ### `parallel_for`
 
-Preface functions you want to run on the accelerator with `YAKL_INLINE`, and preface loop bodies you're passing to YAKL launchers with `YAKL_LAMBDA` (which does a capture by value for CUDA and HIP backends for Nvidia and AMD hardware, respectively). The recommended use case for the `parallel_for` launcher is:
+Preface functions you want to call from a device kernel with `YAKL_INLINE` or `YAKL_DEVICE_INLINE`. `YAKL_INLINE` functions can be called from the host or device, and `YAKL_DEVICE_INLINE` functions can only be called from the device. Preface "loop bodies" you're passing to YAKL launchers with `YAKL_LAMBDA` (which can run on the host or device) or `YAKL_DEVICE_LAMBDA` (which can only run on the device). The recommended use case for the `parallel_for` launcher is:
 
 ```C++
 #include "YAKL.h"
@@ -224,14 +224,14 @@ yakl::Array<T type, int rank, int memSpace, int style>(char const *label, int di
 yakl::Array<T type, int rank, int memSpace, int style>(char const *label, T *ptr, int dim1, [int dim2, ...]);
 ```
 
-* Valid values for `T` can be any `std::is_arithmetic<T>` type in `memDevice` memory and any class at all in `memHost` memory. On the host, `Array`s use the C++ "placement `new`" approach to call the contained class's constructor. This is not supported in device memory because it is less portable, and it requires Unified memory between host and device.
+* Valid values for `T` can be any `std::is_arithmetic<T>` type in `memDevice` memory and any class at all in `memHost` memory. On the host, `Array`s use the C++ "placement `new`" approach to call the contained class's constructor. This is not supported in device memory because it is less portable, and it requires Unified memory between host and device. It is not recommended to use `Array` objects with a pointer type that has a constructor, as that constructor will not be called correctly on the device.
 * Valid values for `rank` can be 1, 2, ..., 8
 * Valid values for `memSpace` can be `memHost` or `memDevice` (default is `memDevice`)
 * Valid values for `style` can be `styleC` or `styleFortran` (default is `styleC`)
 
 Data is accessed in an `Array` object via the `(ind1[,ind2,...])` parenthesis operator with the right-most index varying the fastest for the C style `Array` (`yakl::styleC`) and the left-most index varying the fastest for the Fortran-style `Array` (`yakl::styleFortran`).
 
-YAKL `Array` objects use shallow copies in the move and copy constructors. To copy the data from one `Array` to another, use the `Array::deep_copy_to(Array &destination)` member function. This will copy data between different memory spaces (e.g., `cudaMemcpy(...)`) for you depending on the memory spaces of the `Array` objects.
+YAKL `Array` objects use shallow copies in the move and copy constructors. I.e., if you say `arr1 = arr2`, these two objects now **share the same data pointer**, and only the metadata is actually copied over. To copy the actual data from one `Array` to another, use the `Array::deep_copy_to(Array &destination)` member function. This will copy data between different memory spaces (e.g., `cudaMemcpy(...)`) for you depending on the memory spaces of the `Array` objects.
 
 To create a host copy of an `Array`, use `Array::createHostCopy()`; and to create a device copy, use `Array::createDeviceCopy()`.
 
@@ -242,11 +242,11 @@ Both styles of `Array` only support data that is contiguous in memory.
 
 ### Moving Data Between Two Memory Spaces
 
-The intent of YAKL is to mirror copies of the `Array` class between two distinct memory spaces: Host (i.e., main memory) and Device (e.g., GPU memory). There are currently four member functions of the `Array` class to help with data movement:
+The intent of YAKL is that you will want copies of an `Array` object in one of two distinct memory spaces: Host (i.e., main memory) and Device (e.g., GPU memory). There are currently four member functions of the `Array` class to help with data movement:
 
 ```C++
 // Create a copy of this Array class in Host Memory, and pass that copy back as a return value.
-Array<... createHostCopy();
+Array<...> createHostCopy();
 
 // Create a copy of this Array class in Device Memory, and pass that copy back as a return value.
 Array<...> createDeviceCopy();
