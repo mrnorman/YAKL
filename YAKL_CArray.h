@@ -618,7 +618,7 @@ public:
   }
 
 
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> reshape(Dims const &dims) const {
+  template <int N> inline Array<T,N,myMem,styleC> reshape(Dims const &dims) const {
     #ifdef YAKL_DEBUG
       if (dims.size() != N) { yakl_throw("ERROR: new number of reshaped array dimensions does not match the templated rank"); }
       index_t totelems = 1;
@@ -645,7 +645,7 @@ public:
   }
 
 
-  YAKL_INLINE Array<T,1,myMem,styleC> collapse() {
+  inline Array<T,1,myMem,styleC> collapse() {
     Array<T,1,myMem,styleC> ret;
     ret.owned = owned;
     ret.dimension[0] = totElems();
@@ -778,7 +778,7 @@ public:
   }
 
 
-  YAKL_INLINE void deallocate() {
+  inline void deallocate() {
     if (owned) {
       if (refCount != nullptr) {
         #pragma omp atomic update

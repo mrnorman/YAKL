@@ -653,7 +653,7 @@ public:
   }
 
 
-  YAKL_INLINE Array<T,1,myMem,styleFortran> collapse(int lbnd=1) {
+  inline Array<T,1,myMem,styleFortran> collapse(int lbnd=1) {
     Array<T,1,myMem,styleFortran> ret;
     ret.owned = owned;
     ret.dimension[0] = totElems();
@@ -807,7 +807,7 @@ public:
   }
 
 
-  YAKL_INLINE void deallocate() {
+  inline void deallocate() {
     if (owned) {
       if (refCount != nullptr) {
         #pragma omp atomic update

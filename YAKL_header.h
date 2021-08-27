@@ -10,8 +10,9 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
-#include "YAKL_Gator.h"
+#include <mutex>
 #include "stdlib.h"
+#include "YAKL_Gator.h"
 
 #ifdef YAKL_DEBUG
 #include <stdexcept>
