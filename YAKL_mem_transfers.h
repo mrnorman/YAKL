@@ -21,6 +21,9 @@
     #elif defined(YAKL_ARCH_OPENMP45)
       omp_target_memcpy(dst,src,elems*sizeof(T),0,0,omp_get_initial_device(),omp_get_default_device());
       check_last_error();
+    #elif defined(YAKL_ARCH_OPENMP)
+      #pragma omp parallel for
+      for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #endif
@@ -44,6 +47,9 @@
     #elif defined(YAKL_ARCH_OPENMP45)
       omp_target_memcpy(dst,src,elems*sizeof(T),0,0,omp_get_default_device(),omp_get_initial_device());
       check_last_error();
+    #elif defined(YAKL_ARCH_OPENMP)
+      #pragma omp parallel for
+      for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #endif
@@ -67,6 +73,9 @@
     #elif defined(YAKL_ARCH_OPENMP45)
       omp_target_memcpy(dst,src,elems*sizeof(T),0,0,omp_get_default_device(),omp_get_default_device());
       check_last_error();
+    #elif defined(YAKL_ARCH_OPENMP)
+      #pragma omp parallel for
+      for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #endif
