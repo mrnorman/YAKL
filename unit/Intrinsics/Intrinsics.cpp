@@ -224,6 +224,161 @@ int main() {
 
 
 
+    ////////////////////////////////////////////////
+    // anyLT, anyLTE, anyGT, anyGTE, anyEQ, anyNEQ
+    ////////////////////////////////////////////////
+    {
+      using yakl::intrinsics::anyLT;
+      using yakl::intrinsics::anyLTE;
+      using yakl::intrinsics::anyGT;
+      using yakl::intrinsics::anyGTE;
+      using yakl::intrinsics::anyEQ;
+      using yakl::intrinsics::anyNEQ;
+
+      real_c_1d arr_c("arr_c",5);
+      real_f_1d arr_f("arr_f",5);
+      SArray<real,1,5> sarr_c;
+      FSArray<real,1,SB<5>> sarr_f;
+
+      bool_c_1d mask_c("mask_c",5);
+      bool_f_1d mask_f("mask_f",5);
+      SArray<bool,1,5> smask_c;
+      FSArray<bool,1,SB<5>> smask_f;
+
+      parallel_for( 5 , YAKL_LAMBDA (int i) {
+        arr_c (i  ) = i-2;
+        arr_f (i+1) = i-2;
+        mask_c(i  ) = (i+1)%2 == 0;
+        mask_f(i+1) = (i+1)%2 == 0;
+      });
+
+      for (int i=0; i < 5; i++) {
+        sarr_c (i  ) = i-2;
+        sarr_f (i+1) = i-2;
+        smask_c(i  ) = (i+1)%2 == 0;
+        smask_f(i+1) = (i+1)%2 == 0;
+      }
+
+      if ( anyLT( arr_c  , -2 ) ) die("arr_c  anyLT fail 1");
+      if ( anyLT( arr_f  , -2 ) ) die("arr_f  anyLT fail 1");
+      if ( anyLT( sarr_c , -2 ) ) die("sarr_c anyLT fail 1");
+      if ( anyLT( sarr_f , -2 ) ) die("sarr_f anyLT fail 1");
+
+      if ( !anyLT( arr_c  , -1 ) ) die("arr_c  anyLT fail 2");
+      if ( !anyLT( arr_f  , -1 ) ) die("arr_f  anyLT fail 2");
+      if ( !anyLT( sarr_c , -1 ) ) die("sarr_c anyLT fail 2");
+      if ( !anyLT( sarr_f , -1 ) ) die("sarr_f anyLT fail 2");
+
+      if ( anyLT( arr_c  , mask_c  , -1 ) ) die("arr_c anyLT masked fail");
+      if ( anyLT( arr_f  , mask_f  , -1 ) ) die("arr_f anyLT masked fail");
+      if ( anyLT( sarr_c , smask_c , -1 ) ) die("sarr_c anyLT masked fail");
+      if ( anyLT( sarr_f , smask_f , -1 ) ) die("sarr_f anyLT masked fail");
+
+      if ( anyLTE( arr_c  , -3 ) ) die("arr_c  anyLTE fail 1");
+      if ( anyLTE( arr_f  , -3 ) ) die("arr_f  anyLTE fail 1");
+      if ( anyLTE( sarr_c , -3 ) ) die("sarr_c anyLTE fail 1");
+      if ( anyLTE( sarr_f , -3 ) ) die("sarr_f anyLTE fail 1");
+
+      if ( !anyLTE( arr_c  , -2 ) ) die("arr_c  anyLTE fail 2");
+      if ( !anyLTE( arr_f  , -2 ) ) die("arr_f  anyLTE fail 2");
+      if ( !anyLTE( sarr_c , -2 ) ) die("sarr_c anyLTE fail 2");
+      if ( !anyLTE( sarr_f , -2 ) ) die("sarr_f anyLTE fail 2");
+
+      if ( anyLTE( arr_c  , mask_c  , -2 ) ) die("arr_c anyLTE masked fail");
+      if ( anyLTE( arr_f  , mask_f  , -2 ) ) die("arr_f anyLTE masked fail");
+      if ( anyLTE( sarr_c , smask_c , -2 ) ) die("sarr_c anyLTE masked fail");
+      if ( anyLTE( sarr_f , smask_f , -2 ) ) die("sarr_f anyLTE masked fail");
+
+
+      if ( anyGT( arr_c  , 2 ) ) die("arr_c  anyGT fail 1");
+      if ( anyGT( arr_f  , 2 ) ) die("arr_f  anyGT fail 1");
+      if ( anyGT( sarr_c , 2 ) ) die("sarr_c anyGT fail 1");
+      if ( anyGT( sarr_f , 2 ) ) die("sarr_f anyGT fail 1");
+
+      if ( !anyGT( arr_c  , 1 ) ) die("arr_c  anyGT fail 2");
+      if ( !anyGT( arr_f  , 1 ) ) die("arr_f  anyGT fail 2");
+      if ( !anyGT( sarr_c , 1 ) ) die("sarr_c anyGT fail 2");
+      if ( !anyGT( sarr_f , 1 ) ) die("sarr_f anyGT fail 2");
+
+      if ( anyGT( arr_c  , mask_c  , 1 ) ) die("arr_c anyGT masked fail");
+      if ( anyGT( arr_f  , mask_f  , 1 ) ) die("arr_f anyGT masked fail");
+      if ( anyGT( sarr_c , smask_c , 1 ) ) die("sarr_c anyGT masked fail");
+      if ( anyGT( sarr_f , smask_f , 1 ) ) die("sarr_f anyGT masked fail");
+
+      if ( anyGTE( arr_c  , 3 ) ) die("arr_c  anyGTE fail 1");
+      if ( anyGTE( arr_f  , 3 ) ) die("arr_f  anyGTE fail 1");
+      if ( anyGTE( sarr_c , 3 ) ) die("sarr_c anyGTE fail 1");
+      if ( anyGTE( sarr_f , 3 ) ) die("sarr_f anyGTE fail 1");
+
+      if ( !anyGTE( arr_c  , 2 ) ) die("arr_c  anyGTE fail 2");
+      if ( !anyGTE( arr_f  , 2 ) ) die("arr_f  anyGTE fail 2");
+      if ( !anyGTE( sarr_c , 2 ) ) die("sarr_c anyGTE fail 2");
+      if ( !anyGTE( sarr_f , 2 ) ) die("sarr_f anyGTE fail 2");
+
+      if ( anyGTE( arr_c  , mask_c  , 2 ) ) die("arr_c anyGTE masked fail");
+      if ( anyGTE( arr_f  , mask_f  , 2 ) ) die("arr_f anyGTE masked fail");
+      if ( anyGTE( sarr_c , smask_c , 2 ) ) die("sarr_c anyGTE masked fail");
+      if ( anyGTE( sarr_f , smask_f , 2 ) ) die("sarr_f anyGTE masked fail");
+
+
+      if ( anyEQ( arr_c  , 3 ) ) die("arr_c  anyEQ fail 1");
+      if ( anyEQ( arr_f  , 3 ) ) die("arr_f  anyEQ fail 1");
+      if ( anyEQ( sarr_c , 3 ) ) die("sarr_c anyEQ fail 1");
+      if ( anyEQ( sarr_f , 3 ) ) die("sarr_f anyEQ fail 1");
+
+      if ( !anyEQ( arr_c  , 1 ) ) die("arr_c  anyEQ fail 2");
+      if ( !anyEQ( arr_f  , 1 ) ) die("arr_f  anyEQ fail 2");
+      if ( !anyEQ( sarr_c , 1 ) ) die("sarr_c anyEQ fail 2");
+      if ( !anyEQ( sarr_f , 1 ) ) die("sarr_f anyEQ fail 2");
+
+      if ( anyEQ( arr_c  , mask_c  , 2 ) ) die("arr_c anyEQ masked fail");
+      if ( anyEQ( arr_f  , mask_f  , 2 ) ) die("arr_f anyEQ masked fail");
+      if ( anyEQ( sarr_c , smask_c , 2 ) ) die("sarr_c anyEQ masked fail");
+      if ( anyEQ( sarr_f , smask_f , 2 ) ) die("sarr_f anyEQ masked fail");
+
+
+      parallel_for( 5 , YAKL_LAMBDA (int i) {
+        mask_c(i  ) = i == 2;
+        mask_f(i+1) = i == 2;
+      });
+      for (int i=0; i < 5; i++) {
+        smask_c(i  ) = i == 2;
+        smask_f(i+1) = i == 2;
+      }
+
+      if ( !anyNEQ( arr_c  , 0 ) ) die("arr_c  anyNEQ fail 1");
+      if ( !anyNEQ( arr_f  , 0 ) ) die("arr_f  anyNEQ fail 1");
+      if ( !anyNEQ( sarr_c , 0 ) ) die("sarr_c anyNEQ fail 1");
+      if ( !anyNEQ( sarr_f , 0 ) ) die("sarr_f anyNEQ fail 1");
+
+      if ( anyNEQ( arr_c  , mask_c  , 0 ) ) die("arr_c anyNEQ masked fail");
+      if ( anyNEQ( arr_f  , mask_f  , 0 ) ) die("arr_f anyNEQ masked fail");
+      if ( anyNEQ( sarr_c , smask_c , 0 ) ) die("sarr_c anyNEQ masked fail");
+      if ( anyNEQ( sarr_f , smask_f , 0 ) ) die("sarr_f anyNEQ masked fail");
+
+
+      parallel_for( 5 , YAKL_LAMBDA (int i) {
+        arr_c(i  ) = 1;
+        arr_f(i+1) = 1;
+      });
+      for (int i=0; i < 5; i++) {
+        sarr_c(i  ) = 1;
+        sarr_f(i+1) = 1;
+      }
+
+      if ( anyNEQ( arr_c  , 1 ) ) die("arr_c  anyNEQ fail 2");
+      if ( anyNEQ( arr_f  , 1 ) ) die("arr_f  anyNEQ fail 2");
+      if ( anyNEQ( sarr_c , 1 ) ) die("sarr_c anyNEQ fail 2");
+      if ( anyNEQ( sarr_f , 1 ) ) die("sarr_f anyNEQ fail 2");
+    }
+
+
+    ////////////////////////////////////////////////
+    // matmul_cr, matmul_rc, matinv_cr, matinv_rc
+    ////////////////////////////////////////////////
+    {
+    }
+
 
 
 

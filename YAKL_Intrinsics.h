@@ -246,184 +246,430 @@ namespace intrinsics {
 
 
 
-  template <class F, class T, int rank, int myStyle>
-  inline bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr , F const &f , T val ) {
+  ///////////////////////////
+  // any* device Array
+  ///////////////////////////
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyLT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-      if ( f( arr.myData[i] , val ) ) { ret = true; }
+      if ( arr.myData[i] < val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class F, class T, int rank, int myStyle>
-  inline bool any( Array<T,rank,yakl::memHost,myStyle> const &arr , F const &f , T val ) {
-    bool ret = false;
-    for (int i=0; i < arr.totElems(); i++) {
-      if ( f( arr.myData[i] , val ) ) { ret = true; }
-    }
-    return ret;
-  }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyLT ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <  val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyLTE( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <= val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyGT ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >  val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyGTE( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >= val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyEQ ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem == val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyNEQ ( Array<T,rank,myMem,myStyle> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem != val; };
-    return any( arr , test , val );
-  }
-
-
-
-  template <class F, class T, int rank, int myStyle>
-  inline bool any( Array<T,rank,yakl::memDevice,myStyle> const &arr ,
-                   Array<bool,rank,yakl::memDevice,myStyle> const &mask , F const &f , T val ) {
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-      if ( mask.myData[i] && f( arr.myData[i] , val ) ) { ret = true; }
+      if ( arr.myData[i] <= val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class F, class T, int rank, int myStyle>
-  YAKL_INLINE bool any( Array<T,rank,yakl::memHost,myStyle> const &arr ,
-                        Array<bool,rank,yakl::memHost,myStyle> const &mask , F const &f , T val ) {
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyGT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( arr.myData[i] > val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( arr.myData[i] >= val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( arr.myData[i] == val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( arr.myData[i] != val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+
+
+  ///////////////////////////
+  // any* device Array Masked
+  ///////////////////////////
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyLT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyGT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  YAKL_INLINE bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+    yakl::ScalarLiveOut<bool> ret(false);
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
+      if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
+    });
+    return ret.hostRead();
+  }
+
+
+
+  ///////////////////////////
+  // any* host Array
+  ///////////////////////////
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyLT( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
-      if ( mask.myData[i] && f( arr.myData[i] , val ) ) { ret = true; }
+      if ( arr.myData[i] < val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyLT ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <  val; };
-    return any( arr , mask , test , val );
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyLTE( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( arr.myData[i] <= val ) { ret = true; }
+    }
+    return ret;
   }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyLTE( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <= val; };
-    return any( arr , mask , test , val );
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyGT( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( arr.myData[i] > val ) { ret = true; }
+    }
+    return ret;
   }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyGT ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >  val; };
-    return any( arr , mask , test , val );
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyGTE( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( arr.myData[i] >= val ) { ret = true; }
+    }
+    return ret;
   }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyGTE( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >= val; };
-    return any( arr , mask , test , val );
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyEQ( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( arr.myData[i] == val ) { ret = true; }
+    }
+    return ret;
   }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyEQ ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem == val; };
-    return any( arr , mask , test , val );
-  }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE bool anyNEQ ( Array<T,rank,myMem,myStyle> const &arr , Array<bool,rank,myMem,myStyle> const &mask , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem != val; };
-    return any( arr , mask , test , val );
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyNEQ( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( arr.myData[i] != val ) { ret = true; }
+    }
+    return ret;
   }
 
 
 
-  template <class F, class T, int rank, class D0, class D1, class D2, class D3>
-  YAKL_INLINE bool any( FSArray<T,rank,D0,D1,D2,D3> const &arr , F const &f , T val ) {
+  ///////////////////////////
+  // any* host Array Masked
+  ///////////////////////////
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyLT( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyLTE( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyGT( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyGTE( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyEQ( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, int myStyle>
+  inline bool anyNEQ( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i < arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
+    }
+    return ret;
+  }
+
+
+
+  //////////////////////////
+  // any* FSArray
+  //////////////////////////
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyLT( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
     bool ret = false;
     for (int i=0; i<arr.totElems(); i++) {
-      if ( f( arr.myData[i] , val ) ) { ret = true; }
+      if ( arr.myData[i] < val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, int rank, class D0, class D1, class D2, class D3>
-  YAKL_INLINE bool anyLT ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <  val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, class D0, class D1, class D2, class D3>
-  YAKL_INLINE bool anyLTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <= val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, class D0, class D1, class D2, class D3>
-  YAKL_INLINE bool anyGT ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >  val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, class D0, class D1, class D2, class D3>
-  YAKL_INLINE bool anyGTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >= val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, class D0, class D1, class D2, class D3>
-  YAKL_INLINE bool anyEQ ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem == val; };
-    return any( arr , test , val );
-  }
-  template <class T, int rank, class D0, class D1, class D2, class D3>
-  YAKL_INLINE bool anyNEQ ( FSArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem != val; };
-    return any( arr , test , val );
-  }
-
-
-
-  template <class F, class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
-  YAKL_INLINE bool any( SArray<T,rank,D0,D1,D2,D3> const &arr , F const &f , T val ) {
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyLTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
     bool ret = false;
     for (int i=0; i<arr.totElems(); i++) {
-      if ( f( arr.myData[i] , val ) ) { ret = true; }
+      if ( arr.myData[i] <= val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
-  YAKL_INLINE bool anyLT ( SArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <  val; };
-    return any( arr , test , val );
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyGT( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] > val ) { ret = true; }
+    }
+    return ret;
   }
-  template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
-  YAKL_INLINE bool anyLTE( SArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem <= val; };
-    return any( arr , test , val );
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyGTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] >= val ) { ret = true; }
+    }
+    return ret;
   }
-  template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
-  YAKL_INLINE bool anyGT ( SArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >  val; };
-    return any( arr , test , val );
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyEQ( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] == val ) { ret = true; }
+    }
+    return ret;
   }
-  template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
-  YAKL_INLINE bool anyGTE( SArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem >= val; };
-    return any( arr , test , val );
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyNEQ( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] != val ) { ret = true; }
+    }
+    return ret;
   }
-  template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
-  YAKL_INLINE bool anyEQ ( SArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem == val; };
-    return any( arr , test , val );
+
+
+  //////////////////////////
+  // any* FSArray Masked
+  //////////////////////////
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyLT( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
+    }
+    return ret;
   }
-  template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
-  YAKL_INLINE bool anyNEQ ( SArray<T,rank,D0,D1,D2,D3> const &arr , T val ) {
-    auto test = YAKL_LAMBDA (T elem , T val)->bool { return elem != val; };
-    return any( arr , test , val );
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyLTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyGT( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyGTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyEQ( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, class D0, class D1, class D2, class D3>
+  YAKL_INLINE bool anyNEQ( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
+    }
+    return ret;
+  }
+
+
+  //////////////////////////////
+  // any* SArray
+  //////////////////////////////
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyLT( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] < val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyLTE( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] <= val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyGT( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] > val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyGTE( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] >= val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyEQ( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] == val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyNEQ( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( arr.myData[i] != val ) { ret = true; }
+    }
+    return ret;
+  }
+
+
+  //////////////////////////////
+  // any* SArray Masked
+  //////////////////////////////
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyLT( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyLTE( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyGT( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyGTE( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyEQ( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
+    }
+    return ret;
+  }
+  template <class T, class TVAL, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+  YAKL_INLINE bool anyNEQ( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
+    bool ret = false;
+    for (int i=0; i<arr.totElems(); i++) {
+      if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
+    }
+    return ret;
   }
 
 
@@ -688,44 +934,6 @@ namespace intrinsics {
 
     return inv;
   }
-
-
-
-
-
-  template <class T, int D0_L, int D1_L, int D1_R>
-  YAKL_INLINE FSArray<T,2,SB<D0_L>,SB<D1_R>>
-  matmul( FSArray<T,2,SB<D0_L>,SB<D1_L>> const &a1 ,
-          FSArray<T,2,SB<D1_L>,SB<D1_R>> const &a2 ) {
-    FSArray<T,2,SB<D0_L>,SB<D1_R>> ret;
-    for (int i=1; i <= D0_L; i++) {
-      for (int j=1; j <= D1_R; j++) {
-        T tmp = 0;
-        for (int k=1; k <= D1_L; k++) {
-          tmp += a1(i,k) * a2(k,j);
-        }
-        ret(i,j) = tmp;
-      }
-    }
-    return ret;
-  }
-
-
-  template <class T, int D0_L, int D1_L>
-  YAKL_INLINE FSArray<T,1,SB<D0_L>>
-  matmul( FSArray<T,2,SB<D0_L>,SB<D1_L>> const &a1 ,
-          FSArray<T,1,SB<D1_L>> const &a2 ) {
-    FSArray<T,1,SB<D0_L>> ret;
-    for (int i=1; i <= D0_L; i++) {
-      T tmp = 0;
-      for (int k=1; k <= D1_L; k++) {
-        tmp += a1(i,k) * a2(k);
-      }
-      ret(i) = tmp;
-    }
-    return ret;
-  }
-
 
 
   template <int rank, int myStyle>
