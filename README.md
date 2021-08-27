@@ -31,6 +31,7 @@ Contributors:
 * [YAKL Timers](#yakl-timers)
 * [`YAKL SCOPE`](#yakl_scope)
 * [Handling Class Methods Called from Kernels](#handling-class-methods-called-from-kernels)
+* [A Note on Thread Safety](#a-note-on-thread-safety)
 * [Future Work](#future-work)
 * [Software Dependencies](#software-dependencies)
 
@@ -958,6 +959,12 @@ What the `YAKL_SCOPE()` macro does is create a local reference to the variable, 
 ## Handling Class Methods Called from Kernels
 
 If you have a class method prefixed with `YAKL_INLINE`, meaning you intend to potentially call it from a `parallel_for` kenel, you must delcare it as `static`. This is not a firm requirement in CUDA, but it is in HIP and likely SYCL as well. Also, it makes sense from a C++ perspective. `static` member functions belong to the class itself, not any particular object or instantiation of that class. Therefore, it does not use the `this->` pointer. This idea is moot if you plan on inlining the function; however, strictly speaking, you shouln't open yourself up to the possibility of calling a function via the `this->` pointer. Therefore the function should be static.
+
+## A Note on Thread Safety
+
+If you want to create and destroy YAKL `Array` objects or allocate and free `Gator` pool memory within a threaded region (CPU threads), you will need to ensure that you compile the C++ files that use YAKL with OpenMP enabled (e.g., `-fopenmp` for GNU or `-qsmp=omp` for IBM XL). There are complicated reasons why YAKL's thread safety must rely on OpenMP rather than something better like `std::mutex`. Some versions of CUDA require the `Array` class destructors to be valid on the device, and `std::mutex` is not valid on the device. Since destructors have reference counters that must be protected from thread races, OpenMP is the only option due to CUDA restrictions.
+
+For instance, if you have a Fortran program that has a threaded region calling YAKL C++ code that's targetting the GPU using nvcc + GNU, then you need to ensure you add `-fopenmp` to `YAKL_CUDA_FLAGS`.
 
 ## Future Work
 
