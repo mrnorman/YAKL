@@ -301,9 +301,8 @@ public:
     myData   = rhs.myData;
     refCount = rhs.refCount;
     if (owned && refCount != nullptr) {
-      yakl_mtx.lock();
+      #pragma omp atomic update
       (*refCount)++;
-      yakl_mtx.unlock();
     }
   }
 
@@ -323,9 +322,8 @@ public:
     myData   = rhs.myData;
     refCount = rhs.refCount;
     if (owned && refCount != nullptr) {
-      yakl_mtx.lock();
+      #pragma omp atomic update
       (*refCount)++;
-      yakl_mtx.unlock();
     }
 
     return *this;
@@ -379,7 +377,7 @@ public:
   DESTRUCTOR
   Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
-  ~Array() {
+  YAKL_INLINE ~Array() {
     deallocate();
   }
 
@@ -639,9 +637,8 @@ public:
     ret.myData = myData;
     ret.refCount = refCount;
     if (owned && refCount != nullptr) {
-      yakl_mtx.lock();
+      #pragma omp atomic update
       (*refCount)++;
-      yakl_mtx.unlock();
     }
     return ret;
   }
@@ -657,9 +654,8 @@ public:
     ret.myData = myData;
     ret.refCount = refCount;
     if (owned && refCount != nullptr) {
-      yakl_mtx.lock();
+      #pragma omp atomic update
       (*refCount)++;
-      yakl_mtx.unlock();
     }
     return ret;
   }
@@ -781,12 +777,11 @@ public:
   }
 
 
-  inline void deallocate() {
+  YAKL_INLINE void deallocate() {
     if (owned) {
       if (refCount != nullptr) {
-        yakl_mtx.lock();
+        #pragma omp atomic update
         (*refCount)--;
-        yakl_mtx.unlock();
 
         if (*refCount == 0) {
           delete refCount;

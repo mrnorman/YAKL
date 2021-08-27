@@ -28,11 +28,6 @@ protected:
   size_t blockSize;
   bool   enabled;
 
-  // This is to guard multiple threads allocating and freeing on this object
-  // Separate Gator objects can allocate at the same time, so this mutex
-  // object is allowed to be class-local
-  std::mutex mtx;
-
   void die(std::string str="") {
     std::cerr << str << std::endl;
     throw str;
@@ -150,7 +145,7 @@ public:
     bool room_found = false;
     bool stacky_bug = false;
     void *ptr;
-    mtx.lock();
+    #pragma omp critical
     {
       for (auto it = pools.begin() ; it != pools.end() ; it++) {
         if (it->iGotRoom(bytes)) {
@@ -172,7 +167,6 @@ public:
         ptr = pools.back().allocate(bytes,label);
       }
     }
-    mtx.unlock();
     if (ptr != nullptr) {
       return ptr;
     } else {
@@ -187,7 +181,7 @@ public:
       std::cout << "MEMORY DEBUG: Gator attempting to free " << label << " with the pointer: " << ptr << "\n";
     #endif
     bool pointer_valid = false;
-    mtx.lock();
+    #pragma omp critical
     {
       // Iterate backwards. It's assumed accesses are stack-like
       for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
@@ -198,7 +192,6 @@ public:
         }
       }
     }
-    mtx.unlock();
     if (!pointer_valid) die("Error: Trying to free an invalid pointer");
   };
 
