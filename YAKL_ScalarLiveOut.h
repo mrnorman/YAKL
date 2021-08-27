@@ -32,6 +32,11 @@ public:
     return data(0);
   }
 
+  // Access on the GPU
+  YAKL_INLINE T get() const {
+    return data(0);
+  }
+
   // Read on the host, createHostCopy automatically inserts a fence() operation
   inline T hostRead() const {
     return data.createHostCopy()(0);

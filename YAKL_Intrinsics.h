@@ -947,7 +947,7 @@ namespace intrinsics {
   template <int rank, int myStyle>
   inline int count( Array<bool,rank,memDevice,myStyle> const &mask ) {
     yakl::ScalarLiveOut<int> numTrue(0);
-    yakl::c::parallel_for( yakl::c::SimpleBounds<1>( mask.totElems() ) , YAKL_LAMBDA (int i) {
+    yakl::c::parallel_for( yakl::c::SimpleBounds<1>( mask.totElems() ) , YAKL_DEVICE_LAMBDA (int i) {
       if (mask.myData[i]) { yakl::atomicAdd(numTrue(),1); }
     });
     return numTrue.hostRead();
