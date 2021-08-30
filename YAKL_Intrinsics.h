@@ -250,7 +250,7 @@ namespace intrinsics {
   // any* device Array
   ///////////////////////////
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyLT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  inline bool anyLT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] < val ) { ret = true; }
@@ -258,7 +258,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  inline bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] <= val ) { ret = true; }
@@ -266,7 +266,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyGT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  inline bool anyGT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] > val ) { ret = true; }
@@ -274,7 +274,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  inline bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] >= val ) { ret = true; }
@@ -282,7 +282,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  inline bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] == val ) { ret = true; }
@@ -290,7 +290,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  inline bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] != val ) { ret = true; }
@@ -303,7 +303,7 @@ namespace intrinsics {
   // any* device Array Masked
   ///////////////////////////
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyLT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  inline bool anyLT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
@@ -311,7 +311,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  inline bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
@@ -319,7 +319,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyGT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  inline bool anyGT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
@@ -327,7 +327,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  inline bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
@@ -335,7 +335,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  inline bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
@@ -343,7 +343,7 @@ namespace intrinsics {
     return ret.hostRead();
   }
   template <class T, class TVAL, int rank, int myStyle>
-  YAKL_INLINE bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  inline bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
