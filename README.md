@@ -962,9 +962,11 @@ If you have a class method prefixed with `YAKL_INLINE`, meaning you intend to po
 
 ## A Note on Thread Safety
 
-If you want to create and destroy YAKL `Array` objects or allocate and free `Gator` pool memory within a threaded region (CPU threads), you will need to ensure that you compile the C++ files that use YAKL with OpenMP enabled (e.g., `-fopenmp` for GNU or `-qsmp=omp` for IBM XL). There are complicated reasons why YAKL's thread safety must rely on OpenMP rather than something better like `std::mutex`. Some versions of CUDA require the `Array` class destructors to be valid on the device, and `std::mutex` is not valid on the device. Since destructors have reference counters that must be protected from thread races, OpenMP is the only option due to CUDA restrictions.
+If you want to create and destroy YAKL `Array` objects or allocate and free `Gator` pool memory within a threaded region (CPU threads), you will need to ensure that you compile the C++ files that use YAKL with OpenMP enabled (e.g., `-fopenmp` for GNU or `-qsmp=omp` for IBM XL). Please note this is not the same things as using `-DYAKL_ARCH_OPENMP`, which changes the backend to OpenMP. This is just adding OpenMP flags to YAKL so that it can ensure thread safety in the pool allocator and shared reference counter pointer in the `Array` classes.
 
-For instance, if you have a Fortran program that has a threaded region calling YAKL C++ code that's targetting the GPU using nvcc + GNU, then you need to ensure you add `-fopenmp` to `YAKL_CUDA_FLAGS`.
+There are complicated reasons why YAKL's thread safety must rely on OpenMP rather than something better like `std::mutex`. Some versions of CUDA require the `Array` class destructors to be valid on the device, and `std::mutex` is not valid on the device. Since destructors have reference counter decrement operations that must be protected from thread races, OpenMP is the only option due to CUDA restrictions.
+
+For instance, if you have a Fortran program that has a threaded region calling YAKL C++ code that's targetting the GPU using nvcc + GNU, then you need to ensure you add `-fopenmp --forward-unknown-to-host-compiler --forward-unknown-to-host-linker` to `YAKL_CUDA_FLAGS` and make sure that `-fopenmp` is in the linker flags as well.
 
 ## Future Work
 
