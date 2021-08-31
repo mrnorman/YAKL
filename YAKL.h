@@ -5,6 +5,8 @@
 
 namespace yakl {
 
+  extern std::mutex yakl_mtx;
+
   typedef unsigned int index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 
@@ -30,7 +32,7 @@ namespace yakl {
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
   int constexpr memStack  = 3;
-  #if defined(YAKL_ARCH_CUDA) || defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL)
+  #if defined(YAKL_ARCH_CUDA) || defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL) || defined(YAKL_ARCH_OPENMP45)
     int constexpr memDefault = memDevice;
   #else
     int constexpr memDefault = memHost;
@@ -47,10 +49,11 @@ namespace yakl {
 
 
   #ifdef YAKL_ARCH_CUDA
-    // Size of the buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
-    int constexpr functorBufSize = 1024*128;
-    // Buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
-    extern void *functorBuffer;
+    int constexpr functorBufConstSize = 1024*8;
+    __constant__ __device__ char functorBufferConstant[functorBufConstSize / sizeof(char)];
+
+    int constexpr functorBufDevSize = 1024*128;
+    extern void * functorBufferDevice;
   #endif
 
 
@@ -76,10 +79,10 @@ namespace yakl {
     YAKL_INLINE void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
     YAKL_INLINE void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
   #else
-    void *yaklAllocDevice( size_t bytes , char const *label );
-    void yaklFreeDevice( void *ptr , char const *label );
-    void *yaklAllocHost( size_t bytes , char const *label );
-    void yaklFreeHost( void *ptr , char const *label );
+    inline void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
+    inline void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
+    inline void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
+    inline void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
   #endif
 
 
@@ -111,6 +114,10 @@ namespace yakl {
 
 
   inline void finalize() {
+    #ifdef YAKL_ARCH_CUDA
+      yaklFreeDevice( functorBufferDevice , "functorBufferDevice" );
+      check_last_error();
+    #endif
     yakl_is_initialized = false;
     size_t hwm = pool.highWaterMark();
     if        (hwm >= 1024*1024*1024) {
@@ -121,10 +128,6 @@ namespace yakl {
       std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
     }
     pool.finalize();
-    #if defined(YAKL_ARCH_CUDA)
-      cudaFree(functorBuffer);
-      check_last_error();
-    #endif
     #if defined(YAKL_ARCH_SYCL)
       sycl_default_stream = sycl::queue();
     #endif

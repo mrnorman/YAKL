@@ -7,9 +7,11 @@ namespace yakl {
     sycl::queue sycl_default_stream;
   #endif
 
-  void *functorBuffer;
+  std::mutex yakl_mtx;
 
   Gator pool;
+
+  void * functorBufferDevice;
 
   bool yakl_is_initialized = false;
 
@@ -28,15 +30,6 @@ namespace yakl {
   std::function<void ( void * , char const *)>  yaklFreeHostFunc  = [] ( void *ptr    , char const *label )          {
     std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);
   };
-
-
-  #if defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL)
-  #else
-    void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
-    void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
-    void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
-    void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
-  #endif
 }
 
 

@@ -62,7 +62,7 @@ int main() {
       real_f_2d arr_f("arr_c",{-1,n1-2},n2);
       SArray<real,2,n1,n2> sarr_c;
       FSArray<real,2,SB<-1,n1-2>,SB<n2>> sarr_f;
-      real scalar;
+      real scalar = 1;
 
       if (size(arr_c ) != n1*n2) die("arr_c wrong size tot");
       if (size(arr_f ) != n1*n2) die("arr_f wrong size tot");

@@ -519,33 +519,40 @@ namespace c {
 
 
   #ifdef YAKL_ARCH_CUDA
-    template <class F, int N, bool simple> __global__ void cudaKernelVal( Bounds<N,simple> bounds , F f ) {
+    template <class F, int N, bool simple> __global__ void cudaKernelConst( Bounds<N,simple> bounds , F const &dummy ) {
+      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
+      const F &f = *((const F*)functorBufferConstant);
+      if (i < bounds.nIter) {
+        callFunctor( f , bounds , i );
+      }
+    }
+
+    template <class F, int N, bool simple> __global__ void cudaKernelDev( Bounds<N,simple> bounds , F const &f ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
       if (i < bounds.nIter) {
         callFunctor( f , bounds , i );
       }
     }
 
-    template <class F, int N, bool simple> __global__ void cudaKernelRef( Bounds<N,simple> bounds , F const &f ) {
-      size_t i = blockIdx.x*blockDim.x + threadIdx.x;
-      if (i < bounds.nIter) {
-        callFunctor( f , bounds , i );
-      }
-    }
-
-    template<class F , int N , bool simple , typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0>
+    template<class F , int N , bool simple, typename std::enable_if< (sizeof(F) <= functorBufConstSize) , int >::type = 1 >
     void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
-      cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , f );
+      cudaMemcpyToSymbolAsync(functorBufferConstant,&f,sizeof(F),0,cudaMemcpyHostToDevice);
+      check_last_error();
+      cudaKernelConst <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , f );
       check_last_error();
     }
 
-    template<class F , int N , bool simple , typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0>
+    template<class F , int N , bool simple, typename std::enable_if< (sizeof(F) > functorBufConstSize) && (sizeof(F) <= functorBufDevSize) , int >::type = 1 >
     void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
+      cudaMemcpyAsync(functorBufferDevice,&f,sizeof(F),cudaMemcpyHostToDevice);
       check_last_error();
-      cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , *fp );
+      cudaKernelDev <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , * ( (F const *) functorBufferDevice ) );
       check_last_error();
+    }
+
+    template<class F , int N , bool simple, typename std::enable_if< (sizeof(F) > functorBufDevSize) , int >::type = 1 >
+    void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+      yakl_throw("ERROR: functor size is > functorBufDevSize. Increase functorBufDevSize in YAKL.");
     }
   #endif
 
