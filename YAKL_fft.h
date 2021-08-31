@@ -132,48 +132,40 @@ namespace yakl {
 
     public:
 
-    struct Trig {
-      real1d cos_expr1;
-      real1d sin_expr1;
-      real1d cos_expr2;
-      real1d sin_expr2;
-    };
+    int static constexpr OFF_COS1 = 0;
+    int static constexpr OFF_SIN1 = mylog2<SIZE/2>::value;
+    int static constexpr OFF_COS2 = 2*mylog2<SIZE/2>::value;
+    int static constexpr OFF_SIN2 = 2*mylog2<SIZE/2>::value + SIZE/2;
 
-    Trig trig;
+    real1d trig;
 
     RealFFT1D() {
-      trig.cos_expr1 = real1d("cos_expr1",mylog2<SIZE/2>::value);
-      trig.sin_expr1 = real1d("sin_expr1",mylog2<SIZE/2>::value);
-      trig.cos_expr2 = real1d("cos_expr2",SIZE/2);
-      trig.sin_expr2 = real1d("sin_expr2",SIZE/2);
+      trig = real1d("trig",2*mylog2<SIZE/2>::value + SIZE);
     }
 
 
     ~RealFFT1D() {
-      trig.cos_expr1 = real1d();
-      trig.sin_expr1 = real1d();
-      trig.cos_expr2 = real1d();
-      trig.sin_expr2 = real1d();
+      trig = real1d();
     }
 
 
-    inline void init(Trig &trig) {
+    inline void init(real1d &trig) {
       int constexpr log2_no2 = mylog2<SIZE/2>::value;
       yakl::c::parallel_for( log2_no2 , YAKL_LAMBDA (int i) {
         unsigned int m = 1;
         for (int j=1; j <= i+1; j++) { m *= 2; }
-        trig.cos_expr1(i) = cos(2*M_PI/static_cast<real>(m));
-        trig.sin_expr1(i) = sin(2*M_PI/static_cast<real>(m));
+        trig(OFF_COS1+i) = cos(2*M_PI/static_cast<real>(m));
+        trig(OFF_SIN1+i) = sin(2*M_PI/static_cast<real>(m));
       });
       yakl::c::parallel_for( SIZE/2 , YAKL_LAMBDA (int i) {
-        trig.cos_expr2(i) = cos(2*M_PI*i/static_cast<real>(SIZE));
-        trig.sin_expr2(i) = sin(2*M_PI*i/static_cast<real>(SIZE));
+        trig(OFF_COS2+i) = cos(2*M_PI*i/static_cast<real>(SIZE));
+        trig(OFF_SIN2+i) = sin(2*M_PI*i/static_cast<real>(SIZE));
       });
     }
 
 
     template <class ARR>
-    YAKL_INLINE void forward(ARR const &data, Trig const &trig, int scale = FFT_SCALE_STANDARD) const {
+    YAKL_INLINE void forward(ARR &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) const {
       yakl::SArray<real,1,SIZE> tmp;
       int constexpr n = SIZE;
       bit_reverse_copy_real_forward(data,tmp);
@@ -187,8 +179,8 @@ namespace yakl {
         real b = tmp(2*(    k)+1);
         real c = tmp(2*(n/2-k)  );
         real d = tmp(2*(n/2-k)+1);
-        real cterm = trig.cos_expr2(k);
-        real sterm = trig.sin_expr2(k);
+        real cterm = trig(OFF_COS2+k);
+        real sterm = trig(OFF_SIN2+k);
         data(2*k  ) = 0.5*( (b+d)*cterm + (c-a)*sterm + a + c );
         data(2*k+1) = 0.5*( (c-a)*cterm - (b+d)*sterm + b - d );
       }
@@ -203,7 +195,7 @@ namespace yakl {
 
 
     template <class ARR>
-    YAKL_INLINE void inverse(ARR const &data, Trig const &trig, int scale = FFT_SCALE_STANDARD) const {
+    YAKL_INLINE void inverse(ARR &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) const {
       yakl::SArray<real,1,SIZE> tmp;
       int constexpr  n = SIZE;
       bit_reverse_copy_real_inverse(data,tmp,trig);
@@ -252,15 +244,15 @@ namespace yakl {
 
 
     template <class ARR_IN, class ARR_OUT>
-    YAKL_INLINE void bit_reverse_copy_real_inverse(ARR_IN const &in, ARR_OUT &out, Trig const &trig) const {
+    YAKL_INLINE void bit_reverse_copy_real_inverse(ARR_IN const &in, ARR_OUT &out, real1d const &trig) const {
       int constexpr n = SIZE/2;
       for (unsigned int k=0; k < n; k++) {
         real a = in(2*k  );
         real b = in(2*k+1);
         real c = in(2*(n-k)  );
         real d = in(2*(n-k)+1);
-        real cterm = trig.cos_expr2(k);
-        real sterm = trig.sin_expr2(k);
+        real cterm = trig(OFF_COS2+k);
+        real sterm = trig(OFF_SIN2+k);
         real re = 0.5*( -(b+d)*cterm - (a-c)*sterm + a + c );
         real im = 0.5*(  (a-c)*cterm - (b+d)*sterm + b - d );
         unsigned int br_ind = reverse_bits(k);
@@ -271,14 +263,14 @@ namespace yakl {
 
 
     template <class ARR>
-    YAKL_INLINE void fft_post_bit_reverse(ARR &data, Trig const &trig) const {
+    YAKL_INLINE void fft_post_bit_reverse(ARR &data, real1d const &trig) const {
       unsigned int m = 1;
       int constexpr n = SIZE/2;
       int constexpr log2_n = mylog2<n>::value;
       for (unsigned int s = 1; s <= log2_n; s++) {
         m *= 2;
-        real omega_m_re =  trig.cos_expr1(s-1);
-        real omega_m_im = -trig.sin_expr1(s-1);
+        real omega_m_re =  trig(OFF_COS1+s-1);
+        real omega_m_im = -trig(OFF_SIN1+s-1);
         for (unsigned int k = 0; k < n; k+=m) {
           real omega_re = 1;
           real omega_im = 0;
