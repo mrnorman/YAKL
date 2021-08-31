@@ -7,7 +7,7 @@ namespace yakl {
     sycl::queue sycl_default_stream;
   #endif
 
-  void *functorBuffer;
+  std::mutex yakl_mtx;
 
   Gator pool;
 

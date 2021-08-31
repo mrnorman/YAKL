@@ -69,10 +69,6 @@
     yaklAllocHostFunc = [] (size_t bytes , char const *label) -> void * { return malloc(bytes); };
     yaklFreeHostFunc  = [] (void *ptr , char const *label) { free(ptr); };
 
-    #if defined(YAKL_ARCH_CUDA)
-      cudaMalloc(&functorBuffer,functorBufSize);
-    #endif
-
     #if defined(YAKL_ARCH_HIP)
       int id;
       hipGetDevice(&id);

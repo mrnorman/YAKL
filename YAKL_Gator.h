@@ -167,6 +167,7 @@ public:
         ptr = pools.back().allocate(bytes,label);
       }
     }
+    if (stacky_bug) die("It looks like there might be a bug in StackyAllocator. Please report this at github.com/mrnorman/YAKL");
     if (ptr != nullptr) {
       return ptr;
     } else {

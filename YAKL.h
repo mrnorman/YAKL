@@ -5,6 +5,8 @@
 
 namespace yakl {
 
+  extern std::mutex yakl_mtx;
+
   typedef unsigned int index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 
@@ -48,9 +50,10 @@ namespace yakl {
 
   #ifdef YAKL_ARCH_CUDA
     // Size of the buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
-    int constexpr functorBufSize = 1024*128;
+    int constexpr functorBufSize = 1024*4;
     // Buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
-    extern void *functorBuffer;
+    // extern void *functorBuffer;
+    __constant__ __device__ char functorBuffer[functorBufSize / sizeof(char)];
   #endif
 
 

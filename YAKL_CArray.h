@@ -301,8 +301,9 @@ public:
     myData   = rhs.myData;
     refCount = rhs.refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
   }
 
@@ -322,8 +323,9 @@ public:
     myData   = rhs.myData;
     refCount = rhs.refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
 
     return *this;
@@ -637,8 +639,9 @@ public:
     ret.myData = myData;
     ret.refCount = refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
     return ret;
   }
@@ -654,8 +657,9 @@ public:
     ret.myData = myData;
     ret.refCount = refCount;
     if (owned && refCount != nullptr) {
-      #pragma omp atomic update
+      yakl_mtx.lock();
       (*refCount)++;
+      yakl_mtx.unlock();
     }
     return ret;
   }
@@ -780,8 +784,9 @@ public:
   inline void deallocate() {
     if (owned) {
       if (refCount != nullptr) {
-        #pragma omp atomic update
+        yakl_mtx.lock();
         (*refCount)--;
+        yakl_mtx.unlock();
 
         if (*refCount == 0) {
           delete refCount;
