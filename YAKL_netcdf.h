@@ -1,300 +1,304 @@
-
-#pragma once
-
-#include <netcdf>
-#include <vector>
+#ifndef SIMPLE_NETCDF_HPP
+#define SIMPLE_NETCDF_HPP
+// Provide a simple netCDF interface for RRTMGP that will read data in as YAKL
+// arrays. This replaces the simple netCDF interface that is included with YAKL
+// that requires netcdf-cxx4. We use it here instead of SCORPIO because we use
+// the I/O routines from RRTMGP++ mostly unchanged, and they used the YAKL I/O
+// for convenience. This small library mimics the functionality of the YAKL I/O
+// and provides a nearly 100% compatible API, but uses netCDF-C directly rather
+// than netcdf-cxx4. This library is provided specifically to work with
+// existing RRTMGP I/O routines; all other codes developed for SCREAM should
+// use SCORPIO for I/O.
+#include <netcdf.h>
 #include "YAKL.h"
-using namespace netCDF;
 
 namespace yakl {
 
-  NcFile::FileMode constexpr NETCDF_MODE_READ    = NcFile::read;
-  NcFile::FileMode constexpr NETCDF_MODE_WRITE   = NcFile::write;
-  NcFile::FileMode constexpr NETCDF_MODE_REPLACE = NcFile::replace;
-  NcFile::FileMode constexpr NETCDF_MODE_NEW     = NcFile::newFile;
+    auto constexpr NETCDF_MODE_READ    = NC_NOWRITE;
+    auto constexpr NETCDF_MODE_WRITE   = NC_WRITE;
+    auto constexpr NETCDF_MODE_REPLACE = NC_CLOBBER;
+    auto constexpr NETCDF_MODE_NEW     = NC_NOCLOBBER;
 
-  class SimpleNetCDF {
-  protected:
+    class SimpleNetCDF {
 
-    NcFile file;
+        protected:
 
-  public:
+            int ncid;
 
-    SimpleNetCDF() {};
-    ~SimpleNetCDF() { close(); }
+        public:
 
+            // Constructor
+            SimpleNetCDF() {};
 
-    void open  (std::string fname , NcFile::FileMode mode=NcFile::read   ) { file.open(fname,mode); }
+            // Destructor
+            ~SimpleNetCDF() {
+                //close();
+            };
 
-
-    void create(std::string fname , NcFile::FileMode mode=NcFile::replace) { file.open(fname,mode); }
-
-
-    void close() { file.close(); }
-
-
-    bool varExists( std::string varName ) const { return ! file.getVar(varName).isNull(); }
-
-
-    bool dimExists( std::string dimName ) const { return ! file.getDim(dimName).isNull(); }
-
-
-    int getDimSize( std::string dimName ) const { return file.getDim(dimName).getSize(); }
-
-
-    void createDim( std::string dimName , int len ) {
-      file.addDim( dimName , len );
-    }
-
-
-    /***************************************************************************************************
-    Write an entire Array at once
-    ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle>
-    void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
-      if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
-      std::vector<NcDim> dims(rank); // List of dimensions for this variable
-      // Make sure the dimensions are in there and are the right sizes
-      for (int i=0; i<rank; i++) {
-        auto dimLoc = file.getDim( dimNames[i] );
-        // If dimension doesn't exist, create it; otherwise, make sure it's the right size
-        NcDim tmp;
-        if ( dimLoc.isNull() ) {
-          tmp = file.addDim( dimNames[i] , arr.dimension[i] );
-        } else {
-          if (dimLoc.getSize() != arr.dimension[i]) {
-            yakl_throw("dimension size differs from the file");
-          }
-          tmp = dimLoc;
-        }
-        if (myStyle == styleC) {
-          dims[i] = tmp;
-        } else {
-          dims[rank-1-i] = tmp;
-        }
-      }
-      // Make sure the variable is there and is the right dimension
-      auto var = file.getVar(varName);
-      if ( var.isNull() ) {
-        var = file.addVar( varName , getType<T>() , dims );
-      } else {
-        if ( var.getType() != getType<T>() ) { yakl_throw("Existing variable's type != array's type"); }
-        auto varDims = var.getDims();
-        if (varDims.size() != rank) { yakl_throw("Existing variable's rank != array's rank"); }
-        for (int i=0; i < varDims.size(); i++) {
-          if (myStyle == styleC) {
-            if (varDims[i].getSize() != arr.dimension[i]) {
-              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+            void close() {
+                handle_error(nc_close(ncid));
             }
-          } else {
-            if (varDims[rank-1-i].getSize() != arr.dimension[i]) {
-              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+
+            void create(std::string filename, int mode=NC_CLOBBER) {
+                handle_error(nc_create(filename.c_str(), mode, &ncid));
+            };
+
+            void open(std::string filename, int mode=NC_NOWRITE) {
+                handle_error(nc_open(filename.c_str(), mode, &ncid));
+            };
+
+            void open(char *filename) {
+                handle_error(nc_open(filename, NC_NOWRITE, &ncid));
             }
-          }
-        }
-      }
 
-      if (myMem == memDevice) {
-        var.putVar(arr.createHostCopy().data());
-      } else {
-        var.putVar(arr.data());
-      }
-    }
-
-
-    /***************************************************************************************************
-    Write one entry of a scalar into the unlimited index
-    ***************************************************************************************************/
-    template <class T, typename std::enable_if<std::is_arithmetic<T>::value,int>::type = 0 >
-    void write1(T val , std::string varName , int ind , std::string ulDimName="unlim" ) {
-      // Get the unlimited dimension or create it if it doesn't exist
-      auto ulDim = file.getDim( ulDimName );
-      if ( ulDim.isNull() ) {
-        ulDim = file.addDim( ulDimName );
-      }
-      // Make sure the variable is there and is the right dimension
-      auto var = file.getVar(varName);
-      if ( var.isNull() ) {
-        std::vector<NcDim> dims(1);
-        dims[0] = ulDim;
-        var = file.addVar( varName , getType<T>() , dims );
-      }
-      std::vector<size_t> start(1);
-      std::vector<size_t> count(1);
-      start[0] = ind;
-      count[0] = 1;
-      var.putVar(start,count,&val);
-    }
-
-
-    /***************************************************************************************************
-    Write one entry of an Array into the unlimited index
-    ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle>
-    void write1(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames ,
-                int ind , std::string ulDimName="unlim" ) {
-      if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
-      std::vector<NcDim> dims(rank+1); // List of dimensions for this variable
-      // Get the unlimited dimension or create it if it doesn't exist
-      dims[0] = file.getDim( ulDimName );
-      if ( dims[0].isNull() ) {
-        dims[0] = file.addDim( ulDimName );
-      }
-      // Make sure the dimensions are in there and are the right sizes
-      for (int i=0; i<rank; i++) {
-        auto dimLoc = file.getDim( dimNames[i] );
-        // If dimension doesn't exist, create it; otherwise, make sure it's the right size
-        NcDim tmp;
-        if ( dimLoc.isNull() ) {
-          tmp = file.addDim( dimNames[i] , arr.dimension[i] );
-        } else {
-          if (dimLoc.getSize() != arr.dimension[i]) {
-            yakl_throw("dimension size differs from the file");
-          }
-          tmp = dimLoc;
-        }
-        if (myStyle == styleC) {
-          dims[1+i] = tmp;
-        } else {
-          dims[1+rank-1-i] = tmp;
-        }
-      }
-      // Make sure the variable is there and is the right dimension
-      auto var = file.getVar(varName);
-      if ( var.isNull() ) {
-        var = file.addVar( varName , getType<T>() , dims );
-      } else {
-        if ( var.getType() != getType<T>() ) { yakl_throw("Existing variable's type != array's type"); }
-        auto varDims = var.getDims();
-        if (varDims.size() != rank+1) { yakl_throw("Existing variable's rank != array's rank"); }
-        for (int i=1; i < varDims.size(); i++) {
-          if (myStyle == styleC) {
-            if (varDims[i].getSize() != arr.dimension[i-1]) {
-              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+            // NetCDF routines return an integer error code. Define a function
+            // here to abort program execution and throw an error code if we
+            // encounter a non-zero NetCDF return code. We will wrap our
+            // NetCDF calls with this function to handle these errors in a
+            // consistent way
+            void handle_error(int err) {
+                if (err) {
+                    std::cout << "ERROR: " << nc_strerror(err) << std::endl;
+                    abort();
+                }
             }
-          } else {
-            if (varDims[rank-1-i].getSize() != arr.dimension[i-1]) {
-              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+
+            void handle_error(int err, const char *file, int line) {
+                if (err) {
+                    std::cout << "ERROR: " << nc_strerror(err) << " at line " << line << " in " << file << std::endl;
+                    abort();
+                }
             }
-          }
-        }
-      }
 
-      std::vector<size_t> start(rank+1);
-      std::vector<size_t> count(rank+1);
-      start[0] = ind;
-      count[0] = 1;
-      for (int i=1; i < rank+1; i++) {
-        start[i] = 0;
-        count[i] = dims[i].getSize();
-      }
-      if (myMem == memDevice) {
-        var.putVar(start,count,arr.createHostCopy().data());
-      } else {
-        var.putVar(start,count,arr.data());
-      }
-    }
+            // Read a netCDF array to a YAKL array
+            template <class T, int rank, int myMem, int myStyle> void read(Array<T,rank,myMem,myStyle> &arr, std::string varName) {
 
+                // Get variable ID
+                int varid;
+                handle_error(nc_inq_varid(ncid, varName.c_str(), &varid), __FILE__, __LINE__);
 
-    /***************************************************************************************************
-    Read an entire Array
-    ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle>
-    void read(Array<T,rank,myMem,myStyle> &arr , std::string varName) {
-      // Make sure the variable is there and is the right dimension
-      auto var = file.getVar(varName);
-      std::vector<int> dimSizes(rank);
-      if ( ! var.isNull() ) {
-        auto varDims = var.getDims();
-        if (varDims.size() != rank) { yakl_throw("Existing variable's rank != array's rank"); }
-        if (myStyle == styleC) {
-          for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[i].getSize(); }
-        } else if (myStyle == styleFortran) {
-          for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[varDims.size()-1-i].getSize(); }
-        }
-        bool createArr = ! arr.initialized();
-        if (arr.initialized()) {
-          for (int i=0; i < dimSizes.size(); i++) {
-            if (dimSizes[i] != arr.dimension[i]) {
-              #ifdef YAKL_DEBUG
-                std::cout << "WARNING: Array dims wrong size; deallocating previous array and allocating a new one\n";
-              #endif
-              createArr = true;
+                // Get variable dimension sizes
+                int ndims;
+                int dimids[NC_MAX_VAR_DIMS];
+                nc_type vtype;
+                handle_error(nc_inq_var(ncid, varid, NULL, &vtype, &ndims, dimids, NULL), __FILE__, __LINE__);
+                std::vector<int> dimSizes(ndims);
+                size_t dimsize;
+                for (int i = 0; i < ndims; i++) {
+                    handle_error(nc_inq_dimlen(ncid, dimids[i], &dimsize), __FILE__, __LINE__); 
+                    dimSizes[i] = dimsize;
+                }
+
+                // If style is fortran, we need to reverse array dims
+                if (myStyle == styleFortran) {
+                    std::reverse(dimSizes.begin(), dimSizes.end());
+                }
+
+                // Allocate (or reshape) the yakl array
+                arr = Array<T,rank,myMem,myStyle>(varName.c_str(),dimSizes);
+
+                // Read variable data
+                if (myMem == memDevice) {
+                    auto arrHost = arr.createHostCopy();
+                    if (std::is_same<T,bool>::value) {
+                        // Create boolean array from integer arrays
+                        Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
+                        handle_error(nc_get_var(ncid, varid, tmp.data()), __FILE__, __LINE__);
+                        for (int i=0; i < arr.totElems(); i++) { arrHost.myData[i] = tmp.myData[i] == 1; }
+                    } else {
+                        // Need to be careful with floats; nc_get_var is overloaded on type, but we need
+                        // to make sure we read floats from file with the float procedure, and doubles
+                        // with that for doubles. The danger is if the user passes a yakl array here
+                        // with type double, but tries to read type float from file.
+                        // TODO: why does the YAKL implementation for this work fine, but this version
+                        // calling nc_get_var directly does not?
+                        if (vtype == NC_FLOAT) {
+                            Array<float,rank,memHost,myStyle> tmp("tmp",dimSizes);
+                            handle_error(nc_get_var(ncid, varid, tmp.data()), __FILE__, __LINE__);
+                            for (size_t i=0; i < arr.totElems(); i++) { arrHost.myData[i] = tmp.myData[i]; }
+                        } else {
+                            handle_error(nc_get_var(ncid, varid, arrHost.data()), __FILE__, __LINE__);
+                        }
+                    }
+                    arrHost.deep_copy_to(arr);
+                } else {
+                    if (std::is_same<T,bool>::value) {
+                        // Create boolean array from integer arrays
+                        Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
+                        handle_error(nc_get_var(ncid, varid, tmp.data()), __FILE__, __LINE__);
+                        for (size_t i=0; i < arr.totElems(); i++) { arr.myData[i] = tmp.myData[i] == 1; }
+                    } else {
+                        if (vtype == NC_FLOAT) {
+                            Array<float,rank,memHost,myStyle> tmp("tmp",dimSizes);
+                            handle_error(nc_get_var(ncid, varid, tmp.data()), __FILE__, __LINE__);
+                            for (size_t i=0; i < arr.totElems(); i++) { arr.myData[i] = tmp.myData[i]; }
+                        } else {
+                            handle_error(nc_get_var(ncid, varid, arr.data()), __FILE__, __LINE__);
+                        }
+                    }
+                }
+
             }
-          }
-        }
-        if (createArr) { arr = Array<T,rank,myMem,myStyle>(varName.c_str(),dimSizes); }
-      } else { yakl_throw("Variable does not exist"); }
 
-      if (myMem == memDevice) {
-        auto arrHost = arr.createHostCopy();
-        if (std::is_same<T,bool>::value) {
-          Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
-          var.getVar(tmp.data());
-          for (int i=0; i < arr.totElems(); i++) { arrHost.myData[i] = tmp.myData[i] == 1; }
-        } else {
-          var.getVar(arrHost.data());
-        }
-        arrHost.deep_copy_to(arr);
-      } else {
-        if (std::is_same<T,bool>::value) {
-          Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
-          var.getVar(tmp.data());
-          for (int i=0; i < arr.totElems(); i++) { arr.myData[i] = tmp.myData[i] == 1; }
-        } else {
-          var.getVar(arr.data());
-        }
-      }
-    }
+            // Read a scalar type
+            template <class T> void read(T &arr , std::string varName) {
+                // Get variable ID
+                int varid;
+                handle_error(nc_inq_varid(ncid, varName.c_str(), &varid), __FILE__, __LINE__);
 
+                // Read data
+                handle_error(nc_get_var(ncid, varid, &arr), __FILE__, __LINE__);
+            }
 
-    /***************************************************************************************************
-    Read a single scalar value
-    ***************************************************************************************************/
-    template <class T>
-    void read(T &arr , std::string varName) {
-      auto var = file.getVar(varName);
-      if ( var.isNull() ) { yakl_throw("Variable does not exist"); }
-      var.getVar(&arr);
-    }
+            // Check if variable exists in file
+            bool varExists (std::string varName) {
+                int varid;
+                int ncerr = nc_inq_varid(ncid, varName.c_str(), &varid);
+                if (ncerr == 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
 
+            bool dimExists (std::string dimName) {
+                int dimid;
+                int ncerr = nc_inq_dimid(ncid, dimName.c_str(), &dimid);
+                if (ncerr == 0) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
 
-    /***************************************************************************************************
-    Write a single scalar value
-    ***************************************************************************************************/
-    template <class T>
-    void write(T arr , std::string varName) {
-      auto var = file.getVar(varName);
-      if ( var.isNull() ) {
-        var = file.addVar( varName , getType<T>() );
-      }
-      var.putVar(&arr);
-    }
+            size_t getDimSize(std::string dimName) {
+                // Get dimension ID
+                int dimid;
+                handle_error(nc_inq_dimid(ncid, dimName.c_str(), &dimid));
 
+                // Get dimension size
+                size_t dimSize;
+                handle_error(nc_inq_dimlen(ncid, dimid, &dimSize));
 
-    /***************************************************************************************************
-    Determine the type of a template T
-    ***************************************************************************************************/
-    template <class T> NcType getType() const {
-           if ( std::is_same<T,          char>::value ) { return ncChar;   }
-      else if ( std::is_same<T,unsigned  char>::value ) { return ncUbyte;  }
-      else if ( std::is_same<T,         short>::value ) { return ncShort;  }
-      else if ( std::is_same<T,unsigned short>::value ) { return ncUshort; }
-      else if ( std::is_same<T,           int>::value ) { return ncInt;    }
-      else if ( std::is_same<T,unsigned   int>::value ) { return ncUint;   }
-      else if ( std::is_same<T,          long>::value ) { return ncInt64;  }
-      else if ( std::is_same<T,unsigned  long>::value ) { return ncUint64; }
-      else if ( std::is_same<T,         float>::value ) { return ncFloat;  }
-      else if ( std::is_same<T,        double>::value ) { return ncDouble; }
-      else if ( std::is_same<T,std::string   >::value ) { return ncString; }
-      else { yakl_throw("Invalid type"); }
-      return -1;
-    }
+                return dimSize;
+            }
 
-  };
+            void addDim(std::string dimName, int dimSize, int *dimid) {
+                // Put file into define mode
+                int ncerr = nc_redef(ncid);
+                if ((ncerr != NC_NOERR) and (ncerr != NC_EINDEFINE)) {
+                    handle_error(ncerr, __FILE__, __LINE__);
+                }
 
+                // Define dimension
+                handle_error(nc_def_dim(ncid, dimName.c_str(), dimSize, dimid), __FILE__, __LINE__);
 
+                // End define mode
+                handle_error(nc_enddef(ncid), __FILE__, __LINE__);
+            }
 
-}
+            void addVar(std::string varName, nc_type varType, int ndims, int dimids[], int *varid) {
+                // Put file into define mode
+                int ncerr = nc_redef(ncid);
+                if ((ncerr != NC_NOERR) and (ncerr != NC_EINDEFINE)) {
+                    handle_error(ncerr, __FILE__, __LINE__);
+                }
 
+                // Define variable
+                handle_error(nc_def_var(ncid, varName.c_str(), varType, ndims, dimids, varid), __FILE__, __LINE__);
 
+                // End define mode
+                handle_error(nc_enddef(ncid), __FILE__, __LINE__);
+            }
+
+            template <class T> void putVar(T const &arr, std::string varName) {
+                // Make sure file is not in define mode
+                int ncerr = nc_enddef(ncid);
+                if ((ncerr != NC_NOERR) and (ncerr != NC_ENOTINDEFINE)) {
+                    handle_error(ncerr, __FILE__, __LINE__);
+                }
+
+                // Get variable Id
+                int varid;
+                handle_error(nc_inq_varid(ncid, varName.c_str(), &varid), __FILE__, __LINE__);
+
+                // Write variable data
+                handle_error(nc_put_var(ncid, varid, arr), __FILE__, __LINE__);
+            }
+
+            template <class T, int rank, int myMem, int myStyle> 
+            void write(Array<T,rank,myMem,myStyle> const &arr, std::string varName, std::vector<std::string> dimNames) {
+
+                // Make sure length of dimension names is equal to rank of array
+                if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array rank"); }
+
+                // Get dimension sizes
+                // Define dimensions if they do not exist and get dimension IDs
+                int dimids[rank];
+                size_t dimSize;
+                size_t idim;
+                for (size_t i = 0; i < dimNames.size(); i++) {
+                    // If style is Fortran, dimension ordering is reversed
+                    if (myStyle == styleC) {
+                        idim = i;
+                    } else {
+                        idim = rank - 1 - i;
+                    }
+                    int ncerr = nc_inq_dimid(ncid, dimNames[i].c_str(), &dimids[idim]);
+                    if (ncerr == NC_NOERR) {
+                        // check that size is correct
+                        handle_error(nc_inq_dimlen(ncid, dimids[idim], &dimSize), __FILE__, __LINE__);
+                        if (dimSize != arr.dimension[i]) {
+                            yakl_throw("dimSize != arr.dimension[i]");
+                        }
+                    } else {
+                        addDim(dimNames[i], arr.dimension[i], &dimids[idim]);
+                    }
+                }
+
+                // Add variable if it does not exist
+                if (!varExists(varName)) {
+                    int varid;
+                    addVar(varName, getType<T>(), rank, dimids, &varid);
+                }
+
+                // Write data to file
+                if (myMem == memDevice) {
+                    putVar(arr.createHostCopy().data(), varName);
+                } else {
+                    putVar(arr.data(), varName);
+                }
+            }
+
+            template <class T> void write(T arr, std::string varName) {
+                // If variable does not exist, try to add it
+                if (!varExists(varName)) {
+                    int dimids[1] = {0};
+                    int varid;
+                    addVar(varName, getType<T>(), 0, dimids, &varid);
+                }
+                // Write to file
+                putVar(&arr, varName);
+            }
+
+            // Determine nc_type corresponding to intrinsic type
+            template <class T> nc_type getType() const {
+                     if ( std::is_same<T,          char>::value ) { return NC_CHAR;   }
+                else if ( std::is_same<T,unsigned  char>::value ) { return NC_UBYTE;  }
+                else if ( std::is_same<T,         short>::value ) { return NC_SHORT;  }
+                else if ( std::is_same<T,unsigned short>::value ) { return NC_USHORT; }
+                else if ( std::is_same<T,           int>::value ) { return NC_INT;    }
+                else if ( std::is_same<T,unsigned   int>::value ) { return NC_UINT;   }
+                else if ( std::is_same<T,          long>::value ) { return NC_INT64;  }
+                else if ( std::is_same<T,unsigned  long>::value ) { return NC_UINT64; }
+                else if ( std::is_same<T,         float>::value ) { return NC_FLOAT;  }
+                else if ( std::is_same<T,        double>::value ) { return NC_DOUBLE; }
+                else if ( std::is_same<T,std::string   >::value ) { return NC_STRING; }
+                else { yakl_throw("Invalid type"); }
+                return -1;
+            }
+
+    };  // class SimpleNetCDF
+
+} // namespace simple_netcdf
+#endif
