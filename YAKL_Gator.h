@@ -28,6 +28,8 @@ protected:
   size_t blockSize;
   bool   enabled;
 
+  std::mutex mtx;
+
   void die(std::string str="") {
     std::cerr << str << std::endl;
     throw str;
@@ -145,7 +147,7 @@ public:
     bool room_found = false;
     bool stacky_bug = false;
     void *ptr;
-    #pragma omp critical
+    mtx.lock();
     {
       for (auto it = pools.begin() ; it != pools.end() ; it++) {
         if (it->iGotRoom(bytes)) {
@@ -167,6 +169,7 @@ public:
         ptr = pools.back().allocate(bytes,label);
       }
     }
+    mtx.unlock();
     if (stacky_bug) die("It looks like there might be a bug in StackyAllocator. Please report this at github.com/mrnorman/YAKL");
     if (ptr != nullptr) {
       return ptr;
@@ -182,7 +185,7 @@ public:
       std::cout << "MEMORY DEBUG: Gator attempting to free " << label << " with the pointer: " << ptr << "\n";
     #endif
     bool pointer_valid = false;
-    #pragma omp critical
+    mtx.lock();
     {
       // Iterate backwards. It's assumed accesses are stack-like
       for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
@@ -193,6 +196,7 @@ public:
         }
       }
     }
+    mtx.unlock();
     if (!pointer_valid) die("Error: Trying to free an invalid pointer");
   };
 

@@ -137,7 +137,6 @@ namespace yakl {
 
     SArray<real,1,n>   u1, u2, u3, u4, v1, v2, v3, v4, z1, z2, z3, z4, r, s, y;
     SArray<real,2,4,4> h, p;
-    real               sum;
 
     real cp1 = a(0);
     real cp2 = b(0);
