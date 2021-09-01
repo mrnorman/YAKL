@@ -173,7 +173,7 @@ namespace yakl {
               yakl_throw("Existing variable's dimension sizes are not the same as the array's");
             }
           } else {
-            if (varDims[rank-1-i].getSize() != arr.dimension[i-1]) {
+            if (varDims[1+rank-i].getSize() != arr.dimension[i-1]) {
               yakl_throw("Existing variable's dimension sizes are not the same as the array's");
             }
           }
