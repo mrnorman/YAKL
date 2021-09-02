@@ -287,7 +287,7 @@ namespace yakl {
 
       NcVar addVar( std::string varName , int type ) {
         int varid;
-        int *dummy;
+        int *dummy = nullptr;
         ncwrap( nc_def_var(ncid , varName.c_str() , type , 0 , dummy , &varid) , __LINE__ );
         return NcVar( ncid , varName , std::vector<NcDim>(0) , varid , type );
       }
