@@ -77,7 +77,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<8; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
       // Compute base indices
       index_t fac   ; indices[7] = fastmod( (iGlob    ) , dims[7] );
       fac  = dims[7]; indices[6] = fastmod( (iGlob/fac) , dims[6] );
@@ -115,7 +115,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<8; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
       // Compute base indices
       index_t fac   ; indices[7] = fastmod( (iGlob    ) , dims[7] );
       fac  = dims[7]; indices[6] = fastmod( (iGlob/fac) , dims[6] );
@@ -147,7 +147,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<7; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
       // Compute base indices
       index_t fac   ; indices[6] = fastmod( (iGlob    ) , dims[6] );
       fac  = dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] );
@@ -182,7 +182,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<7; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
       // Compute base indices
       index_t fac   ; indices[6] = fastmod( (iGlob    ) , dims[6] );
       fac  = dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] );
@@ -212,7 +212,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<6; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
       // Compute base indices
       index_t fac   ; indices[5] = fastmod( (iGlob    ) , dims[5] );
       fac  = dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] );
@@ -244,7 +244,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<6; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
       // Compute base indices
       index_t fac   ; indices[5] = fastmod( (iGlob    ) , dims[5] );
       fac  = dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] );
@@ -272,7 +272,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<5; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
       // Compute base indices
       index_t fac   ; indices[4] = fastmod( (iGlob    ) , dims[4] );
       fac  = dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] );
@@ -301,7 +301,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<5; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
       // Compute base indices
       index_t fac   ; indices[4] = fastmod( (iGlob    ) , dims[4] );
       fac  = dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] );
@@ -327,7 +327,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<4; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
       // Compute base indices
       index_t fac   ; indices[3] = fastmod( (iGlob    ) , dims[3] );
       fac  = dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
@@ -353,7 +353,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<4; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
       // Compute base indices
       index_t fac   ; indices[3] = fastmod( (iGlob    ) , dims[3] );
       fac  = dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
@@ -377,7 +377,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<3; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
       // Compute base indices
       index_t fac   ; indices[2] = fastmod( (iGlob    ) , dims[2] );
       fac  = dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
@@ -400,7 +400,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<3; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
       // Compute base indices
       index_t fac   ; indices[2] = fastmod( (iGlob    ) , dims[2] );
       fac  = dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
@@ -422,7 +422,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<2; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
       // Compute base indices
       indices[1] = fastmod( (iGlob        ) , dims[1] );
       indices[0] =          (iGlob/dims[1])            ;
@@ -442,7 +442,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<2; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
       // Compute base indices
       indices[1] = fastmod( (iGlob        ) , dims[1] );
       indices[0] =          (iGlob/dims[1])            ;
@@ -461,7 +461,7 @@ namespace c {
       lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
       nIter = dims[0];
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
       // Compute base indices
       indices[0] = iGlob;
       // Apply strides and lower bounds
@@ -477,7 +477,7 @@ namespace c {
       dims[0] = b0;
       nIter = dims[0];
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
       // Compute base indices
       indices[0] = iGlob;
     }
@@ -495,42 +495,42 @@ namespace c {
   ////////////////////////////////////////////////
   // Convenience functions to handle the indexing
   ////////////////////////////////////////////////
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<1,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<1,simple> const &bnd , int const i ) {
     int ind[1];
     bnd.unpackIndices( i , ind );
     f(ind[0]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<2,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<2,simple> const &bnd , int const i ) {
     int ind[2];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<3,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<3,simple> const &bnd , int const i ) {
     int ind[3];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<4,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<4,simple> const &bnd , int const i ) {
     int ind[4];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<5,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<5,simple> const &bnd , int const i ) {
     int ind[5];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3],ind[4]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<6,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<6,simple> const &bnd , int const i ) {
     int ind[6];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<7,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<7,simple> const &bnd , int const i ) {
     int ind[7];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<8,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<8,simple> const &bnd , int const i ) {
     int ind[8];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],ind[7]);
@@ -950,3 +950,4 @@ namespace c {
 
 
 }
+
