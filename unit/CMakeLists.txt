@@ -31,6 +31,7 @@ add_subdirectory(Fortran_Gator)
 add_subdirectory(OpenMP_Regions)
 add_subdirectory(Intrinsics)
 add_subdirectory(ParForC)
+add_subdirectory(ParForFortran)
 
 if (DEFINED NETCDF_LINK_FLAGS)
   add_subdirectory(NetCDF)
