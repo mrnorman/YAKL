@@ -4,6 +4,8 @@
 template <class T, int rank, int myMem> class Array<T,rank,myMem,styleC> {
 public:
 
+  typedef typename std::remove_const<T>::type type;
+
   T       * myData;         // Pointer to the flattened internal data
   int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
   index_t dimension[rank];  // Sizes of the 8 possible dimensions

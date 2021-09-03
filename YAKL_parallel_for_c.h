@@ -15,9 +15,17 @@ namespace c {
 
 
 
+  ///////////////////////////////////////////////////////////
+  // LBnd: Loop Bound -- Describes the bounds of one loop
+  ///////////////////////////////////////////////////////////
   class LBnd {
   public:
     int l, u, s;
+    LBnd(index_t u) {
+      this->l = 0;
+      this->u = u-1;
+      this->s = 1;
+    }
     LBnd(int u) {
       this->l = 0;
       this->u = u-1;
@@ -35,12 +43,18 @@ namespace c {
       this->s = s;
       if (s < 1) yakl_throw("ERROR: negative strides not yet supported.");
     }
+    index_t to_scalar() {
+      return (index_t) u+1;
+    }
   };
 
 
+  ///////////////////////////////////////////////////////////
+  // Bounds: Describes a set of loop bounds
+  ///////////////////////////////////////////////////////////
 
-  // Bounds with simple set to true have no lower bounds or strides specified
-  // This saves on register space on accelerators
+  // N == number of loops
+  // simple == all lower bounds are 0, and all strides are 1
   template <int N, bool simple = false> class Bounds;
 
 
@@ -63,7 +77,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<8; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
       // Compute base indices
       index_t fac   ; indices[7] = fastmod( (iGlob    ) , dims[7] );
       fac  = dims[7]; indices[6] = fastmod( (iGlob/fac) , dims[6] );
@@ -101,7 +115,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<8; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
       // Compute base indices
       index_t fac   ; indices[7] = fastmod( (iGlob    ) , dims[7] );
       fac  = dims[7]; indices[6] = fastmod( (iGlob/fac) , dims[6] );
@@ -133,7 +147,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<7; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
       // Compute base indices
       index_t fac   ; indices[6] = fastmod( (iGlob    ) , dims[6] );
       fac  = dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] );
@@ -168,7 +182,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<7; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
       // Compute base indices
       index_t fac   ; indices[6] = fastmod( (iGlob    ) , dims[6] );
       fac  = dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] );
@@ -198,7 +212,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<6; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
       // Compute base indices
       index_t fac   ; indices[5] = fastmod( (iGlob    ) , dims[5] );
       fac  = dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] );
@@ -230,7 +244,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<6; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
       // Compute base indices
       index_t fac   ; indices[5] = fastmod( (iGlob    ) , dims[5] );
       fac  = dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] );
@@ -258,7 +272,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<5; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
       // Compute base indices
       index_t fac   ; indices[4] = fastmod( (iGlob    ) , dims[4] );
       fac  = dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] );
@@ -287,7 +301,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<5; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
       // Compute base indices
       index_t fac   ; indices[4] = fastmod( (iGlob    ) , dims[4] );
       fac  = dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] );
@@ -313,7 +327,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<4; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
       // Compute base indices
       index_t fac   ; indices[3] = fastmod( (iGlob    ) , dims[3] );
       fac  = dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
@@ -339,7 +353,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<4; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
       // Compute base indices
       index_t fac   ; indices[3] = fastmod( (iGlob    ) , dims[3] );
       fac  = dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
@@ -363,7 +377,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<3; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
       // Compute base indices
       index_t fac   ; indices[2] = fastmod( (iGlob    ) , dims[2] );
       fac  = dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
@@ -386,7 +400,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<3; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
       // Compute base indices
       index_t fac   ; indices[2] = fastmod( (iGlob    ) , dims[2] );
       fac  = dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
@@ -408,7 +422,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<2; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
       // Compute base indices
       indices[1] = fastmod( (iGlob        ) , dims[1] );
       indices[0] =          (iGlob/dims[1])            ;
@@ -428,7 +442,7 @@ namespace c {
       nIter = 1;
       for (int i=0; i<2; i++) { nIter *= dims[i]; }
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
       // Compute base indices
       indices[1] = fastmod( (iGlob        ) , dims[1] );
       indices[0] =          (iGlob/dims[1])            ;
@@ -447,7 +461,7 @@ namespace c {
       lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
       nIter = dims[0];
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
       // Compute base indices
       indices[0] = iGlob;
       // Apply strides and lower bounds
@@ -463,7 +477,7 @@ namespace c {
       dims[0] = b0;
       nIter = dims[0];
     }
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
+    YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
       // Compute base indices
       indices[0] = iGlob;
     }
@@ -471,46 +485,52 @@ namespace c {
 
 
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Make it easy for the user to specify that all lower bounds are zero and all strides are one
+  ////////////////////////////////////////////////////////////////////////////////////////////////
   template <int N> using SimpleBounds = Bounds<N,true>;
 
 
 
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<1,simple> const &bnd , int const i ) {
+  ////////////////////////////////////////////////
+  // Convenience functions to handle the indexing
+  ////////////////////////////////////////////////
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<1,simple> const &bnd , int const i ) {
     int ind[1];
     bnd.unpackIndices( i , ind );
     f(ind[0]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<2,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<2,simple> const &bnd , int const i ) {
     int ind[2];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<3,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<3,simple> const &bnd , int const i ) {
     int ind[3];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<4,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<4,simple> const &bnd , int const i ) {
     int ind[4];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<5,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<5,simple> const &bnd , int const i ) {
     int ind[5];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3],ind[4]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<6,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<6,simple> const &bnd , int const i ) {
     int ind[6];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<7,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<7,simple> const &bnd , int const i ) {
     int ind[7];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6]);
   }
-  template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<8,simple> const &bnd , int const i ) {
+  template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<8,simple> const &bnd , int const i ) {
     int ind[8];
     bnd.unpackIndices( i , ind );
     f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],ind[7]);
@@ -518,6 +538,9 @@ namespace c {
 
 
 
+  ////////////////////////////////////////////////
+  // HARDWARE BACKENDS FOR KERNEL LAUNCHING
+  ////////////////////////////////////////////////
   #ifdef YAKL_ARCH_CUDA
     template <class F, int N, bool simple> __global__ void cudaKernelConst( Bounds<N,simple> bounds , F const &dummy ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -535,7 +558,7 @@ namespace c {
     }
 
     template<class F , int N , bool simple, typename std::enable_if< (sizeof(F) <= functorBufConstSize) , int >::type = 1 >
-    void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+    void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize ) {
       cudaMemcpyToSymbolAsync(functorBufferConstant,&f,sizeof(F),0,cudaMemcpyHostToDevice);
       check_last_error();
       cudaKernelConst <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , f );
@@ -543,7 +566,7 @@ namespace c {
     }
 
     template<class F , int N , bool simple, typename std::enable_if< (sizeof(F) > functorBufConstSize) && (sizeof(F) <= functorBufDevSize) , int >::type = 1 >
-    void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+    void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize ) {
       cudaMemcpyAsync(functorBufferDevice,&f,sizeof(F),cudaMemcpyHostToDevice);
       check_last_error();
       cudaKernelDev <<< (unsigned int) (bounds.nIter-1)/vectorSize+1 , vectorSize >>> ( bounds , * ( (F const *) functorBufferDevice ) );
@@ -551,7 +574,7 @@ namespace c {
     }
 
     template<class F , int N , bool simple, typename std::enable_if< (sizeof(F) > functorBufDevSize) , int >::type = 1 >
-    void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+    void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , int vectorSize ) {
       yakl_throw("ERROR: functor size is > functorBufDevSize. Increase functorBufDevSize in YAKL.");
     }
   #endif
@@ -567,7 +590,7 @@ namespace c {
     }
 
     template<class F, int N, bool simple>
-    void parallel_for_hip( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+    void parallel_for_hip( Bounds<N,simple> const &bounds , F const &f , int vectorSize ) {
       hipLaunchKernelGGL( hipKernel , dim3((bounds.nIter-1)/vectorSize+1) , dim3(vectorSize) ,
                           (std::uint32_t) 0 , (hipStream_t) 0 , bounds , f );
       check_last_error();
@@ -578,7 +601,7 @@ namespace c {
 
   #ifdef YAKL_ARCH_SYCL
     template<class F, int N, bool simple>
-    void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+    void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , int vectorSize ) {
       isTriviallyCopyable<F>();
 
       sycl_default_stream.parallel_for<class sycl_kernel>( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
@@ -587,24 +610,6 @@ namespace c {
       check_last_error();
     }
   #endif
-
-
-  template <class F, int N, bool simple>
-  inline void parallel_for( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
-    #ifdef YAKL_ARCH_CUDA
-      parallel_for_cuda( bounds , f , vectorSize );
-    #elif defined(YAKL_ARCH_HIP)
-      parallel_for_hip ( bounds , f , vectorSize );
-    #elif defined(YAKL_ARCH_SYCL)
-      parallel_for_sycl( bounds , f , vectorSize );
-    #else
-      parallel_for_cpu_serial( bounds , f );
-    #endif
-
-    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-      fence();
-    #endif
-  }
 
 
   template <class F> inline void parallel_for_cpu_serial( int ubnd , F const &f ) {
@@ -863,6 +868,32 @@ namespace c {
     } } } } } } } }
   }
 
+
+
+  ////////////////////////////////////////////////
+  // MAIN USER-LEVEL FUNCTIONS
+  ////////////////////////////////////////////////
+
+  // Bounds class, No label
+  // This serves as the template, which all other user-level functions route into
+  template <class F, int N, bool simple>
+  inline void parallel_for( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+    #ifdef YAKL_ARCH_CUDA
+      parallel_for_cuda( bounds , f , vectorSize );
+    #elif defined(YAKL_ARCH_HIP)
+      parallel_for_hip ( bounds , f , vectorSize );
+    #elif defined(YAKL_ARCH_SYCL)
+      parallel_for_sycl( bounds , f , vectorSize );
+    #else
+      parallel_for_cpu_serial( bounds , f );
+    #endif
+
+    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+      fence();
+    #endif
+  }
+
+  // Bounds class, Label
   template <class F, int N, bool simple>
   inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f, int vectorSize = 128 ) {
     #ifdef YAKL_ARCH_CUDA
@@ -882,13 +913,19 @@ namespace c {
     #endif
   }
 
-
-  template <class F> inline void parallel_for( LBnd &bnd , F const &f , int vectorSize = 128 ) {
-    parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+  // Single bound or integer, no label
+  // Since "bnd" is accepted by value, integers will be accepted as well
+  template <class F> inline void parallel_for( LBnd bnd , F const &f , int vectorSize = 128 ) {
+    if (bnd.l == 0 && bnd.s == 1) {
+      parallel_for( Bounds<1,true>(bnd.to_scalar()) , f , vectorSize );
+    } else {
+      parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+    }
   }
 
-
-  template <class F> inline void parallel_for( char const * str , LBnd &bnd , F const &f , int vectorSize = 128 ) {
+  // Single bound or integer, label
+  // Since "bnd" is accepted by value, integers will be accepted as well
+  template <class F> inline void parallel_for( char const * str , LBnd bnd , F const &f , int vectorSize = 128 ) {
     #ifdef YAKL_ARCH_CUDA
       nvtxRangePushA(str);
     #endif
@@ -896,7 +933,11 @@ namespace c {
       timer_start(str);
     #endif
 
-    parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+    if (bnd.l == 0 && bnd.s == 1) {
+      parallel_for( Bounds<1,true>(bnd.to_scalar()) , f , vectorSize );
+    } else {
+      parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+    }
 
     #ifdef YAKL_AUTO_PROFILE
       timer_stop(str);
@@ -907,17 +948,6 @@ namespace c {
   }
 
 
-  template <class F, class T, typename std::enable_if< std::is_integral<T>::value , int >::type = 0 >
-  inline void parallel_for( T bnd , F const &f , int vectorSize = 128 ) {
-    parallel_for( Bounds<1,true>(bnd) , f , vectorSize );
-  }
-
-
-  template <class F, class T, typename std::enable_if< std::is_integral<T>::value , int >::type = 0 >
-  inline void parallel_for( char const * str , T bnd , F const &f , int vectorSize = 128 ) {
-    parallel_for( str , Bounds<1,true>(bnd) , f , vectorSize );
-  }
-
-
 
 }
+
