@@ -11,6 +11,9 @@ namespace fortran {
 
 
 
+  ///////////////////////////////////////////////////////////
+  // LBnd: Loop Bound -- Describes the bounds of one loop
+  ///////////////////////////////////////////////////////////
   class LBnd {
   public:
     int l, u, s;
@@ -31,12 +34,19 @@ namespace fortran {
       this->s = s;
       if (s < 1) yakl_throw("ERROR: negative strides not yet supported.");
     }
+    index_t to_scalar() {
+      return (index_t) u;
+    }
   };
 
 
 
-  // Bounds with simple set to true have no lower bounds or strides specified
-  // This saves on register space on accelerators
+  ///////////////////////////////////////////////////////////
+  // Bounds: Describes a set of loop bounds
+  ///////////////////////////////////////////////////////////
+
+  // N == number of loops
+  // simple == all lower bounds are 1, and all strides are 1
   template <int N, bool simple = false> class Bounds;
 
 
@@ -467,10 +477,16 @@ namespace fortran {
 
 
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Make it easy for the user to specify that all lower bounds are zero and all strides are one
+  ////////////////////////////////////////////////////////////////////////////////////////////////
   template <int N> using SimpleBounds = Bounds<N,true>;
 
 
 
+  ////////////////////////////////////////////////
+  // Convenience functions to handle the indexing
+  ////////////////////////////////////////////////
   template <class F, bool simple> YAKL_INLINE void callFunctor(F const &f , Bounds<1,simple> const &bnd , int const i ) {
     int ind[1];
     bnd.unpackIndices( i , ind );
@@ -514,6 +530,9 @@ namespace fortran {
 
 
 
+  ////////////////////////////////////////////////
+  // HARDWARE BACKENDS FOR KERNEL LAUNCHING
+  ////////////////////////////////////////////////
   #ifdef YAKL_ARCH_CUDA
     template <class F, int N, bool simple> __global__ void cudaKernelConst( Bounds<N,simple> bounds , F const &dummy ) {
       size_t i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -584,23 +603,6 @@ namespace fortran {
     }
   #endif
 
-
-  template <class F, int N, bool simple>
-  inline void parallel_for( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
-    #ifdef YAKL_ARCH_CUDA
-      parallel_for_cuda( bounds , f , vectorSize );
-    #elif defined(YAKL_ARCH_HIP)
-      parallel_for_hip ( bounds , f , vectorSize );
-    #elif defined(YAKL_ARCH_SYCL)
-      parallel_for_sycl( bounds , f , vectorSize );
-    #else
-      parallel_for_cpu_serial( bounds , f );
-    #endif
-
-    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-      fence();
-    #endif
-  }
 
   template <class F> inline void parallel_for_cpu_serial( int ubnd , F const &f ) {
     #ifdef YAKL_ARCH_OPENMP45
@@ -858,6 +860,32 @@ namespace fortran {
     } } } } } } } }
   }
 
+
+
+  ////////////////////////////////////////////////
+  // MAIN USER-LEVEL FUNCTIONS
+  ////////////////////////////////////////////////
+
+  // Bounds class, No label
+  // This serves as the template, which all other user-level functions route into
+  template <class F, int N, bool simple>
+  inline void parallel_for( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
+    #ifdef YAKL_ARCH_CUDA
+      parallel_for_cuda( bounds , f , vectorSize );
+    #elif defined(YAKL_ARCH_HIP)
+      parallel_for_hip ( bounds , f , vectorSize );
+    #elif defined(YAKL_ARCH_SYCL)
+      parallel_for_sycl( bounds , f , vectorSize );
+    #else
+      parallel_for_cpu_serial( bounds , f );
+    #endif
+
+    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+      fence();
+    #endif
+  }
+
+  // Bounds class, Label
   template <class F, int N, bool simple>
   inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f, int vectorSize = 128 ) {
     #ifdef YAKL_ARCH_CUDA
@@ -878,12 +906,20 @@ namespace fortran {
   }
 
 
-  template <class F> inline void parallel_for( LBnd &bnd , F const &f , int vectorSize = 128 ) {
-    parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+  // Single bound or integer, no label
+  // Since "bnd" is accepted by value, integers will be accepted as well
+  template <class F> inline void parallel_for( LBnd bnd , F const &f , int vectorSize = 128 ) {
+    if (bnd.l == 1 && bnd.s == 1) {
+      parallel_for( Bounds<1,true>(bnd.to_scalar()) , f , vectorSize );
+    } else {
+      parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+    }
   }
 
 
-  template <class F> inline void parallel_for( char const * str , LBnd &bnd , F const &f , int vectorSize = 128 ) {
+  // Single bound or integer, label
+  // Since "bnd" is accepted by value, integers will be accepted as well
+  template <class F> inline void parallel_for( char const * str , LBnd bnd , F const &f , int vectorSize = 128 ) {
     #ifdef YAKL_ARCH_CUDA
       nvtxRangePushA(str);
     #endif
@@ -891,7 +927,11 @@ namespace fortran {
       timer_start(str);
     #endif
 
-    parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+    if (bnd.l == 1 && bnd.s == 1) {
+      parallel_for( Bounds<1,true>(bnd.to_scalar()) , f , vectorSize );
+    } else {
+      parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+    }
 
     #ifdef YAKL_AUTO_PROFILE
       timer_stop(str);
