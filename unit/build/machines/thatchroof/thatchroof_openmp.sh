@@ -12,8 +12,9 @@ unset CXXFLAGS
 unset FFLAGS
 
 cmake -DYAKL_ARCH="OPENMP"               \
-      -DYAKL_OPENMP_FLAGS="-O3 -fopenmp" \
+      -DYAKL_OPENMP_FLAGS="-O3 -fopenmp -I/opt/netcdf_gnu/include" \
       -DYAKL_C_FLAGS="-O3"               \
       -DYAKL_F90_FLAGS="-O3"             \
+      -DNETCDF_LINK_FLAGS="`/opt/netcdf_gnu/bin/nc-config --libs`"        \
       ../../..
 
