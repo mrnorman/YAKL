@@ -264,6 +264,14 @@ int main() {
     if (yakl::intrinsics::sum(test8d) != d6*d7*d8) { die("slice: wrong sum for slice"); }
 
     ///////////////////////////////////////////////////////////
+    // Test slice inside a kernel
+    ///////////////////////////////////////////////////////////
+    yakl::memset(test8d,0.f);
+    parallel_for( 1 , YAKL_LAMBDA (int dummy) {
+      auto slice = test8d.slice<3>(1,2,3,4,5,COLON,COLON,COLON);
+    });
+
+    ///////////////////////////////////////////////////////////
     // Test non-standard loop bounds
     ///////////////////////////////////////////////////////////
     yakl::memset(test3d,0.);

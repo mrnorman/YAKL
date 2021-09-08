@@ -30,6 +30,24 @@ namespace yakl {
   std::function<void ( void * , char const *)>  yaklFreeHostFunc  = [] ( void *ptr    , char const *label )          {
     std::cout << "ERROR: attempting memory free before calling yakl::init()\n"; exit(-1);
   };
+
+
+  #if defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL)
+    // YAKL_INLINE void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
+    // YAKL_INLINE void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
+    // YAKL_INLINE void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
+    // YAKL_INLINE void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
+    // YAKL_INLINE void yakl_mtx_lock()   { yakl_mtx.lock(); }
+    // YAKL_INLINE void yakl_mtx_unlock() { yakl_mtx.unlock(); }
+  #else
+    void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
+    void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
+    void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
+    void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
+    void yakl_mtx_lock()   { yakl_mtx.lock(); }
+    void yakl_mtx_unlock() { yakl_mtx.unlock(); }
+  #endif
+
 }
 
 

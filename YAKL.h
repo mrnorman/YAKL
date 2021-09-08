@@ -78,11 +78,15 @@ namespace yakl {
     YAKL_INLINE void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
     YAKL_INLINE void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
     YAKL_INLINE void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
+    YAKL_INLINE void yakl_mtx_lock()   { yakl_mtx.lock(); }
+    YAKL_INLINE void yakl_mtx_unlock() { yakl_mtx.unlock(); }
   #else
-    inline void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
-    inline void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
-    inline void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
-    inline void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
+    extern void *yaklAllocDevice( size_t bytes , char const *label );
+    extern void yaklFreeDevice( void *ptr , char const *label );
+    extern void *yaklAllocHost( size_t bytes , char const *label );
+    extern void yaklFreeHost( void *ptr , char const *label );
+    extern void yakl_mtx_lock();
+    extern void yakl_mtx_unlock();
   #endif
 
 

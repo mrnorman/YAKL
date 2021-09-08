@@ -9,30 +9,30 @@ public:
   int data[8];
   int rank;
 
-  Dims() {rank = 0;}
-  Dims(int i0) {
+  YAKL_INLINE Dims() {rank = 0;}
+  YAKL_INLINE Dims(int i0) {
     data[0] = i0;
     rank = 1;
   }
-  Dims(int i0, int i1) {
+  YAKL_INLINE Dims(int i0, int i1) {
     data[0] = i0;
     data[1] = i1;
     rank = 2;
   }
-  Dims(int i0, int i1, int i2) {
+  YAKL_INLINE Dims(int i0, int i1, int i2) {
     data[0] = i0;
     data[1] = i1;
     data[2] = i2;
     rank = 3;
   }
-  Dims(int i0, int i1, int i2, int i3) {
+  YAKL_INLINE Dims(int i0, int i1, int i2, int i3) {
     data[0] = i0;
     data[1] = i1;
     data[2] = i2;
     data[3] = i3;
     rank = 4;
   }
-  Dims(int i0, int i1, int i2, int i3, int i4) {
+  YAKL_INLINE Dims(int i0, int i1, int i2, int i3, int i4) {
     data[0] = i0;
     data[1] = i1;
     data[2] = i2;
@@ -40,7 +40,7 @@ public:
     data[4] = i4;
     rank = 5;
   }
-  Dims(int i0, int i1, int i2, int i3, int i4, int i5) {
+  YAKL_INLINE Dims(int i0, int i1, int i2, int i3, int i4, int i5) {
     data[0] = i0;
     data[1] = i1;
     data[2] = i2;
@@ -49,7 +49,7 @@ public:
     data[5] = i5;
     rank = 6;
   }
-  Dims(int i0, int i1, int i2, int i3, int i4, int i5, int i6) {
+  YAKL_INLINE Dims(int i0, int i1, int i2, int i3, int i4, int i5, int i6) {
     data[0] = i0;
     data[1] = i1;
     data[2] = i2;
@@ -59,7 +59,7 @@ public:
     data[6] = i6;
     rank = 7;
   }
-  Dims(int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+  YAKL_INLINE Dims(int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
     data[0] = i0;
     data[1] = i1;
     data[2] = i2;
@@ -71,7 +71,7 @@ public:
     rank = 8;
   }
 
-  int size() const {
+  YAKL_INLINE int size() const {
     return rank;
   }
 };
@@ -82,9 +82,9 @@ public:
 class Bnd {
 public:
   int l, u;
-  Bnd(                  ) { l = 1   ; u = 1   ; }
-  Bnd(          int u_in) { l = 1   ; u = u_in; }
-  Bnd(int l_in, int u_in) { l = l_in; u = u_in; }
+  YAKL_INLINE Bnd(                  ) { l = 1   ; u = 1   ; }
+  YAKL_INLINE Bnd(          int u_in) { l = 1   ; u = u_in; }
+  YAKL_INLINE Bnd(int l_in, int u_in) { l = l_in; u = u_in; }
 };
 
 
@@ -95,15 +95,15 @@ public:
   int u[8];
   int rank;
 
-  Bnds() {rank = 0;}
-  Bnds(Bnd b0) {
+  YAKL_INLINE Bnds() {rank = 0;}
+  YAKL_INLINE Bnds(Bnd b0) {
     l[0] = b0.l;
 
     u[0] = b0.u;
 
     rank = 1;
   }
-  Bnds(Bnd b0, Bnd b1) {
+  YAKL_INLINE Bnds(Bnd b0, Bnd b1) {
     l[0] = b0.l;
     l[1] = b1.l;
 
@@ -112,7 +112,7 @@ public:
 
     rank = 2;
   }
-  Bnds(Bnd b0, Bnd b1, Bnd b2) {
+  YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2) {
     l[0] = b0.l;
     l[1] = b1.l;
     l[2] = b2.l;
@@ -123,7 +123,7 @@ public:
 
     rank = 3;
   }
-  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3) {
+  YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3) {
     l[0] = b0.l;
     l[1] = b1.l;
     l[2] = b2.l;
@@ -136,7 +136,7 @@ public:
 
     rank = 4;
   }
-  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4) {
+  YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4) {
     l[0] = b0.l;
     l[1] = b1.l;
     l[2] = b2.l;
@@ -151,7 +151,7 @@ public:
 
     rank = 5;
   }
-  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5) {
+  YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5) {
     l[0] = b0.l;
     l[1] = b1.l;
     l[2] = b2.l;
@@ -168,7 +168,7 @@ public:
 
     rank = 6;
   }
-  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6) {
+  YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6) {
     l[0] = b0.l;
     l[1] = b1.l;
     l[2] = b2.l;
@@ -187,7 +187,7 @@ public:
 
     rank = 7;
   }
-  Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7) {
+  YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7) {
     l[0] = b0.l;
     l[1] = b1.l;
     l[2] = b2.l;
