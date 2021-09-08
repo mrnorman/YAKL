@@ -162,6 +162,7 @@ namespace yakl {
       void putVar(unsigned long long const *data) { ncwrap( nc_put_var_ulonglong( ncid , id , data ) , __LINE__ ); }
       void putVar(unsigned short     const *data) { ncwrap( nc_put_var_ushort   ( ncid , id , data ) , __LINE__ ); }
       void putVar(char               const *data) { ncwrap( nc_put_var_text     ( ncid , id , data ) , __LINE__ ); }
+      void putVar(bool               const *data) { yakl_throw("ERROR: Cannot write bools to netCDF file"); }
 
       void putVar(std::vector<size_t> start , std::vector<size_t> count, double             const *data) { ncwrap( nc_put_vara_double   ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, float              const *data) { ncwrap( nc_put_vara_float    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
@@ -176,6 +177,7 @@ namespace yakl {
       void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned long long const *data) { ncwrap( nc_put_vara_ulonglong( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned short     const *data) { ncwrap( nc_put_vara_ushort   ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, char               const *data) { ncwrap( nc_put_vara_text     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, bool               const *data) { yakl_throw("ERROR: Cannot write bools to netCDF file"); }
 
       void getVar(double             *data) const { ncwrap( nc_get_var_double   ( ncid , id , data ) , __LINE__ ); }
       void getVar(float              *data) const { ncwrap( nc_get_var_float    ( ncid , id , data ) , __LINE__ ); }
@@ -190,6 +192,7 @@ namespace yakl {
       void getVar(unsigned long long *data) const { ncwrap( nc_get_var_ulonglong( ncid , id , data ) , __LINE__ ); }
       void getVar(unsigned short     *data) const { ncwrap( nc_get_var_ushort   ( ncid , id , data ) , __LINE__ ); }
       void getVar(char               *data) const { ncwrap( nc_get_var_text     ( ncid , id , data ) , __LINE__ ); }
+      void getVar(bool               *data) const { yakl_throw("ERROR: Cannot read bools directly from netCDF file. This should've been intercepted and changed to int."); }
 
       void print() {
         std::cout << "Variable Name: " << name << "\n";
