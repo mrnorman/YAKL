@@ -49,11 +49,10 @@ namespace yakl {
 
 
   #ifdef YAKL_ARCH_CUDA
-    int constexpr functorBufConstSize = 1024*8;
-    __constant__ __device__ char functorBufferConstant[functorBufConstSize / sizeof(char)];
-
-    int constexpr functorBufDevSize = 1024*128;
-    extern void * functorBufferDevice;
+    // Size of the buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
+    int constexpr functorBufSize = 1024*128;
+    // Buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
+    extern void *functorBuffer;
   #endif
 
 
@@ -81,12 +80,12 @@ namespace yakl {
     YAKL_INLINE void yakl_mtx_lock()   { yakl_mtx.lock(); }
     YAKL_INLINE void yakl_mtx_unlock() { yakl_mtx.unlock(); }
   #else
-    extern void *yaklAllocDevice( size_t bytes , char const *label );
-    extern void yaklFreeDevice( void *ptr , char const *label );
-    extern void *yaklAllocHost( size_t bytes , char const *label );
-    extern void yaklFreeHost( void *ptr , char const *label );
-    extern void yakl_mtx_lock();
-    extern void yakl_mtx_unlock();
+    void *yaklAllocDevice( size_t bytes , char const *label );
+    void yaklFreeDevice( void *ptr , char const *label );
+    void *yaklAllocHost( size_t bytes , char const *label );
+    void yaklFreeHost( void *ptr , char const *label );
+    void yakl_mtx_lock();
+    void yakl_mtx_unlock();
   #endif
 
 
@@ -119,7 +118,7 @@ namespace yakl {
 
   inline void finalize() {
     #ifdef YAKL_ARCH_CUDA
-      yaklFreeDevice( functorBufferDevice , "functorBufferDevice" );
+      cudaFree(functorBuffer);
       check_last_error();
     #endif
     yakl_is_initialized = false;

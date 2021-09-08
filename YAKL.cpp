@@ -11,7 +11,7 @@ namespace yakl {
 
   Gator pool;
 
-  void * functorBufferDevice;
+  void * functorBuffer;
 
   bool yakl_is_initialized = false;
 
