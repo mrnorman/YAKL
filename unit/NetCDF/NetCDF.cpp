@@ -56,6 +56,7 @@ int main() {
       Array<unsigned long long,8,memHost  ,styleFortran> a7("a7",d1,d2,d3,d4,d5,d6,d7,d8);
       Array<             float,3,memHost  ,styleC      > a8("a8",d3,d2,d1);
       Array<            double,3,memHost  ,styleFortran> a9("a9",d1,d2,d3);
+      Array<              char,2,memHost  ,styleC      > text("text",4,10);
       float s0 = 1;
       int   s1 = 2;
 
@@ -70,6 +71,10 @@ int main() {
       yakl::memset(a7,7);
       yakl::memset(a8,8);
       yakl::memset(a9,9);
+      text(0,0)='I';
+      text(1,0)='n';  text(1,1)='e';  text(1,2)='e';  text(1,3)='d';
+      text(2,0)='m';  text(2,1)='o';
+      text(3,0)='g';  text(3,1)='a';  text(3,2)='s';  text(3,3)='e';  text(3,4)='s';
 
       // Write entire arrays to file
       nc.write( a0 , "a0" , {"d1"} );
@@ -84,6 +89,7 @@ int main() {
       nc.write( a9 , "a9" , {"d1","d2","d3"} );
       nc.write( s0  , "s0" );
       nc.write( s1  , "s1" );
+      nc.write( text , "text" , {"four","ten"} );
     
       // Create a dimension that isn't used
       nc.createDim( "nobody_likes_me" , 100 );
@@ -164,6 +170,7 @@ int main() {
       Array<         long long,8,memDevice,styleFortran> a6_unlim("a6_unlim",d1,d2,d3,d4,d5,d6,d7,num_entries);
       Array<             float,4,memDevice,styleFortran> a8_unlim("a8_unlim",d1,d2,d3,num_entries);
       Array<            double,4,memHost  ,styleFortran> a9_unlim("a9_unlim",d1,d2,d3,num_entries);
+      Array<              char,2,memHost  ,styleC      > text("text",4,10);
       Array<float,1,memHost  ,styleC> s0_unlim("s0_unlim",num_entries);
       Array<int  ,1,memDevice,styleC> s1_unlim("s1_unlim",num_entries);
       float s0;
@@ -181,6 +188,7 @@ int main() {
       nc.read( a9 , "a9" );
       nc.read( s0 , "s0" );
       nc.read( s1 , "s1" );
+      nc.read( text , "text" );
       nc.read( a0_unlim , "a0_unlim" );
       nc.read( a1_unlim , "a1_unlim" );
       nc.read( a2_unlim , "a2_unlim" );
@@ -220,6 +228,8 @@ int main() {
       if ( sum(a9_unlim) / size(a9_unlim) != 9 ) die("ERROR: avg of a9_unlim should be 9");
       if ( sum(s0_unlim) / size(s0_unlim) != 1 ) die("ERROR: avg of s0_unlim should be 1");
       if ( sum(s1_unlim) / size(s1_unlim) != 2 ) die("ERROR: avg of s1_unlim should be 2");
+
+      if ( text(2,0) != 'm' || text(2,1) != 'o' ) die("ERROR: text is incorrect");
     }
 
   }
