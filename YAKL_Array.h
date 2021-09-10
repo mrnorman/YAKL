@@ -1,7 +1,7 @@
 
 #pragma once
 
-template <class T, int rank, int myMem=memDefault, int myStyle=styleDefault> class Array;
+template <class T, int rank, int myMem=memDefault, int myStyle=styleDefault, int myAttr=attrManaged> class Array;
 
 
 class Dims {
@@ -250,8 +250,12 @@ using SArray  = Array< CSPEC< T , D0 , D1 , D2 , D3 > , rank , memStack , styleC
 template <class T, int rank, class B0 , class B1=SB<1,1> , class B2=SB<1,1> , class B3=SB<1,1> >
 using FSArray = Array< FSPEC< T , B0 , B1 , B2 , B3 > , rank , memStack , styleFortran >;
         
+#include "YAKL_ArrayBase.h"
+
+#include "YAKL_CArrayBase.h"
 #include "YAKL_CArray.h"
 
+#include "YAKL_FArrayBase.h"
 #include "YAKL_FArray.h"
 
 

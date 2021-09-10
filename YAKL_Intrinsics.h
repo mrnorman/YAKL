@@ -31,8 +31,8 @@ namespace intrinsics {
 
 
   template <class T> YAKL_INLINE T constexpr epsilon(T) { return std::numeric_limits<T>::epsilon(); }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE T constexpr epsilon(Array<T,rank,myMem,myStyle> const &arr) { return std::numeric_limits<T>::epsilon(); }
+  template <class T, int rank, int myMem, int myStyle, int myAttr>
+  YAKL_INLINE T constexpr epsilon(Array<T,rank,myMem,myStyle,myAttr> const &arr) { return std::numeric_limits<T>::epsilon(); }
   template <class T, int rank, class D0, class D1, class D2, class D3>
   YAKL_INLINE T constexpr epsilon(FSArray<T,rank,D0,D1,D2,D3> const &arr) { return std::numeric_limits<T>::epsilon(); }
   template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -41,8 +41,8 @@ namespace intrinsics {
 
 
   template <class T> YAKL_INLINE T constexpr tiny(T) { return std::numeric_limits<T>::min(); }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE T constexpr tiny(Array<T,rank,myMem,myStyle> const &arr) { return std::numeric_limits<T>::min(); }
+  template <class T, int rank, int myMem, int myStyle, int myAttr>
+  YAKL_INLINE T constexpr tiny(Array<T,rank,myMem,myStyle,myAttr> const &arr) { return std::numeric_limits<T>::min(); }
   template <class T, int rank, class D0, class D1, class D2, class D3>
   YAKL_INLINE T constexpr tiny(FSArray<T,rank,D0,D1,D2,D3> const &arr) { return std::numeric_limits<T>::min(); }
   template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -51,8 +51,8 @@ namespace intrinsics {
 
 
   template <class T> YAKL_INLINE T constexpr huge(T) { return std::numeric_limits<T>::max(); }
-  template <class T, int rank, int myMem, int myStyle>
-  YAKL_INLINE T constexpr huge(Array<T,rank,myMem,myStyle> const &arr) { return std::numeric_limits<T>::max(); }
+  template <class T, int rank, int myMem, int myStyle, int myAttr>
+  YAKL_INLINE T constexpr huge(Array<T,rank,myMem,myStyle,myAttr> const &arr) { return std::numeric_limits<T>::max(); }
   template <class T, int rank, class D0, class D1, class D2, class D3>
   YAKL_INLINE T constexpr huge(FSArray<T,rank,D0,D1,D2,D3> const &arr) { return std::numeric_limits<T>::max(); }
   template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -75,16 +75,16 @@ namespace intrinsics {
   ////////////////////////////////////////////////////////////////////////
   // minval
   ////////////////////////////////////////////////////////////////////////
-  template <class T, int rank, int myStyle>
-  inline T minval( Array<T,rank,memHost,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle, int myAttr>
+  inline T minval( Array<T,rank,memHost,myStyle,myAttr> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] < m) { m = arr.myData[i]; }
     }
     return m;
   }
-  template <class T, int rank, int myStyle>
-  inline T minval( Array<T,rank,memDevice,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle, int myAttr>
+  inline T minval( Array<T,rank,memDevice,myStyle,myAttr> const &arr ) {
     ParallelMin<T,memDevice> pmin(arr.totElems());
     return pmin( arr.data() );
   }
@@ -138,16 +138,16 @@ namespace intrinsics {
   ////////////////////////////////////////////////////////////////////////
   // maxval
   ////////////////////////////////////////////////////////////////////////
-  template <class T, int rank, int myStyle>
-  inline T maxval( Array<T,rank,memHost,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle, int myAttr>
+  inline T maxval( Array<T,rank,memHost,myStyle,myAttr> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] > m) { m = arr.myData[i]; }
     }
     return m;
   }
-  template <class T, int rank, int myStyle>
-  inline T maxval( Array<T,rank,memDevice,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle, int myAttr>
+  inline T maxval( Array<T,rank,memDevice,myStyle,myAttr> const &arr ) {
     ParallelMax<T,memDevice> pmax(arr.totElems());
     return pmax( arr.data() );
   }
@@ -201,14 +201,14 @@ namespace intrinsics {
   ////////////////////////////////////////////////////////////////////////
   // sum
   ////////////////////////////////////////////////////////////////////////
-  template <class T, int rank, int myStyle>
-  inline T sum( Array<T,rank,memHost,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle, int myAttr>
+  inline T sum( Array<T,rank,memHost,myStyle,myAttr> const &arr ) {
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
     return m;
   }
-  template <class T, int rank, int myStyle>
-  inline T sum( Array<T,rank,memDevice,myStyle> const &arr ) {
+  template <class T, int rank, int myStyle, int myAttr>
+  inline T sum( Array<T,rank,memDevice,myStyle,myAttr> const &arr ) {
     ParallelSum<T,memDevice> psum(arr.totElems());
     return psum( arr.data() );
   }
@@ -249,48 +249,48 @@ namespace intrinsics {
   ///////////////////////////
   // any* device Array
   ///////////////////////////
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyLT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyLT ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] < val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] <= val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyGT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyGT ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] > val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] >= val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] == val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] != val ) { ret = true; }
@@ -302,48 +302,48 @@ namespace intrinsics {
   ///////////////////////////
   // any* device Array Masked
   ///////////////////////////
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyLT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyLT ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memDevice,myStyle,myAttr> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyLTE ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memDevice,myStyle,myAttr> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyGT ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyGT ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memDevice,myStyle,myAttr> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyGTE ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memDevice,myStyle,myAttr> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyEQ ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memDevice,myStyle,myAttr> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
     });
     return ret.hostRead();
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle> const &arr , Array<bool,rank,yakl::memDevice,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyNEQ ( Array<T,rank,yakl::memDevice,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memDevice,myStyle,myAttr> const &mask , TVAL val ) {
     yakl::ScalarLiveOut<bool> ret(false);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
@@ -356,48 +356,48 @@ namespace intrinsics {
   ///////////////////////////
   // any* host Array
   ///////////////////////////
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyLT( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyLT( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] < val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyLTE( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyLTE( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] <= val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyGT( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyGT( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] > val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyGTE( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyGTE( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] >= val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyEQ( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyEQ( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] == val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyNEQ( Array<T,rank,yakl::memHost,myStyle> const &arr , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyNEQ( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] != val ) { ret = true; }
@@ -410,48 +410,48 @@ namespace intrinsics {
   ///////////////////////////
   // any* host Array Masked
   ///////////////////////////
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyLT( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyLT( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memHost,myStyle,myAttr> const &mask , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyLTE( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyLTE( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memHost,myStyle,myAttr> const &mask , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyGT( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyGT( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memHost,myStyle,myAttr> const &mask , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyGTE( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyGTE( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memHost,myStyle,myAttr> const &mask , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyEQ( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyEQ( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memHost,myStyle,myAttr> const &mask , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
     }
     return ret;
   }
-  template <class T, class TVAL, int rank, int myStyle>
-  inline bool anyNEQ( Array<T,rank,yakl::memHost,myStyle> const &arr , Array<bool,rank,yakl::memHost,myStyle> const &mask , TVAL val ) {
+  template <class T, class TVAL, int rank, int myStyle, int myAttr>
+  inline bool anyNEQ( Array<T,rank,yakl::memHost,myStyle,myAttr> const &arr , Array<bool,rank,yakl::memHost,myStyle,myAttr> const &mask , TVAL val ) {
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
@@ -959,16 +959,16 @@ namespace intrinsics {
   /////////////////////////////////////////////////////////////////
   // Count
   /////////////////////////////////////////////////////////////////
-  template <int rank, int myStyle>
-  inline int count( Array<bool,rank,memHost,myStyle> const &mask ) {
+  template <int rank, int myStyle, int myAttr>
+  inline int count( Array<bool,rank,memHost,myStyle,myAttr> const &mask ) {
     int numTrue = 0;
     for (int i=0; i < mask.totElems(); i++) {
       if (mask.myData[i]) { numTrue++; }
     }
     return numTrue;
   }
-  template <int rank, int myStyle>
-  inline int count( Array<bool,rank,memDevice,myStyle> const &mask ) {
+  template <int rank, int myStyle, int myAttr>
+  inline int count( Array<bool,rank,memDevice,myStyle,myAttr> const &mask ) {
     yakl::ScalarLiveOut<int> numTrue(0);
     yakl::c::parallel_for( yakl::c::SimpleBounds<1>( mask.totElems() ) , YAKL_DEVICE_LAMBDA (int i) {
       if (mask.myData[i]) { yakl::atomicAdd(numTrue(),1); }
@@ -997,9 +997,9 @@ namespace intrinsics {
   /////////////////////////////////////////////////////////////////
   // Pack
   /////////////////////////////////////////////////////////////////
-  template <class T, int rank, int myStyle> inline Array<T,1,memHost,myStyle> pack( Array<T,rank,memHost,myStyle> const &arr ,
-                                                                                    Array<bool,rank,memHost,myStyle> const &mask = 
-                                                                                                Array<bool,rank,memHost,myStyle>() ) {
+  template <class T, int rank, int myStyle, int myAttr>
+  inline Array<T,1,memHost,myStyle> pack( Array<T,rank,memHost,myStyle,myAttr> const &arr ,
+                                          Array<bool,rank,memHost,myStyle,myAttr> const &mask = Array<bool,rank,memHost,myStyle,myAttr>() ) {
     if (allocated(mask)) {
       if (mask.totElems() != arr.totElems()) {
         yakl_throw("Error: pack: arr and mask have a different number of elements");
