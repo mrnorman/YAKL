@@ -31,7 +31,6 @@
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
   #define YAKL_SEPARATE_MEMORY_SPACE
   #include <CL/sycl.hpp>
-  namespace sycl = cl::sycl;
 
 #elif defined(YAKL_ARCH_OPENMP45)
 

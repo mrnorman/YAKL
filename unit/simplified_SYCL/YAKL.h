@@ -16,7 +16,6 @@
 #define YAKL_DEVICE inline
 #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
 #include <CL/sycl.hpp>
-namespace sycl = cl::sycl;
 
 namespace yakl {
 

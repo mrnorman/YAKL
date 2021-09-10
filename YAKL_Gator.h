@@ -9,7 +9,6 @@
 #endif
 #if defined(YAKL_ARCH_SYCL)
   #include <CL/sycl.hpp>
-  namespace sycl = cl::sycl;
 #endif
 #if defined( YAKL_ARCH_OPENMP45)
   #include <omp.h>

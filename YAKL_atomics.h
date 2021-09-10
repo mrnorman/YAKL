@@ -112,9 +112,9 @@
   template <typename T, sycl::access::address_space addressSpace =
       sycl::access::address_space::global_space>
   using relaxed_atomic_ref =
-sycl::ONEAPI::atomic_ref< T,
-        sycl::ONEAPI::memory_order::relaxed,
-        sycl::ONEAPI::memory_scope::device,
+sycl::ext::oneapi::atomic_ref< T,
+        sycl::ext::oneapi::memory_order::relaxed,
+        sycl::ext::oneapi::memory_scope::device,
         addressSpace>;
 
 
@@ -141,11 +141,11 @@ sycl::ONEAPI::atomic_ref< T,
     float old_float_value;
 
     do {
-      old_value = obj.load(sycl::ONEAPI::memory_order::relaxed);
+      old_value = obj.load(sycl::memory_order::relaxed);
       old_float_value = *reinterpret_cast<const float *>(&old_value);
       const float new_float_value = old_float_value + operand;
       const int new_value = *reinterpret_cast<const int *>(&new_float_value);
-      if (obj.compare_exchange_strong(old_value, new_value, sycl::ONEAPI::memory_order::relaxed))
+      if (obj.compare_exchange_strong(old_value, new_value, sycl::memory_order::relaxed))
         break;
     } while (true);
 
@@ -166,13 +166,13 @@ sycl::ONEAPI::atomic_ref< T,
     double old_double_value;
 
     do {
-      old_value = obj.load(sycl::ONEAPI::memory_order::relaxed);
+      old_value = obj.load(sycl::memory_order::relaxed);
       old_double_value = *reinterpret_cast<const double *>(&old_value);
       const double new_double_value = old_double_value + operand;
       const unsigned long long int new_value =
         *reinterpret_cast<const unsigned long long int *>(&new_double_value);
 
-      if (obj.compare_exchange_strong(old_value, new_value, sycl::ONEAPI::memory_order::relaxed))
+      if (obj.compare_exchange_strong(old_value, new_value, sycl::memory_order::relaxed))
         break;
     } while (true);
 
