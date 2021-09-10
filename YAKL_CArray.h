@@ -250,6 +250,33 @@ public:
   }
 
 
+  // Allow this to accept an unmanaged array
+  YAKL_INLINE Array(Array<T,rank,myMem,styleC,attrUnmanaged> const &rhs) {
+    nullify();
+    for (int i=0; i<rank; i++) {
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(Array<T,rank,myMem,styleC,attrUnmanaged> &&rhs) {
+    nullify();
+    for (int i=0; i<rank; i++) {
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
+    this->refCount = nullptr;
+
+    rhs.myData   = nullptr;
+  }
+
+
   template <int N> inline Array<T,N,myMem,styleC,attrManaged> reshape(Dims const &dims) const {
     #ifdef YAKL_DEBUG
       if (dims.size() != N) { yakl_throw("ERROR: new number of reshaped array dimensions does not match the templated rank"); }
@@ -584,6 +611,19 @@ public:
     rhs.myData   = nullptr;
 
     return *this;
+  }
+
+
+  // Allow this to accept a managed array
+  YAKL_INLINE Array(Array<T,rank,myMem,styleC,attrManaged> const &rhs) {
+    nullify();
+    for (int i=0; i<rank; i++) {
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
   }
 
 

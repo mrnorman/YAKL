@@ -135,9 +135,11 @@ public:
     #endif
     this->myData   = rhs.myData;
     this->refCount = rhs.refCount;
-    yakl_mtx_lock();
-    (*this->refCount)++;
-    yakl_mtx_unlock();
+    if (refCount != nullptr) {
+      yakl_mtx_lock();
+      (*this->refCount)++;
+      yakl_mtx_unlock();
+    }
   }
 
 
@@ -153,9 +155,11 @@ public:
     #endif
     this->myData   = rhs.myData;
     this->refCount = rhs.refCount;
-    yakl_mtx_lock();
-    (*this->refCount)++;
-    yakl_mtx_unlock();
+    if (refCount != nullptr) {
+      yakl_mtx_lock();
+      (*this->refCount)++;
+      yakl_mtx_unlock();
+    }
 
     return *this;
   }
@@ -210,6 +214,35 @@ public:
   */
   YAKL_INLINE ~Array() {
     deallocate();
+  }
+
+
+  // Allow this to accept an unmanaged array
+  YAKL_INLINE Array(Array<T,rank,myMem,styleFortran,attrUnmanaged> const &rhs) {
+    nullify();
+    for (int i=0; i<rank; i++) {
+      this->lbounds  [i] = rhs.lbounds  [i];
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(Array<T,rank,myMem,styleFortran,attrUnmanaged> &&rhs) {
+    nullify();
+    for (int i=0; i<rank; i++) {
+      this->lbounds  [i] = rhs.lbounds  [i];
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
+    this->refCount = nullptr;
+
+    rhs.myData   = nullptr;
   }
 
 
@@ -536,6 +569,20 @@ public:
   DESTRUCTOR
   */
   YAKL_INLINE ~Array() {
+  }
+
+
+  // Allow this to accept a managed array
+  YAKL_INLINE Array(Array<T,rank,myMem,styleFortran,attrManaged> const &rhs) {
+    nullify();
+    for (int i=0; i<rank; i++) {
+      this->lbounds  [i] = rhs.lbounds  [i];
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
   }
 
 
