@@ -30,6 +30,9 @@ public:
       this->myname = label;
     #endif
   }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Owned constructors
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   Array(char const * label, Bnd const &b1) {
     #ifdef YAKL_DEBUG
       if ( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
@@ -116,6 +119,116 @@ public:
     else if ( rank == 6 ) { setup(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4],bnds[5]); } 
     else if ( rank == 7 ) { setup(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4],bnds[5],bnds[6]); } 
     else if ( rank == 8 ) { setup(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4],bnds[5],bnds[6],bnds[7]); } 
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Non-owned constructors
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1) {
+    #ifdef YAKL_DEBUG
+      if ( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
+    #endif
+    nullify();
+    setup_non_owned(label,b1);
+    this->myData = data;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2) {
+    #ifdef YAKL_DEBUG
+      if ( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
+    #endif
+    nullify();
+    setup_non_owned(label,b1,b2);
+    this->myData = data;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
+    #ifdef YAKL_DEBUG
+      if ( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
+    #endif
+    nullify();
+    setup_non_owned(label,b1,b2,b3);
+    this->myData = data;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
+    #ifdef YAKL_DEBUG
+      if ( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
+    #endif
+    nullify();
+    setup_non_owned(label,b1,b2,b3,b4);
+    this->myData = data;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
+    #ifdef YAKL_DEBUG
+      if ( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
+    #endif
+    nullify();
+    setup_non_owned(label,b1,b2,b3,b4,b5);
+    this->myData = data;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
+    #ifdef YAKL_DEBUG
+      if ( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
+    #endif
+    nullify();
+    setup_non_owned(label,b1,b2,b3,b4,b5,b6);
+    this->myData = data;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
+    #ifdef YAKL_DEBUG
+      if ( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
+    #endif
+    nullify();
+    setup_non_owned(label,b1,b2,b3,b4,b5,b6,b7);
+    this->myData = data;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
+    #ifdef YAKL_DEBUG
+      if ( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
+    #endif
+    nullify();
+    setup_non_owned(label,b1,b2,b3,b4,b5,b6,b7,b8);
+    this->myData = data;
+    this->refCount = nullptr;
+  }
+  YAKL_INLINE Array(char const * label, T * data, std::vector<Bnd> const &bnds) {
+    #ifdef YAKL_DEBUG
+      if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
+      if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
+    #endif
+    nullify();
+         if ( rank == 1 ) { setup_non_owned(label,bnds[0]); }
+    else if ( rank == 2 ) { setup_non_owned(label,bnds[0],bnds[1]); }
+    else if ( rank == 3 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2]); }
+    else if ( rank == 4 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3]); }
+    else if ( rank == 5 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4]); }
+    else if ( rank == 6 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4],bnds[5]); }
+    else if ( rank == 7 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4],bnds[5],bnds[6]); }
+    else if ( rank == 8 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4],bnds[5],bnds[6],bnds[7]); }
+    this->myData = data;
+    this->refCount = nullptr;
+  }
+  template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
+  YAKL_INLINE Array(char const * label, T * data, std::vector<INT> const &bnds) {
+    #ifdef YAKL_DEBUG
+      if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
+      if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
+    #endif
+    nullify();
+         if ( rank == 1 ) { setup_non_owned(label,bnds[0]); }
+    else if ( rank == 2 ) { setup_non_owned(label,bnds[0],bnds[1]); }
+    else if ( rank == 3 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2]); }
+    else if ( rank == 4 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3]); }
+    else if ( rank == 5 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4]); }
+    else if ( rank == 6 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4],bnds[5]); }
+    else if ( rank == 7 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4],bnds[5],bnds[6]); }
+    else if ( rank == 8 ) { setup_non_owned(label,bnds[0],bnds[1],bnds[2],bnds[3],bnds[4],bnds[5],bnds[6],bnds[7]); }
+    this->myData = data;
+    this->refCount = nullptr;
   }
 
 
@@ -315,6 +428,21 @@ public:
     if (rank >= 8) { this->lbounds[7] = b8.l; this->dimension[7] = b8.u - b8.l + 1; }
 
     allocate(label);
+  }
+
+
+  YAKL_INLINE void setup_non_owned(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
+    #ifdef YAKL_DEBUG
+      this->myname = label;
+    #endif
+                     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;  
+    if (rank >= 2) { this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1; }
+    if (rank >= 3) { this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1; }
+    if (rank >= 4) { this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1; }
+    if (rank >= 5) { this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1; }
+    if (rank >= 6) { this->lbounds[5] = b6.l; this->dimension[5] = b6.u - b6.l + 1; }
+    if (rank >= 7) { this->lbounds[6] = b7.l; this->dimension[6] = b7.u - b7.l + 1; }
+    if (rank >= 8) { this->lbounds[7] = b8.l; this->dimension[7] = b8.u - b8.l + 1; }
   }
 
 
