@@ -295,7 +295,7 @@ public:
 
 
   /* ACCESSORS */
-  YAKL_INLINE int use_count() const {
+  inline int use_count() const {
     return *this->refCount;
   }
 
@@ -369,7 +369,7 @@ public:
       this->myname = label;
     #endif
   }
-  Array(char const * label, T * data, index_t const d1) {
+  YAKL_INLINE Array(char const * label, T * data, index_t const d1) {
     #ifdef YAKL_DEBUG
       if( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
       this->myname = label;
@@ -378,7 +378,7 @@ public:
     this->dimension[0] = d1;
     this->myData = data;
   }
-  Array(char const * label, T * data, index_t const d1, index_t const d2) {
+  YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2) {
     #ifdef YAKL_DEBUG
       if( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
       this->myname = label;
@@ -388,7 +388,7 @@ public:
     this->dimension[1] = d2;
     this->myData = data;
   }
-  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3) {
+  YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3) {
     #ifdef YAKL_DEBUG
       if( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
       this->myname = label;
@@ -399,7 +399,7 @@ public:
     this->dimension[2] = d3;
     this->myData = data;
   }
-  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
+  YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
     #ifdef YAKL_DEBUG
       if( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
       this->myname = label;
@@ -411,7 +411,7 @@ public:
     this->dimension[3] = d4;
     this->myData = data;
   }
-  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
+  YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
     #ifdef YAKL_DEBUG
       if( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
       this->myname = label;
@@ -424,7 +424,7 @@ public:
     this->dimension[4] = d5;
     this->myData = data;
   }
-  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
+  YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
     #ifdef YAKL_DEBUG
       if( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
       this->myname = label;
@@ -438,7 +438,7 @@ public:
     this->dimension[5] = d6;
     this->myData = data;
   }
-  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
+  YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
     #ifdef YAKL_DEBUG
       if( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
       this->myname = label;
@@ -453,7 +453,7 @@ public:
     this->dimension[6] = d7;
     this->myData = data;
   }
-  Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
+  YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
     #ifdef YAKL_DEBUG
       if( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
       this->myname = label;
@@ -470,7 +470,7 @@ public:
     this->myData = data;
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
-  Array(char const * label, T * data, std::vector<INT> const dims) {
+  YAKL_INLINE Array(char const * label, T * data, std::vector<INT> const dims) {
     #ifdef YAKL_DEBUG
       if ( dims.size() < rank ) { yakl_throw("ERROR: dims < rank"); }
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
@@ -523,7 +523,7 @@ public:
   /*
   COPY CONSTRUCTORS / FUNCTIONS
   */
-  Array(Array const &rhs) {
+  YAKL_INLINE Array(Array const &rhs) {
     // constructor, so no need to deallocate
     nullify();
     for (int i=0; i<rank; i++) {
@@ -536,7 +536,7 @@ public:
   }
 
 
-  Array & operator=(Array const &rhs) {
+  YAKL_INLINE Array & operator=(Array const &rhs) {
     if (this == &rhs) {
       return *this;
     }
@@ -556,7 +556,7 @@ public:
   MOVE CONSTRUCTORS
   This steals the pointers form the rhs rather than sharing and sets rhs pointers to nullptr.
   */
-  Array(Array &&rhs) {
+  YAKL_INLINE Array(Array &&rhs) {
     // constructor, so no need to deallocate
     nullify();
     for (int i=0; i<rank; i++) {
@@ -571,7 +571,7 @@ public:
   }
 
 
-  Array& operator=(Array &&rhs) {
+  YAKL_INLINE Array& operator=(Array &&rhs) {
     if (this == &rhs) { return *this; }
     for (int i=0; i<rank; i++) {
       this->dimension[i] = rhs.dimension[i];

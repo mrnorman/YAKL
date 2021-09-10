@@ -260,7 +260,7 @@ public:
 
 
   /* ACCESSORS */
-  YAKL_INLINE int use_count() const {
+  inline int use_count() const {
     return *this->refCount;
   }
 
@@ -352,16 +352,16 @@ public:
   setup() functions to keep from deallocating myData upon initialization, since
   you don't know what "myData" will be when the object is created.
   */
-  Array() {
+  YAKL_INLINE Array() {
     nullify();
   }
-  Array(char const * label) {
+  YAKL_INLINE Array(char const * label) {
     nullify();
     #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
   }
-  Array(char const * label, T * data, Bnd const &b1) {
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1) {
     #ifdef YAKL_DEBUG
       if ( rank != 1 ) { yakl_throw("ERROR: Calling invalid constructor on rank 1 Array"); }
     #endif
@@ -369,7 +369,7 @@ public:
     setup(label,b1);
     this->myData = data;
   }
-  Array(char const * label, T * data, Bnd const &b1, Bnd const &b2) {
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2) {
     #ifdef YAKL_DEBUG
       if ( rank != 2 ) { yakl_throw("ERROR: Calling invalid constructor on rank 2 Array"); }
     #endif
@@ -377,7 +377,7 @@ public:
     setup(label,b1,b2);
     this->myData = data;
   }
-  Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
     #ifdef YAKL_DEBUG
       if ( rank != 3 ) { yakl_throw("ERROR: Calling invalid constructor on rank 3 Array"); }
     #endif
@@ -385,7 +385,7 @@ public:
     setup(label,b1,b2,b3);
     this->myData = data;
   }
-  Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
     #ifdef YAKL_DEBUG
       if ( rank != 4 ) { yakl_throw("ERROR: Calling invalid constructor on rank 4 Array"); }
     #endif
@@ -393,7 +393,7 @@ public:
     setup(label,b1,b2,b3,b4);
     this->myData = data;
   }
-  Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
     #ifdef YAKL_DEBUG
       if ( rank != 5 ) { yakl_throw("ERROR: Calling invalid constructor on rank 5 Array"); }
     #endif
@@ -401,7 +401,7 @@ public:
     setup(label,b1,b2,b3,b4,b5);
     this->myData = data;
   }
-  Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
     #ifdef YAKL_DEBUG
       if ( rank != 6 ) { yakl_throw("ERROR: Calling invalid constructor on rank 6 Array"); }
     #endif
@@ -409,7 +409,7 @@ public:
     setup(label,b1,b2,b3,b4,b5,b6);
     this->myData = data;
   }
-  Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
     #ifdef YAKL_DEBUG
       if ( rank != 7 ) { yakl_throw("ERROR: Calling invalid constructor on rank 7 Array"); }
     #endif
@@ -417,7 +417,7 @@ public:
     setup(label,b1,b2,b3,b4,b5,b6,b7);
     this->myData = data;
   }
-  Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
+  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
     #ifdef YAKL_DEBUG
       if ( rank != 8 ) { yakl_throw("ERROR: Calling invalid constructor on rank 8 Array"); }
     #endif
@@ -425,7 +425,7 @@ public:
     setup(label,b1,b2,b3,b4,b5,b6,b7,b8);
     this->myData = data;
   }
-  Array(char const * label, T * data, std::vector<Bnd> const &bnds) {
+  YAKL_INLINE Array(char const * label, T * data, std::vector<Bnd> const &bnds) {
     #ifdef YAKL_DEBUG
       if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
       if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
@@ -442,7 +442,7 @@ public:
     this->myData = data;
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
-  Array(char const * label, T * data, std::vector<INT> const &bnds) {
+  YAKL_INLINE Array(char const * label, T * data, std::vector<INT> const &bnds) {
     #ifdef YAKL_DEBUG
       if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
       if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
@@ -465,7 +465,7 @@ public:
   COPY CONSTRUCTORS / FUNCTIONS
   This shares the pointers with another Array and increments the refCounter
   */
-  Array(Array const &rhs) {
+  YAKL_INLINE Array(Array const &rhs) {
     // This is a constructor, so no need to deallocate
     nullify();
     for (int i=0; i<rank; i++) {
@@ -479,7 +479,7 @@ public:
   }
 
 
-  Array & operator=(Array const &rhs) {
+  YAKL_INLINE Array & operator=(Array const &rhs) {
     if (this == &rhs) { return *this; }
     for (int i=0; i<rank; i++) {
       this->lbounds  [i] = rhs.lbounds  [i];
@@ -499,7 +499,7 @@ public:
   This steals the pointers form the rhs instead of sharing and sets rhs pointers to nullptr.
   Therefore, no need to increment reference counter
   */
-  Array(Array &&rhs) {
+  YAKL_INLINE Array(Array &&rhs) {
     // This is a constructor, so no need to deallocate
     nullify();
     for (int i=0; i<rank; i++) {
@@ -515,7 +515,7 @@ public:
   }
 
 
-  Array& operator=(Array &&rhs) {
+  YAKL_INLINE Array& operator=(Array &&rhs) {
     if (this == &rhs) { return *this; }
     for (int i=0; i<rank; i++) {
       this->lbounds  [i] = rhs.lbounds  [i];
@@ -573,7 +573,7 @@ public:
   }
 
 
-  inline void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
+  YAKL_INLINE void setup(char const * label, Bnd const &b1, Bnd const &b2=-1, Bnd const &b3=-1, Bnd const &b4=-1, Bnd const &b5=-1, Bnd const &b6=-1, Bnd const &b7=-1, Bnd const &b8=-1) {
     #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
