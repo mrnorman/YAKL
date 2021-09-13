@@ -12,20 +12,6 @@ namespace yakl {
 
   #ifdef YAKL_ARCH_SYCL
     extern sycl::queue sycl_default_stream;
-
-    template <class Fctor>
-    constexpr void isTriviallyCopyable() {
-      static_assert(std::is_trivially_copyable<Fctor>::value,
-                    "Fctor not copyable");
-
-      static_assert(std::is_trivially_copy_constructible<Fctor>::value ||
-                    !std::is_copy_constructible<Fctor>::value,
-                    "Fctor not trivially copy constructible");
-
-      static_assert(std::is_trivially_copy_assignable<Fctor>::value ||
-                    !std::is_copy_assignable<Fctor>::value,
-                    "Fctor not trivially copy assignable");
-    }
   #endif
 
   // Memory space specifiers for YAKL Arrays
@@ -48,10 +34,10 @@ namespace yakl {
   int constexpr NOSPEC = std::numeric_limits<int>::min()+1;
 
 
-  #ifdef YAKL_ARCH_CUDA
-    // Size of the buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
+  #if defined(YAKL_ARCH_CUDA) || defined(YAKL_ARCH_SYCL)
+    // Size of the buffer to hold large functors for the CUDA, SYCL backend to avoid exceeding the max stack frame
     int constexpr functorBufSize = 1024*128;
-    // Buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
+    // Buffer to hold large functors for the CUDA, SYCL backend to avoid exceeding the max stack frame
     extern void *functorBuffer;
   #endif
 
@@ -72,7 +58,7 @@ namespace yakl {
   extern bool yakl_is_initialized;
 
 
-  #if defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL)
+  #if defined(YAKL_ARCH_HIP)
     YAKL_INLINE void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
     YAKL_INLINE void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
     YAKL_INLINE void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
@@ -132,7 +118,8 @@ namespace yakl {
     }
     pool.finalize();
     #if defined(YAKL_ARCH_SYCL)
-      sycl_default_stream = sycl::queue();
+      sycl::free(functorBuffer, sycl_default_stream);
+      check_last_error();
     #endif
     #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
       GPTLpr_file("");
