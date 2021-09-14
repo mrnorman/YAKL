@@ -1,3 +1,4 @@
+project(YAKL C CXX Fortran)
 
 set(YAKL_C_SOURCE gptl/GPTLget_memusage.c gptl/GPTLprint_memusage.c gptl/GPTLutil.c gptl/gptl.c gptl/gptl_papi.c)
 set(YAKL_CXX_SOURCE YAKL.cpp)
