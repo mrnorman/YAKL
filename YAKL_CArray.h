@@ -640,7 +640,7 @@ public:
   }
 
 
-  template <int N> inline Array<T,N,myMem,styleC,attrUnmanaged> reshape(Dims const &dims) const {
+  template <int N> inline Array<T,N,myMem,styleC,attrUnmanaged> reshape(Dims const dims) const {
     #ifdef YAKL_DEBUG
       if (dims.size() != N) { yakl_throw("ERROR: new number of reshaped array dimensions does not match the templated rank"); }
       index_t totelems = 1;
