@@ -56,7 +56,7 @@ public:
                    std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); } ,
                    unsigned                              blockSize = 128*sizeof(size_t) ,
                    std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
-    std::cout << "Create Pool\n";
+    if (yakl::yakl_masterproc()) std::cout << "Create Pool\n";
     if (blockSize%sizeof(size_t) != 0) { die("Error: blockSize must be a multiple of sizeof(size_t)"); }
     this->highWater = 0;
     this->blockSize = blockSize;
@@ -153,7 +153,7 @@ public:
 
   ~StackyAllocator() {
     if (pool != nullptr) {
-      std::cout << "Destroy Pool\n";
+      if (yakl::yakl_masterproc()) std::cout << "Destroy Pool\n";
     }
     finalize();
   }
@@ -198,7 +198,7 @@ public:
 
   void * allocate(size_t bytes, char const * label="") {
     #ifdef MEMORY_DEBUG
-      std::cout << "MEMORY DEBUG: StackyAllocator attempting to allocate " << label << " with " << bytes << " bytes\n";
+      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: StackyAllocator attempting to allocate " << label << " with " << bytes << " bytes\n";
     #endif
     if (bytes == 0) {
       return nullptr;
@@ -208,7 +208,7 @@ public:
       if (nBlocks >= blocksReq) {
         allocs.push_back( { (size_t) 0 , blocksReq , label } );
         if (allocs.back().start + allocs.back().length  > highWater) { highWater = allocs.back().start + allocs.back().length; }
-        // std::cout << "Allocating: " << label << " with " << blocksReq*blockSize << " bytes at location " << pool << "\n";
+        // if (yakl::yakl_masterproc()) std::cout << "Allocating: " << label << " with " << blocksReq*blockSize << " bytes at location " << pool << "\n";
         return pool;
       } else {
         return nullptr;
@@ -219,7 +219,7 @@ public:
         size_t newStart = allocs.back().start + allocs.back().length;
         allocs.push_back( { newStart , blocksReq , label } );
         if (allocs.back().start + allocs.back().length  > highWater) { highWater = allocs.back().start + allocs.back().length; }
-        // std::cout << "Allocating: " << label << " with " << blocksReq*blockSize << " bytes at location " << getPtr(newStart) << "\n";
+        // if (yakl::yakl_masterproc()) std::cout << "Allocating: " << label << " with " << blocksReq*blockSize << " bytes at location " << getPtr(newStart) << "\n";
         return getPtr(newStart);
       } else {
         // If we start looking in between allocations, this could incur a large performance penalty
@@ -231,13 +231,13 @@ public:
 
   void free(void *ptr, char const * label = "") {
     #ifdef MEMORY_DEBUG
-      std::cout << "MEMORY DEBUG: StackyAllocator attempting to free " << label << " with the pointer: " << ptr << "\n";
+      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: StackyAllocator attempting to free " << label << " with the pointer: " << ptr << "\n";
     #endif
     // Iterate backwards from the end to search for the pointer
     // Efficiency requires stack-like accesses to avoid traversing the entire list
     for (auto it = allocs.rbegin() ; it != allocs.rend() ; it++) {
       if ( ptr == getPtr(it->start) ) {
-        // std::cout << "Deallocating: " << it->label << "\n";
+        // if (yakl::yakl_masterproc()) std::cout << "Deallocating: " << it->label << "\n";
         allocs.erase(std::next(it).base());  // This syntax is really dumb. Just...why?
         return;
       }

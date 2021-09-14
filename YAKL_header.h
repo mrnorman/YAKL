@@ -14,6 +14,10 @@
 #include "stdlib.h"
 #include "YAKL_Gator.h"
 
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
+
 #ifdef YAKL_DEBUG
 #include <stdexcept>
 #include <sstream>
