@@ -359,7 +359,7 @@ public:
   }
 
 
-  template <int N> inline Array<T,N,myMem,styleFortran> reshape(Bnds const bnds) const {
+  template <int N> inline Array<T,N,myMem,styleFortran> reshape(Bnds const &bnds) const {
     #ifdef YAKL_DEBUG
       if (bnds.size() != N) { yakl_throw("ERROR: new number of reshaped array dimensions does not match the templated rank"); }
       index_t totelems = 1;
