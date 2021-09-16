@@ -289,8 +289,8 @@ namespace yakl {
     /***************************************************************************************************
     Serially write an entire Array at once
     ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle>
-    void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName) {
+    template <class T, int rank, int myMem, int myStyle, int myAttr>
+    void write(Array<T,rank,myMem,myStyle,myAttr> const &arr , std::string varName) {
       int varid = get_var_id( varName );
       pnetcdf_put_var( ncid , varid , arr.data() );
     }
@@ -299,8 +299,8 @@ namespace yakl {
     /***************************************************************************************************
     Collectively write an entire Array at once
     ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle>
-    void write_all(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<MPI_Offset> start ) {
+    template <class T, int rank, int myMem, int myStyle, int myAttr>
+    void write_all(Array<T,rank,myMem,myStyle,myAttr> const &arr , std::string varName , std::vector<MPI_Offset> start ) {
       if (rank != start   .size()) { yakl_throw("start.size() != Array's rank"); }
       std::vector<MPI_Offset> count(rank);
       for (int i=0; i < rank; i++) {
@@ -336,8 +336,8 @@ namespace yakl {
     /***************************************************************************************************
     Serially write one entry of an Array into the unlimited index
     ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle>
-    void write1(Array<T,rank,myMem,myStyle> const &arr , std::string varName ,
+    template <class T, int rank, int myMem, int myStyle, int myAttr>
+    void write1(Array<T,rank,myMem,myStyle,myAttr> const &arr , std::string varName ,
                 int ind , std::string ulDimName="unlim" ) {
       std::vector<MPI_Offset> start(rank+1);
       std::vector<MPI_Offset> count(rank+1);
@@ -361,8 +361,8 @@ namespace yakl {
     /***************************************************************************************************
     Collectively write one entry of an Array into the unlimited index
     ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle>
-    void write1_all(Array<T,rank,myMem,myStyle> const &arr , std::string varName ,
+    template <class T, int rank, int myMem, int myStyle, int myAttr>
+    void write1_all(Array<T,rank,myMem,myStyle,myAttr> const &arr , std::string varName ,
                     int ind , std::vector<MPI_Offset> start_in , std::string ulDimName="unlim" ) {
       if (rank != start_in.size()) { yakl_throw("start_in.size() != Array's rank"); }
       std::vector<MPI_Offset> start(rank+1);

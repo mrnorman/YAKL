@@ -2,6 +2,9 @@
 #pragma once
 
 #include "YAKL_defines.h"
+#ifdef HAVE_MPI
+#include <mpi.h>
+#endif
 
 namespace yakl {
 
@@ -31,6 +34,22 @@ namespace yakl {
       #elif defined(YAKL_ARCH_OPENMP45)
         //auto ierr = GetLastError();
       #endif
+    #endif
+  }
+
+  inline bool yakl_masterproc() {
+    #ifdef HAVE_MPI
+      int is_initialized;
+      MPI_Initialized(&is_initialized);
+      if (!is_initialized) {
+        return true;
+      } else {
+        int myrank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+        return myrank == 0;
+      }
+    #else
+      return true;
     #endif
   }
 

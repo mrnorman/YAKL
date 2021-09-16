@@ -6,7 +6,7 @@
   // Initialize the YAKL framework
   inline void init() {
     #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
-      std::cout << "Using YAKL Timers via GPTL\n";
+      if (yakl_masterproc()) std::cout << "Using YAKL Timers via GPTL\n";
       GPTLinitialize();
     #endif
     bool use_pool = true;
@@ -26,9 +26,9 @@
 
       sycl_default_stream = sycl::queue(sycl::gpu_selector{}, asyncHandler,
                                         sycl::property_list{sycl::property::queue::in_order{}});
-      std::cout << "Running on "
-                << sycl_default_stream.get_device().get_info<sycl::info::device::name>()
-                << "\n";
+      if (yakl_masterproc()) std::cout << "Running on "
+                                       << sycl_default_stream.get_device().get_info<sycl::info::device::name>()
+                                       << "\n";
     #endif
 
     yakl_is_initialized = true;
@@ -79,11 +79,11 @@
       hipGetDevice(&id);
       hipDeviceProp_t props;
       hipGetDeviceProperties(&props,id);
-      std::cout << props.name << std::endl;
+      if (yakl_masterproc()) std::cout << props.name << std::endl;
     #endif
 
     #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-      std::cout << "INFORM: Automatically inserting fence() after every parallel_for" << std::endl;
+      if (yakl_masterproc()) std::cout << "INFORM: Automatically inserting fence() after every parallel_for" << std::endl;
     #endif
 
   } //

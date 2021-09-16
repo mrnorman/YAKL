@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "YAKL_StackyAllocator.h"
 #include <list>
 #include <functional>
 #if defined(YAKL_ARCH_HIP)
@@ -15,6 +14,8 @@
 #endif
 
 #include "YAKL_alloc_free.h"
+
+#include "YAKL_StackyAllocator.h"
 
 
 class Gator {
@@ -90,7 +91,7 @@ public:
         initialSize = initial_mb*1024*1024;
         this->growSize = initialSize;
       } else {
-        std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
+        if (yakl::yakl_masterproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
       }
     }
 
@@ -101,7 +102,7 @@ public:
       if (grow_mb != 0) {
         this->growSize = grow_mb*1024*1024;
       } else {
-        std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
+        if (yakl::yakl_masterproc()) std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
       }
     }
 
@@ -112,8 +113,8 @@ public:
       if (block_bytes != 0 && block_bytes%sizeof(size_t) == 0) {
         this->blockSize = block_bytes;
       } else {
-        std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 128*sizeof(size_t)\n";
-        std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of sizeof(size_t)\n";
+        if (yakl::yakl_masterproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 128*sizeof(size_t)\n";
+        if (yakl::yakl_masterproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of sizeof(size_t)\n";
       }
     }
 
@@ -139,7 +140,7 @@ public:
 
   void * allocate(size_t bytes, char const * label="") {
     #ifdef MEMORY_DEBUG
-      std::cout << "MEMORY DEBUG: Gator attempting to allocate " << label << " with " << bytes << " bytes\n";
+      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Gator attempting to allocate " << label << " with " << bytes << " bytes\n";
     #endif
     if (bytes == 0) return nullptr;
     // Loop through the pools and see if there's room. If so, allocate in one of them
@@ -157,7 +158,7 @@ public:
       }
       if (!room_found) {
         #ifdef MEMORY_DEBUG
-          std::cout << "MEMORY DEBUG: Current pools are not large enough. Adding a new pool of size " << growSize << " bytes\n";
+          if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Current pools are not large enough. Adding a new pool of size " << growSize << " bytes\n";
         #endif
         if (bytes > growSize) {
           std::cerr << "ERROR: Trying to allocate " << bytes << " bytes, but the current pool is too small, and growSize is only " << 
@@ -181,7 +182,7 @@ public:
 
   void free(void *ptr , char const * label = "") {
     #ifdef MEMORY_DEBUG
-      std::cout << "MEMORY DEBUG: Gator attempting to free " << label << " with the pointer: " << ptr << "\n";
+      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Gator attempting to free " << label << " with the pointer: " << ptr << "\n";
     #endif
     bool pointer_valid = false;
     mtx.lock();

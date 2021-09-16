@@ -93,6 +93,7 @@ namespace yakl {
           return ptr;
         };
         dealloc = [] ( void *ptr ) {
+          sycl_default_stream.wait();
           sycl::free(ptr, sycl_default_stream);
           check_last_error();
           ptr = nullptr;

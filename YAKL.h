@@ -24,11 +24,12 @@ namespace yakl {
     int constexpr memDefault = memHost;
   #endif
 
-
   int constexpr styleC       = 1;
   int constexpr styleFortran = 2;
   int constexpr styleDefault = styleC;
 
+  int constexpr attrManaged   = 1;
+  int constexpr attrUnmanaged = 2;
 
   int constexpr COLON = std::numeric_limits<int>::min();
   int constexpr NOSPEC = std::numeric_limits<int>::min()+1;
@@ -110,11 +111,11 @@ namespace yakl {
     yakl_is_initialized = false;
     size_t hwm = pool.highWaterMark();
     if        (hwm >= 1024*1024*1024) {
-      std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024*1024) << " GB\n";
+      if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024*1024) << " GB\n";
     } else if (hwm >= 1024*1024     ) {
-      std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024     ) << " MB\n";
+      if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024     ) << " MB\n";
     } else if (hwm >= 1024          ) {
-      std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
+      if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
     }
     pool.finalize();
     #if defined(YAKL_ARCH_SYCL)
@@ -163,8 +164,8 @@ namespace yakl {
   /////////////////////////////////////////////////
   // memset
   /////////////////////////////////////////////////
-  template <class T, int rank, int myMem, int myStyle, class I>
-  void memset( Array<T,rank,myMem,myStyle> &arr , I val ) {
+  template <class T, int rank, int myMem, int myStyle, int myAttr, class I>
+  void memset( Array<T,rank,myMem,myStyle,myAttr> &arr , I val ) {
     if (myMem == memDevice) {
       c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
         arr.myData[i] = val;
