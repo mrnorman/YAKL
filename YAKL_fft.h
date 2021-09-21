@@ -144,7 +144,7 @@ namespace yakl {
     }
 
 
-    ~RealFFT1D() {
+    YAKL_INLINE ~RealFFT1D() {
       trig = real1d();
     }
 

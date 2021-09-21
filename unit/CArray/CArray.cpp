@@ -6,7 +6,6 @@ using yakl::Array;
 using yakl::styleC;
 using yakl::memHost;
 using yakl::memDevice;
-using yakl::attrUnmanaged;
 using yakl::c::parallel_for;
 using yakl::c::Bounds;
 using yakl::c::SimpleBounds;
@@ -31,16 +30,6 @@ typedef Array<real,5,memDevice,styleC> real5d;
 typedef Array<real,6,memDevice,styleC> real6d;
 typedef Array<real,7,memDevice,styleC> real7d;
 typedef Array<real,8,memDevice,styleC> real8d;
-
-typedef Array<real,1,memDevice,styleC,attrUnmanaged> realUmg1d;
-typedef Array<real,2,memDevice,styleC,attrUnmanaged> realUmg2d;
-typedef Array<real,3,memDevice,styleC,attrUnmanaged> realUmg3d;
-typedef Array<real,4,memDevice,styleC,attrUnmanaged> realUmg4d;
-typedef Array<real,5,memDevice,styleC,attrUnmanaged> realUmg5d;
-typedef Array<real,6,memDevice,styleC,attrUnmanaged> realUmg6d;
-typedef Array<real,7,memDevice,styleC,attrUnmanaged> realUmg7d;
-typedef Array<real,8,memDevice,styleC,attrUnmanaged> realUmg8d;
-
 
 void die(std::string msg) {
   std::cerr << msg << std::endl;
@@ -155,14 +144,14 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test unmanaged arrays
     ///////////////////////////////////////////////////////////
-    realUmg1d test1d_ptr("test1d",test1d.data(),d1);
-    realUmg2d test2d_ptr("test2d",test2d.data(),d1,d2);
-    realUmg3d test3d_ptr("test3d",test3d.data(),d1,d2,d3);
-    realUmg4d test4d_ptr("test4d",test4d.data(),d1,d2,d3,d4);
-    realUmg5d test5d_ptr("test5d",test5d.data(),d1,d2,d3,d4,d5);
-    realUmg6d test6d_ptr("test6d",test6d.data(),d1,d2,d3,d4,d5,d6);
-    realUmg7d test7d_ptr("test7d",test7d.data(),d1,d2,d3,d4,d5,d6,d7);
-    realUmg8d test8d_ptr("test8d",test8d.data(),d1,d2,d3,d4,d5,d6,d7,d8);
+    real1d test1d_ptr("test1d",test1d.data(),d1);
+    real2d test2d_ptr("test2d",test2d.data(),d1,d2);
+    real3d test3d_ptr("test3d",test3d.data(),d1,d2,d3);
+    real4d test4d_ptr("test4d",test4d.data(),d1,d2,d3,d4);
+    real5d test5d_ptr("test5d",test5d.data(),d1,d2,d3,d4,d5);
+    real6d test6d_ptr("test6d",test6d.data(),d1,d2,d3,d4,d5,d6);
+    real7d test7d_ptr("test7d",test7d.data(),d1,d2,d3,d4,d5,d6,d7);
+    real8d test8d_ptr("test8d",test8d.data(),d1,d2,d3,d4,d5,d6,d7,d8);
 
     yakl::memset(test1d_ptr,0.f);
     yakl::memset(test2d_ptr,0.f);

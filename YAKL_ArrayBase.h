@@ -1,7 +1,7 @@
 
 #pragma once
 
-template <class T, int rank, int myMem, int myStyle, int myAttr>
+template <class T, int rank, int myMem, int myStyle>
 class ArrayBase {
 public:
 
@@ -14,8 +14,8 @@ public:
   #endif
 
 
-  template <int theirRank, int theirStyle, int theirAttr>
-  inline void deep_copy_to(Array<T,theirRank,memHost,theirStyle,theirAttr> &lhs) const {
+  template <int theirRank, int theirStyle>
+  inline void deep_copy_to(Array<T,theirRank,memHost,theirStyle> &lhs) const {
     #ifdef YAKL_DEBUG
       if (this->totElems() != lhs.totElems()) {
         yakl_throw("ERROR: deep_copy_to with different number of elements");
@@ -32,8 +32,8 @@ public:
   }
 
 
-  template <int theirRank, int theirStyle, int theirAttr>
-  inline void deep_copy_to(Array<T,theirRank,memDevice,theirStyle,theirAttr> &lhs) const {
+  template <int theirRank, int theirStyle>
+  inline void deep_copy_to(Array<T,theirRank,memDevice,theirStyle> &lhs) const {
     #ifdef YAKL_DEBUG
       if (this->totElems() != lhs.totElems()) {
         yakl_throw("ERROR: deep_copy_to with different number of elements");
@@ -88,7 +88,7 @@ public:
 
   /* OPERATOR<<
   Print the array. If it's 2-D, print a pretty looking matrix */
-  inline friend std::ostream &operator<<(std::ostream& os, Array<T,rank,myMem,myStyle,myAttr> const &v) {
+  inline friend std::ostream &operator<<(std::ostream& os, Array<T,rank,myMem,myStyle> const &v) {
     #ifdef YAKL_DEBUG
       os << "For Array labeled: " << v.myname << "\n";
     #endif
