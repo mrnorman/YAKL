@@ -1,8 +1,8 @@
 
 #pragma once
 
-template <class T, int rank, int myMem, int myAttr>
-class CArrayBase : public ArrayBase<T,rank,myMem,styleC,myAttr> {
+template <class T, int rank, int myMem>
+class CArrayBase : public ArrayBase<T,rank,myMem,styleC> {
 public:
 
   /* ARRAY INDEXERS (FORTRAN index ordering)
@@ -121,7 +121,7 @@ public:
   }
 
 
-  template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleC,attrUnmanaged> &store ) const {
+  template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleC> &store ) const {
     #ifdef YAKL_DEBUG
       if (rank != dims.size()) {
         yakl_throw( "ERROR: slice rank must be equal to dims.size()" );
@@ -144,65 +144,65 @@ public:
     }
     store.myData = &(this->myData[retOff]);
   }
-  template <int N> YAKL_INLINE void slice( int i0 , Array<T,N,myMem,styleC,attrUnmanaged> &store ) const {
+  template <int N> YAKL_INLINE void slice( int i0 , Array<T,N,myMem,styleC> &store ) const {
     slice( {i0} , store );
   }
-  template <int N> YAKL_INLINE void slice( int i0, int i1 , Array<T,N,myMem,styleC,attrUnmanaged> &store ) const {
+  template <int N> YAKL_INLINE void slice( int i0, int i1 , Array<T,N,myMem,styleC> &store ) const {
     slice( {i0,i1} , store );
   }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, Array<T,N,myMem,styleC,attrUnmanaged> &store ) const {
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, Array<T,N,myMem,styleC> &store ) const {
     slice( {i0,i1,i2} , store );
   }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, Array<T,N,myMem,styleC,attrUnmanaged> &store ) const {
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, Array<T,N,myMem,styleC> &store ) const {
     slice( {i0,i1,i2,i3} , store );
   }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, Array<T,N,myMem,styleC,attrUnmanaged> &store ) const {
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, Array<T,N,myMem,styleC> &store ) const {
     slice( {i0,i1,i2,i3,i4} , store );
   }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, Array<T,N,myMem,styleC,attrUnmanaged> &store ) const {
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, Array<T,N,myMem,styleC> &store ) const {
     slice( {i0,i1,i2,i3,i4,i5} , store );
   }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, Array<T,N,myMem,styleC,attrUnmanaged> &store ) const {
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, Array<T,N,myMem,styleC> &store ) const {
     slice( {i0,i1,i2,i3,i4,i5,i6} , store );
   }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7, Array<T,N,myMem,styleC,attrUnmanaged> &store ) const {
+  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7, Array<T,N,myMem,styleC> &store ) const {
     slice( {i0,i1,i2,i3,i4,i5,i6,i7} , store );
   }
 
 
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC,attrUnmanaged> slice( Dims const &dims ) const {
-    Array<T,N,myMem,styleC,attrUnmanaged> ret;
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( Dims const &dims ) const {
+    Array<T,N,myMem,styleC> ret;
     slice( dims , ret );
     return ret;
   }
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC,attrUnmanaged> slice( int i0 ) const {
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0 ) const {
     return slice<N>( {i0} );
   }
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC,attrUnmanaged> slice( int i0, int i1 ) const {
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1 ) const {
     return slice<N>( {i0,i1} );
   }
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC,attrUnmanaged> slice( int i0, int i1, int i2 ) const {
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2 ) const {
     return slice<N>( {i0,i1,i2} );
   }
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC,attrUnmanaged> slice( int i0, int i1, int i2, int i3 ) const {
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3 ) const {
     return slice<N>( {i0,i1,i2,i3} );
   }
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC,attrUnmanaged> slice( int i0, int i1, int i2, int i3, int i4 ) const {
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4 ) const {
     return slice<N>( {i0,i1,i2,i3,i4} );
   }
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC,attrUnmanaged> slice( int i0, int i1, int i2, int i3, int i4, int i5 ) const {
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5 ) const {
     return slice<N>( {i0,i1,i2,i3,i4,i5} );
   }
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC,attrUnmanaged> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6 ) const {
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6 ) const {
     return slice<N>( {i0,i1,i2,i3,i4,i5,i6} );
   }
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC,attrUnmanaged> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7 ) const {
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7 ) const {
     return slice<N>( {i0,i1,i2,i3,i4,i5,i6,i7} );
   }
 
 
-  inline Array<T,rank,memHost,styleC,attrManaged> createHostCopy() const {
-    Array<T,rank,memHost,styleC,attrManaged> ret;
+  inline Array<T,rank,memHost,styleC> createHostCopy() const {
+    Array<T,rank,memHost,styleC> ret;
     for (int i=0; i<rank; i++) {
       ret.dimension[i] = this->dimension[i];
     }
@@ -220,8 +220,8 @@ public:
   }
 
 
-  inline Array<T,rank,memDevice,styleC,attrManaged> createDeviceCopy() const {
-    Array<T,rank,memDevice,styleC,attrManaged> ret;
+  inline Array<T,rank,memDevice,styleC> createDeviceCopy() const {
+    Array<T,rank,memDevice,styleC> ret;
     for (int i=0; i<rank; i++) {
       ret.dimension[i] = this->dimension[i];
     }

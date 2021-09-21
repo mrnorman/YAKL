@@ -42,9 +42,6 @@ namespace yakl {
   int constexpr styleFortran = 2;
   int constexpr styleDefault = styleC;
 
-  int constexpr attrManaged   = 1;
-  int constexpr attrUnmanaged = 2;
-
   int constexpr COLON = std::numeric_limits<int>::min();
   int constexpr NOSPEC = std::numeric_limits<int>::min()+1;
 
@@ -177,8 +174,8 @@ namespace yakl {
   /////////////////////////////////////////////////
   // memset
   /////////////////////////////////////////////////
-  template <class T, int rank, int myMem, int myStyle, int myAttr, class I>
-  void memset( Array<T,rank,myMem,myStyle,myAttr> &arr , I val ) {
+  template <class T, int rank, int myMem, int myStyle, class I>
+  void memset( Array<T,rank,myMem,myStyle> &arr , I val ) {
     if (myMem == memDevice) {
       c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
         arr.myData[i] = val;
