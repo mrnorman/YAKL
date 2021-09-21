@@ -70,20 +70,20 @@ namespace yakl {
   extern bool yakl_is_initialized;
 
 
-  #if defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL)
+  #if defined(YAKL_ARCH_SYCL)
     YAKL_INLINE void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
     YAKL_INLINE void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
     YAKL_INLINE void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
     YAKL_INLINE void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
     YAKL_INLINE void yakl_mtx_lock()   { yakl_mtx.lock(); }
     YAKL_INLINE void yakl_mtx_unlock() { yakl_mtx.unlock(); }
-  #else
-    void *yaklAllocDevice( size_t bytes , char const *label );
-    void yaklFreeDevice( void *ptr , char const *label );
-    void *yaklAllocHost( size_t bytes , char const *label );
-    void yaklFreeHost( void *ptr , char const *label );
-    void yakl_mtx_lock();
-    void yakl_mtx_unlock();
+  #else   // HIP AND CUDA
+    inline void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
+    inline void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
+    inline void *yaklAllocHost( size_t bytes , char const *label ) { return yaklAllocHostFunc(bytes,label); }
+    inline void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
+    inline void yakl_mtx_lock()   { yakl_mtx.lock(); }
+    inline void yakl_mtx_unlock() { yakl_mtx.unlock(); }
   #endif
 
 
