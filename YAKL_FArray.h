@@ -201,14 +201,10 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
-                     this->lbounds[0] = bnds[1].l; this->dimension[0] = bnds[1].u - bnds[1].l + 1;  
-    if (rank >= 2) { this->lbounds[1] = bnds[2].l; this->dimension[1] = bnds[2].u - bnds[2].l + 1; }
-    if (rank >= 3) { this->lbounds[2] = bnds[3].l; this->dimension[2] = bnds[3].u - bnds[3].l + 1; }
-    if (rank >= 4) { this->lbounds[3] = bnds[4].l; this->dimension[3] = bnds[4].u - bnds[4].l + 1; }
-    if (rank >= 5) { this->lbounds[4] = bnds[5].l; this->dimension[4] = bnds[5].u - bnds[5].l + 1; }
-    if (rank >= 6) { this->lbounds[5] = bnds[6].l; this->dimension[5] = bnds[6].u - bnds[6].l + 1; }
-    if (rank >= 7) { this->lbounds[6] = bnds[7].l; this->dimension[6] = bnds[7].u - bnds[7].l + 1; }
-    if (rank >= 8) { this->lbounds[7] = bnds[8].l; this->dimension[7] = bnds[8].u - bnds[8].l + 1; }
+    for (int i=0; i < rank; i++) {
+      this->lbounds[i] = bnds[i].l;
+      this->dimension[i] = bnds[i].u - bnds[i].l + 1;
+    }
     #if YAKL_CURRENTLY_ON_HOST()
       allocate(label);
     #endif
@@ -226,14 +222,10 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
-                     this->lbounds[0] = 1; this->dimension[0] = bnds[1];  
-    if (rank >= 2) { this->lbounds[1] = 1; this->dimension[1] = bnds[2]; }
-    if (rank >= 3) { this->lbounds[2] = 1; this->dimension[2] = bnds[3]; }
-    if (rank >= 4) { this->lbounds[3] = 1; this->dimension[3] = bnds[4]; }
-    if (rank >= 5) { this->lbounds[4] = 1; this->dimension[4] = bnds[5]; }
-    if (rank >= 6) { this->lbounds[5] = 1; this->dimension[5] = bnds[6]; }
-    if (rank >= 7) { this->lbounds[6] = 1; this->dimension[6] = bnds[7]; }
-    if (rank >= 8) { this->lbounds[7] = 1; this->dimension[7] = bnds[8]; }
+    for (int i=0; i < rank; i++) {
+      this->lbounds[i] = 1;
+      this->dimension[i] = bnds[i];
+    }
     #if YAKL_CURRENTLY_ON_HOST()
       allocate(label);
     #endif
@@ -374,14 +366,10 @@ public:
     #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
-                     this->lbounds[0] = bnds[1].l; this->dimension[0] = bnds[1].u - bnds[1].l + 1;  
-    if (rank >= 2) { this->lbounds[1] = bnds[2].l; this->dimension[1] = bnds[2].u - bnds[2].l + 1; }
-    if (rank >= 3) { this->lbounds[2] = bnds[3].l; this->dimension[2] = bnds[3].u - bnds[3].l + 1; }
-    if (rank >= 4) { this->lbounds[3] = bnds[4].l; this->dimension[3] = bnds[4].u - bnds[4].l + 1; }
-    if (rank >= 5) { this->lbounds[4] = bnds[5].l; this->dimension[4] = bnds[5].u - bnds[5].l + 1; }
-    if (rank >= 6) { this->lbounds[5] = bnds[6].l; this->dimension[5] = bnds[6].u - bnds[6].l + 1; }
-    if (rank >= 7) { this->lbounds[6] = bnds[7].l; this->dimension[6] = bnds[7].u - bnds[7].l + 1; }
-    if (rank >= 8) { this->lbounds[7] = bnds[8].l; this->dimension[7] = bnds[8].u - bnds[8].l + 1; }
+    for (int i=0; i < rank; i++) {
+      this->lbounds[i] = bnds[i].l;
+      this->dimension[i] = bnds[i].u - bnds[i].l + 1;
+    }
     this->myData = data;
     this->refCount = nullptr;
   }
@@ -395,14 +383,10 @@ public:
     #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
-                     this->lbounds[0] = 1; this->dimension[0] = bnds[1];  
-    if (rank >= 2) { this->lbounds[1] = 1; this->dimension[1] = bnds[2]; }
-    if (rank >= 3) { this->lbounds[2] = 1; this->dimension[2] = bnds[3]; }
-    if (rank >= 4) { this->lbounds[3] = 1; this->dimension[3] = bnds[4]; }
-    if (rank >= 5) { this->lbounds[4] = 1; this->dimension[4] = bnds[5]; }
-    if (rank >= 6) { this->lbounds[5] = 1; this->dimension[5] = bnds[6]; }
-    if (rank >= 7) { this->lbounds[6] = 1; this->dimension[6] = bnds[7]; }
-    if (rank >= 8) { this->lbounds[7] = 1; this->dimension[7] = bnds[8]; }
+    for (int i=0; i < rank; i++) {
+      this->lbounds[i] = 1;
+      this->dimension[i] = bnds[i];
+    }
     this->myData = data;
     this->refCount = nullptr;
   }
