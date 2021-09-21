@@ -95,7 +95,7 @@ public:
 
 
   // if this function gets called, then there was definitely an error
-  inline void indexing_check(int rank_in, index_t i0 ,
+  YAKL_INLINE void indexing_check(int rank_in, index_t i0 ,
                                           index_t i1=INDEX_MAX ,
                                           index_t i2=INDEX_MAX ,
                                           index_t i3=INDEX_MAX ,
