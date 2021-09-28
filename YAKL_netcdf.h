@@ -346,8 +346,8 @@ namespace yakl {
     /***************************************************************************************************
     Write an entire Array at once
     ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle, int myAttr>
-    void write(Array<T,rank,myMem,myStyle,myAttr> const &arr , std::string varName , std::vector<std::string> dimNames) {
+    template <class T, int rank, int myMem, int myStyle>
+    void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
       if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
       std::vector<NcDim> dims(rank); // List of dimensions for this variable
       // Make sure the dimensions are in there and are the right sizes
@@ -426,8 +426,8 @@ namespace yakl {
     /***************************************************************************************************
     Write one entry of an Array into the unlimited index
     ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle, int myAttr>
-    void write1(Array<T,rank,myMem,myStyle,myAttr> const &arr , std::string varName , std::vector<std::string> dimNames ,
+    template <class T, int rank, int myMem, int myStyle>
+    void write1(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames ,
                 int ind , std::string ulDimName="unlim" ) {
       if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
       std::vector<NcDim> dims(rank+1); // List of dimensions for this variable
@@ -497,8 +497,8 @@ namespace yakl {
     /***************************************************************************************************
     Read an entire Array
     ***************************************************************************************************/
-    template <class T, int rank, int myMem, int myStyle, int myAttr>
-    void read(Array<T,rank,myMem,myStyle,myAttr> &arr , std::string varName) {
+    template <class T, int rank, int myMem, int myStyle>
+    void read(Array<T,rank,myMem,myStyle> &arr , std::string varName) {
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
       std::vector<int> dimSizes(rank);
