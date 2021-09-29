@@ -278,9 +278,12 @@ template <class T, int myMem> class ParallelSum;
       rsltP = nullptr;
     }
     T operator() (T *data) {
-      T rslt;
-      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, 2},
-                                       sycl::ext::oneapi::reduction(rsltP, sycl::ext::oneapi::minimum<>()),
+      T rslt=0;
+      size_t local_size=0;
+      (nItems % 2 == 0) ? (local_size=2) : (local_size=3);
+      auto properties = sycl::property::reduction::initialize_to_identity{};
+      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, local_size},
+                                       sycl::reduction(rsltP, sycl::minimum<>(), properties),
                                        [=](sycl::nd_item<1> idx, auto& min) {
                                          min.combine(data[idx.get_global_linear_id()]);
                                        }).wait();
@@ -288,8 +291,11 @@ template <class T, int myMem> class ParallelSum;
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
-      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, 2},
-                                       sycl::ext::oneapi::reduction(devP, sycl::ext::oneapi::minimum<>()),
+      size_t local_size=0;
+      (nItems % 2 == 0) ? (local_size=2) : (local_size=3);
+      auto properties = sycl::property::reduction::initialize_to_identity{};
+      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, local_size},
+                                       sycl::reduction(devP, sycl::minimum<>(), properties),
                                        [=](sycl::nd_item<1> idx, auto& min) {
                                          min.combine(data[idx.get_global_linear_id()]);
                                        }).wait();
@@ -315,9 +321,12 @@ template <class T, int myMem> class ParallelSum;
       rsltP = nullptr;
     }
     T operator() (T *data) {
-      T rslt;
-      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, 2},
-                                       sycl::ext::oneapi::reduction(rsltP, sycl::ext::oneapi::maximum<>()),
+      T rslt=0;
+      size_t local_size=0;
+      (nItems % 2 == 0) ? (local_size=2) : (local_size=3);
+      auto properties = sycl::property::reduction::initialize_to_identity{};
+      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, local_size},
+                                       sycl::reduction(rsltP, sycl::maximum<>(), properties),
                                        [=](sycl::nd_item<1> idx, auto& max) {
                                          max.combine(data[idx.get_global_linear_id()]);
                                        }).wait();
@@ -325,8 +334,11 @@ template <class T, int myMem> class ParallelSum;
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
-      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, 2},
-                                       sycl::ext::oneapi::reduction(devP, sycl::ext::oneapi::maximum<>()),
+      size_t local_size=0;
+      (nItems % 2 == 0) ? (local_size=2) : (local_size=3);
+      auto properties = sycl::property::reduction::initialize_to_identity{};
+      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, local_size},
+                                       sycl::reduction(devP, sycl::maximum<>(), properties),
                                        [=](sycl::nd_item<1> idx, auto& max) {
                                          max.combine(data[idx.get_global_linear_id()]);
                                        }).wait();
@@ -352,9 +364,12 @@ template <class T, int myMem> class ParallelSum;
       rsltP = nullptr;
     }
     T operator() (T *data) {
-      T rslt;
-      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, 2},
-                                       sycl::ext::oneapi::reduction(rsltP, sycl::ext::oneapi::plus<>()),
+      T rslt = 0;
+      size_t local_size=0;
+      (nItems % 2 == 0) ? (local_size=2) : (local_size=3);
+      auto properties = sycl::property::reduction::initialize_to_identity{};
+      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, 17},
+                                       sycl::reduction(rsltP, std::plus<>(), properties),
                                        [=](sycl::nd_item<1> idx, auto& sum) {
                                          sum.combine(data[idx.get_global_linear_id()]);
                                        }).wait();
@@ -362,8 +377,11 @@ template <class T, int myMem> class ParallelSum;
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
-      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, 2},
-                                       sycl::ext::oneapi::reduction(devP, sycl::ext::oneapi::plus<>()),
+      size_t local_size=0;
+      (nItems % 2 == 0) ? (local_size=2) : (local_size=3);
+      auto properties = sycl::property::reduction::initialize_to_identity{};
+      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, local_size},
+                                       sycl::reduction(devP, std::plus<>(), properties),
                                        [=](sycl::nd_item<1> idx, auto& sum) {
                                          sum.combine(data[idx.get_global_linear_id()]);
                                        }).wait();

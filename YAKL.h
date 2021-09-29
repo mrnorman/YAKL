@@ -70,7 +70,7 @@ namespace yakl {
     inline void yaklFreeHost( void *ptr , char const *label ) { yaklFreeHostFunc(ptr,label); }
     inline void yakl_mtx_lock()   { yakl_mtx.lock(); }
     inline void yakl_mtx_unlock() { yakl_mtx.unlock(); }
-  #endif
+ #endif
 
 
   // Block the CPU code until the device code and data transfers are all completed
@@ -105,6 +105,11 @@ namespace yakl {
       cudaFree(functorBuffer);
       check_last_error();
     #endif
+    #if defined(YAKL_ARCH_SYCL)
+      sycl::free(functorBuffer, sycl_default_stream);
+      check_last_error();
+    #endif
+
     yakl_is_initialized = false;
     size_t hwm = pool.highWaterMark();
     if        (hwm >= 1024*1024*1024) {
@@ -115,10 +120,6 @@ namespace yakl {
       if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
     }
     pool.finalize();
-    #if defined(YAKL_ARCH_SYCL)
-      sycl::free(functorBuffer, sycl_default_stream);
-      check_last_error();
-    #endif
     #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
       GPTLpr_file("");
       GPTLpr_file("yakl_timer_output.txt");

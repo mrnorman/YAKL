@@ -166,7 +166,7 @@ namespace yakl {
           void *ptr = sycl::malloc_shared(bytes,sycl_default_stream);
           sycl_default_stream.memset(ptr, 0, bytes).wait();
           check_last_error();
-          sycl_default_stream.prefetch(ptr,bytes);
+          sycl_default_stream.prefetch(ptr,bytes).wait();
           return ptr;
         };
         dealloc = [] ( void *ptr ) {

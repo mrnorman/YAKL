@@ -57,10 +57,10 @@ Example usage:
     pressure(k,j,i) = ...;
   });
 
-  yakl::RealFFT1D<n,double> fft_x;
+  RealFFT1D<n,double> fft_x;
   fft_x.init(fft_x.trig);
 
-  yakl::RealFFT1D<n,double> fft_y;
+  RealFFT1D<n,double> fft_y;
   fft_y.init(fft_y.trig);
 
   // x-direction forward FFTs
@@ -69,7 +69,7 @@ Example usage:
     for (int i=0; i < nx; i++) {
       data(i) = pressure(k,j,i);
     }
-    fft_x.forward(data,fft_x.trig,yakl::FFT_SCALE_ECMWF);
+    fft_x.forward(data,fft_x.trig,FFT_SCALE_ECMWF);
     for (int i=0; i < nx+2; i++) {
       pressure(k,j,i) = data(i);
     }
@@ -81,7 +81,7 @@ Example usage:
     for (int j=0; j < ny; j++) {
       data(j) = pressure(k,j,i);
     }
-    fft_y.forward(data,fft_y.trig,yakl::FFT_SCALE_ECMWF);
+    fft_y.forward(data,fft_y.trig,FFT_SCALE_ECMWF);
     for (int j=0; j < ny+2; j++) {
       pressure(k,j,i) = data(j);
     }
@@ -95,7 +95,7 @@ Example usage:
     for (int j=0; j < ny+2; j++) {
       data(j) = pressure(k,j,i);
     }
-    fft_y.inverse(data,fft_y.trig,yakl::FFT_SCALE_ECMWF);
+    fft_y.inverse(data,fft_y.trig,FFT_SCALE_ECMWF);
     for (int j=0; j < ny; j++) {
       pressure(k,j,i) = data(j);
     }
@@ -107,7 +107,7 @@ Example usage:
     for (int i=0; i < nx+2; i++) {
       data(i) = pressure(k,j,i);
     }
-    fft_x.inverse(data,fft_x.trig,yakl::FFT_SCALE_ECMWF);
+    fft_x.inverse(data,fft_x.trig,FFT_SCALE_ECMWF);
     for (int i=0; i < nx; i++) {
       pressure(k,j,i) = data(i);
     }
@@ -128,7 +128,7 @@ namespace yakl {
 
   template <unsigned int SIZE, class real = double>
   class RealFFT1D {
-    typedef yakl::Array<real,1,yakl::memDevice,yakl::styleC> real1d;
+    typedef Array<real,1,memDevice,styleC> real1d;
 
     public:
 
@@ -151,13 +151,13 @@ namespace yakl {
 
     inline void init(real1d &trig) {
       int constexpr log2_no2 = mylog2<SIZE/2>::value;
-      yakl::c::parallel_for( log2_no2 , YAKL_LAMBDA (int i) {
+      c::parallel_for( log2_no2 , YAKL_LAMBDA (int i) {
         unsigned int m = 1;
         for (int j=1; j <= i+1; j++) { m *= 2; }
         trig(OFF_COS1+i) = cos(2*M_PI/static_cast<real>(m));
         trig(OFF_SIN1+i) = sin(2*M_PI/static_cast<real>(m));
       });
-      yakl::c::parallel_for( SIZE/2 , YAKL_LAMBDA (int i) {
+      c::parallel_for( SIZE/2 , YAKL_LAMBDA (int i) {
         trig(OFF_COS2+i) = cos(2*M_PI*i/static_cast<real>(SIZE));
         trig(OFF_SIN2+i) = sin(2*M_PI*i/static_cast<real>(SIZE));
       });
@@ -166,7 +166,7 @@ namespace yakl {
 
     template <class ARR>
     YAKL_INLINE void forward(ARR &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) const {
-      yakl::SArray<real,1,SIZE> tmp;
+      SArray<real,1,SIZE> tmp;
       int constexpr n = SIZE;
       bit_reverse_copy_real_forward(data,tmp);
       fft_post_bit_reverse(tmp,trig);
@@ -196,7 +196,7 @@ namespace yakl {
 
     template <class ARR>
     YAKL_INLINE void inverse(ARR &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) const {
-      yakl::SArray<real,1,SIZE> tmp;
+      SArray<real,1,SIZE> tmp;
       int constexpr  n = SIZE;
       bit_reverse_copy_real_inverse(data,tmp,trig);
       fft_post_bit_reverse(tmp,trig);
