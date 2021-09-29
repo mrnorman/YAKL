@@ -368,7 +368,7 @@ template <class T, int myMem> class ParallelSum;
       size_t local_size=0;
       (nItems % 2 == 0) ? (local_size=2) : (local_size=3);
       auto properties = sycl::property::reduction::initialize_to_identity{};
-      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, 17},
+      sycl_default_stream.parallel_for(sycl::nd_range<1>{nItems, local_size},
                                        sycl::reduction(rsltP, std::plus<>(), properties),
                                        [=](sycl::nd_item<1> idx, auto& sum) {
                                          sum.combine(data[idx.get_global_linear_id()]);
