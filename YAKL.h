@@ -115,27 +115,37 @@ namespace yakl {
 
 
   inline void finalize() {
-    #ifdef YAKL_ARCH_CUDA
-      cudaFree(functorBuffer);
-      check_last_error();
-    #endif
-    yakl_is_initialized = false;
-    size_t hwm = pool.highWaterMark();
-    if        (hwm >= 1024*1024*1024) {
-      if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024*1024) << " GB\n";
-    } else if (hwm >= 1024*1024     ) {
-      if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024     ) << " MB\n";
-    } else if (hwm >= 1024          ) {
-      if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
+    yakl_mtx.lock();
+
+    if ( isInitialized() ) {
+      #ifdef YAKL_ARCH_CUDA
+        cudaFree(functorBuffer);
+        check_last_error();
+      #endif
+      yakl_is_initialized = false;
+      size_t hwm = pool.highWaterMark();
+      if        (hwm >= 1024*1024*1024) {
+        if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024*1024) << " GB\n";
+      } else if (hwm >= 1024*1024     ) {
+        if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024     ) << " MB\n";
+      } else if (hwm >= 1024          ) {
+        if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
+      }
+      pool.finalize();
+      #if defined(YAKL_ARCH_SYCL)
+        sycl_default_stream = sycl::queue();
+      #endif
+      #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
+        GPTLpr_file("");
+        GPTLpr_file("yakl_timer_output.txt");
+      #endif
+    } else {
+      std::cerr << "WARNING: Calling yakl::finalize() when YAKL is not initialized. ";
+      std::cerr << "This might mean you've called yakl::finalize() more than once.\n";
     }
-    pool.finalize();
-    #if defined(YAKL_ARCH_SYCL)
-      sycl_default_stream = sycl::queue();
-    #endif
-    #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
-      GPTLpr_file("");
-      GPTLpr_file("yakl_timer_output.txt");
-    #endif
+    yakl_is_initialized = false;
+
+    yakl_mtx.unlock();
   }
 
 
