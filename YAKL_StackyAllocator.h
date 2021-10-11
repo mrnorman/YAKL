@@ -161,13 +161,15 @@ public:
 
   void finalize() {
     if (allocs.size() != 0) {
-      std::cerr << "WARNING: Not all allocations were deallocated before destroying this pool.\n" <<
-                   "The following allocations were not deallocated:" << std::endl;
-      for (auto it = allocs.begin() ; it != allocs.end() ; it++) {
-        std::cerr << "*** Label: " << it->label << "  ;  size: " << it->length*blockSize << " bytes  ;  offset: " << 
-                     it->start*blockSize << " bytes  ;  ptr: " << getPtr(it->start) << std::endl;
-      }
-      std::cerr << "This probably won't end well, but carry on.\n" << std::endl;
+      #if defined(YAKL_DEBUG) || defined(MEMORY_DEBUG)
+        std::cerr << "WARNING: Not all allocations were deallocated before destroying this pool.\n" <<
+                     "The following allocations were not deallocated:" << std::endl;
+        for (auto it = allocs.begin() ; it != allocs.end() ; it++) {
+          std::cerr << "*** Label: " << it->label << "  ;  size: " << it->length*blockSize << " bytes  ;  offset: " << 
+                       it->start*blockSize << " bytes  ;  ptr: " << getPtr(it->start) << std::endl;
+        }
+        std::cerr << "This probably won't end well, but carry on.\n" << std::endl;
+      #endif
     }
     if (refCount != nullptr) {
       (*refCount)--;
