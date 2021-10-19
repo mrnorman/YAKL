@@ -13,6 +13,9 @@
         GPTLinitialize();
       #endif
       bool use_pool = true;
+      #ifndef YAKL_SEPARATE_MEMORY_SPACE
+        use_pool = false;
+      #endif
 
       #ifdef YAKL_ARCH_SYCL
         auto asyncHandler = [&](sycl::exception_list eL) {
