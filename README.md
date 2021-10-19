@@ -37,11 +37,10 @@ Contributors:
 
 ## Overview
 
-The YAKL API is similar to Kokkos in many ways, but is quite simplified and has much stronger Fortran interoperability and Fortran-like options. YAKL currently has backends for CPUs (serial), CUDA, HIP, SYCL (in progress), and OpenMP offload (in progress). YAKL provides the following:
+The YAKL API is similar to Kokkos in many ways, but is quite simplified and has much stronger Fortran interoperability and Fortran-like options. YAKL currently has backends for CPUs (serial), CPU OpenMP threading, CUDA, HIP, SYCL, OpenMP offload (in progress). YAKL provides the following:
 
 * **Pool Allocator**: A pool allocator for all `memDevice` `Array`s in accelerator memory
-  * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators
-  * CUDA Managed memory also calls `cudaMemPrefetchAsync` on the entire pool
+  * Supports `malloc`, `cudaMalloc`, `cudaMallocManaged`, `hipMalloc`, and `hipMallocHost` allocators as well as SYCL allocators
   * If the pool allocator is not used, YAKL still maintains internal host and device allocators with the afforementioned options
   * Specify `-DYAKL_MANAGED_MEMORY` to turn on `cudaMallocManaged` for Nvidia GPUs and `hipMallocHost` for AMD GPUs
   * Controllable via environment variables (initial size, grow size, and to turn it on or off)
@@ -51,13 +50,13 @@ The YAKL API is similar to Kokkos in many ways, but is quite simplified and has 
   * You can call `gator_init()` from `gator_mod` to initialize YAKL's pool allocator from Fortran code.
   * Call `gator_finalize()` to deallocate YAKL's runtime pool and other miscellaneous data
   * When you specify `-DYAKL_MANAGED_MEMORY -DYAKL_ARCH_CUDA`, all `gator_allocate(...)` calls will not only use CUDA Managed Memory but will also map that data in OpenACC and OpenMP offload runtimes so that the data will be left alone in the offload runtimes and left for the CUDA runtime to manage instead.
-    * This allows you to use OpenACC and OpenMP offload without any data statements and still get efficient runtime and correct results.
+    * This allows you to use OpenACC and OpenMP offload without any data statements and still get [somewhat] efficient runtime and correct results.
     * This is accomplished with `acc_map_data(...)` in OpenACC and `omp_target_associate_ptr(...)` in OpenMP 4.5+
-    * With OpenACC, this happens automatically, but with OpenMP offload, you need to also specify `-D_OPEMP45`
+    * With OpenACC, this happens automatically, but with OpenMP offload, you need to also specify `-D_OPENMP45` in your compile flags
 * **Limited Fortran Intrinsics**: To help the code look more like Fortran when desired
   * A limited library of Fortran intrinsic functions (a reduced set, not all Fortran intrinsics)
   * Most intrinsics operator on Fortran-style and C-style arrays on the heap and on the stack
-  * Some intrinsics (like `pack`) only operate in host memory
+  * Some intrinsics (like `pack`) only operate in host memory at the moment
 * **Multi-Dimensional Arrays**: A C-style `Array` class for allocated multi-dimensional array data
   * Only one memory layout is supported for simplicity: contiguous with the right-most index varying the fastest
     * This makes library interoperability more straightforward
@@ -73,6 +72,7 @@ The YAKL API is similar to Kokkos in many ways, but is quite simplified and has 
   * This makes it easy to create low-overhead private arrays in kernels
   * Supports up to four dimensions, the sizes of which are template parameters known at compile time
     * CPU code allows runtime-length stack arrays, but most accelerators do not allow this
+    * So to remain portable, it's best not to allow runtime-length stack arrays
   * Supports array index debugging to throw an error when indices are out of bounds
   * Because `SArray` objects are inherently on the stack, they have no templated memory space specifiers
 * **Fortran-style Multi-dimensional Arrays**: Fortran-style `Array` and `FSArray` classes
@@ -84,20 +84,18 @@ The YAKL API is similar to Kokkos in many ways, but is quite simplified and has 
   * Removes the need to permute array indices and change indexing when porting Fortran codes to C++
 * **Kernel Launchers**: `parallel_for` launchers
   * Similar syntax as the Kokkos `parallel_for`
-  * Only supports one level of parallelism for simplicity, so your loops need to be collapsed
-    * Once you begin to expose multiple levels of on-node parallelism, you have inherently given up some ground in terms of portability
+  * Only supports one level of parallelism for simplicity, so your loops need to be collapsed / tightly nested
   * Multiple tightly-nested loops are supported through the `Bounds` class, which sets multiple looping indices for the kernel
   * C-style and Fortran-style `parallel_for` functions and `Bounds` classes
     * C-style defaults to: `parallel_for( nx , YAKL_LAMBDA (int i) {` --> `for (int i=0; i < nx; i++) {`
-    * FOrtran-style defaults to: `parallel_for( nx , YAKL_LAMBDA (int i) {` --> `for (int i=1; i <= nx; i++) {`, which is the same as a Fortran `do`-loop
-  * Supports CUDA, CPU serial, and HIP backends at the moment
-  * `parallel_for` launchers on the device are by default asynchronous in the CUDA and HIP default streams
-  * There is an automatic `fence()` option specified at compile time with `-DYAKL_AUTO_FENCE` to insert fences after every `parallel_for` launch
+    * FOrtran-style defaults to: `parallel_for( nx , YAKL_LAMBDA (int i) {` --> `for (int i=1; i <= nx; i++) {` --> `do i=1,nx`
+  * `parallel_for` launchers on the device are by default asynchronous in the CUDA, HIP, SYCL, and OpenMP target default streams
+  * There is an automatic `fence()` option specified at compile time with `-DYAKL_AUTO_FENCE` or `-DYAKL_DEBUG` to insert fences after every `parallel_for` launch
 * **NetCDF I/O and Parallel NetCDF I/O**:
   * Simplified NetCDF reading and writing utilities to get dimension sizes, tell if dimensions and variables exist, and write data either as entire varaibles or as a single entry with an `unlimited` NetCDF dimension.
   * You can write an entire variable at once, or you can write just one entry in an unlimited (typically time) dimension
 * **Atomics**: Atomic instructions
-  * `atomicAdd`, `atomicMin`, and `atomicMax` are supported for 4- and 8-byte integers (signed and unsigned) and reals
+  * `atomicAdd`, `atomicMin`, and `atomicMax` are supported for 4- and 8-byte integers (signed and unsigned), floats, and doubles
   * Whenever possible, hardware atomics are used, and software atomics using `atomicCAS` and real-to-integer conversions in the CUDA and HIP backends
   * Note this is different from Kokkos, which specifies atomic accesses for entire Views all of the time. With YAKL, you only perform atomic accesses when you need them at the development expense of having to explicitly use `atomic[Add|Min|Max]` in the kernel code yourself.
 * **Reductions**: Parallel reductions using the Nvidia `cub` and AMD `hipCUB` (wrapper to `rocPRIM`) libraries
@@ -106,14 +104,16 @@ The YAKL API is similar to Kokkos in many ways, but is quite simplified and has 
   * If the pool allocator is turned on, allocations are fast either way
   * The `operator(T *data)` function defaults to copying the result of the reduction to a host scalar value
   * The user can also use the `deviceReduce(T *data)` function to store the result into a device scalar location
+  * It is recommended to use the YAKL intrinsics for readability: `sum()`, `maxval()`, and `minval()`
 * **Scalar Live-Out**: When a device kernel needs to return a scalar that depends on calculations in the kernel, the scalar has to be allocated in device memory. YAKL has a `ScalarLiveOut` class that makes this more convenient.
   * This is perhaps the most obscure among common issues encountered in GPU porting, but scalars that are assigned in a kernel and used outside the kernel must be allocated in device memory (perhaps using a 1-D YAKL `Array` of size 1), and the data must be copied from device to host once the kernel is done.
-  * This situation happens most often with testing kernels; i.e., a `bool` decides if the data is valid or not, and it is read on the host outside the kernel.
+  * This situation happens most often with error checking kernels; i.e., a `bool` decides if the data is valid or not, and it is read on the host outside the kernel.
   * `ScalarLiveOut` allows normal assignment with the `=` operator inside a kernel (so it looks like a normal scalar in the kernel).
-  * `ScalarLiveOut` is initialized from the host via a constructor that allocates on the device and copies initial data the device behind the scenes
+  * `ScalarLiveOut` is initialized from the host via a constructor that allocates on the device and copies initial data the device behind the scenes.
   * `ScalarLiveOut` allows reads on the host with a `hostRead()` member function that copies data from the device to the host behind the scenes.
+  * `ScalarLiveOut` has an `operator()`, which provides a reference valid on the device.
 * **Synchronization**
-  * The `yakl::fence()` operation forces the host code to wait for all device code to complete
+  * The `yakl::fence()` operation forces the host code to wait for all device code to complete.
 
 ## Code Sample
 
@@ -176,9 +176,22 @@ std::cout << tot << std::endl;
 
 ## Using YAKL
 
-To use YAKL's Array classes, `parallel_for` launchers, reductions, allocators, and atomics, you only need to `#include "YAKL.h"`. For NetCDF I/O routines, you need to `#include "YAKL_netcdf.h"`. For YAKL's FFTs, you need to `#include "YAKL_fft.h"`.
+To use YAKL's Array classes, `parallel_for` launchers, reductions, allocators, intrinsics, and atomics, you only need to `#include "YAKL.h"`. For NetCDF I/O routines, you need to `#include "YAKL_netcdf.h"`. For YAKL's FFTs, you need to `#include "YAKL_fft.h"`.
 
 Be sure to use `yakl::init(...)` at the beginning of the program and `yakl::finalize()` at the end. If you do not call these functions, you will get errors during runtime for all `Array`s, `SArray`s, and device reductions.
+
+Also, if you're doing a small code inside `int main() {}`, keep in mind that you'll likely want brackets between `yakl::init()` and `yakl::finalize()` to ensure all allocated data is deallocated before calling `finalize()`. I.e.,
+
+```C++
+#include "YAKL.h"
+int main() {
+  yakl::init();
+  {
+    ...
+  }
+  yakl::finalize();
+}
+```
 
 ### `parallel_for`
 
@@ -208,7 +221,7 @@ yakl::parallel_for( nx , YAKL_LAMBDA (int i) {
 });
 ```
 
-The `parallel_for` launcher is useful for every type of loop except for prefix sums and reductions. You can embed atomics in `parallel_for` as you'll see a few sections down.
+In the `Bounds` class as you go from left to right, you're always going from outer to inner loops as the examples indicate above. The `parallel_for` launcher is useful for every type of loop except for prefix sums and reductions. You can embed atomics in `parallel_for` as you'll see a few sections down.
 
 ### `Array`
 
@@ -225,14 +238,35 @@ yakl::Array<T type, int rank, int memSpace, int style>(char const *label, int di
 yakl::Array<T type, int rank, int memSpace, int style>(char const *label, T *ptr, int dim1, [int dim2, ...]);
 ```
 
-* Valid values for `T` can be any `std::is_arithmetic<T>` type in `memDevice` memory and any class at all in `memHost` memory. On the host, `Array`s use the C++ "placement `new`" approach to call the contained class's constructor. This is not supported in device memory because it is less portable, and it requires Unified memory between host and device. It is not recommended to use `Array` objects with a pointer type that has a constructor, as that constructor will not be called correctly on the device.
+* Valid values for `T` can be any `std::is_arithmetic<T>` type in `memDevice` memory and any class at all in `memHost` memory. On the host, `Array`s use the C++ "placement `new`" approach to call the contained class's constructor. This is not supported in device memory because it is less portable, and it requires Unified memory between host and device. It is not recommended to use `Array` objects on the device with a `type` that has a constructor, as that constructor will not be called correctly on the device.
 * Valid values for `rank` can be 1, 2, ..., 8
 * Valid values for `memSpace` can be `memHost` or `memDevice` (default is `memDevice`)
 * Valid values for `style` can be `styleC` or `styleFortran` (default is `styleC`)
 
 Data is accessed in an `Array` object via the `(ind1[,ind2,...])` parenthesis operator with the right-most index varying the fastest for the C style `Array` (`yakl::styleC`) and the left-most index varying the fastest for the Fortran-style `Array` (`yakl::styleFortran`).
 
-YAKL `Array` objects use shallow copies in the move and copy constructors. I.e., if you say `arr1 = arr2`, these two objects now **share the same data pointer**, and only the metadata is actually copied over. To copy the actual data from one `Array` to another, use the `Array::deep_copy_to(Array &destination)` member function. This will copy data between different memory spaces (e.g., `cudaMemcpy(...)`) for you depending on the memory spaces of the `Array` objects.
+YAKL `Array` objects use shallow copies in the move and copy constructors. I.e., if you say `arr1 = arr2`, these two objects now **share the same data pointer**, and only the metadata is actually copied over. To duplicate the data from one `Array` to another, use the `Array::deep_copy_to(Array &destination)` member function. This will copy data between different memory spaces (e.g., `cudaMemcpy(...)`) for you depending on the memory spaces of the `Array` objects. For instance:
+
+```C++
+// The line below allocates a new array "arr1" of size 100
+yakl::Array<float,1,yakl::memDevice,yakl::styleC> arr1("arr1",100);
+// The line below does not allocate
+yakl::Array<float,1,yakl::memDevice,yakl::styleC> arr2;
+// The line below has "arr1" and "arr2" using the same data
+// Thus changes to data in arr1 are seen when reading from arr2
+// and vice versa
+arr2 = arr1;
+// The line below allocates a new array "arr3" of size 100
+yakl::Array<float,1,yakl::memDevice,yakl::styleC> arr3("arr3",100);
+// The line below duplicates arr1 data in arr3
+// arr1 and arr3 have separate data and will not mirror each others changes
+arr1.deep_copy_to(arr3);
+// The line below allocates a new array "arrHost" of size 100 in host memory
+yakl::Array<float,1,yakl::memHost,yakl::styleC> arrHost("arrHost",100);
+// The line below does a device-to-host copy of the data
+// arr1 and arrHost do not share the same data
+arr1.deep_copy_to(arrHost);
+```
 
 To create a host copy of an `Array`, use `Array::createHostCopy()`; and to create a device copy, use `Array::createDeviceCopy()`.
 
@@ -253,10 +287,10 @@ Array<...> createHostCopy();
 Array<...> createDeviceCopy();
 
 // Copy the data from this Array pointer to the Host Array's pointer (Host Array must already exist)
-void deep_copy_to(Array<T,memHost> lhs);
+void deep_copy_to(Array<T,...,memHost,...> lhs);
 
 // Copy the data from this Array pointer to the Device Array's pointer (Device Array must already exist)
-void deep_copy_to(Array<T,memDevice> lhs);
+void deep_copy_to(Array<T,...,memDevice,...> lhs);
 ```
 
 ### `SArray` (and `YAKL_INLINE`)
@@ -270,8 +304,8 @@ yakl::Array<real,memDevice> coefs("coefs",nx,ord);
 
 ...
 
-YAKL_INLINE void recon( SArray<real,ord> const &stencil , 
-                        SArray<real,ord> &coefs ) {
+YAKL_INLINE void recon( SArray<real,1,ord> const &stencil , 
+                        SArray<real,1,ord> &coefs ) {
   ...
 }
                         
@@ -299,6 +333,8 @@ SArray<type , num_dimensions , dim1 [ , dim2 , ...]> arrName;
 Data is accessed in an `SArray` object via the `(ind1[,ind2,...])` parenthesis operator with the right-most index varying the fastest.
 
 Note that `SArray` objects are inherently placed on the stack of whatever context they are declared in. Because of this, it doesn't make sense to allow a templated memory specifier (i.e., `yakl::memHost` or `yakl::memDevice`). Therefore, stack `Array` objects always have the `yakl::memStack` specifier. If used in a CUDA kernel, `SArray` objects will be placed onto the kernel stack frame. If used in CPU functions, they will be placed in the CPU function's stack. If defined on the host and used in a kernel, it will be copied by value to the device. Large `SArray` transfers from host to device will incur a large transfer cost.
+
+One benefit of declaring read-only variables using `SArray` is that in CUDA, they will be passed by value in GPU "constant" memory.
 
 ## Fortran-style `Array`, `FSArray`, and Fortran-like `parallel_for` (Fortran Behavior in C++)
 
@@ -366,7 +402,7 @@ do j=-1,30,3
 enddo
 ```
 
-Currently, backwards iterating is not supported, so `do` loops with a negative stride will need to be altered to have a positive stride.
+Currently, backwards iterating is not supported, so `do` loops with a negative stride will need to be altered to have a positive stride. In loops where the ordering matters, it is likely you have a data race of the prefix sum type and cannot use a `parallel_for` anyway.
 
 **Fortran Intrinsics**:
 
@@ -384,11 +420,11 @@ if (associated(arr)) { ... }
 
 ### Managed Memory
 
-To use CUDA Managed Memory or HIP pinned memory, add `-DYAKL_MANAGED_MEMORY` to the compiler flags. This will make your life much easier when porting a Fortran code to a GPU-enabled C++ code because all data allocated with the Fortran hooks of YAKL will be avilable on the CPU and the GPU without having to transfer it explicitly. However, it is always recommended to handle the transfers yourself eventually for improved efficiency. 
+To use CUDA Managed Memory or HIP pinned memory, add `-DYAKL_MANAGED_MEMORY` to the compiler flags. This will make your life much easier when porting a Fortran code to a GPU-enabled C++ code because all data allocated with the Fortran hooks of YAKL will be avilable on the CPU and the GPU without having to transfer it explicitly. However, it is always recommended to eventually handle the transfers yourself eventually for improved efficiency. 
 
 ### Pool Allocator
 
-An easy-to-use, self-contained, automatically growing C++ pool allocator optimized for stack-like allocations and deallocations with fortran bindings and hooks into OpenMP offload and OpenACC, CUDA Managed memory, and HIP.
+An easy-to-use, self-contained, automatically growing C++ pool allocator with fortran bindings and hooks into OpenMP offload and OpenACC, CUDA Managed memory, and HIP.
 
 ```
    ,(   ,(   ,(   ,(   ,(   ,(   ,(   ,(
@@ -418,69 +454,15 @@ An easy-to-use, self-contained, automatically growing C++ pool allocator optimiz
 * Fortran bindings for integer, integer(8), real, real(8), and logical
 * Fortran bindings for arrays of one to seven dimensions
 * Able to call cudaMallocManaged under the hood with prefetching and memset
-* Able to support arbitrary lower bounds for Fortran allocations
-* Simple and efficient pool allocator implementation that's easy to compile and automatically grows as needed
+* Able to support arbitrary lower bounds in the Fortran interface for Fortran pointers
+* Simple pool allocator implementation that and automatically grows as needed
 * The pool allocator responds to environment variables to control the initial allocation size, growth size, and block size
-* No segmentation for stack-like allocations and deallocations for efficient use of limited memory space.
-* Warns the user if allocations are left allocated after the pool is destroyed to help the user debug the infamous "double free" error.
+* Minimal internal segmentation for any pattern of allocations and frees
+* Warns the user if allocations are left allocated after the pool is destroyed
 
 #### Why Use A Memory Pool?
 
-In most of our codes in weather and climate, the reason we need a pool allocator on GPUs is that the native `cudaMalloc` and `hipMalloc` for Nvidia and AMD GPUs (presumably Intel will fall into this category as well) have extremely large runtimes that scale with the size of the allocation. This is for two reasons: (1) `cudaMalloc` is basically a system-level call, and (2) there is no Operating System layer on GPUs to manage a pool for us like we have in the Linux kernel in main system memory. Further, `cudaFree` and `hipFree` are synchronizing calls because they cannot deallocate memory while kernels are still using that memory. These issues combined make frequent intermittent malloc and free operations prohibitively expensive on GPUs, and the speed-up is usually reduced by at least 5x in our strong-scaled codes.
-
-#### What Does "Stack-Like" Allocations and Deallocations Mean?
-
-In weather and climate, we tend to allocate local data dynamically at the beginning of subroutines and then deallocate that data at the end of the subroutines. It ends up lookng like this:
-
-```Fortran
-subroutine parent()
-   allocate(parent_a(...))
-   allocate(parent_b(...))
-   call child1()
-   call child2()
-   ! do work
-   deallocate(parent_a))
-   deallocate(parent_b))
-end subroutine parent
-
-subroutine child1()
-   allocate(child1_data(...))
-   ! do work
-   deallocate(child1_data)
-end subroutine child1
-
-subroutine child2()
-   allocate(child2_data(...))
-   ! do work
-   call grandchild()
-   deallocate(child2_data)
-end subroutine child2
-
-subroutine grandchild()
-   allocate(grandchild_data(...))
-   ! do work
-   deallocate(grandchild_data)
-end subroutine randchild
-```
-
-If you follow the order of allocations and deallocations in that code, it's very close to a stack:
-
-* `allocate(parent_a(...))`
-* `allocate(parent_b(...))`
-  * `allocate(child1_data(...))`
-  * `deallocate(child1_data)`
-  * `allocate(child2_data(...))`
-    * `allocate(grandchild_data(...))`
-    * `deallocate(grandchild_data)`
-  * `deallocate(child2_data)`
-* `deallocate(parent_a))`
-* `deallocate(parent_b))`
-
-You push allocations onto the back of the stack, and then your free allocations from the back of the stack (First In, Last Out). The most efficient memory allocator in terms of space efficiency and speed is, in fact, a stack. However, a stack **requires** you to deallocate in the reverse order that you allocate, and it can't be thread-safe. A stack-like allocator is more flexible. It allows you to allocate and deallocate in any order you want, and it can be made thread safe.
-
-However, unlike a more general allocator like a Buddy Allocator (https://en.wikipedia.org/wiki/Buddy_memory_allocation), the stack-like allocator here assumes the allocations and deallocations are **close** to stack-like behavior, and it optimizes for that case. In essence, new allocations can only be pushed to the end of the allocation list (there is no searching for gaps between previous allocations in the list), and when a pointer is deallocated, the search for the allocation for that pointer begins at the end of the allocation list and traverses backward.
-
-With this assumption, any violation of stack-like behavior will incur linear search costs and additional segmentation. But for most of weather and climate, the behavior is very close to that of a stack.
+The reason we need a pool allocator on GPUs is that the native `cudaMalloc` and `hipMalloc` for Nvidia and AMD GPUs (presumably Intel will fall into this category as well) have extremely large runtimes that scale with the size of the allocation. This pool allocator is not the fastest implementation possible, but it is one of the most efficient uses of pool memory space to reduce overall memory requirements. The somewhat slower allocation and free process is ameliorated by the fact that allocations and frees typically overlap with device kernel execution to hide the cost. If the YAKL backend does not have a separate memory address space, then the pool allocator is not used, since OS alloc and free routines are typically pretty efficient.
 
 #### Automatically Growing
 
@@ -488,11 +470,9 @@ Gator automatically allocates more space whenever it runs out of space for a req
 
 #### Informative
 
-Gator keeps track of the memory high-water mark in the pool automatically and informs the user at the end of the simulation.
-
 Error messages are made as helpful as possible to help the user know what to do in the event of a pool overflow. Sometimes, it is necessary to create a larger initial pool to use a limited memory space more effectively, and this guidance is given in error messages as errors occur.
 
-Also, all allocations can be labeled with an optional string parameter upon allocation. This allows tracking of timestamped and labeled allocations that are written to a file in debug mode (**soon to be implemented**).
+Also, all allocations can be labeled with an optional string parameter upon allocation. This allows tracking of labeled allocations that are printed out in a special `MEMORY_DEBUG` mode.
 
 #### Environment variables 
 
@@ -500,18 +480,14 @@ You control the behavior of Gator's pool management through the following enviro
 
 * `GATOR_INITIAL_MB`: The initial pool size in MB
 * `GATOR_GROW_MB`: The size of each new pool in MB once the initial pool is out of memory
-* `GATOR_BLOCK_BYTES`: The size of a byte. I can't imagine why you'd want to change this, but you can
-
-Environment variables are advantageous because they allow easier adaptation to critical metrics like the number of processes per node or per GPU, which are easiest to calculate outside of the executable itself.
+* `GATOR_BLOCK_BYTES`: The size of a byte. This is currently set to `sizeof(size_t)`, which is arguably as small as you'd ever want to go. It's unlikely you would wnat to change this, but whatever you put here needs to be a multiple of `sizeof(size_t)`, which is typically 128 bytes.
 
 #### GPUs and Managed Memory
 
 The following CPP defines control Gator's behavior as well:
 
-* `-DYAKL_ARCH_CUDA`: Enable CUDA allcoations (`cudaMalloc` and `cudaFree` are used to create and destroy the pools)
-* `-DYAKL_ARCH_HIP`: Enable HIP allocations (`hipMalloc` and `hipFree` are used to create and destroy the pools)
 * `-DYAKL_MANAGED_MEMORY`: Enable managed memory (`cudaMallocManaged` and `hipMallocHost` are used for CUDA and HIP, respectively, and the pools are pre-fetched to the GPU ahead of time for you), and inform OpenMP and OpenACC runtimes of this memory's Managed status whenever OpenACC or OpenMP are enabled. This is done automatically for OpenACC, but for OpenMP45, you'll need to specify a CPP define
-* `-D_OPENMP45 -DYAKL_MANAGED_MEMORY`: Tell the OpenMP4.5 runtime that your allocations are managed so that OpenMP doesn't try to copy the data for you (i.e., this lets the underlying CUDA runtime handle it for you instead). This only does anything if `-DYAKL_MANAGED_MEMORY` is also specified.
+* `-D_OPENMP45 -DYAKL_MANAGED_MEMORY`: Tell the OpenMP4.5 runtime that your allocations are managed so that OpenMP doesn't try to copy the data for you (i.e., this lets the underlying CUDA runtime handle it for you instead).
 
 ### Synchronization
 
@@ -547,24 +523,18 @@ The best way to do reductions is through the YAKL intrinsic functions `sum`, `ma
 YAKL provides efficient min, max, and sum array reductions using [CUB](https://nvlabs.github.io/cub/) and [hipCUB](https://github.com/ROCmSoftwarePlatform/hipCUB) for Nvidia and AMD GPUs. Because these implementations require temporary storage, a design choice was made to expose reductions through class objects. Upon construction, you must specify the size (number of elements to reduce), type (`template <class T>`) of the array that will be reduced, and the memory space (via template parameter, `yakl::memHost` or `yakl::memDevice`) of the array to be reduced. The constructor then allocates memory for the temporary storage. Then, you run the reduction on an array of that size using `T operator()(T *data)`, which returns the result of the reduction in host memory. When the object goes out of scope, it deallocates the data for you. The array reduction objects are not sharable and implements no shallow copy. An example reduction is below:
 
 ```C++
-Array<float> dt3d;
+Array<float,...> dt3d;
 // Fill dt3d
-yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
-dt = pmin( dt3d.data() );
+real dt = yakl::intrinsics::minval(dt3d);
+
+Array<float,...> mass3d;
+real total_mass = yakl::intrinsics::sum(mass3d);
+
+Array<float,...> dz;
+real dzmax = yakl::intrinsics::maxval(dz);
 ```
 
-If you want to avoid copying the result back to the host, you can run the `void deviceReduce(T *data, T *rslt)` member function, where the `rslt` pointer is allocated in device memory. An example is below:
-
-```C++
-Array<float> dt3d;
-float *dtDev;
-// Allocate dtDev on device
-// Fill dt3d
-yakl::ParallelMin<float,yakl::memDevice> pmin( nx*ny*nz );
-pmin.deviceReduce( dt3d.data() , dtDev );
-```
-
-As a rule, if you ever see a scalar on the left-hand and right-hand sides of an `=`, then it's a race condition in parallel that you will need to resolve by using a reduction.
+The `minval`, `maxval`, and `sum` intrinsics work in parallel on `Array` objects that are `memDevice` or `memHost`, `styleC` or `styleFortran`. They also work in serial on `SArray` and `FSArray` objects. Inside device kernels (i.e., inside a `parallel_for` call), you can only use `minval`, `maxval`, and `sum` on `SArray` and `FSArray` objects.
 
 ### `ScalarLiveOut`
 
@@ -599,7 +569,7 @@ if (dataIsBad.hostRead()) {
 }
 ```
 
-**When to not use `ScalarLiveOut`:** If you find yourself wanting to use atomics on a scalar, often times you're better off using a reduction instead, because all of the data is being reduced to a single scalar value. To facilitate this, it's best to create a temporary array with all necessary calculations (e.g., `dt3d` for the stable time step at each cell in a 3-D grid), and then perform a reduction on that array. While there is an `operator()` to expose the scalar for reading on the GPU, if you're needing to do this, there is usually an easier solution to you problem.
+**When to not use `ScalarLiveOut`:** If you find yourself wanting to use atomics on a scalar, often times you're better off using a reduction instead, because all of the data is being reduced to a single scalar value. To facilitate this, it's best to create a temporary array with all necessary calculations (e.g., `dt3d` for the stable time step at each cell in a 3-D grid), and then perform a reduction on that array. While there is an `operator()` to expose the scalar for reading on the GPU, if you're needing to do this, there is often (though not always) an easier solution to your problem.
 
 ### Fortran - C++ interoperability with YAKL: `Array` and `gator_mod.F90`
 
@@ -899,13 +869,13 @@ set(YAKL_ARCH "CUDA")
 set(YAKL_CUDA_FLAGS "-O3 -arch sm_70 -ccbin mpic++")
 # Add the YAKL library and perform other needed target tasks
 add_subdirectory(${YAKL_HOME} ./yakl)
-# Set YAKL properties on the C++ source files in a target
+# Set YAKL properties on the C++ source files in a target and link yakl into that target
 include(${YAKL_HOME}/yakl_utils.cmake)
 yakl_process_target(TARGET)
 message(STATUS "YAKL Compiler Flags: ${YAKL_COMPILER_FLAGS}")
 ```
 
-YAKL's `yakl_process_target()` macro processes the target's C++ source files, and it will automtaically link the `yakl` library target into the `TARGET` you pass in. It also sets the CXX and CUDA (if `YAKL_ARCH == "CUDA"`) C++ standards to C++14 for the target, and it defines a `${YAKL_COMPILER_FLAGS}` variable you can query for the C++ flags applied to the target's C++ source files.
+YAKL's `yakl_process_target()` macro processes the target's C++ source files, and it will automatically link the `yakl` library target into the `TARGET` you pass in. It also sets the CXX and CUDA (if `YAKL_ARCH == "CUDA"`) C++ standards to C++14 for the target, and it defines a `${YAKL_COMPILER_FLAGS}` variable you can query for the C++ flags applied to the target's C++ source files.
 
 You can add `-DYAKL_DEBUG` to enable some YAKL compiler flags options, and this is valid on both the CPU and the GPU.
 
@@ -915,11 +885,11 @@ When setting flags for YAKL and targets' C++ files that use YAKL, you need to sp
 * **All** of the processed target's C++ files are processed with YAKL's flags and other tasks
 * **No other flags** are included in YAKL's C++ source files after they are processed. This is important for CUDA targets because the `nvcc` compiler cannot handle duplicate flags (for reasons I cannot understand). Therefore, to be clear, the **only** flags used for processed C++ source files come from `YAKL_<LANG>_FLAGS`. `CMAKE_CXX_FLAGS`, for instance, are not used for C++ files processed with YAKL's CMake macros.
 
-If you'd rather deal with a list of C++ source files, you can use `yakl_process_cxx_source_files("${files_list}")`, where `${files_list}` is a list of C++ source files you want to process with YAKL flags and cmake attributes. Be sure not to forget the **quotations** around the variable, or the list will not properly make its way to the macro.
+If you'd rather deal with a list of C++ source files, you can use `yakl_process_cxx_source_files("${files_list}")`, where `${files_list}` is a list of C++ source files you want to process with YAKL flags and cmake attributes. Be sure not to forget the **quotations** around the variable, or the list may not properly make its way to the macro.
 
 ### Traditional Makefile
 
-To compile in a traditional make file, you need to handle the backend-specific flags yourself. For different hardware backens, you need to specify `-DYAKL_ARCH_[BACKEND]` where `[BACKEND] is CUDA, HIP, SYCL, OpenMP45`. If you do not specify any `-DYAKL_ARCH_`, then it will compile for a serial CPU backend.
+To compile in a traditional make file, you need to handle the backend-specific flags yourself. For different hardware backens, you need to specify `-DYAKL_ARCH_[BACKEND]` where `[BACKEND] is CUDA, HIP, SYCL, OpenMP45`. If you do not specify any `-DYAKL_ARCH_`, then it will compile for a serial CPU backend. Full disclosure, this process will be more difficult, as there are flags for each backend you may need in addition. Please see the `CMakeLists.txt` file for information as to what flags you might need for a given backend.
 
 ## YAKL Timers
 
@@ -958,11 +928,11 @@ What the `YAKL_SCOPE()` macro does is create a local reference to the variable, 
 
 ## Handling Class Methods Called from Kernels
 
-If you have a class method prefixed with `YAKL_INLINE`, meaning you intend to potentially call it from a `parallel_for` kenel, you must delcare it as `static`. This is not a firm requirement in CUDA, but it is in HIP and likely SYCL as well. Also, it makes sense from a C++ perspective. `static` member functions belong to the class itself, not any particular object or instantiation of that class. Therefore, it does not use the `this->` pointer. This idea is moot if you plan on inlining the function; however, strictly speaking, you shouln't open yourself up to the possibility of calling a function via the `this->` pointer. Therefore the function should be static.
+If you have a class method prefixed with `YAKL_INLINE`, meaning you intend to potentially call it from a `parallel_for` kenel, you must delcare it as `static`. This is not a firm requirement in CUDA, but it is in HIP and likely SYCL as well. Also, it makes sense from a C++ perspective. `static` member functions belong to the class itself, not any particular object of that class. Therefore, it does not use the `this->` pointer. This idea is moot if you plan on inlining the function; however, strictly speaking, you shouln't open yourself up to the possibility of calling a function via the `this->` pointer. Therefore the function should be static. If, instead, you choose to rely on the C++17 feature that passes `*this` to a lambda, please understand that this might not be portable to all hardware backends.
 
 ## A Note on Thread Safety
 
-YAKL's Gator pool allocator has mutex locks around requests for allocations and frees. YAKL's `Array` classes have mutex locks around reference counter increments and decrements.
+YAKL's Gator pool allocator has mutex locks around requests for allocations and frees. YAKL's `Array` classes have mutex locks around allocation and free calls as well as reference counter arithmetic.
 
 ## Future Work
 
