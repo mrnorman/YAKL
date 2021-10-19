@@ -123,14 +123,6 @@ namespace yakl {
         check_last_error();
       #endif
       yakl_is_initialized = false;
-      size_t hwm = pool.highWaterMark();
-      if        (hwm >= 1024*1024*1024) {
-        if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024*1024) << " GB\n";
-      } else if (hwm >= 1024*1024     ) {
-        if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024*1024     ) << " MB\n";
-      } else if (hwm >= 1024          ) {
-        if (yakl_masterproc()) std::cout << "Memory high water mark: " << (double) hwm / (double) (1024          ) << " KB\n";
-      }
       pool.finalize();
       #if defined(YAKL_ARCH_SYCL)
         sycl_default_stream = sycl::queue();
