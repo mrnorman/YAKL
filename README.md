@@ -245,6 +245,7 @@ yakl::Array<T type, int rank, int memSpace, int style>(char const *label, T *ptr
 
 Data is accessed in an `Array` object via the `(ind1[,ind2,...])` parenthesis operator with the right-most index varying the fastest for the C style `Array` (`yakl::styleC`) and the left-most index varying the fastest for the Fortran-style `Array` (`yakl::styleFortran`).
 
+#### Shallow and Deep Copy
 YAKL `Array` objects use shallow copies in the move and copy constructors. I.e., if you say `arr1 = arr2`, these two objects now **share the same data pointer**, and only the metadata is actually copied over. To duplicate the data from one `Array` to another, use the `Array::deep_copy_to(Array &destination)` member function. This will copy data between different memory spaces (e.g., `cudaMemcpy(...)`) for you depending on the memory spaces of the `Array` objects. For instance:
 
 ```C++
@@ -266,14 +267,71 @@ yakl::Array<float,1,yakl::memHost,yakl::styleC> arrHost("arrHost",100);
 // The line below does a device-to-host copy of the data
 // arr1 and arrHost do not share the same data
 arr1.deep_copy_to(arrHost);
+// The line below also aliases arr1 using an unmanaged Array syntax
+// This is similar to arr4 = arr1 in how it behaves
+yakl::Array<float,1,yakl::memDevice,yakl::styleC> arr4("arr4",arr1.data(),100);
 ```
 
+So, `arr2 = arr1` should be thought of, in essence, as setting a pointer to another data's address, aliasing the data.
+
 To create a host copy of an `Array`, use `Array::createHostCopy()`; and to create a device copy, use `Array::createDeviceCopy()`.
+
+#### C and Fortran
 
 * `C` behavior only supports lower bounds of `0` for each dimension, and it has the right-most index varying the fastest in memory.
 * `Fortran` behavior allows arbitrary lower bounds that defualt to `1`, and it has the left-most index varying the fastest in memory.
 
 Both styles of `Array` only support data that is contiguous in memory.
+
+#### Deallocating Arrays
+
+There are two recommended ways of deallocating an `Array` object. The first and most convenient is to simply let it fall out of scope. Once the object falls out of scope, the destructor is called, and if that is the last remaining object sharing the same data pointer, it will deallocate the data for you. E.g.,
+
+```C++
+function dummy() {
+  // This allocates a new array
+  yakl::Array<double,1,yakl::memDevice,yakl::styleC> arr("arr",100);
+  yakl::c::parallel_for( 100 , YAKL_LAMBDA (int i) {
+    arr(i) = i;
+  });
+  std::cout << arr;
+}
+// After this function exits, "arr" falls out of scope and deallocates automatically
+```
+
+The other way to deallocate an `Array` object is to set it to an empty array object. This is necessary when you have `Array` objects with static lifetimes that never fall out of scope. E.g.,
+
+```C++
+yakl::Array<double,1,yakl::memDevice,yakl::styleC> arr;
+
+function dummy() {
+  // This is another pattern for allocation, by setting an `Array` object
+  // to a newly created one
+  arr = yakl::Array<double,1,yakl::memDevice,yakl::styleC>("arr",100);
+  yakl::c::parallel_for( 100 , YAKL_LAMBDA (int i) {
+    arr(i) = i;
+  });
+  std::cout << arr;
+  // The line below deallocates "arr" by replacing it with an empty object
+  // Upon replacement, the previous object falls out of scope and deallocates
+  // Without this line, there would be a memory leak because "arr" is in
+  // global scope with static lifetime.
+  arr = yakl::Array<double,1,yakl::memDevice,yakl::styleC>();
+}
+```
+
+Also, any time you replace an `Array` object with another object, the previous one falls out of scope. So in the following situation, a memory leak is still avoided:
+
+```C++
+function dummy() {
+  yakl::Array<double,1,yakl::memDevice,yakl::styleC> arr("arr",100);
+  // In the line below, the Array of size 100 falls out of scope and deallocates
+  // "arr" is replaced with an Array object of size 200.
+  arr = yakl::Array<double,1,yakl::memDevice,yakl::styleC>("arr",200);
+}
+// At the end of scope in function dummy(), the Array object of size 200
+// falls out of scope and deallocates.
+```
 
 ### Moving Data Between Two Memory Spaces
 
