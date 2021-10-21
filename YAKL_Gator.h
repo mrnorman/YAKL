@@ -15,12 +15,12 @@
 
 #include "YAKL_alloc_free.h"
 
-#include "YAKL_StackyAllocator.h"
+#include "YAKL_LinearAllocator.h"
 
 
 class Gator {
 protected:
-  std::list<StackyAllocator> pools;               // The pools managed by this class
+  std::list<LinearAllocator> pools;               // The pools managed by this class
   std::function<void *( size_t )>       mymalloc; // allocation function
   std::function<void( void * )>         myfree;   // free function
   std::function<void( void *, size_t )> myzero;   // zero function
@@ -72,7 +72,7 @@ public:
     // Default to 1GB initial size and grow size
     size_t initialSize = 1024*1024*1024;
     this->growSize     = initialSize;
-    this->blockSize    = sizeof(size_t)*128;
+    this->blockSize    = sizeof(size_t);
 
     enabled = true;
     char * env = std::getenv("GATOR_DISABLE");
@@ -119,28 +119,29 @@ public:
     }
 
     if (enabled) {
-      pools.push_back(StackyAllocator(initialSize , mymalloc , myfree , blockSize , myzero));
+      pools.push_back(LinearAllocator(initialSize , blockSize , mymalloc , myfree , myzero));
     }
   }
 
 
   void finalize() {
     if (enabled) {
-      pools = std::list<StackyAllocator>();
+      pools = std::list<LinearAllocator>();
     }
   }
 
 
-  void checkAllocsLeft() {
+  void printAllocsLeft() {
     for (auto it = pools.begin() ; it != pools.end() ; it++) {
-      it->checkAllocsLeft();
+      it->printAllocsLeft();
     }
   }
 
 
   void * allocate(size_t bytes, char const * label="") {
     #ifdef MEMORY_DEBUG
-      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Gator attempting to allocate " << label << " with " << bytes << " bytes\n";
+      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Gator attempting to allocate " << label << " with "
+                                             << bytes << " bytes\n";
     #endif
     if (bytes == 0) return nullptr;
     // Loop through the pools and see if there's room. If so, allocate in one of them
@@ -158,19 +159,20 @@ public:
       }
       if (!room_found) {
         #ifdef MEMORY_DEBUG
-          if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Current pools are not large enough. Adding a new pool of size " << growSize << " bytes\n";
+          if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Current pools are not large enough. Adding a new pool of size "
+                                                 << growSize << " bytes\n";
         #endif
         if (bytes > growSize) {
-          std::cerr << "ERROR: Trying to allocate " << bytes << " bytes, but the current pool is too small, and growSize is only " << 
-                       growSize << " bytes. Thus, the allocation will never fit in pool memory.\n";
+          std::cerr << "ERROR: Trying to allocate " << bytes << " bytes, but the current pool is too small, and growSize is only "
+                    << growSize << " bytes. Thus, the allocation will never fit in pool memory.\n";
           die("You need to increase GATOR_GROW_MB and probably GATOR_INITIAL_MB as well\n");
         }
-        pools.push_back( StackyAllocator(growSize , mymalloc , myfree , blockSize , myzero) );
+        pools.push_back( LinearAllocator(growSize , blockSize , mymalloc , myfree , myzero) );
         ptr = pools.back().allocate(bytes,label);
       }
     }
     mtx.unlock();
-    if (stacky_bug) die("It looks like there might be a bug in StackyAllocator. Please report this at github.com/mrnorman/YAKL");
+    if (stacky_bug) die("It looks like there might be a bug in LinearAllocator. Please report this at github.com/mrnorman/YAKL");
     if (ptr != nullptr) {
       return ptr;
     } else {
@@ -182,7 +184,8 @@ public:
 
   void free(void *ptr , char const * label = "") {
     #ifdef MEMORY_DEBUG
-      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Gator attempting to free " << label << " with the pointer: " << ptr << "\n";
+      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Gator attempting to free " << label
+                                             << " with the pointer: " << ptr << "\n";
     #endif
     bool pointer_valid = false;
     mtx.lock();
@@ -199,13 +202,6 @@ public:
     mtx.unlock();
     if (!pointer_valid) die("Error: Trying to free an invalid pointer");
   };
-
-
-  size_t highWaterMark() const {
-    size_t highWater = 0;
-    for (auto it = pools.begin() ; it != pools.end() ; it++) { highWater += it->highWaterMark(); }
-    return highWater;
-  }
 
 
   size_t poolSize( ) const {
