@@ -394,7 +394,6 @@ template <class T, int myMem> class ParallelSum;
     }
     T operator() (T *data) {
       T rslt=0;
-      sycl::nd_range<1> res = get_reduction_range(nItems, rsltP);
       sycl_default_stream.submit([&, nItems = this->nItems](sycl::handler &cgh) {
           cgh.parallel_for(get_reduction_range(nItems, rsltP),
                            sycl::reduction(rsltP, std::plus<>(), sycl::property::reduction::initialize_to_identity{}),
