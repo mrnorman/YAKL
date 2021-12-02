@@ -15,7 +15,7 @@ unset CXXFLAGS
 unset FFLAGS
 
 cmake -DYAKL_ARCH="SYCL"        \
-      -DYAKL_SYCL_FLAGS="-O0 -g --intel -fsycl" \
+      -DCMAKE_CXX_FLAGS='-O0 -g -sycl-std=2020 -fsycl -fsycl-unnamed-lambda' \
       -DYAKL_F90_FLAGS="-O0 -g" \
       -DYAKL_C_FLAGS="-O0 -g"   \
       ../../..
