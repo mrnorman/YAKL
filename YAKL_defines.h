@@ -32,9 +32,8 @@
   #define YAKL_DEVICE_INLINE __inline__ __attribute__((always_inline))
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
   #define YAKL_SEPARATE_MEMORY_SPACE
-  #define YAKL_CURRENTLY_ON_HOST() 1
+  #define YAKL_CURRENTLY_ON_HOST() (! defined(__SYCL_DEVICE_ONLY__))
   #include <CL/sycl.hpp>
-  namespace sycl = cl::sycl;
 
 #elif defined(YAKL_ARCH_OPENMP45)
 

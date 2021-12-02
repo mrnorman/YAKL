@@ -12,20 +12,6 @@ namespace yakl {
 
   #ifdef YAKL_ARCH_SYCL
     extern sycl::queue sycl_default_stream;
-
-    template <class Fctor>
-    constexpr void isTriviallyCopyable() {
-      static_assert(std::is_trivially_copyable<Fctor>::value,
-                    "Fctor not copyable");
-
-      static_assert(std::is_trivially_copy_constructible<Fctor>::value ||
-                    !std::is_copy_constructible<Fctor>::value,
-                    "Fctor not trivially copy constructible");
-
-      static_assert(std::is_trivially_copy_assignable<Fctor>::value ||
-                    !std::is_copy_assignable<Fctor>::value,
-                    "Fctor not trivially copy assignable");
-    }
   #endif
 
   // Memory space specifiers for YAKL Arrays
@@ -46,10 +32,10 @@ namespace yakl {
   int constexpr NOSPEC = std::numeric_limits<int>::min()+1;
 
 
-  #ifdef YAKL_ARCH_CUDA
-    // Size of the buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
+  #if defined(YAKL_ARCH_CUDA) || defined (YAKL_ARCH_SYCL)
+    // Size of the buffer to hold large functors for the CUDA and SYCL backends to avoid exceeding the max stack frame
     int constexpr functorBufSize = 1024*128;
-    // Buffer to hold large functors for the CUDA backend to avoid exceeding the max stack frame
+    // Buffer to hold large functors for the CUDA and SYCL backends to avoid exceeding the max stack frame
     extern void *functorBuffer;
   #endif
 
@@ -122,11 +108,15 @@ namespace yakl {
         cudaFree(functorBuffer);
         check_last_error();
       #endif
+      #if defined(YAKL_ARCH_SYCL)
+        sycl::free(functorBuffer, sycl_default_stream);
+        sycl_default_stream.wait();
+        // This was removed by Abhishek
+        // sycl_default_stream = sycl::queue();
+        check_last_error();
+      #endif
       yakl_is_initialized = false;
       pool.finalize();
-      #if defined(YAKL_ARCH_SYCL)
-        sycl_default_stream = sycl::queue();
-      #endif
       #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
         GPTLpr_file("");
         GPTLpr_file("yakl_timer_output.txt");

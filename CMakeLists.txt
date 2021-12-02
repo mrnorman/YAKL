@@ -44,7 +44,11 @@ set_source_files_properties(${YAKL_C_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_C_
 set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
 
 add_library(yakl STATIC ${YAKL_SOURCE})
-target_compile_features(yakl PUBLIC cxx_std_14)
+if ("${YAKL_ARCH}" STREQUAL "SYCL")
+  target_compile_features(yakl PUBLIC cxx_std_17)
+else()
+  target_compile_features(yakl PUBLIC cxx_std_14)
+endif()
 
 target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gptl)
