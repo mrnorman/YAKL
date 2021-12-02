@@ -11,6 +11,7 @@
 #include <cstring>
 #include <vector>
 #include <mutex>
+#include <memory>
 #include "stdlib.h"
 #include "YAKL_Gator.h"
 

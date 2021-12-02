@@ -264,8 +264,8 @@ template <class T, int myMem> class ParallelSum;
     // - Bigger work-groups are better
     // - An implementation may reserve 1 element per work-item in shared memory
     // In practice, DPC++ seems to limit itself to 1/2 of this
-    const size_t max_size = sycl_default_stream.get_device().get_info<sycl::info::device::max_work_group_size>();
-    const size_t local_mem = sycl_default_stream.get_device().get_info<sycl::info::device::local_mem_size>();
+    const size_t max_size = sycl_default_stream().get_device().get_info<sycl::info::device::max_work_group_size>();
+    const size_t local_mem = sycl_default_stream().get_device().get_info<sycl::info::device::local_mem_size>();
     return std::min(local_mem / bytes_per_wi, max_size) / 2;
   }
 
@@ -300,7 +300,7 @@ template <class T, int myMem> class ParallelSum;
     }
     T operator() (T *data) {
       T rslt=0;
-      sycl_default_stream.submit([&, nItems = this->nItems](sycl::handler &cgh) {
+      sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
           cgh.parallel_for(get_reduction_range(nItems, rsltP),
                            sycl::reduction(rsltP, sycl::minimum<>(), sycl::property::reduction::initialize_to_identity{}),
                            [=](sycl::nd_item<1> idx, auto& min) {
@@ -310,11 +310,11 @@ template <class T, int myMem> class ParallelSum;
                              }
                            });
         }).wait();
-      sycl_default_stream.memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
+      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
-      sycl_default_stream.submit([&, nItems = this->nItems](sycl::handler &cgh) {
+      sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
           cgh.parallel_for(get_reduction_range(nItems, devP),
                            sycl::reduction(devP, sycl::minimum<>(), sycl::property::reduction::initialize_to_identity{}),
                            [=](sycl::nd_item<1> idx, auto& min) {
@@ -347,7 +347,7 @@ template <class T, int myMem> class ParallelSum;
     }
     T operator() (T *data) {
       T rslt=0;
-      sycl_default_stream.submit([&, nItems = this->nItems](sycl::handler &cgh) {
+      sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
           cgh.parallel_for(get_reduction_range(nItems, rsltP),
                            sycl::reduction(rsltP, sycl::maximum<>(), sycl::property::reduction::initialize_to_identity{}),
                            [=](sycl::nd_item<1> idx, auto& max) {
@@ -357,11 +357,11 @@ template <class T, int myMem> class ParallelSum;
                              }
                            });
         }).wait();
-      sycl_default_stream.memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
+      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
-      sycl_default_stream.submit([&, nItems = this->nItems](sycl::handler &cgh) {
+      sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
           cgh.parallel_for(get_reduction_range(nItems, devP),
                            sycl::reduction(devP, sycl::maximum<>(), sycl::property::reduction::initialize_to_identity{}),
                            [=](sycl::nd_item<1> idx, auto& max) {
@@ -394,7 +394,7 @@ template <class T, int myMem> class ParallelSum;
     }
     T operator() (T *data) {
       T rslt=0;
-      sycl_default_stream.submit([&, nItems = this->nItems](sycl::handler &cgh) {
+      sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
           cgh.parallel_for(get_reduction_range(nItems, rsltP),
                            sycl::reduction(rsltP, std::plus<>(), sycl::property::reduction::initialize_to_identity{}),
                            [=](sycl::nd_item<1> idx, auto& sum) {
@@ -405,11 +405,11 @@ template <class T, int myMem> class ParallelSum;
                            });
         }).wait();
 
-      sycl_default_stream.memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
+      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
-      sycl_default_stream.submit([&, nItems = this->nItems](sycl::handler &cgh) {
+      sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
           cgh.parallel_for(get_reduction_range(nItems, rsltP),
                            sycl::reduction(rsltP, std::plus<>(), sycl::property::reduction::initialize_to_identity{}),
                            [=](sycl::nd_item<1> idx, auto& sum) {

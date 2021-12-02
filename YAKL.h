@@ -10,10 +10,6 @@ namespace yakl {
   typedef unsigned int index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 
-  #ifdef YAKL_ARCH_SYCL
-    extern sycl::queue sycl_default_stream;
-  #endif
-
   // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
@@ -84,7 +80,7 @@ namespace yakl {
       check_last_error();
     #endif
     #ifdef YAKL_ARCH_SYCL
-      sycl_default_stream.wait();
+      sycl_default_stream().wait();
       check_last_error();
     #endif
   }
@@ -109,10 +105,8 @@ namespace yakl {
         check_last_error();
       #endif
       #if defined(YAKL_ARCH_SYCL)
-        sycl::free(functorBuffer, sycl_default_stream);
-        sycl_default_stream.wait();
-        // This was removed by Abhishek
-        // sycl_default_stream = sycl::queue();
+        sycl::free(functorBuffer, sycl_default_stream());
+        sycl_default_stream().wait();
         check_last_error();
       #endif
       yakl_is_initialized = false;

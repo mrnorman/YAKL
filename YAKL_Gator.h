@@ -6,9 +6,6 @@
 #if defined(YAKL_ARCH_HIP)
   #include "hip/hip_runtime.h"
 #endif
-#if defined(YAKL_ARCH_SYCL)
-  #include <CL/sycl.hpp>
-#endif
 #if defined( YAKL_ARCH_OPENMP45)
   #include <omp.h>
 #endif

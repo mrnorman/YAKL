@@ -11,10 +11,10 @@ if ("${ARCH}" STREQUAL "SYCL")
 endif()
 
 add_library(yakl STATIC ${YAKL_SOURCE})
-target_compile_features(yakl PUBLIC cxx_std_14)
+target_compile_features(yakl PUBLIC cxx_std_17)
 
 if ("${ARCH}" STREQUAL "SYCL")
-  target_link_libraries(yakl "--intel -fsycl")
+  target_link_libraries(yakl "-fsycl")
 endif()
 
 
