@@ -5,6 +5,11 @@ template <class T, int rank, int myMem>
 class Array<T,rank,myMem,styleC> : public CArrayBase<T,rank,myMem> {
 public:
 
+  typedef typename std::remove_cv<T>::type type;
+  typedef          T value_type;
+  typedef typename std::add_const<type>::type const_value_type;
+  typedef typename std::remove_const<type>::type non_const_value_type;
+
   int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
 
 
@@ -315,7 +320,7 @@ public:
   COPY CONSTRUCTORS / FUNCTIONS
   This shares the pointers with another Array and increments the refCounter
   */
-  YAKL_INLINE Array(Array const &rhs) {
+  YAKL_INLINE Array(Array<non_const_value_type,rank,myMem,styleC> const &rhs) {
     // constructor, so no need to deallocate
     nullify();
     for (int i=0; i<rank; i++) {
@@ -325,23 +330,50 @@ public:
       this->myname = rhs.myname;
     #endif
     this->myData   = rhs.myData;
-    this->refCount = rhs.refCount;
-    if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        yakl_mtx_lock();
-        (*this->refCount)++;
-        yakl_mtx_unlock();
-      #endif
+    if (std::is_const<T>::value) {
+      this->refCount = nullptr;
+    } else {
+      this->refCount = rhs.refCount;
+      if (this->refCount != nullptr) {
+        #if YAKL_CURRENTLY_ON_HOST()
+          yakl_mtx_lock();
+          (*this->refCount)++;
+          yakl_mtx_unlock();
+        #endif
+      }
+    }
+  }
+  YAKL_INLINE Array(Array<const_value_type,rank,myMem,styleC> const &rhs) {
+    // constructor, so no need to deallocate
+    nullify();
+    for (int i=0; i<rank; i++) {
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
+    if (std::is_const<T>::value) {
+      this->refCount = nullptr;
+    } else {
+      this->refCount = rhs.refCount;
+      if (this->refCount != nullptr) {
+        #if YAKL_CURRENTLY_ON_HOST()
+          yakl_mtx_lock();
+          (*this->refCount)++;
+          yakl_mtx_unlock();
+        #endif
+      }
     }
   }
 
 
-  YAKL_INLINE Array & operator=(Array const &rhs) {
+  YAKL_INLINE Array & operator=(Array<non_const_value_type,rank,myMem,styleC> const &rhs) {
     if (this == &rhs) {
       return *this;
     }
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      deallocate_wrapper();
     #endif
     for (int i=0; i<rank; i++) {
       this->dimension[i] = rhs.dimension[i];
@@ -351,12 +383,45 @@ public:
     #endif
     this->myData   = rhs.myData;
     this->refCount = rhs.refCount;
-    if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        yakl_mtx_lock();
-        (*this->refCount)++;
-        yakl_mtx_unlock();
-      #endif
+    if (std::is_const<T>::value) {
+      this->refCount = nullptr;
+    } else {
+      if (this->refCount != nullptr) {
+        #if YAKL_CURRENTLY_ON_HOST()
+          yakl_mtx_lock();
+          (*this->refCount)++;
+          yakl_mtx_unlock();
+        #endif
+      }
+    }
+
+    return *this;
+  }
+  YAKL_INLINE Array & operator=(Array<const_value_type,rank,myMem,styleC> const &rhs) {
+    if (this == &rhs) {
+      return *this;
+    }
+    #if YAKL_CURRENTLY_ON_HOST()
+      deallocate_wrapper();
+    #endif
+    for (int i=0; i<rank; i++) {
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
+    this->refCount = rhs.refCount;
+    if (std::is_const<T>::value) {
+      this->refCount = nullptr;
+    } else {
+      if (this->refCount != nullptr) {
+        #if YAKL_CURRENTLY_ON_HOST()
+          yakl_mtx_lock();
+          (*this->refCount)++;
+          yakl_mtx_unlock();
+        #endif
+      }
     }
 
     return *this;
@@ -406,13 +471,24 @@ public:
   }
 
 
+  template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
+  void deallocate_wrapper() {
+  }
+
+
+  template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
+  void deallocate_wrapper() {
+    deallocate();
+  }
+
+
   /*
   DESTRUCTOR
   Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
   YAKL_INLINE ~Array() {
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      deallocate_wrapper();
     #endif
   }
 
@@ -471,6 +547,7 @@ public:
   }
 
 
+  template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
   inline void allocate(char const * label = "") {
     // static_assert( std::is_arithmetic<T>() || myMem == memHost , 
     //                "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
@@ -484,6 +561,7 @@ public:
   }
 
 
+  template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
   inline void deallocate() {
     if (this->refCount != nullptr) {
       yakl_mtx_lock();
