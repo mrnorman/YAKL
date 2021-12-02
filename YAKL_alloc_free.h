@@ -74,19 +74,27 @@ namespace yakl {
       #if defined (YAKL_MANAGED_MEMORY)
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
+          sycl_default_stream.wait();
           void *ptr = sycl::malloc_shared(bytes,sycl_default_stream);
+          sycl_default_stream.memset(ptr, 0, bytes);
+          sycl_default_stream.wait();
           check_last_error();
           sycl_default_stream.prefetch(ptr,bytes);
           return ptr;
         };
         dealloc = [] ( void *ptr ) {
-          sycl::free(ptr, sycl_default_stream).wait();
+          sycl_default_stream.wait();
+          sycl::free(ptr, sycl_default_stream);
+          sycl_default_stream.wait();
           check_last_error();
         };
       #else
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
+          sycl_default_stream.wait();
           void *ptr = sycl::malloc_device(bytes,sycl_default_stream);
+          sycl_default_stream.memset(ptr, 0, bytes);
+          sycl_default_stream.wait();
           check_last_error();
           return ptr;
         };
@@ -95,6 +103,7 @@ namespace yakl {
           sycl::free(ptr, sycl_default_stream);
           sycl_default_stream.wait();
           check_last_error();
+          // ptr = nullptr;
         };
       #endif
     #elif defined(YAKL_ARCH_OPENMP45)

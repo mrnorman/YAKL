@@ -67,7 +67,7 @@ int main() {
 
     data.deep_copy_to(dataHost);
     for (int i=0; i < n; i++) {
-      if ( abs(dataHost(i) - dataInit(i)) > 1.e-13 ) { die("ERROR: forward gives wrong answer"); }
+      if ( abs(dataHost(i) - dataInit(i)) > 1.e-13 ) { die("ERROR: backward gives wrong answer"); }
     }
 
   }
