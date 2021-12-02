@@ -601,7 +601,7 @@ namespace c {
         }).wait();
       } else {
         F *fp = (F *) functorBuffer;
-        sycl_default_stream().memcpy(fp, &f, sizeof(F)).wait();
+        sycl_default_stream().memcpy(fp, &f, sizeof(F));
         sycl_default_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
           callFunctor( *fp , bounds , i );
         }).wait();

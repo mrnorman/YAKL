@@ -63,7 +63,6 @@
                                          << sycl_default_stream().get_device().get_info<sycl::info::device::name>()
                                          << "\n";
         functorBuffer = sycl::malloc_device(functorBufSize, sycl_default_stream());
-        sycl_default_stream().memset(functorBuffer, 0, functorBufSize).wait();
       #endif
 
       #if defined(YAKL_ARCH_HIP)

@@ -309,8 +309,10 @@ template <class T, int myMem> class ParallelSum;
                                min.combine(data[i]);
                              }
                            });
-        }).wait();
-      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
+        });
+      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
+      check_last_error();
+      fence();
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
@@ -323,7 +325,10 @@ template <class T, int myMem> class ParallelSum;
                                min.combine(data[i]);
                              }
                            });
-        }).wait();
+        });
+      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+        fence();
+      #endif
     }
   };
 
@@ -356,8 +361,10 @@ template <class T, int myMem> class ParallelSum;
                                max.combine(data[i]);
                              }
                            });
-        }).wait();
-      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
+        });
+      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
+      check_last_error();
+      fence();
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
@@ -370,7 +377,10 @@ template <class T, int myMem> class ParallelSum;
                                max.combine(data[i]);
                              }
                            });
-        }).wait();
+        });
+      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+        fence();
+      #endif
     }
   };
 
@@ -403,9 +413,10 @@ template <class T, int myMem> class ParallelSum;
                                sum.combine(data[i]);
                              }
                            });
-        }).wait();
-
-      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
+        });
+      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
+      check_last_error();
+      fence();
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
@@ -418,7 +429,10 @@ template <class T, int myMem> class ParallelSum;
                                sum.combine(data[i]);
                              }
                            });
-        }).wait();
+        });
+      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+        fence();
+      #endif
     }
   };
 
