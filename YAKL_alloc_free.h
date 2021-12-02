@@ -75,7 +75,6 @@ namespace yakl {
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
           void *ptr = sycl::malloc_shared(bytes,sycl_default_stream);
-          sycl_default_stream.memset(ptr, 0, bytes).wait();
           check_last_error();
           sycl_default_stream.prefetch(ptr,bytes);
           return ptr;
@@ -88,15 +87,12 @@ namespace yakl {
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
           void *ptr = sycl::malloc_device(bytes,sycl_default_stream);
-          sycl_default_stream.memset(ptr, 0, bytes).wait();
           check_last_error();
           return ptr;
         };
         dealloc = [] ( void *ptr ) {
-          sycl_default_stream.wait();
           sycl::free(ptr, sycl_default_stream);
           check_last_error();
-          ptr = nullptr;
         };
       #endif
     #elif defined(YAKL_ARCH_OPENMP45)
