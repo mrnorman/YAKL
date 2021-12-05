@@ -5,6 +5,11 @@ template <class T, int rank, int myMem>
 class Array<T,rank,myMem,styleFortran> : public FArrayBase<T,rank,myMem> {
 public:
 
+  typedef typename std::remove_cv<T>::type type;
+  typedef          T value_type;
+  typedef typename std::add_const<type>::type const_value_type;
+  typedef typename std::remove_const<type>::type non_const_value_type;
+
   int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
 
 
@@ -15,11 +20,7 @@ public:
   }
 
   /* CONSTRUCTORS
-  You can declare the array empty or with up to 8 dimensions
-  Like kokkos, you need to give a label for the array for debug printing
-  Always nullify before beginning so that myData == nullptr upon init. This allows the
-  setup() functions to keep from deallocating myData upon initialization, since
-  you don't know what "myData" will be when the object is created.
+  Always nullify before beginning so that myData == nullptr upon init.
   */
   YAKL_INLINE Array() {
     nullify();
@@ -396,7 +397,7 @@ public:
   COPY CONSTRUCTORS / FUNCTIONS
   This shares the pointers with another Array and increments the refCounter
   */
-  YAKL_INLINE Array(Array const &rhs) {
+  YAKL_INLINE Array(Array<non_const_value_type,rank,myMem,styleFortran> const &rhs) {
     // This is a constructor, so no need to deallocate
     nullify();
     for (int i=0; i<rank; i++) {
@@ -407,18 +408,48 @@ public:
       this->myname = rhs.myname;
     #endif
     this->myData   = rhs.myData;
-    this->refCount = rhs.refCount;
-    if (refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        yakl_mtx_lock();
-        (*this->refCount)++;
-        yakl_mtx_unlock();
-      #endif
+    if (std::is_const<T>::value) {
+      this->refCount = nullptr;
+    } else {
+      this->refCount = rhs.refCount;
+      if (refCount != nullptr) {
+        #if YAKL_CURRENTLY_ON_HOST()
+          yakl_mtx_lock();
+          (*this->refCount)++;
+          yakl_mtx_unlock();
+        #endif
+      }
+    }
+  }
+  YAKL_INLINE Array(Array<const_value_type,rank,myMem,styleFortran> const &rhs) {
+    static_assert( std::is_const<T>::value , 
+                   "ERROR: Cannot create non-const Array using const Array" );
+    // This is a constructor, so no need to deallocate
+    nullify();
+    for (int i=0; i<rank; i++) {
+      this->lbounds  [i] = rhs.lbounds  [i];
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
+    if (std::is_const<T>::value) {
+      this->refCount = nullptr;
+    } else {
+      this->refCount = rhs.refCount;
+      if (refCount != nullptr) {
+        #if YAKL_CURRENTLY_ON_HOST()
+          yakl_mtx_lock();
+          (*this->refCount)++;
+          yakl_mtx_unlock();
+        #endif
+      }
     }
   }
 
 
-  YAKL_INLINE Array & operator=(Array const &rhs) {
+  YAKL_INLINE Array & operator=(Array<non_const_value_type,rank,myMem,styleFortran> const &rhs) {
     if (this == &rhs) { return *this; }
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
@@ -431,15 +462,47 @@ public:
       this->myname = rhs.myname;
     #endif
     this->myData   = rhs.myData;
-    this->refCount = rhs.refCount;
-    if (refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        yakl_mtx_lock();
-        (*this->refCount)++;
-        yakl_mtx_unlock();
-      #endif
+    if (std::is_const<T>::value) {
+      this->refCount = nullptr;
+    } else {
+      this->refCount = rhs.refCount;
+      if (refCount != nullptr) {
+        #if YAKL_CURRENTLY_ON_HOST()
+          yakl_mtx_lock();
+          (*this->refCount)++;
+          yakl_mtx_unlock();
+        #endif
+      }
     }
-
+    return *this;
+  }
+  YAKL_INLINE Array & operator=(Array<const_value_type,rank,myMem,styleFortran> const &rhs) {
+    static_assert( std::is_const<T>::value , 
+                   "ERROR: Cannot create non-const Array using const Array" );
+    if (this == &rhs) { return *this; }
+    #if YAKL_CURRENTLY_ON_HOST()
+      deallocate();
+    #endif
+    for (int i=0; i<rank; i++) {
+      this->lbounds  [i] = rhs.lbounds  [i];
+      this->dimension[i] = rhs.dimension[i];
+    }
+    #ifdef YAKL_DEBUG
+      this->myname = rhs.myname;
+    #endif
+    this->myData   = rhs.myData;
+    if (std::is_const<T>::value) {
+      this->refCount = nullptr;
+    } else {
+    this->refCount = rhs.refCount;
+      if (refCount != nullptr) {
+        #if YAKL_CURRENTLY_ON_HOST()
+          yakl_mtx_lock();
+          (*this->refCount)++;
+          yakl_mtx_unlock();
+        #endif
+      }
+    }
     return *this;
   }
 
@@ -569,6 +632,12 @@ public:
   }
 
 
+  template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
+  inline void deallocate() {
+  }
+
+
+  template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
   inline void deallocate() {
     if (this->refCount != nullptr) {
       yakl_mtx_lock();

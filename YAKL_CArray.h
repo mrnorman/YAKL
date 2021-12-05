@@ -19,7 +19,6 @@ public:
     this->refCount = nullptr;
   }
 
-
   /* CONSTRUCTORS
   Always nullify before beginning so that myData == nullptr upon init.
   */
@@ -344,6 +343,8 @@ public:
     }
   }
   YAKL_INLINE Array(Array<const_value_type,rank,myMem,styleC> const &rhs) {
+    static_assert( std::is_const<T>::value , 
+                   "ERROR: Cannot create non-const Array using const Array" );
     // constructor, so no need to deallocate
     nullify();
     for (int i=0; i<rank; i++) {
@@ -373,7 +374,7 @@ public:
       return *this;
     }
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate_wrapper();
+      deallocate();
     #endif
     for (int i=0; i<rank; i++) {
       this->dimension[i] = rhs.dimension[i];
@@ -401,8 +402,10 @@ public:
     if (this == &rhs) {
       return *this;
     }
+    static_assert( std::is_const<T>::value , 
+                   "ERROR: Cannot create non-const Array using const Array" );
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate_wrapper();
+      deallocate();
     #endif
     for (int i=0; i<rank; i++) {
       this->dimension[i] = rhs.dimension[i];
@@ -471,24 +474,13 @@ public:
   }
 
 
-  template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
-  void deallocate_wrapper() {
-  }
-
-
-  template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
-  void deallocate_wrapper() {
-    deallocate();
-  }
-
-
   /*
   DESTRUCTOR
   Decrement the refCounter, and if it's zero, deallocate and nullify.  
   */
   YAKL_INLINE ~Array() {
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate_wrapper();
+      deallocate();
     #endif
   }
 
@@ -558,6 +550,11 @@ public:
     } else {
       this->myData = new T[this->totElems()];
     }
+  }
+
+
+  template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
+  inline void deallocate() {
   }
 
 
