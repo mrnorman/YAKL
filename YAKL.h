@@ -11,7 +11,7 @@ namespace yakl {
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 
   #ifdef YAKL_ARCH_SYCL
-    extern sycl::queue sycl_default_stream;
+    extern sycl::queue *sycl_default_stream;
   #endif
 
   // Memory space specifiers for YAKL Arrays
@@ -84,7 +84,7 @@ namespace yakl {
       check_last_error();
     #endif
     #ifdef YAKL_ARCH_SYCL
-      sycl_default_stream.wait();
+      sycl_default_stream->wait();
       check_last_error();
     #endif
   }
@@ -104,19 +104,19 @@ namespace yakl {
     yakl_mtx.lock();
 
     if ( isInitialized() ) {
+      pool.finalize();
       #ifdef YAKL_ARCH_CUDA
         cudaFree(functorBuffer);
         check_last_error();
       #endif
       #if defined(YAKL_ARCH_SYCL)
-        sycl::free(functorBuffer, sycl_default_stream);
-        sycl_default_stream.wait();
-        // This was removed by Abhishek
-        // sycl_default_stream = sycl::queue();
+        sycl::free(functorBuffer, *sycl_default_stream);
+        sycl_default_stream->wait();
         check_last_error();
+        delete sycl_default_stream;
+        sycl_default_stream = nullptr;
       #endif
       yakl_is_initialized = false;
-      pool.finalize();
       #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
         GPTLpr_file("");
         GPTLpr_file("yakl_timer_output.txt");

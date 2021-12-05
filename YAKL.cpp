@@ -4,7 +4,7 @@
 namespace yakl {
 
   #ifdef YAKL_ARCH_SYCL
-    sycl::queue sycl_default_stream;
+    sycl::queue *sycl_default_stream;
   #endif
 
   std::mutex yakl_mtx;
