@@ -10,7 +10,8 @@ public:
   */
   YAKL_INLINE T &operator()(index_t const i0) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 1 || i0 >= this->dimension[0] ) { indexing_check(1,i0); };
+      if ( rank != 1 || i0 >= this->dimension[0] || 
+                        !this->initialized() ) { indexing_check(1,i0); };
     #endif
     index_t ind = i0;
     return this->myData[ind];
@@ -18,7 +19,8 @@ public:
   YAKL_INLINE T &operator()(index_t const i0, index_t const i1) const {
     #ifdef YAKL_DEBUG
       if ( rank != 2 || i0 >= this->dimension[0] ||
-                        i1 >= this->dimension[1] ) { indexing_check(2,i0,i1); };
+                        i1 >= this->dimension[1] || 
+                        !this->initialized() ) { indexing_check(2,i0,i1); };
     #endif
     index_t ind = i0*this->dimension[1] + i1;
     return this->myData[ind];
@@ -27,7 +29,8 @@ public:
     #ifdef YAKL_DEBUG
       if ( rank != 3 || i0 >= this->dimension[0] ||
                         i1 >= this->dimension[1] ||
-                        i2 >= this->dimension[2] ) { indexing_check(3,i0,i1,i2); };
+                        i2 >= this->dimension[2] || 
+                        !this->initialized() ) { indexing_check(3,i0,i1,i2); };
     #endif
     index_t ind = (i0*this->dimension[1] + i1)*this->dimension[2] + i2;
     return this->myData[ind];
@@ -37,7 +40,8 @@ public:
       if ( rank != 4 || i0 >= this->dimension[0] ||
                         i1 >= this->dimension[1] ||
                         i2 >= this->dimension[2] ||
-                        i3 >= this->dimension[3] ) { indexing_check(4,i0,i1,i2,i3); };
+                        i3 >= this->dimension[3] || 
+                        !this->initialized() ) { indexing_check(4,i0,i1,i2,i3); };
     #endif
     index_t ind = ((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3;
     return this->myData[ind];
@@ -48,7 +52,8 @@ public:
                         i1 >= this->dimension[1] ||
                         i2 >= this->dimension[2] ||
                         i3 >= this->dimension[3] ||
-                        i4 >= this->dimension[4] ) { indexing_check(5,i0,i1,i2,i3,i4); };
+                        i4 >= this->dimension[4] || 
+                        !this->initialized() ) { indexing_check(5,i0,i1,i2,i3,i4); };
     #endif
     index_t ind = (((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3)*this->dimension[4] + i4;
     return this->myData[ind];
@@ -60,7 +65,8 @@ public:
                         i2 >= this->dimension[2] ||
                         i3 >= this->dimension[3] ||
                         i4 >= this->dimension[4] ||
-                        i5 >= this->dimension[5] ) { indexing_check(6,i0,i1,i2,i3,i4,i5); };
+                        i5 >= this->dimension[5] || 
+                        !this->initialized() ) { indexing_check(6,i0,i1,i2,i3,i4,i5); };
     #endif
     index_t ind = ((((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3)*this->dimension[4] + i4)*this->dimension[5] + i5;
     return this->myData[ind];
@@ -73,7 +79,8 @@ public:
                         i3 >= this->dimension[3] ||
                         i4 >= this->dimension[4] ||
                         i5 >= this->dimension[5] ||
-                        i6 >= this->dimension[6] ) { indexing_check(7,i0,i1,i2,i3,i4,i5,i6); };
+                        i6 >= this->dimension[6] || 
+                        !this->initialized() ) { indexing_check(7,i0,i1,i2,i3,i4,i5,i6); };
     #endif
     index_t ind = (((((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3)*this->dimension[4] + i4)*this->dimension[5] + i5)*this->dimension[6] + i6;
     return this->myData[ind];
@@ -87,7 +94,8 @@ public:
                         i4 >= this->dimension[4] ||
                         i5 >= this->dimension[5] ||
                         i6 >= this->dimension[6] ||
-                        i7 >= this->dimension[7] ) { indexing_check(8,i0,i1,i2,i3,i4,i5,i6,i7); };
+                        i7 >= this->dimension[7] || 
+                        !this->initialized() ) { indexing_check(8,i0,i1,i2,i3,i4,i5,i6,i7); };
     #endif
     index_t ind = ((((((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3)*this->dimension[4] + i4)*this->dimension[5] + i5)*this->dimension[6] + i6)*this->dimension[7] + i7;
     return this->myData[ind];
@@ -95,18 +103,25 @@ public:
 
 
   // if this function gets called, then there was definitely an error
-  YAKL_INLINE void indexing_check(int rank_in, index_t i0 ,
-                                          index_t i1=INDEX_MAX ,
-                                          index_t i2=INDEX_MAX ,
-                                          index_t i3=INDEX_MAX ,
-                                          index_t i4=INDEX_MAX ,
-                                          index_t i5=INDEX_MAX ,
-                                          index_t i6=INDEX_MAX ,
-                                          index_t i7=INDEX_MAX ) const {
+  YAKL_INLINE void indexing_check( int rank_in, index_t i0 ,
+                                   index_t i1=INDEX_MAX ,
+                                   index_t i2=INDEX_MAX ,
+                                   index_t i3=INDEX_MAX ,
+                                   index_t i4=INDEX_MAX ,
+                                   index_t i5=INDEX_MAX ,
+                                   index_t i6=INDEX_MAX ,
+                                   index_t i7=INDEX_MAX ) const {
     #ifdef YAKL_DEBUG
       #ifndef YAKL_SEPARATE_MEMORY_SPACE
         std::cerr << "For Array labeled: " << this->myname << ":" << std::endl;
-        if (rank_in != rank) { std::cerr << "Indexing with the incorrect number of dimensions. " << std::endl; }
+        if (!this->initialized()) {
+          yakl_throw("Error: Using operator() on an Array that isn't allocated");
+        }
+        if (rank_in != rank) {
+          std::cerr << "Error: Using operator() with " << rank_in << " dimensions, but Array has " <<
+                                                          rank << " dimensions" << std::endl;
+          yakl_throw("");
+        }
         if (rank >= 1 && i0 >= this->dimension[0]) { std::cerr << "Index 1 of " << rank << " is out of bounds. Value: " << i0 << "; Bound: " << this->dimension[0]-1 << std::endl; }
         if (rank >= 2 && i1 >= this->dimension[1]) { std::cerr << "Index 2 of " << rank << " is out of bounds. Value: " << i1 << "; Bound: " << this->dimension[1]-1 << std::endl; }
         if (rank >= 3 && i2 >= this->dimension[2]) { std::cerr << "Index 3 of " << rank << " is out of bounds. Value: " << i2 << "; Bound: " << this->dimension[2]-1 << std::endl; }
@@ -115,8 +130,9 @@ public:
         if (rank >= 6 && i5 >= this->dimension[5]) { std::cerr << "Index 6 of " << rank << " is out of bounds. Value: " << i5 << "; Bound: " << this->dimension[5]-1 << std::endl; }
         if (rank >= 7 && i6 >= this->dimension[6]) { std::cerr << "Index 7 of " << rank << " is out of bounds. Value: " << i6 << "; Bound: " << this->dimension[6]-1 << std::endl; }
         if (rank >= 8 && i7 >= this->dimension[7]) { std::cerr << "Index 8 of " << rank << " is out of bounds. Value: " << i7 << "; Bound: " << this->dimension[7]-1 << std::endl; }
+        yakl_throw("");
       #endif
-      yakl_throw("Invalid Array Index Encountered");
+      yakl_throw("Error: one or more of the following has occurred: (1) operator() called while array is not initialized; (2) operator() called with the wrong number of dimensions; AND / OR (3) operator() called with an index that is out of bounds.");
     #endif
   }
 
@@ -124,12 +140,24 @@ public:
   template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleC> &store ) const {
     #ifdef YAKL_DEBUG
       if (rank != dims.size()) {
-        yakl_throw( "ERROR: slice rank must be equal to dims.size()" );
+        #ifndef YAKL_SEPARATE_MEMORY_SPACE
+          std::cerr << "For Array named " << this->myname << ":  ";
+        #endif
+        yakl_throw("ERROR: slice rank must be equal to dims.size()");
       }
       for (int i = rank-1-N; i >= 0; i--) {
         if (dims.data[i] >= this->dimension[i]) {
-          yakl_throw( "ERROR: One of the slicing dimension dimensions is out of bounds" );
+          #ifndef YAKL_SEPARATE_MEMORY_SPACE
+            std::cerr << "For Array named " << this->myname << ":  ";
+          #endif
+          yakl_throw("ERROR: One of the slicing dimension dimensions is out of bounds");
         }
+      }
+      if (! this->initialized()) {
+        #ifndef YAKL_SEPARATE_MEMORY_SPACE
+          std::cerr << "For Array named " << this->myname << ":  ";
+        #endif
+        yakl_throw("ERROR: calling slice() on an Array that hasn't been allocated");
       }
     #endif
     index_t offset = 1;
@@ -202,6 +230,14 @@ public:
 
 
   inline Array<T,rank,memHost,styleC> createHostCopy() const {
+    #ifdef YAKL_DEBUG
+      if (! this->initialized()) {
+        #ifndef YAKL_SEPARATE_MEMORY_SPACE
+          std::cerr << "For Array named " << this->myname << ":  ";
+        #endif
+        yakl_throw("Error: createHostCopy() called on an Array that hasn't been allocated");
+      }
+    #endif
     Array<T,rank,memHost,styleC> ret;
     for (int i=0; i<rank; i++) {
       ret.dimension[i] = this->dimension[i];
@@ -221,6 +257,14 @@ public:
 
 
   inline Array<T,rank,memDevice,styleC> createDeviceCopy() const {
+    #ifdef YAKL_DEBUG
+      if (! this->initialized()) {
+        #ifndef YAKL_SEPARATE_MEMORY_SPACE
+          std::cerr << "For Array named " << this->myname << ":  ";
+        #endif
+        yakl_throw("Error: createHostCopy() called on an Array that hasn't been allocated.");
+      }
+    #endif
     Array<T,rank,memDevice,styleC> ret;
     for (int i=0; i<rank; i++) {
       ret.dimension[i] = this->dimension[i];
