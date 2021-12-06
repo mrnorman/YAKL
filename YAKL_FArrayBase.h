@@ -12,7 +12,15 @@ public:
   */
   YAKL_INLINE T &operator()(int const i0) const {
     #ifdef YAKL_DEBUG
-      if ( rank != 1 || i0 < this->lbounds[0] || i0 >= this->lbounds[0] + this->dimension[0] ) { indexing_check(1,i0); };
+      if ( rank != 1 || i0 < this->lbounds[0] || i0 >= this->lbounds[0] + this->dimension[0] || 
+                        !this->initialized() ) { indexing_check(1,i0); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = (i0-this->lbounds[0]);
     return this->myData[ind];
@@ -20,7 +28,15 @@ public:
   YAKL_INLINE T &operator()(int const i0, int const i1) const {
     #ifdef YAKL_DEBUG
       if ( rank != 2 || i0 < this->lbounds[0] || i0 >= this->lbounds[0] + this->dimension[0] ||
-                        i1 < this->lbounds[1] || i1 >= this->lbounds[1] + this->dimension[1] ) { indexing_check(2,i0,i1); };
+                        i1 < this->lbounds[1] || i1 >= this->lbounds[1] + this->dimension[1] || 
+                        !this->initialized() ) { indexing_check(2,i0,i1); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind =                 (i1-this->lbounds[1])  *
                    this->dimension[0] + (i0-this->lbounds[0]) ;
@@ -30,7 +46,15 @@ public:
     #ifdef YAKL_DEBUG
       if ( rank != 3 || i0 < this->lbounds[0] || i0 >= this->lbounds[0] + this->dimension[0] ||
                         i1 < this->lbounds[1] || i1 >= this->lbounds[1] + this->dimension[1] ||
-                        i2 < this->lbounds[2] || i2 >= this->lbounds[2] + this->dimension[2] ) { indexing_check(3,i0,i1,i2); };
+                        i2 < this->lbounds[2] || i2 >= this->lbounds[2] + this->dimension[2] || 
+                        !this->initialized() ) { indexing_check(3,i0,i1,i2); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = (                (i2-this->lbounds[2])  *
                     this->dimension[1] + (i1-this->lbounds[1]) )*
@@ -42,7 +66,15 @@ public:
       if ( rank != 4 || i0 < this->lbounds[0] || i0 >= this->lbounds[0] + this->dimension[0] ||
                         i1 < this->lbounds[1] || i1 >= this->lbounds[1] + this->dimension[1] ||
                         i2 < this->lbounds[2] || i2 >= this->lbounds[2] + this->dimension[2] ||
-                        i3 < this->lbounds[3] || i3 >= this->lbounds[3] + this->dimension[3] ) { indexing_check(4,i0,i1,i2,i3); };
+                        i3 < this->lbounds[3] || i3 >= this->lbounds[3] + this->dimension[3] || 
+                        !this->initialized() ) { indexing_check(4,i0,i1,i2,i3); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = ((                (i3-this->lbounds[3])  *
                      this->dimension[2] + (i2-this->lbounds[2]) )*
@@ -56,7 +88,15 @@ public:
                         i1 < this->lbounds[1] || i1 >= this->lbounds[1] + this->dimension[1] ||
                         i2 < this->lbounds[2] || i2 >= this->lbounds[2] + this->dimension[2] ||
                         i3 < this->lbounds[3] || i3 >= this->lbounds[3] + this->dimension[3] ||
-                        i4 < this->lbounds[4] || i4 >= this->lbounds[4] + this->dimension[4] ) { indexing_check(5,i0,i1,i2,i3,i4); };
+                        i4 < this->lbounds[4] || i4 >= this->lbounds[4] + this->dimension[4] || 
+                        !this->initialized() ) { indexing_check(5,i0,i1,i2,i3,i4); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = (((                (i4-this->lbounds[4])  *
                       this->dimension[3] + (i3-this->lbounds[3]) )*
@@ -72,7 +112,15 @@ public:
                         i2 < this->lbounds[2] || i2 >= this->lbounds[2] + this->dimension[2] ||
                         i3 < this->lbounds[3] || i3 >= this->lbounds[3] + this->dimension[3] ||
                         i4 < this->lbounds[4] || i4 >= this->lbounds[4] + this->dimension[4] ||
-                        i5 < this->lbounds[5] || i5 >= this->lbounds[5] + this->dimension[5] ) { indexing_check(6,i0,i1,i2,i3,i4,i5); };
+                        i5 < this->lbounds[5] || i5 >= this->lbounds[5] + this->dimension[5] || 
+                        !this->initialized() ) { indexing_check(6,i0,i1,i2,i3,i4,i5); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = ((((                (i5-this->lbounds[5])  *
                        this->dimension[4] + (i4-this->lbounds[4]) )*
@@ -90,7 +138,15 @@ public:
                         i3 < this->lbounds[3] || i3 >= this->lbounds[3] + this->dimension[3] ||
                         i4 < this->lbounds[4] || i4 >= this->lbounds[4] + this->dimension[4] ||
                         i5 < this->lbounds[5] || i5 >= this->lbounds[5] + this->dimension[5] ||
-                        i6 < this->lbounds[6] || i6 >= this->lbounds[6] + this->dimension[6] ) { indexing_check(7,i0,i1,i2,i3,i4,i5,i6); };
+                        i6 < this->lbounds[6] || i6 >= this->lbounds[6] + this->dimension[6] || 
+                        !this->initialized() ) { indexing_check(7,i0,i1,i2,i3,i4,i5,i6); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = (((((                (i6-this->lbounds[6])  *
                         this->dimension[5] + (i5-this->lbounds[5]) )*
@@ -110,7 +166,15 @@ public:
                         i4 < this->lbounds[4] || i4 >= this->lbounds[4] + this->dimension[4] ||
                         i5 < this->lbounds[5] || i5 >= this->lbounds[5] + this->dimension[5] ||
                         i6 < this->lbounds[6] || i6 >= this->lbounds[6] + this->dimension[6] ||
-                        i7 < this->lbounds[7] || i7 >= this->lbounds[7] + this->dimension[7] ) { indexing_check(8,i0,i1,i2,i3,i4,i5,i6,i7); };
+                        i7 < this->lbounds[7] || i7 >= this->lbounds[7] + this->dimension[7] || 
+                        !this->initialized() ) { indexing_check(8,i0,i1,i2,i3,i4,i5,i6,i7); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = ((((((                (i7-this->lbounds[7])  *
                          this->dimension[6] + (i6-this->lbounds[6]) )*
@@ -136,9 +200,16 @@ public:
     #ifdef YAKL_DEBUG
       #ifndef YAKL_SEPARATE_MEMORY_SPACE
         std::cerr << "For Array labeled: " << this->myname << ":" << std::endl;
+        if (!this->initialized()) {
+          yakl_throw("ERROR: operator() called on an Array that hasn't been allocated");
+        }
+        if (rank_in != rank) {
+          std::cerr << "ERROR: operator() called with " << rank_in << " dimensions, but Array has " << rank << " dimensions." << std::endl;
+          yakl_throw("");
+        }
+
         std::string msg1 = " is out of bounds. Value: ";
         std::string msg2 = "; Bounds: (";
-        if (rank_in != rank) { std::cerr << "Indexing with the incorrect number of dimensions. " << std::endl; }
         if (rank >= 1 && (i0 < this->lbounds[0] || i0 >= this->lbounds[0]+this->dimension[0])) {
           std::cerr << "Index 1 of " << rank << msg1 << i0 << msg2 << this->lbounds[0] << "," << this->lbounds[0]+this->dimension[0]-1 << ")" << std::endl;
         }
@@ -163,8 +234,9 @@ public:
         if (rank >= 8 && (i7 < this->lbounds[7] || i7 >= this->lbounds[7]+this->dimension[7])) {
           std::cerr << "Index 8 of " << rank << msg1 << i7 << msg2 << this->lbounds[7] << "," << this->lbounds[7]+this->dimension[7]-1 << ")" << std::endl;
         }
+        yakl_throw("");
       #endif
-      yakl_throw("Invalid Array Index Encountered");
+      yakl_throw("Error: one or more of the following has occurred: (1) operator() called while array is not initialized; (2) operator() called with the wrong number of dimensions; AND / OR (3) operator() called with an index that is out of bounds.");
     #endif
   }
 
@@ -172,12 +244,24 @@ public:
   template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleFortran> &store ) const {
     #ifdef YAKL_DEBUG
       if (rank != dims.size()) {
-        yakl_throw( "ERROR: rank must be equal to dims.size()" );
+        #ifndef YAKL_SEPARATE_MEMORY_SPACE
+          std::cerr << "For Array named " << this->myname << ":  ";
+        #endif
+        yakl_throw("ERROR: rank must be equal to dims.size()");
       }
       for (int i=N; i<rank; i++) {
         if (dims.data[i] < this->lbounds[i] || dims.data[i] >= this->lbounds[i]+this->dimension[i] ) {
-          yakl_throw( "ERROR: One of the slicing dimension dimensions is out of bounds" );
+        #ifndef YAKL_SEPARATE_MEMORY_SPACE
+            std::cerr << "For Array named " << this->myname << ":  ";
+          #endif
+          yakl_throw("ERROR: One of the slicing dimension dimensions is out of bounds");
         }
+      }
+      if (! this->initialized()) {
+        #ifndef YAKL_SEPARATE_MEMORY_SPACE
+          std::cerr << "For Array named " << this->myname << ":  ";
+        #endif
+        yakl_throw("ERROR: calling slice() on an Array that hasn't been allocated");
       }
     #endif
     index_t offset = 1;
@@ -251,6 +335,14 @@ public:
 
 
   inline Array<T,rank,memHost,styleFortran> createHostCopy() const {
+    #ifdef YAKL_DEBUG
+      if (! this->initialized()) {
+        #ifndef YAKL_SEPARATE_MEMORY_SPACE
+          std::cerr << "For Array named " << this->myname << ":  ";
+        #endif
+        yakl_throw("Error: createHostCopy() called on an Array that hasn't been allocated.");
+      }
+    #endif
     Array<T,rank,memHost,styleFortran> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
       ret.lbounds  [i] = this->lbounds  [i];
@@ -270,6 +362,14 @@ public:
   }
 
   inline Array<T,rank,memDevice,styleFortran> createDeviceCopy() const {
+    #ifdef YAKL_DEBUG
+      if (! this->initialized()) {
+        #ifndef YAKL_SEPARATE_MEMORY_SPACE
+          std::cerr << "For Array named " << this->myname << ":  ";
+        #endif
+        yakl_throw("Error: createHostCopy() called on an Array that hasn't been allocated.");
+      }
+    #endif
     Array<T,rank,memDevice,styleFortran> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
       ret.lbounds  [i] = this->lbounds  [i];
