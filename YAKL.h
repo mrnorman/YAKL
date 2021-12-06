@@ -104,6 +104,7 @@ namespace yakl {
     yakl_mtx.lock();
 
     if ( isInitialized() ) {
+      fence();
       pool.finalize();
       #ifdef YAKL_ARCH_CUDA
         cudaFree(functorBuffer);
@@ -121,6 +122,22 @@ namespace yakl {
         GPTLpr_file("");
         GPTLpr_file("yakl_timer_output.txt");
       #endif
+      // YAKL allocator and deallocator
+      yaklAllocDeviceFunc = [] ( size_t bytes , char const *label ) -> void* {
+        yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
+        return nullptr;
+      };
+      yaklFreeDeviceFunc  = [] ( void *ptr    , char const *label )          {
+        yakl_throw("ERROR: attempting memory free before calling yakl::init()");
+      };
+      // YAKL allocator and deallocator
+      yaklAllocHostFunc = [] ( size_t bytes , char const *label ) -> void* {
+        yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
+        return nullptr;
+      };
+      yaklFreeHostFunc  = [] ( void *ptr    , char const *label )          {
+        yakl_throw("ERROR: attempting memory free before calling yakl::init()");
+      };
     } else {
       std::cerr << "WARNING: Calling yakl::finalize() when YAKL is not initialized. ";
       std::cerr << "This might mean you've called yakl::finalize() more than once.\n";
@@ -168,6 +185,11 @@ namespace yakl {
   /////////////////////////////////////////////////
   template <class T, int rank, int myMem, int myStyle, class I>
   void memset( Array<T,rank,myMem,myStyle> &arr , I val ) {
+    #ifdef YAKL_DEBUG
+      if (! arr.initialized()) {
+        yakl_throw("ERROR: calling memset on an array that is not allocated");
+      }
+    #endif
     if (myMem == memDevice) {
       c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
         arr.myData[i] = val;

@@ -50,12 +50,10 @@
   __device__ __forceinline__ void atomicAdd(float &update , float value) {
     ::atomicAdd( &update , value );
   }
-  #if __CUDA_ARCH__ >= 600
-    __device__ __forceinline__ void atomicAdd(double &update , double value) {
+  __device__ __forceinline__ void atomicAdd(double &update , double value) {
+    #if __CUDA_ARCH__ >= 600
       ::atomicAdd( &update , value );
-    }
-  #else
-    __device__ __forceinline__ void atomicAdd(double &update , double value) {
+    #else
       unsigned long long oldval, newval, readback;
       oldval = __double_as_longlong(update);
       newval = __double_as_longlong( __longlong_as_double(oldval) + value );
@@ -63,8 +61,8 @@
         oldval = readback;
         newval = __double_as_longlong( __longlong_as_double(oldval) + value );
       }
-    }
-  #endif
+    #endif
+  }
   __device__ __forceinline__ void atomicAdd(int &update , int value) {
     ::atomicAdd( &update , value );
   }
@@ -84,11 +82,13 @@
   __device__ __forceinline__ void atomicMin(unsigned int &update , unsigned int value) {
     ::atomicMin( &update , value );
   }
-  #if __CUDA_ARCH__ >= 350
-    __device__ __forceinline__ void atomicMin(unsigned long long int &update , unsigned long long int value) {
+  __device__ __forceinline__ void atomicMin(unsigned long long int &update , unsigned long long int value) {
+    #if __CUDA_ARCH__ >= 350
       ::atomicMin( &update , value );
-    }
-  #endif
+    #else
+      yakl_throw("ERROR: atomicMin not implemented for unsigned long long int for this CUDA architecture");
+    #endif
+  }
 
   ////////////////////////////////////////////////////////////
   // CUDA has HW atomics for atomicMax int, unsigned int, and unsigned long long int
@@ -99,11 +99,13 @@
   __device__ __forceinline__ void atomicMax(unsigned int &update , unsigned int value) {
     ::atomicMax( &update , value );
   }
-  #if __CUDA_ARCH__ >= 350
-    __device__ __forceinline__ void atomicMax(unsigned long long int &update , unsigned long long int value) {
+  __device__ __forceinline__ void atomicMax(unsigned long long int &update , unsigned long long int value) {
+    #if __CUDA_ARCH__ >= 350
       ::atomicMax( &update , value );
-    }
-  #endif
+    #else
+      yakl_throw("ERROR: atomicMin not implemented for unsigned long long int for this CUDA architecture");
+    #endif
+  }
 
 
 #elif defined(YAKL_ARCH_SYCL)
@@ -332,7 +334,7 @@
     #pragma omp atomic update 
     update += value;
   }
-  template <class T> inline void atomicMin(T&update, T value) {
+  template <class T> inline void atomicMin(T &update, T value) {
     #pragma omp critical
     {
       update = value < update ? value : update;
