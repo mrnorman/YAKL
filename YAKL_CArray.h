@@ -413,18 +413,22 @@ public:
       this->myname = rhs.myname;
     #endif
     this->myData   = rhs.myData;
+    #if YAKL_CURRENTLY_ON_HOST()
+      yakl_mtx_lock();
+    #endif
     if (std::is_const<T>::value) {
       this->refCount = nullptr;
     } else {
       this->refCount = rhs.refCount;
       if (this->refCount != nullptr) {
         #if YAKL_CURRENTLY_ON_HOST()
-          yakl_mtx_lock();
           (*this->refCount)++;
-          yakl_mtx_unlock();
         #endif
       }
     }
+    #if YAKL_CURRENTLY_ON_HOST()
+      yakl_mtx_unlock();
+    #endif
   }
   YAKL_INLINE Array(Array<const_value_type,rank,myMem,styleC> const &rhs) {
     static_assert( std::is_const<T>::value , 
@@ -438,18 +442,22 @@ public:
       this->myname = rhs.myname;
     #endif
     this->myData   = rhs.myData;
+    #if YAKL_CURRENTLY_ON_HOST()
+      yakl_mtx_lock();
+    #endif
     if (std::is_const<T>::value) {
       this->refCount = nullptr;
     } else {
       this->refCount = rhs.refCount;
       if (this->refCount != nullptr) {
         #if YAKL_CURRENTLY_ON_HOST()
-          yakl_mtx_lock();
           (*this->refCount)++;
-          yakl_mtx_unlock();
         #endif
       }
     }
+    #if YAKL_CURRENTLY_ON_HOST()
+      yakl_mtx_unlock();
+    #endif
   }
 
 
@@ -467,18 +475,22 @@ public:
       this->myname = rhs.myname;
     #endif
     this->myData   = rhs.myData;
-    this->refCount = rhs.refCount;
+    #if YAKL_CURRENTLY_ON_HOST()
+      yakl_mtx_lock();
+    #endif
     if (std::is_const<T>::value) {
       this->refCount = nullptr;
     } else {
+      this->refCount = rhs.refCount;
       if (this->refCount != nullptr) {
         #if YAKL_CURRENTLY_ON_HOST()
-          yakl_mtx_lock();
           (*this->refCount)++;
-          yakl_mtx_unlock();
         #endif
       }
     }
+    #if YAKL_CURRENTLY_ON_HOST()
+      yakl_mtx_unlock();
+    #endif
 
     return *this;
   }
@@ -498,18 +510,22 @@ public:
       this->myname = rhs.myname;
     #endif
     this->myData   = rhs.myData;
-    this->refCount = rhs.refCount;
+    #if YAKL_CURRENTLY_ON_HOST()
+      yakl_mtx_lock();
+    #endif
     if (std::is_const<T>::value) {
       this->refCount = nullptr;
     } else {
+      this->refCount = rhs.refCount;
       if (this->refCount != nullptr) {
         #if YAKL_CURRENTLY_ON_HOST()
-          yakl_mtx_lock();
           (*this->refCount)++;
-          yakl_mtx_unlock();
         #endif
       }
     }
+    #if YAKL_CURRENTLY_ON_HOST()
+      yakl_mtx_unlock();
+    #endif
 
     return *this;
   }
@@ -530,9 +546,9 @@ public:
       this->myname = rhs.myname;
     #endif
     this->myData   = rhs.myData;
-    this->refCount = rhs.refCount;
-
     rhs.myData   = nullptr;
+
+    this->refCount = rhs.refCount;
     rhs.refCount = nullptr;
   }
 
@@ -549,9 +565,9 @@ public:
       this->myname = rhs.myname;
     #endif
     this->myData   = rhs.myData;
-    this->refCount = rhs.refCount;
-
     rhs.myData   = nullptr;
+
+    this->refCount = rhs.refCount;
     rhs.refCount = nullptr;
 
     return *this;
@@ -587,14 +603,12 @@ public:
       ret.myname = this->myname;
     #endif
     ret.myData = this->myData;
+    yakl_mtx_lock();
     ret.refCount = this->refCount;
     if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        yakl_mtx_lock();
-        (*this->refCount)++;
-        yakl_mtx_unlock();
-      #endif
+      (*this->refCount)++;
     }
+    yakl_mtx_unlock();
     return ret;
   }
 
@@ -609,14 +623,12 @@ public:
       ret.myname = this->myname;
     #endif
     ret.myData = this->myData;
+    yakl_mtx_lock();
     ret.refCount = this->refCount;
     if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        yakl_mtx_lock();
-        (*this->refCount)++;
-        yakl_mtx_unlock();
-      #endif
+      (*this->refCount)++;
     }
+    yakl_mtx_unlock();
     return ret;
   }
 
@@ -631,6 +643,7 @@ public:
   inline void allocate(char const * label = "") {
     // static_assert( std::is_arithmetic<T>() || myMem == memHost , 
     //                "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
+    yakl_mtx_lock();
     this->refCount = new int;
     *this->refCount = 1;
     if (myMem == memDevice) {
@@ -638,6 +651,7 @@ public:
     } else {
       this->myData = new T[this->totElems()];
     }
+    yakl_mtx_unlock();
   }
 
 
@@ -648,10 +662,9 @@ public:
 
   template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
   inline void deallocate() {
+    yakl_mtx_lock();
     if (this->refCount != nullptr) {
-      yakl_mtx_lock();
       (*this->refCount)--;
-      yakl_mtx_unlock();
 
       if (*this->refCount == 0) {
         delete this->refCount;
@@ -671,6 +684,7 @@ public:
       }
 
     }
+    yakl_mtx_unlock();
   }
 
 };
