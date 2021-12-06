@@ -5,7 +5,10 @@ template <class T, int rank, int myMem, int myStyle>
 class ArrayBase {
 public:
 
-  typedef typename std::remove_const<T>::type type;
+  typedef typename std::remove_cv<T>::type type;
+  typedef          T value_type;
+  typedef typename std::add_const<type>::type const_value_type;
+  typedef typename std::remove_const<type>::type non_const_value_type;
 
   T       * myData;         // Pointer to the flattened internal data
   index_t dimension[rank];  // Sizes of the 8 possible dimensions
@@ -99,16 +102,18 @@ public:
       os << v.dimension[i] << ", ";
     }
     os << "\n";
-    T *local = v.myData;
+    const_value_type     *local = v.myData;
+    non_const_value_type *from_dev;
     if (myMem == memDevice) {
-      local = new T[v.totElems()];
-      memcpy_device_to_host( local , v.myData , v.totElems() );
+      from_dev = new non_const_value_type[v.totElems()];
+      memcpy_device_to_host( from_dev , v.myData , v.totElems() );
+      local = from_dev;
     }
     for (index_t i=0; i<v.totElems(); i++) {
       os << local[i] << " ";
     }
     if (myMem == memDevice) {
-      delete[] local;
+      delete[] from_dev;
     }
     os << "\n";
     return os;

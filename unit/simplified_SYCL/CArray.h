@@ -124,8 +124,8 @@ public:
       refCount = new int;
       *refCount = 1;
       //myData = (T *) yaklAllocDevice( totElems()*sizeof(T) , label );
-      //myData = sycl::malloc_device(bytes,sycl_default_stream);
-      myData = (T *) sycl::malloc_device(totElems()*sizeof(T),sycl_default_stream);
+      //myData = sycl::malloc_device(bytes,sycl_default_stream());
+      myData = (T *) sycl::malloc_device(totElems()*sizeof(T),sycl_default_stream());
     }
   }
 
@@ -140,7 +140,7 @@ public:
           refCount = nullptr;
           if (totElems() > 0) {
             //yaklFreeDevice(myData,"");
-            sycl::free(myData, sycl_default_stream);
+            sycl::free(myData, sycl_default_stream());
             myData = nullptr;
           }
         }

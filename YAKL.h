@@ -100,6 +100,7 @@ namespace yakl {
     yakl_mtx.lock();
 
     if ( isInitialized() ) {
+      pool.finalize();
       #ifdef YAKL_ARCH_CUDA
         cudaFree(functorBuffer);
         check_last_error();
@@ -107,9 +108,10 @@ namespace yakl {
       #if defined(YAKL_ARCH_SYCL)
         sycl::free(functorBuffer, sycl_default_stream());
         check_last_error();
+        delete sycl_default_stream;
+        sycl_default_stream = nullptr;
       #endif
       yakl_is_initialized = false;
-      pool.finalize();
       #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
         GPTLpr_file("");
         GPTLpr_file("yakl_timer_output.txt");

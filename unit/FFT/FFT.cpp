@@ -66,6 +66,7 @@ int main() {
     });
 
     data.deep_copy_to(dataHost);
+    yakl::fence();
     for (int i=0; i < n; i++) {
       if ( abs(dataHost(i) - dataInit(i)) > 1.e-13 ) { die("ERROR: backward gives wrong answer"); }
     }

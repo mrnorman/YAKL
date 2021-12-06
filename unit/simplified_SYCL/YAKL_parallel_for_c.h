@@ -69,7 +69,7 @@ namespace c {
 
   template<class F, int N, bool simple>
   void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , int vectorSize = 128 ) {
-    sycl_default_stream.parallel_for<class sycl_kernel>( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
+    sycl_default_stream().parallel_for<class sycl_kernel>( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
       callFunctor( f , bounds , i );
     });
   }
