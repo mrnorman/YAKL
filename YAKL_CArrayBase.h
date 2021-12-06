@@ -12,6 +12,12 @@ public:
     #ifdef YAKL_DEBUG
       if ( rank != 1 || i0 >= this->dimension[0] || 
                         !this->initialized() ) { indexing_check(1,i0); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
     #endif
     index_t ind = i0;
     return this->myData[ind];
@@ -21,6 +27,13 @@ public:
       if ( rank != 2 || i0 >= this->dimension[0] ||
                         i1 >= this->dimension[1] || 
                         !this->initialized() ) { indexing_check(2,i0,i1); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = i0*this->dimension[1] + i1;
     return this->myData[ind];
@@ -31,6 +44,13 @@ public:
                         i1 >= this->dimension[1] ||
                         i2 >= this->dimension[2] || 
                         !this->initialized() ) { indexing_check(3,i0,i1,i2); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = (i0*this->dimension[1] + i1)*this->dimension[2] + i2;
     return this->myData[ind];
@@ -42,6 +62,13 @@ public:
                         i2 >= this->dimension[2] ||
                         i3 >= this->dimension[3] || 
                         !this->initialized() ) { indexing_check(4,i0,i1,i2,i3); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = ((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3;
     return this->myData[ind];
@@ -54,6 +81,13 @@ public:
                         i3 >= this->dimension[3] ||
                         i4 >= this->dimension[4] || 
                         !this->initialized() ) { indexing_check(5,i0,i1,i2,i3,i4); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = (((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3)*this->dimension[4] + i4;
     return this->myData[ind];
@@ -67,6 +101,13 @@ public:
                         i4 >= this->dimension[4] ||
                         i5 >= this->dimension[5] || 
                         !this->initialized() ) { indexing_check(6,i0,i1,i2,i3,i4,i5); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = ((((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3)*this->dimension[4] + i4)*this->dimension[5] + i5;
     return this->myData[ind];
@@ -81,6 +122,13 @@ public:
                         i5 >= this->dimension[5] ||
                         i6 >= this->dimension[6] || 
                         !this->initialized() ) { indexing_check(7,i0,i1,i2,i3,i4,i5,i6); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = (((((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3)*this->dimension[4] + i4)*this->dimension[5] + i5)*this->dimension[6] + i6;
     return this->myData[ind];
@@ -96,6 +144,13 @@ public:
                         i6 >= this->dimension[6] ||
                         i7 >= this->dimension[7] || 
                         !this->initialized() ) { indexing_check(8,i0,i1,i2,i3,i4,i5,i6,i7); };
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+      #endif
+
     #endif
     index_t ind = ((((((i0*this->dimension[1] + i1)*this->dimension[2] + i2)*this->dimension[3] + i3)*this->dimension[4] + i4)*this->dimension[5] + i5)*this->dimension[6] + i6)*this->dimension[7] + i7;
     return this->myData[ind];
