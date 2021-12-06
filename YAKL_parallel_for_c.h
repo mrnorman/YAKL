@@ -604,7 +604,7 @@ namespace c {
         sycl_default_stream().memcpy(fp, &f, sizeof(F));
         sycl_default_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
           callFunctor( *fp , bounds , i );
-        });
+        }).wait();
       }
 
       check_last_error();

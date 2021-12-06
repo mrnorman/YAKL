@@ -108,8 +108,6 @@ namespace yakl {
       #if defined(YAKL_ARCH_SYCL)
         sycl::free(functorBuffer, sycl_default_stream());
         check_last_error();
-        delete sycl_default_stream;
-        sycl_default_stream = nullptr;
       #endif
       yakl_is_initialized = false;
       #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
