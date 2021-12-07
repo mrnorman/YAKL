@@ -65,6 +65,14 @@
         functorBuffer = sycl::malloc_device(functorBufSize, sycl_default_stream());
       #endif
 
+      #if defined(YAKL_ARCH_CUDA)
+        int id;
+        cudaGetDevice(&id);
+        cudaDeviceProp props;
+        cudaGetDeviceProperties(&props,id);
+        if (yakl_masterproc()) std::cout << props.name << std::endl;
+      #endif
+
       #if defined(YAKL_ARCH_HIP)
         int id;
         hipGetDevice(&id);

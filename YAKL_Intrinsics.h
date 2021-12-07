@@ -77,6 +77,9 @@ namespace intrinsics {
   ////////////////////////////////////////////////////////////////////////
   template <class T, int rank, int myStyle>
   inline T minval( Array<T,rank,memHost,myStyle> const &arr ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
+    #endif
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] < m) { m = arr.myData[i]; }
@@ -85,6 +88,9 @@ namespace intrinsics {
   }
   template <class T, int rank, int myStyle>
   inline T minval( Array<T,rank,memDevice,myStyle> const &arr ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
+    #endif
     ParallelMin<T,memDevice> pmin(arr.totElems());
     return pmin( arr.data() );
   }
@@ -140,6 +146,9 @@ namespace intrinsics {
   ////////////////////////////////////////////////////////////////////////
   template <class T, int rank, int myStyle>
   inline T maxval( Array<T,rank,memHost,myStyle> const &arr ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling maxval on an array that has not been initialized"); }
+    #endif
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] > m) { m = arr.myData[i]; }
@@ -148,6 +157,9 @@ namespace intrinsics {
   }
   template <class T, int rank, int myStyle>
   inline T maxval( Array<T,rank,memDevice,myStyle> const &arr ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling maxval on an array that has not been initialized"); }
+    #endif
     ParallelMax<T,memDevice> pmax(arr.totElems());
     return pmax( arr.data() );
   }
@@ -203,12 +215,18 @@ namespace intrinsics {
   ////////////////////////////////////////////////////////////////////////
   template <class T, int rank, int myStyle>
   inline T sum( Array<T,rank,memHost,myStyle> const &arr ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling sum on an array that has not been initialized"); }
+    #endif
     T m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
     return m;
   }
   template <class T, int rank, int myStyle>
   inline T sum( Array<T,rank,memDevice,myStyle> const &arr ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling sum on an array that has not been initialized"); }
+    #endif
     ParallelSum<T,memDevice> psum(arr.totElems());
     return psum( arr.data() );
   }
@@ -251,6 +269,9 @@ namespace intrinsics {
   ///////////////////////////
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyLT ( Array<T,rank,memDevice,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] < val ) { ret = true; }
@@ -259,6 +280,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyLTE ( Array<T,rank,memDevice,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] <= val ) { ret = true; }
@@ -267,6 +291,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyGT ( Array<T,rank,memDevice,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] > val ) { ret = true; }
@@ -275,6 +302,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyGTE ( Array<T,rank,memDevice,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] >= val ) { ret = true; }
@@ -283,6 +313,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyEQ ( Array<T,rank,memDevice,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] == val ) { ret = true; }
@@ -291,6 +324,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyNEQ ( Array<T,rank,memDevice,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( arr.myData[i] != val ) { ret = true; }
@@ -304,6 +340,9 @@ namespace intrinsics {
   ///////////////////////////
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyLT ( Array<T,rank,memDevice,myStyle> const &arr , Array<bool,rank,memDevice,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
@@ -312,6 +351,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyLTE ( Array<T,rank,memDevice,myStyle> const &arr , Array<bool,rank,memDevice,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
@@ -320,6 +362,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyGT ( Array<T,rank,memDevice,myStyle> const &arr , Array<bool,rank,memDevice,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
@@ -328,6 +373,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyGTE ( Array<T,rank,memDevice,myStyle> const &arr , Array<bool,rank,memDevice,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
@@ -336,6 +384,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyEQ ( Array<T,rank,memDevice,myStyle> const &arr , Array<bool,rank,memDevice,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
@@ -344,6 +395,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyNEQ ( Array<T,rank,memDevice,myStyle> const &arr , Array<bool,rank,memDevice,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<bool> ret(false);
     c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
       if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
@@ -358,6 +412,9 @@ namespace intrinsics {
   ///////////////////////////
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyLT( Array<T,rank,memHost,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] < val ) { ret = true; }
@@ -366,6 +423,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyLTE( Array<T,rank,memHost,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] <= val ) { ret = true; }
@@ -374,6 +434,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyGT( Array<T,rank,memHost,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] > val ) { ret = true; }
@@ -382,6 +445,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyGTE( Array<T,rank,memHost,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] >= val ) { ret = true; }
@@ -390,6 +456,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyEQ( Array<T,rank,memHost,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] == val ) { ret = true; }
@@ -398,6 +467,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyNEQ( Array<T,rank,memHost,myStyle> const &arr , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( arr.myData[i] != val ) { ret = true; }
@@ -412,6 +484,9 @@ namespace intrinsics {
   ///////////////////////////
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyLT( Array<T,rank,memHost,myStyle> const &arr , Array<bool,rank,memHost,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
@@ -420,6 +495,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyLTE( Array<T,rank,memHost,myStyle> const &arr , Array<bool,rank,memHost,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
@@ -428,6 +506,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyGT( Array<T,rank,memHost,myStyle> const &arr , Array<bool,rank,memHost,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
@@ -436,6 +517,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyGTE( Array<T,rank,memHost,myStyle> const &arr , Array<bool,rank,memHost,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
@@ -444,6 +528,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyEQ( Array<T,rank,memHost,myStyle> const &arr , Array<bool,rank,memHost,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
@@ -452,6 +539,9 @@ namespace intrinsics {
   }
   template <class T, class TVAL, int rank, int myStyle>
   inline bool anyNEQ( Array<T,rank,memHost,myStyle> const &arr , Array<bool,rank,memHost,myStyle> const &mask , TVAL val ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    #endif
     bool ret = false;
     for (int i=0; i < arr.totElems(); i++) {
       if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
@@ -961,6 +1051,9 @@ namespace intrinsics {
   /////////////////////////////////////////////////////////////////
   template <int rank, int myStyle>
   inline int count( Array<bool,rank,memHost,myStyle> const &mask ) {
+    #ifdef YAKL_DEBUG
+      if (!mask.initialized()) { yakl_throw("ERROR: calling count on an array that has not been initialized"); }
+    #endif
     int numTrue = 0;
     for (int i=0; i < mask.totElems(); i++) {
       if (mask.myData[i]) { numTrue++; }
@@ -969,6 +1062,9 @@ namespace intrinsics {
   }
   template <int rank, int myStyle>
   inline int count( Array<bool,rank,memDevice,myStyle> const &mask ) {
+    #ifdef YAKL_DEBUG
+      if (!mask.initialized()) { yakl_throw("ERROR: calling count on an array that has not been initialized"); }
+    #endif
     ScalarLiveOut<int> numTrue(0);
     c::parallel_for( c::SimpleBounds<1>( mask.totElems() ) , YAKL_DEVICE_LAMBDA (int i) {
       if (mask.myData[i]) { atomicAdd(numTrue(),1); }

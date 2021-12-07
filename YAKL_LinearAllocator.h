@@ -55,7 +55,8 @@ public:
     this->myfree    = myfree  ;
     this->myzero    = myzero  ;
     this->pool      = mymalloc( poolSize() );
-    this->allocs    = std::vector<AllocNode>(128);
+    this->allocs    = std::vector<AllocNode>();
+    this->allocs.reserve(128);
     if (pool == nullptr) {
       std::cerr << "ERROR: Could not create pool of size " << bytes << "\n" <<
                    "You have run out of memory. If GATOR_INITIAL_MB and GATOR_GROW_MB are too small " <<

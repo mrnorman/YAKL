@@ -10,6 +10,7 @@
   #define YAKL_SCOPE(a,b) auto &a = b
   #define YAKL_SEPARATE_MEMORY_SPACE
   #define YAKL_CURRENTLY_ON_HOST() (! defined(__CUDA_ARCH__))
+  #define YAKL_CURRENTLY_ON_DEVICE() (defined(__CUDA_ARCH__))
   #include <cub/cub.cuh>
 
 #elif defined(YAKL_ARCH_HIP)
@@ -21,6 +22,7 @@
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
   #define YAKL_SEPARATE_MEMORY_SPACE
   #define YAKL_CURRENTLY_ON_HOST() (! defined(__HIP_DEVICE_COMPILE__))
+  #define YAKL_CURRENTLY_ON_DEVICE() (defined(__HIP_DEVICE_COMPILE__))
   #include "hip/hip_runtime.h"
   #include <hipcub/hipcub.hpp>
 
@@ -33,6 +35,7 @@
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
   #define YAKL_SEPARATE_MEMORY_SPACE
   #define YAKL_CURRENTLY_ON_HOST() (! defined(__SYCL_DEVICE_ONLY__))
+  #define YAKL_CURRENTLY_ON_DEVICE() (defined(__SYCL_DEVICE_ONLY__))
   #include <CL/sycl.hpp>
 
 #elif defined(YAKL_ARCH_OPENMP45)
@@ -44,6 +47,7 @@
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
   #define YAKL_SEPARATE_MEMORY_SPACE
   #define YAKL_CURRENTLY_ON_HOST() 1
+  #define YAKL_CURRENTLY_ON_DEVICE() 1
   #include <omp.h>
 
 #elif defined(YAKL_ARCH_OPENMP)
@@ -54,6 +58,7 @@
   #define YAKL_DEVICE_INLINE inline 
   #define YAKL_SCOPE(a,b) auto &a = b
   #define YAKL_CURRENTLY_ON_HOST() 1
+  #define YAKL_CURRENTLY_ON_DEVICE() 1
 
 #else
 
@@ -63,6 +68,7 @@
   #define YAKL_DEVICE_INLINE inline
   #define YAKL_SCOPE(a,b) auto &a = b
   #define YAKL_CURRENTLY_ON_HOST() 1
+  #define YAKL_CURRENTLY_ON_DEVICE() 1
 
 #endif
 
