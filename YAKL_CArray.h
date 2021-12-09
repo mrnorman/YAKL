@@ -39,6 +39,7 @@ public:
   // Owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   YAKL_INLINE Array(char const * label, index_t const d1) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 1 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -48,7 +49,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
@@ -58,6 +58,7 @@ public:
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 2 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -67,7 +68,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
@@ -78,6 +78,7 @@ public:
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 3 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -87,7 +88,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
@@ -99,6 +99,7 @@ public:
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 4 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -108,7 +109,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
@@ -121,6 +121,7 @@ public:
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 5 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -130,7 +131,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
@@ -144,6 +144,7 @@ public:
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 6 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -153,7 +154,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
@@ -168,6 +168,7 @@ public:
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 7 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -177,7 +178,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
@@ -193,6 +193,7 @@ public:
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 8 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -202,7 +203,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     #if YAKL_CURRENTLY_ON_HOST()
       deallocate();
     #endif
@@ -220,12 +220,12 @@ public:
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
   Array(char const * label, std::vector<INT> const dims) {
+    nullify();
     #ifdef YAKL_DEBUG
       if ( dims.size() < rank ) { yakl_throw("ERROR: dims < rank"); }
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
       this->myname = label;
     #endif
-    nullify();
     deallocate();
     for (int i=0; i < rank; i++) {
       this->dimension[i] = dims[i];
@@ -236,6 +236,7 @@ public:
   // Non-owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   YAKL_INLINE Array(char const * label, T * data, index_t const d1) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 1 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -245,12 +246,12 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     this->dimension[0] = d1;
     this->myData = data;
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 2 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -260,13 +261,13 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     this->myData = data;
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 3 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -276,7 +277,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     this->dimension[2] = d3;
@@ -284,6 +284,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 4 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -293,7 +294,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     this->dimension[2] = d3;
@@ -302,6 +302,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 5 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -311,7 +312,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     this->dimension[2] = d3;
@@ -321,6 +321,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 6 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -330,7 +331,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     this->dimension[2] = d3;
@@ -341,6 +341,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 7 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -350,7 +351,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     this->dimension[2] = d3;
@@ -362,6 +362,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 8 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -371,7 +372,6 @@ public:
       }
       this->myname = label;
     #endif
-    nullify();
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     this->dimension[2] = d3;
@@ -385,12 +385,12 @@ public:
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
   inline Array(char const * label, T * data, std::vector<INT> const dims) {
+    nullify();
     #ifdef YAKL_DEBUG
       if ( dims.size() < rank ) { yakl_throw("ERROR: dims < rank"); }
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
       this->myname = label;
     #endif
-    nullify();
     for (int i=0; i < rank; i++) {
       this->dimension[i] = dims[i];
     }
