@@ -495,15 +495,11 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_lock();
     #endif
-    if (std::is_const<T>::value) {
-      this->refCount = nullptr;
-    } else {
-      this->refCount = rhs.refCount;
-      if (refCount != nullptr) {
-        #if YAKL_CURRENTLY_ON_HOST()
-          (*this->refCount)++;
-        #endif
-      }
+    this->refCount = rhs.refCount;
+    if (refCount != nullptr) {
+      #if YAKL_CURRENTLY_ON_HOST()
+        (*this->refCount)++;
+      #endif
     }
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_unlock();
@@ -525,15 +521,11 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_lock();
     #endif
-    if (std::is_const<T>::value) {
-      this->refCount = nullptr;
-    } else {
-      this->refCount = rhs.refCount;
-      if (refCount != nullptr) {
-        #if YAKL_CURRENTLY_ON_HOST()
-          (*this->refCount)++;
-        #endif
-      }
+    this->refCount = rhs.refCount;
+    if (refCount != nullptr) {
+      #if YAKL_CURRENTLY_ON_HOST()
+        (*this->refCount)++;
+      #endif
     }
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_unlock();
@@ -557,15 +549,11 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_lock();
     #endif
-    if (std::is_const<T>::value) {
-      this->refCount = nullptr;
-    } else {
-      this->refCount = rhs.refCount;
-      if (refCount != nullptr) {
-        #if YAKL_CURRENTLY_ON_HOST()
-          (*this->refCount)++;
-        #endif
-      }
+    this->refCount = rhs.refCount;
+    if (refCount != nullptr) {
+      #if YAKL_CURRENTLY_ON_HOST()
+        (*this->refCount)++;
+      #endif
     }
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_unlock();
@@ -590,15 +578,11 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_lock();
     #endif
-    if (std::is_const<T>::value) {
-      this->refCount = nullptr;
-    } else {
-      this->refCount = rhs.refCount;
-      if (refCount != nullptr) {
-        #if YAKL_CURRENTLY_ON_HOST()
-          (*this->refCount)++;
-        #endif
-      }
+    this->refCount = rhs.refCount;
+    if (refCount != nullptr) {
+      #if YAKL_CURRENTLY_ON_HOST()
+        (*this->refCount)++;
+      #endif
     }
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_unlock();
