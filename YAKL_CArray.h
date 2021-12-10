@@ -419,7 +419,7 @@ public:
     this->refCount = rhs.refCount;
     if (this->refCount != nullptr) {
       #if YAKL_CURRENTLY_ON_HOST()
-        (*this->refCount)++;
+        (*(this->refCount))++;
       #endif
     }
     #if YAKL_CURRENTLY_ON_HOST()
@@ -444,7 +444,7 @@ public:
     this->refCount = rhs.refCount;
     if (this->refCount != nullptr) {
       #if YAKL_CURRENTLY_ON_HOST()
-        (*this->refCount)++;
+        (*(this->refCount))++;
       #endif
     }
     #if YAKL_CURRENTLY_ON_HOST()
@@ -473,7 +473,7 @@ public:
     this->refCount = rhs.refCount;
     if (this->refCount != nullptr) {
       #if YAKL_CURRENTLY_ON_HOST()
-        (*this->refCount)++;
+        (*(this->refCount))++;
       #endif
     }
     #if YAKL_CURRENTLY_ON_HOST()
@@ -504,7 +504,7 @@ public:
     this->refCount = rhs.refCount;
     if (this->refCount != nullptr) {
       #if YAKL_CURRENTLY_ON_HOST()
-        (*this->refCount)++;
+        (*(this->refCount))++;
       #endif
     }
     #if YAKL_CURRENTLY_ON_HOST()
@@ -590,7 +590,7 @@ public:
     yakl_mtx_lock();
     ret.refCount = this->refCount;
     if (this->refCount != nullptr) {
-      (*this->refCount)++;
+      (*(this->refCount))++;
     }
     yakl_mtx_unlock();
     return ret;
@@ -610,7 +610,7 @@ public:
     yakl_mtx_lock();
     ret.refCount = this->refCount;
     if (this->refCount != nullptr) {
-      (*this->refCount)++;
+      (*(this->refCount))++;
     }
     yakl_mtx_unlock();
     return ret;
@@ -619,7 +619,11 @@ public:
 
   /* ACCESSORS */
   inline int use_count() const {
-    return *this->refCount;
+    if (this->refCount != nullptr) {
+      return *(this->refCount);
+    } else {
+      return 0;
+    }
   }
 
 
@@ -629,7 +633,7 @@ public:
     //                "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
     yakl_mtx_lock();
     this->refCount = new int;
-    *this->refCount = 1;
+    (*(this->refCount)) = 1;
     if (myMem == memDevice) {
       this->myData = (T *) yaklAllocDevice( this->totElems()*sizeof(T) , label );
     } else {
@@ -641,6 +645,11 @@ public:
 
   template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
   inline void deallocate() {
+    yakl_mtx_lock();
+    if (this->refCount != nullptr) {
+      (*(this->refCount))--;
+    }
+    yakl_mtx_unlock();
   }
 
 
@@ -648,7 +657,7 @@ public:
   inline void deallocate() {
     yakl_mtx_lock();
     if (this->refCount != nullptr) {
-      (*this->refCount)--;
+      (*(this->refCount))--;
 
       if (*this->refCount == 0) {
         delete this->refCount;
