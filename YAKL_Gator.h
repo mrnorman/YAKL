@@ -152,6 +152,7 @@ public:
           ptr = it->allocate(bytes,label);
           room_found = true;
           if (ptr == nullptr) stacky_bug = true;
+          break;
         }
       }
       if (!room_found) {
