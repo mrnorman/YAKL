@@ -6,6 +6,10 @@
 #include <mpi.h>
 #endif
 
+#ifdef YAKL_ARCH_SYCL
+#include "YAKL_sycldevice.hpp"
+#endif
+
 namespace yakl {
 
   YAKL_INLINE void yakl_throw(const char * msg) {

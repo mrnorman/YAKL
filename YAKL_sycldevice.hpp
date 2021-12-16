@@ -63,7 +63,7 @@ namespace yakl {
     }
     void check_id(unsigned int id) const {
       if (id >= _devs.size()) {
-        yakl_throw("ERROR: invalid SYCL device id");
+	std::cerr << "ERROR: invalid SYCL device id \n";
       }
     }
     std::vector<std::shared_ptr<sycl::device>> _devs;
