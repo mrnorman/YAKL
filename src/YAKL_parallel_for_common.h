@@ -133,7 +133,7 @@ template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f )
     f( i0 );
   }
 }
-template <class F> inline void parallel_for_cpu_serial( Bounds<1,false> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<1,simple> const &bounds , F const &f ) {
   #ifdef YAKL_ARCH_OPENMP45
     #pragma omp target teams distribute parallel for simd
   #endif
@@ -144,7 +144,7 @@ template <class F> inline void parallel_for_cpu_serial( Bounds<1,false> const &b
     f( i0 );
   }
 }
-template <class F> inline void parallel_for_cpu_serial( Bounds<2,false> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<2,simple> const &bounds , F const &f ) {
   #ifdef YAKL_ARCH_OPENMP45
     #pragma omp target teams distribute parallel for simd collapse(2) 
   #endif
@@ -156,7 +156,7 @@ template <class F> inline void parallel_for_cpu_serial( Bounds<2,false> const &b
     f( i0 , i1 );
   } }
 }
-template <class F> inline void parallel_for_cpu_serial( Bounds<3,false> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<3,simple> const &bounds , F const &f ) {
   #ifdef YAKL_ARCH_OPENMP45
     #pragma omp target teams distribute parallel for simd collapse(3)
   #endif
@@ -169,7 +169,7 @@ template <class F> inline void parallel_for_cpu_serial( Bounds<3,false> const &b
     f( i0 , i1 , i2 );
   } } }
 }
-template <class F> inline void parallel_for_cpu_serial( Bounds<4,false> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<4,simple> const &bounds , F const &f ) {
   #ifdef YAKL_ARCH_OPENMP45
     #pragma omp target teams distribute parallel for simd collapse(4)
   #endif
@@ -183,7 +183,7 @@ template <class F> inline void parallel_for_cpu_serial( Bounds<4,false> const &b
     f( i0 , i1 , i2 , i3 );
   } } } }
 }
-template <class F> inline void parallel_for_cpu_serial( Bounds<5,false> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<5,simple> const &bounds , F const &f ) {
   #ifdef YAKL_ARCH_OPENMP45
     #pragma omp target teams distribute parallel for simd collapse(5)
   #endif
@@ -198,7 +198,7 @@ template <class F> inline void parallel_for_cpu_serial( Bounds<5,false> const &b
     f( i0 , i1 , i2 , i3 , i4 );
   } } } } }
 }
-template <class F> inline void parallel_for_cpu_serial( Bounds<6,false> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<6,simple> const &bounds , F const &f ) {
   #ifdef YAKL_ARCH_OPENMP45
     #pragma omp target teams distribute parallel for simd collapse(6)
   #endif
@@ -214,7 +214,7 @@ template <class F> inline void parallel_for_cpu_serial( Bounds<6,false> const &b
     f( i0 , i1 , i2 , i3 , i4 , i5 );
   } } } } } }
 }
-template <class F> inline void parallel_for_cpu_serial( Bounds<7,false> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<7,simple> const &bounds , F const &f ) {
   #ifdef YAKL_ARCH_OPENMP45
     #pragma omp target teams distribute parallel for simd collapse(7)
   #endif
@@ -231,7 +231,7 @@ template <class F> inline void parallel_for_cpu_serial( Bounds<7,false> const &b
     f( i0 , i1 , i2 , i3 , i4 , i5 , i6 );
   } } } } } } }
 }
-template <class F> inline void parallel_for_cpu_serial( Bounds<8,false> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<8,simple> const &bounds , F const &f ) {
   #ifdef YAKL_ARCH_OPENMP45
     #pragma omp target teams distribute parallel for simd collapse(8)
   #endif
@@ -290,3 +290,38 @@ inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F 
     nvtxRangePop();
   #endif
 }
+
+// Single bound or integer, no label
+// Since "bnd" is accepted by value, integers will be accepted as well
+template <class F> inline void parallel_for( LBnd bnd , F const &f , int vectorSize = 128 ) {
+  if (bnd.l == bnd.default_lbound && bnd.s == 1) {
+    parallel_for( Bounds<1,true>(bnd.to_scalar()) , f , vectorSize );
+  } else {
+    parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+  }
+}
+
+// Single bound or integer, label
+// Since "bnd" is accepted by value, integers will be accepted as well
+template <class F> inline void parallel_for( char const * str , LBnd bnd , F const &f , int vectorSize = 128 ) {
+  #ifdef YAKL_ARCH_CUDA
+    nvtxRangePushA(str);
+  #endif
+  #ifdef YAKL_AUTO_PROFILE
+    timer_start(str);
+  #endif
+
+  if (bnd.l == bnd.default_lbound && bnd.s == 1) {
+    parallel_for( Bounds<1,true>(bnd.to_scalar()) , f , vectorSize );
+  } else {
+    parallel_for( Bounds<1,false>(bnd) , f , vectorSize );
+  }
+
+  #ifdef YAKL_AUTO_PROFILE
+    timer_stop(str);
+  #endif
+  #ifdef YAKL_ARCH_CUDA
+    nvtxRangePop();
+  #endif
+}
+
