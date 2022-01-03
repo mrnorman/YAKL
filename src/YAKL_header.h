@@ -46,3 +46,7 @@
   #include <omp.h>
 #endif
 
+#ifdef YAKL_ARCH_CUDA
+  #include <nvtx3/nvToolsExt.h>
+#endif
+
