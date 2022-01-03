@@ -1,20 +1,6 @@
 
 #pragma once
 
-#include <list>
-#include <functional>
-#if defined(YAKL_ARCH_HIP)
-  #include "hip/hip_runtime.h"
-#endif
-#if defined(YAKL_ARCH_SYCL)
-  #include <CL/sycl.hpp>
-#endif
-#if defined( YAKL_ARCH_OPENMP45)
-  #include <omp.h>
-#endif
-
-#include "YAKL_alloc_free.h"
-
 #include "YAKL_LinearAllocator.h"
 
 

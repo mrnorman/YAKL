@@ -12,7 +12,8 @@
 #include <vector>
 #include <mutex>
 #include "stdlib.h"
-#include "YAKL_Gator.h"
+#include <list>
+#include <functional>
 
 #ifdef HAVE_MPI
 #include <mpi.h>
@@ -24,13 +25,7 @@
 #include <string>
 #endif
 
-#include "YAKL_defines.h"
-
 #ifdef _OPENMP45
-#include <omp.h>
-#endif
-
-#ifdef YAKL_ARCH_OPENMP45
 #include <omp.h>
 #endif
 
@@ -38,6 +33,16 @@
 #include "openacc.h"
 #endif
 
-#include "YAKL_error.h"
-#include "YAKL_alloc_free.h"
+#if   defined(YAKL_ARCH_CUDA)
+  #include <cub/cub.cuh>
+#elif defined(YAKL_ARCH_HIP)
+  #include "hip/hip_runtime.h"
+  #include <hipcub/hipcub.hpp>
+#elif defined(YAKL_ARCH_SYCL)
+  #include <CL/sycl.hpp>
+#elif defined(YAKL_ARCH_OPENMP45)
+  #include <omp.h>
+#elif defined(YAKL_ARCH_OPENMP)
+  #include <omp.h>
+#endif
 
