@@ -36,6 +36,7 @@ int main() {
 
     realHost1d dataInit("dataInit",n+2);
     data.deep_copy_to(dataInit);
+    yakl::fence();
 
     yakl::RealFFT1D<n,real> fft;
     fft.init(fft.trig);

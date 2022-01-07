@@ -241,6 +241,7 @@ int main() {
     // Test deep_copy_to host to device
     ///////////////////////////////////////////////////////////
     testHost8d.deep_copy_to(test8d);
+    yakl::fence();
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("deep_copy_to: wrong sum for test8d"); }
 
     ///////////////////////////////////////////////////////////
@@ -254,6 +255,7 @@ int main() {
     ///////////////////////////////////////////////////////////
     yakl::memset(test8d_dev2,0.f);
     test8d.deep_copy_to(test8d_dev2);
+    yakl::fence();
     if (yakl::intrinsics::sum(test8d_dev2) != d1*d2*d3*d4*d5*d6*d7*d8) { die("deep_copy_to: wrong sum for test8d_dev2"); }
 
     ///////////////////////////////////////////////////////////

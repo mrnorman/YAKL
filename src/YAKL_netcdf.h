@@ -534,6 +534,7 @@ namespace yakl {
           var.getVar(arrHost.data());
         }
         arrHost.deep_copy_to(arr);
+        fence();
       } else {
         if (std::is_same<T,bool>::value) {
           Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);

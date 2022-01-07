@@ -107,6 +107,7 @@ public:
     if (myMem == memDevice) {
       from_dev = new non_const_value_type[v.totElems()];
       memcpy_device_to_host( from_dev , v.myData , v.totElems() );
+      fence();
       local = from_dev;
     }
     for (index_t i=0; i<v.totElems(); i++) {
