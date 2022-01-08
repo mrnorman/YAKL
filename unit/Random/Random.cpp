@@ -28,8 +28,9 @@ int main() {
   {
     int constexpr n = 1024*1024;
     real1d arr("arr",n);
+    auto clk = std::clock();
     parallel_for( n , YAKL_LAMBDA (int i) {
-      yakl::Random rand(static_cast<unsigned long long>( std::clock() ) + i);
+      yakl::Random rand(static_cast<unsigned long long>( clk ) + i);
       arr(i) = rand.genFP<real>( ) ;
     });
     // Compute mean
