@@ -646,8 +646,28 @@ public:
   template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
   inline void deallocate() {
     yakl_mtx_lock();
+    typedef typename std::remove_cv<T>::type T_non_const;
+    T_non_const *data = const_cast<T_non_const *>(this->myData);
     if (this->refCount != nullptr) {
       (*(this->refCount))--;
+
+      if (*this->refCount == 0) {
+        delete this->refCount;
+        this->refCount = nullptr;
+        if (this->totElems() > 0) {
+          if (myMem == memDevice) {
+            #ifdef YAKL_DEBUG
+              yaklFreeDevice(data,this->myname);
+            #else
+              yaklFreeDevice(data,"");
+            #endif
+          } else {
+            delete[] data;
+          }
+          this->myData = nullptr;
+        }
+      }
+
     }
     yakl_mtx_unlock();
   }
