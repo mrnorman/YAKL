@@ -13,6 +13,11 @@ template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
 class Array< CSPEC< T , D0 , D1 , D2 , D3 > , rank , memStack , styleC > {
 public :
 
+  typedef typename std::remove_cv<T>::type type;
+  typedef          T value_type;
+  typedef typename std::add_const<type>::type const_value_type;
+  typedef typename std::remove_const<type>::type non_const_value_type;
+
   static unsigned constexpr totElems() { return D3*D2*D1*D0; }
 
   static unsigned constexpr OFF0 = D3*D2*D1;

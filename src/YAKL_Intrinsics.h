@@ -80,7 +80,7 @@ namespace intrinsics {
     #ifdef YAKL_DEBUG
       if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
     #endif
-    T m = arr.myData[0];
+    typename std::remove_cv<T>::type m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] < m) { m = arr.myData[i]; }
     }
@@ -91,12 +91,13 @@ namespace intrinsics {
     #ifdef YAKL_DEBUG
       if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
     #endif
-    ParallelMin<T,memDevice> pmin(arr.totElems());
-    return pmin( arr.data() );
+    typedef typename std::remove_cv<T>::type TNC; // T Non-Const
+    ParallelMin<TNC,memDevice> pmin(arr.totElems());
+    return pmin( const_cast<TNC *>(arr.data()) );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3>
   YAKL_INLINE T minval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
-    T m = arr.myData[0];
+    typename std::remove_cv<T>::type m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] < m) { m = arr.myData[i]; }
     }
@@ -104,7 +105,7 @@ namespace intrinsics {
   }
   template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
   YAKL_INLINE T minval( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
-    T m = arr.myData[0];
+    typename std::remove_cv<T>::type m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] < m) { m = arr.myData[i]; }
     }
@@ -149,7 +150,7 @@ namespace intrinsics {
     #ifdef YAKL_DEBUG
       if (!arr.initialized()) { yakl_throw("ERROR: calling maxval on an array that has not been initialized"); }
     #endif
-    T m = arr.myData[0];
+    typename std::remove_cv<T>::type m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] > m) { m = arr.myData[i]; }
     }
@@ -160,12 +161,13 @@ namespace intrinsics {
     #ifdef YAKL_DEBUG
       if (!arr.initialized()) { yakl_throw("ERROR: calling maxval on an array that has not been initialized"); }
     #endif
-    ParallelMax<T,memDevice> pmax(arr.totElems());
-    return pmax( arr.data() );
+    typedef typename std::remove_cv<T>::type TNC; // T Non-Const
+    ParallelMax<TNC,memDevice> pmax(arr.totElems());
+    return pmax( const_cast<TNC *>(arr.data()) );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3>
   YAKL_INLINE T maxval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
-    T m = arr.myData[0];
+    typename std::remove_cv<T>::type m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] > m) { m = arr.myData[i]; }
     }
@@ -173,7 +175,7 @@ namespace intrinsics {
   }
   template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
   YAKL_INLINE T maxval( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
-    T m = arr.myData[0];
+    typename std::remove_cv<T>::type m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) {
       if (arr.myData[i] > m) { m = arr.myData[i]; }
     }
@@ -218,7 +220,7 @@ namespace intrinsics {
     #ifdef YAKL_DEBUG
       if (!arr.initialized()) { yakl_throw("ERROR: calling sum on an array that has not been initialized"); }
     #endif
-    T m = arr.myData[0];
+    typename std::remove_cv<T>::type m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
     return m;
   }
@@ -227,18 +229,19 @@ namespace intrinsics {
     #ifdef YAKL_DEBUG
       if (!arr.initialized()) { yakl_throw("ERROR: calling sum on an array that has not been initialized"); }
     #endif
-    ParallelSum<T,memDevice> psum(arr.totElems());
-    return psum( arr.data() );
+    typedef typename std::remove_cv<T>::type TNC;  // T Non-Const
+    ParallelSum<TNC,memDevice> psum(arr.totElems());
+    return psum( const_cast<TNC *>(arr.data()) );
   }
   template <class T, int rank, class D0, class D1, class D2, class D3>
   YAKL_INLINE T sum( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
-    T m = arr.myData[0];
+    typename std::remove_cv<T>::type m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
     return m;
   }
   template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
   YAKL_INLINE T sum( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
-    T m = arr.myData[0];
+    typename std::remove_cv<T>::type m = arr.myData[0];
     for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
     return m;
   }
