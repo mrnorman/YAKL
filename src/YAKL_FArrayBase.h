@@ -343,7 +343,9 @@ public:
         yakl_throw("Error: createHostCopy() called on an Array that hasn't been allocated.");
       }
     #endif
-    Array<T,rank,memHost,styleFortran> ret;  // nullified + owned == true
+    // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
+    typedef typename std::remove_cv<T>::type T_NONCONST;
+    Array<T_NONCONST,rank,memHost,styleFortran> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
       ret.lbounds  [i] = this->lbounds  [i];
       ret.dimension[i] = this->dimension[i];
@@ -358,7 +360,7 @@ public:
       memcpy_device_to_host( ret.myData , this->myData , this->totElems() );
     }
     fence();
-    return ret;
+    return Array<T,rank,memHost,styleFortran>(ret);
   }
 
   inline Array<T,rank,memDevice,styleFortran> createDeviceCopy() const {
@@ -370,7 +372,9 @@ public:
         yakl_throw("Error: createHostCopy() called on an Array that hasn't been allocated.");
       }
     #endif
-    Array<T,rank,memDevice,styleFortran> ret;  // nullified + owned == true
+    // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
+    typedef typename std::remove_cv<T>::type T_NONCONST;
+    Array<T_NONCONST,rank,memDevice,styleFortran> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) {
       ret.lbounds  [i] = this->lbounds  [i];
       ret.dimension[i] = this->dimension[i];
@@ -385,7 +389,7 @@ public:
       memcpy_device_to_device( ret.myData , this->myData , this->totElems() );
     }
     fence();
-    return ret;
+    return Array<T,rank,memDevice,styleFortran>(ret);
   }
 
 
