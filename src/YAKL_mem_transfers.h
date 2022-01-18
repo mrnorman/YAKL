@@ -18,7 +18,7 @@
       hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyDeviceToHost,0);
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
-      sycl_default_stream->memcpy(dst, src, elems*sizeof(T1));
+      sycl_default_stream().memcpy(dst, src, elems*sizeof(T1));
       check_last_error();
     #elif defined(YAKL_ARCH_OPENMP45)
       omp_target_memcpy(dst,src,elems*sizeof(T1),0,0,omp_get_initial_device(),omp_get_default_device());
@@ -45,7 +45,7 @@
       hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyHostToDevice,0);
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
-      sycl_default_stream->memcpy(dst, src, elems*sizeof(T1));
+      sycl_default_stream().memcpy(dst, src, elems*sizeof(T1));
       check_last_error();
     #elif defined(YAKL_ARCH_OPENMP45)
       omp_target_memcpy(dst,src,elems*sizeof(T1),0,0,omp_get_default_device(),omp_get_initial_device());
@@ -72,7 +72,7 @@
       hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyDeviceToDevice,0);
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
-      sycl_default_stream->memcpy(dst, src, elems*sizeof(T1));
+      sycl_default_stream().memcpy(dst, src, elems*sizeof(T1));
       check_last_error();
     #elif defined(YAKL_ARCH_OPENMP45)
       omp_target_memcpy(dst,src,elems*sizeof(T1),0,0,omp_get_default_device(),omp_get_default_device());

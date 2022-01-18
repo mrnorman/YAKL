@@ -8,14 +8,12 @@ namespace yakl {
 
   #include "YAKL_error.h"
 
+  #include "YAKL_sycldevice.h"
+
   extern std::mutex yakl_mtx;
 
   typedef unsigned int index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
-
-  #ifdef YAKL_ARCH_SYCL
-    extern sycl::queue *sycl_default_stream;
-  #endif
 
   // Memory space specifiers for YAKL Arrays
   int constexpr memDevice = 1;
@@ -90,7 +88,7 @@ namespace yakl {
       check_last_error();
     #endif
     #ifdef YAKL_ARCH_SYCL
-      sycl_default_stream->wait();
+      sycl_default_stream().wait();
       check_last_error();
     #endif
   }
@@ -117,11 +115,9 @@ namespace yakl {
         check_last_error();
       #endif
       #if defined(YAKL_ARCH_SYCL)
-        sycl::free(functorBuffer, *sycl_default_stream);
-        sycl_default_stream->wait();
+        sycl::free(functorBuffer, sycl_default_stream());
+        sycl_default_stream().wait();
         check_last_error();
-        delete sycl_default_stream;
-        sycl_default_stream = nullptr;
       #endif
       yakl_is_initialized = false;
       #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)

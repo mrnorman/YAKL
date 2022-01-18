@@ -30,10 +30,8 @@
           }
         };
 
-        sycl_default_stream = new sycl::queue(sycl::gpu_selector{}, asyncHandler,
-                                              sycl::property_list{sycl::property::queue::in_order{}});
         if (yakl_masterproc()) std::cout << "Running on "
-                                         << sycl_default_stream->get_device().get_info<sycl::info::device::name>()
+                                         << sycl_default_stream().get_device().get_info<sycl::info::device::name>()
                                          << "\n";
       #endif
 
@@ -78,8 +76,8 @@
         cudaMalloc(&functorBuffer,functorBufSize);
       #endif
       #ifdef YAKL_ARCH_SYCL
-        functorBuffer = sycl::malloc_device(functorBufSize, *sycl_default_stream);
-        sycl_default_stream->memset(functorBuffer, 0, functorBufSize).wait();
+        functorBuffer = sycl::malloc_device(functorBufSize, sycl_default_stream());
+        sycl_default_stream().memset(functorBuffer, 0, functorBufSize).wait();
       #endif
 
       #if defined(YAKL_ARCH_CUDA)
