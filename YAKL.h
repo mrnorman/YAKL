@@ -176,6 +176,25 @@ namespace yakl {
   /////////////////////////////////////////////////
   // memset
   /////////////////////////////////////////////////
+  template <class T, int rank, int myMem, int myStyle>
+  void _memset_builtins( Array<T,rank,myMem,myStyle> &arr ) {
+    if (myMem == memDevice) {
+      #if defined(YAKL_ARCH_CUDA)
+        cudaMemset( arr.data(), 0, sizeof(T)*arr.totElems() );
+      #elif defined(YAKL_ARCH_HIP)
+        hipMemset( arr.data(), 0, sizeof(T)*arr.totElems() );
+      #elif defined(YAKL_ARCH_SYCL)
+        sycl_default_stream().memset( arr.data(), 0, sizeof(T)*arr.totElems() );
+      #endif
+
+      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+        fence();
+      #endif
+    } else if (myMem == memHost) {
+      std::memset( arr.data(), 0, sizeof(T)*arr.totElems() );
+    }
+  }
+
   template <class T, int rank, int myMem, int myStyle, class I>
   void memset( Array<T,rank,myMem,myStyle> &arr , I val ) {
     #ifdef YAKL_DEBUG
@@ -183,16 +202,21 @@ namespace yakl {
         yakl_throw("ERROR: calling memset on an array that is not allocated");
       }
     #endif
-    if (myMem == memDevice) {
-      c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
-        arr.myData[i] = val;
-      });
-      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+
+    if (val == 0) {
+      _memset_builtins( arr );
+    } else {
+      if (myMem == memDevice) {
+        c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
+            arr.myData[i] = val;
+          });
+        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
         fence();
-      #endif
-    } else if (myMem == memHost) {
-      for (index_t i = 0; i < arr.totElems(); i++) {
-        arr.myData[i] = val;
+        #endif
+      } else if (myMem == memHost) {
+        for (index_t i = 0; i < arr.totElems(); i++) {
+          arr.myData[i] = val;
+        }
       }
     }
   }

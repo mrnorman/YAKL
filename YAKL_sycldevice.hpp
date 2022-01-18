@@ -1,6 +1,7 @@
 #pragma once
 
-#include "YAKL_error.h"
+#include "YAKL_defines.h"
+//#include "YAKL_error.h"
 
 namespace yakl {
 

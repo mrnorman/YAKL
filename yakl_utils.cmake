@@ -43,8 +43,12 @@ macro(yakl_process_target tname)
 
   if ("${YAKL_ARCH}" STREQUAL "CUDA")
     set_property(TARGET ${tname} PROPERTY CUDA_STANDARD 14)
+    set_property(TARGET ${tname} PROPERTY CXX_STANDARD 14)
+  elseif ("${YAKL_ARCH}" STREQUAL "SYCL")
+    set_property(TARGET ${tname} PROPERTY CXX_STANDARD 17)
+  else()
+    set_property(TARGET ${tname} PROPERTY CXX_STANDARD 14)
   endif()
-  set_property(TARGET ${tname} PROPERTY CXX_STANDARD 14)
 
   target_link_libraries(${tname} yakl)
 endmacro(yakl_process_target)
