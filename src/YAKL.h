@@ -200,9 +200,7 @@ namespace yakl {
         fence();
       #endif
     } else if (myMem == memHost) {
-      for (index_t i = 0; i < arr.totElems(); i++) {
-        arr.myData[i] = val;
-      }
+      std::memset( arr.data(), val, sizeof(T)*arr.totElems() );
     }
   }
   template <class T, int rank, class B0, class B1, class B2, class B3, class I>
