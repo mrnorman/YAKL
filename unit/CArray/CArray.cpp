@@ -37,6 +37,16 @@ void die(std::string msg) {
 }
 
 
+Array<real const,1,memHost,styleC> construct_const_array_host() {
+  return Array<real const,1,memHost,styleC>( realHost1d("arr",10) );
+}
+
+
+Array<real const,1,memDevice,styleC> construct_const_array_device() {
+  return Array<real const,1,memDevice,styleC>( real1d("arr",10) );
+}
+
+
 int main() {
   yakl::init();
   {
@@ -240,6 +250,7 @@ int main() {
     // Test deep_copy_to host to device
     ///////////////////////////////////////////////////////////
     testHost8d.deep_copy_to(test8d);
+    yakl::fence();
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("deep_copy_to: wrong sum for test8d"); }
 
     ///////////////////////////////////////////////////////////
@@ -253,6 +264,7 @@ int main() {
     ///////////////////////////////////////////////////////////
     yakl::memset(test8d_dev2,0.f);
     test8d.deep_copy_to(test8d_dev2);
+    yakl::fence();
     if (yakl::intrinsics::sum(test8d_dev2) != d1*d2*d3*d4*d5*d6*d7*d8) { die("deep_copy_to: wrong sum for test8d_dev2"); }
 
     ///////////////////////////////////////////////////////////
@@ -343,6 +355,13 @@ int main() {
     memset(collapsed,3.f);
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8*3) { die("SimpleBounds: wrong sum for collapsed test8d"); }
 
+    auto constHostArr = construct_const_array_host();
+    constHostArr.deallocate();
+    if (constHostArr.initialized()) die("constHostArr: array didn't deallocate properly");
+
+    auto constDevArr = construct_const_array_device();
+    constDevArr.deallocate();
+    if (constDevArr.initialized()) die("constDevArr: array didn't deallocate properly");
 
   }
   yakl::finalize();

@@ -45,5 +45,6 @@ extern "C" void add(real *a_p, real *b_p, real *c_p, int &n) {
   a.deep_copy_to(a_host);
   b.deep_copy_to(b_host);
   c.deep_copy_to(c_host);
+  yakl::fence();
 }
 

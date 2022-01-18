@@ -2,8 +2,11 @@
 #pragma once
 
 #include "YAKL_header.h"
+#include "YAKL_defines.h"
 
 namespace yakl {
+
+  #include "YAKL_error.h"
 
   extern std::mutex yakl_mtx;
 
@@ -35,6 +38,9 @@ namespace yakl {
     extern void *functorBuffer;
   #endif
 
+
+  #include "YAKL_alloc_free.h"
+  #include "YAKL_Gator.h"
 
   // Pool allocator object
   extern Gator pool;
@@ -93,7 +99,7 @@ namespace yakl {
   }
 
 
-#include "YAKL_init.h"
+  #include "YAKL_init.h"
 
 
   inline void finalize() {

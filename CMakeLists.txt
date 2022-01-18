@@ -1,8 +1,12 @@
 project(YAKL C CXX Fortran)
 
-set(YAKL_C_SOURCE gptl/GPTLget_memusage.c gptl/GPTLprint_memusage.c gptl/GPTLutil.c gptl/gptl.c gptl/gptl_papi.c)
-set(YAKL_CXX_SOURCE YAKL.cpp)
-set(YAKL_F90_SOURCE YAKL_gator_mod.F90)
+set(YAKL_C_SOURCE src/gptl/GPTLget_memusage.c
+                  src/gptl/GPTLprint_memusage.c
+                  src/gptl/GPTLutil.c
+                  src/gptl/gptl.c
+                  src/gptl/gptl_papi.c)
+set(YAKL_CXX_SOURCE src/YAKL.cpp)
+set(YAKL_F90_SOURCE src/YAKL_gator_mod.F90)
 set(YAKL_SOURCE ${YAKL_C_SOURCE} ${YAKL_CXX_SOURCE} ${YAKL_F90_SOURCE})
 
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
@@ -50,8 +54,8 @@ else()
   target_compile_features(yakl PUBLIC cxx_std_14)
 endif()
 
-target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gptl)
+target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/gptl)
 
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)

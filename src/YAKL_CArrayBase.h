@@ -293,7 +293,9 @@ public:
         yakl_throw("Error: createHostCopy() called on an Array that hasn't been allocated");
       }
     #endif
-    Array<T,rank,memHost,styleC> ret;
+    // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
+    typedef typename std::remove_cv<T>::type T_NONCONST;
+    Array<T_NONCONST,rank,memHost,styleC> ret;
     for (int i=0; i<rank; i++) {
       ret.dimension[i] = this->dimension[i];
     }
@@ -307,7 +309,7 @@ public:
       memcpy_device_to_host( ret.myData , this->myData , this->totElems() );
     }
     fence();
-    return ret;
+    return Array<T,rank,memHost,styleC>(ret);
   }
 
 
@@ -320,7 +322,9 @@ public:
         yakl_throw("Error: createHostCopy() called on an Array that hasn't been allocated.");
       }
     #endif
-    Array<T,rank,memDevice,styleC> ret;
+    // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
+    typedef typename std::remove_cv<T>::type T_NONCONST;
+    Array<T_NONCONST,rank,memDevice,styleC> ret;
     for (int i=0; i<rank; i++) {
       ret.dimension[i] = this->dimension[i];
     }
@@ -334,7 +338,7 @@ public:
       memcpy_device_to_device( ret.myData , this->myData , this->totElems() );
     }
     fence();
-    return ret;
+    return Array<T,rank,memDevice,styleC>(ret);
   }
 
 

@@ -18,7 +18,7 @@ public:
 
 
   template <int theirRank, int theirStyle>
-  inline void deep_copy_to(Array<T,theirRank,memHost,theirStyle> &lhs) const {
+  inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> &lhs) const {
     #ifdef YAKL_DEBUG
       if (this->totElems() != lhs.totElems()) {
         yakl_throw("ERROR: deep_copy_to with different number of elements");
@@ -36,7 +36,7 @@ public:
 
 
   template <int theirRank, int theirStyle>
-  inline void deep_copy_to(Array<T,theirRank,memDevice,theirStyle> &lhs) const {
+  inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> &lhs) const {
     #ifdef YAKL_DEBUG
       if (this->totElems() != lhs.totElems()) {
         yakl_throw("ERROR: deep_copy_to with different number of elements");
@@ -107,6 +107,7 @@ public:
     if (myMem == memDevice) {
       from_dev = new non_const_value_type[v.totElems()];
       memcpy_device_to_host( from_dev , v.myData , v.totElems() );
+      fence();
       local = from_dev;
     }
     for (index_t i=0; i<v.totElems(); i++) {

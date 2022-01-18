@@ -30,6 +30,11 @@ public :
   static unsigned constexpr OFF2 = D0*D1;
   static unsigned constexpr OFF3 = D0*D1*D2;
 
+  typedef typename std::remove_cv<T>::type type;
+  typedef          T value_type;
+  typedef typename std::add_const<type>::type const_value_type;
+  typedef typename std::remove_const<type>::type non_const_value_type;
+
   T mutable myData[D0*D1*D2*D3];
 
   YAKL_INLINE Array() {}
