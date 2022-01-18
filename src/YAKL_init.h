@@ -17,24 +17,6 @@
         use_pool = false;
       #endif
 
-      #ifdef YAKL_ARCH_SYCL
-        auto asyncHandler = [&](sycl::exception_list eL) {
-          for (auto& e : eL) {
-            try {
-              std::rethrow_exception(e);
-            } catch (sycl::exception& e) {
-              std::cout << e.what() << std::endl;
-              std::cout << "fail" << std::endl;
-              std::terminate();
-            }
-          }
-        };
-
-        if (yakl_masterproc()) std::cout << "Running on "
-                                         << sycl_default_stream().get_device().get_info<sycl::info::device::name>()
-                                         << "\n";
-      #endif
-
       yakl_is_initialized = true;
 
       // Check for pool allocator env var
@@ -75,9 +57,13 @@
       #ifdef YAKL_ARCH_CUDA
         cudaMalloc(&functorBuffer,functorBufSize);
       #endif
+
       #ifdef YAKL_ARCH_SYCL
+        if (yakl_masterproc()) std::cout << "Running on "
+                                         << sycl_default_stream().get_device().get_info<sycl::info::device::name>()
+                                         << "\n";
         functorBuffer = sycl::malloc_device(functorBufSize, sycl_default_stream());
-        sycl_default_stream().memset(functorBuffer, 0, functorBufSize).wait();
+        fence();
       #endif
 
       #if defined(YAKL_ARCH_CUDA)

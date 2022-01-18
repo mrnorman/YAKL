@@ -301,29 +301,33 @@ template <class T, int myMem> class ParallelSum;
     T operator() (T *data) {
       T rslt=0;
       sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(get_reduction_range(nItems, rsltP),
-                           sycl::reduction(rsltP, sycl::minimum<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::nd_item<1> idx, auto& min) {
-                             const int i = idx.get_global_linear_id();
-                             if (i < nItems) {
-                               min.combine(data[i]);
-                             }
-                           });
-        }).wait();
-      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
+        cgh.parallel_for(get_reduction_range(nItems, rsltP),
+                         sycl::reduction(rsltP, sycl::minimum<>(), sycl::property::reduction::initialize_to_identity{}),
+                         [=](sycl::nd_item<1> idx, auto& min) {
+                           const int i = idx.get_global_linear_id();
+                           if (i < nItems) {
+                             min.combine(data[i]);
+                           }
+                         });
+      });
+      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
+      fence();
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
       sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(get_reduction_range(nItems, devP),
-                           sycl::reduction(devP, sycl::minimum<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::nd_item<1> idx, auto& min) {
-                             const int i = idx.get_global_linear_id();
-                             if (i < nItems) {
-                               min.combine(data[i]);
-                             }
-                           });
-        }).wait();
+        cgh.parallel_for(get_reduction_range(nItems, devP),
+                         sycl::reduction(devP, sycl::minimum<>(), sycl::property::reduction::initialize_to_identity{}),
+                         [=](sycl::nd_item<1> idx, auto& min) {
+                           const int i = idx.get_global_linear_id();
+                           if (i < nItems) {
+                             min.combine(data[i]);
+                           }
+                         });
+      });
+      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+        fence();
+      #endif
     }
   };
 
@@ -348,29 +352,33 @@ template <class T, int myMem> class ParallelSum;
     T operator() (T *data) {
       T rslt=0;
       sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(get_reduction_range(nItems, rsltP),
-                           sycl::reduction(rsltP, sycl::maximum<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::nd_item<1> idx, auto& max) {
-                             const int i = idx.get_global_linear_id();
-                             if (i < nItems) {
-                               max.combine(data[i]);
-                             }
-                           });
-        }).wait();
-      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
+        cgh.parallel_for(get_reduction_range(nItems, rsltP),
+                         sycl::reduction(rsltP, sycl::maximum<>(), sycl::property::reduction::initialize_to_identity{}),
+                         [=](sycl::nd_item<1> idx, auto& max) {
+                           const int i = idx.get_global_linear_id();
+                           if (i < nItems) {
+                             max.combine(data[i]);
+                           }
+                         });
+      });
+      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
+      fence();
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
       sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(get_reduction_range(nItems, devP),
-                           sycl::reduction(devP, sycl::maximum<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::nd_item<1> idx, auto& max) {
-                             const int i = idx.get_global_linear_id();
-                             if (i < nItems) {
-                               max.combine(data[i]);
-                             }
-                           });
-        }).wait();
+        cgh.parallel_for(get_reduction_range(nItems, devP),
+                         sycl::reduction(devP, sycl::maximum<>(), sycl::property::reduction::initialize_to_identity{}),
+                         [=](sycl::nd_item<1> idx, auto& max) {
+                           const int i = idx.get_global_linear_id();
+                           if (i < nItems) {
+                             max.combine(data[i]);
+                           }
+                         });
+      });
+      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+        fence();
+      #endif
     }
   };
 
@@ -395,30 +403,34 @@ template <class T, int myMem> class ParallelSum;
     T operator() (T *data) {
       T rslt=0;
       sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(get_reduction_range(nItems, rsltP),
-                           sycl::reduction(rsltP, std::plus<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::nd_item<1> idx, auto& sum) {
-                             const int i = idx.get_global_linear_id();
-                             if (i < nItems) {
-                               sum.combine(data[i]);
-                             }
-                           });
-        }).wait();
+        cgh.parallel_for(get_reduction_range(nItems, rsltP),
+                         sycl::reduction(rsltP, std::plus<>(), sycl::property::reduction::initialize_to_identity{}),
+                         [=](sycl::nd_item<1> idx, auto& sum) {
+                           const int i = idx.get_global_linear_id();
+                           if (i < nItems) {
+                             sum.combine(data[i]);
+                           }
+                         });
+      });
 
-      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)).wait(); // Copy result to host
+      sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T));
+      fence();
       return rslt;
     }
     void deviceReduce(T *data, T *devP) {
       sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(get_reduction_range(nItems, rsltP),
-                           sycl::reduction(rsltP, std::plus<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::nd_item<1> idx, auto& sum) {
-                             const int i = idx.get_global_linear_id();
-                             if (i < nItems) {
-                               sum.combine(data[i]);
-                             }
-                           });
-        }).wait();
+        cgh.parallel_for(get_reduction_range(nItems, rsltP),
+                         sycl::reduction(rsltP, std::plus<>(), sycl::property::reduction::initialize_to_identity{}),
+                         [=](sycl::nd_item<1> idx, auto& sum) {
+                           const int i = idx.get_global_linear_id();
+                           if (i < nItems) {
+                             sum.combine(data[i]);
+                           }
+                         });
+      });
+      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+        fence();
+      #endif
     }
   };
 

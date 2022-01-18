@@ -8,6 +8,7 @@
 #include <functional>
 #include <limits>
 #include <cmath>
+#include <memory>
 #include <cstring>
 #include <vector>
 #include <mutex>
