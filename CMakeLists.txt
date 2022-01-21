@@ -1,5 +1,10 @@
 project(YAKL C CXX Fortran)
 
+if ("${YAKL_ARCH}" STREQUAL "CUDA")
+  enable_language(CUDA)
+endif()
+
+
 set(YAKL_C_SOURCE src/gptl/GPTLget_memusage.c
                   src/gptl/GPTLprint_memusage.c
                   src/gptl/GPTLutil.c
