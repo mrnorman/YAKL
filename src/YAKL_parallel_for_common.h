@@ -107,13 +107,15 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
     if constexpr (sycl::is_device_copyable<F>::value) {
       sycl_default_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
         callFunctor( f , bounds , i );
-      }).wait();
+      });
+      sycl_default_stream().ext_oneapi_submit_barrier();
     } else {
       F *fp = (F *) functorBuffer;
-      sycl_default_stream().memcpy(fp, &f, sizeof(F)).wait();
+      sycl_default_stream().memcpy(fp, &f, sizeof(F));
       sycl_default_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
         callFunctor( *fp , bounds , i );
-      }).wait();
+      });
+      sycl_default_stream().ext_oneapi_submit_barrier();
     }
 
     check_last_error();

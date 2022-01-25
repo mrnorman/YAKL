@@ -116,7 +116,6 @@ namespace yakl {
       #endif
       #if defined(YAKL_ARCH_SYCL)
         sycl::free(functorBuffer, sycl_default_stream());
-        sycl_default_stream().wait();
         check_last_error();
       #endif
       yakl_is_initialized = false;
