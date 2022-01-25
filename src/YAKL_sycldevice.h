@@ -19,7 +19,7 @@
   public:
     sycl::queue &default_queue() {
       check_id(DEFAULT_DEVICE_ID);
-      return *_queues[DEFAULT_DEVICE_ID];
+      return *(_queues[DEFAULT_DEVICE_ID].get());
     }
     unsigned int device_count() { return _devs.size(); }
 
@@ -42,17 +42,13 @@
           auto subDevs = dev.create_sub_devices<sycl::info::partition_property::partition_by_affinity_domain>(sycl::info::partition_affinity_domain::numa);
           for (auto &sub_dev : subDevs) {
             _devs.push_back(std::make_shared<sycl::device>(sub_dev));
-            _ctxts.push_back(std::make_shared<sycl::context>(sub_dev));
-            _queues.push_back(std::make_shared<sycl::queue>(*(_ctxts.back()),
-                                                            sub_dev,
+            _queues.push_back(std::make_shared<sycl::queue>(sub_dev,
                                                             asyncHandler,
                                                             sycl::property_list{sycl::property::queue::in_order{}}));
           }
         } else {
           _devs.push_back(std::make_shared<sycl::device>(dev));
-          _ctxts.push_back(std::make_shared<sycl::context>(dev));
-          _queues.push_back(std::make_shared<sycl::queue>(*(_ctxts.back()),
-                                                          dev,
+          _queues.push_back(std::make_shared<sycl::queue>(dev,
                                                           asyncHandler,
                                                           sycl::property_list{sycl::property::queue::in_order{}}));
         }
@@ -64,7 +60,6 @@
       }
     }
     std::vector<std::shared_ptr<sycl::device>> _devs;
-    std::vector<std::shared_ptr<sycl::context>> _ctxts;
     std::vector<std::shared_ptr<sycl::queue>> _queues;
 
     const unsigned int DEFAULT_DEVICE_ID = 0;
