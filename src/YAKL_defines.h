@@ -33,6 +33,11 @@
   #define YAKL_SEPARATE_MEMORY_SPACE
   #define YAKL_CURRENTLY_ON_HOST() (! defined(__SYCL_DEVICE_ONLY__))
   #define YAKL_CURRENTLY_ON_DEVICE() (defined(__SYCL_DEVICE_ONLY__))
+  #ifdef __SYCL_DEVICE_ONLY__
+    #define CONSTANT __attribute__((opencl_constant))
+  #else
+    #define CONSTANT
+  #endif
 
 #elif defined(YAKL_ARCH_OPENMP45)
 
