@@ -7,7 +7,9 @@ YAKL_INLINE void yakl_throw(const char * msg) {
     std::cerr << msg << std::endl;
     throw msg;
   #else
+    #ifndef YAKL_ARCH_SYCL
     printf("%s\n",msg);
+    #endif
     // Intentionally cause a segfault to kill the run if you're on a GPU
     int *segfault = nullptr;
     *segfault = 10;
