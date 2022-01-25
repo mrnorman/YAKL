@@ -115,70 +115,14 @@
       sycl::access::address_space::global_space>
   using relaxed_atomic_ref =
         sycl::ext::oneapi::atomic_ref< T,
-        sycl::ext::oneapi::memory_order::relaxed,
+        sycl::ext::oneapi::memory_order::seq_cst,
         sycl::ext::oneapi::memory_scope::device,
         addressSpace>;
 
-
-  template <typename T,
-      sycl::access::address_space addressSpace =
+  template <typename T, sycl::access::address_space addressSpace =
       sycl::access::address_space::global_space>
   __inline__ __attribute__((always_inline)) void atomicAdd(T &update , T value) {
     relaxed_atomic_ref<T, addressSpace>( update ).fetch_add( value );
-  }
-
-  ////////////////////////////////////////////////////////////
-  // SYCL's atomics for reals could be quite slow with different Intel hardware
-  ////////////////////////////////////////////////////////////
-
-  template <typename T=float, sycl::access::address_space addressSpace =
-            sycl::access::address_space::global_space>
-  __inline__ __attribute__((always_inline)) void atomicAdd(float &addr , float operand) {
-    static_assert(sizeof(float) == sizeof(int), "Mismatched type size");
-
-    sycl::atomic<int, addressSpace> obj(
-      (sycl::multi_ptr<int, addressSpace>(reinterpret_cast<int *>(&addr))));
-
-    int old_value;
-    float old_float_value;
-
-    do {
-      old_value = obj.load(sycl::memory_order::relaxed);
-      old_float_value = *reinterpret_cast<const float *>(&old_value);
-      const float new_float_value = old_float_value + operand;
-      const int new_value = *reinterpret_cast<const int *>(&new_float_value);
-      if (obj.compare_exchange_strong(old_value, new_value, sycl::memory_order::relaxed))
-        break;
-    } while (true);
-
-    return;
-  }
-
-  template <typename T=double, sycl::access::address_space addressSpace =
-            sycl::access::address_space::global_space>
-  __inline__ __attribute__((always_inline)) void atomicAdd(double &addr , double operand) {
-    static_assert(sizeof(double) == sizeof(unsigned long long int),
-                  "Mismatched type size");
-
-    sycl::atomic<unsigned long long int, addressSpace> obj(
-      (sycl::multi_ptr<unsigned long long int, addressSpace>(
-        reinterpret_cast<unsigned long long int *>(&addr))));
-
-    unsigned long long int old_value;
-    double old_double_value;
-
-    do {
-      old_value = obj.load(sycl::memory_order::relaxed);
-      old_double_value = *reinterpret_cast<const double *>(&old_value);
-      const double new_double_value = old_double_value + operand;
-      const unsigned long long int new_value =
-        *reinterpret_cast<const unsigned long long int *>(&new_double_value);
-
-      if (obj.compare_exchange_strong(old_value, new_value, sycl::memory_order::relaxed))
-        break;
-    } while (true);
-
-    return;
   }
 
   template <typename T, sycl::access::address_space addressSpace =
