@@ -4,6 +4,8 @@
 
 #if defined(__GNUG__) && !defined(__clang__)
 # define GET_SIMD_PRAGMA() _Pragma("GCC ivdep")
+#else
+# define GET_SIMD_PRAGMA() 
 #endif
 
 template <class T, int N>
