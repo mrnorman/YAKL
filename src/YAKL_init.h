@@ -13,9 +13,9 @@
         GPTLinitialize();
       #endif
       bool use_pool = true;
-      #ifndef YAKL_SEPARATE_MEMORY_SPACE
-        use_pool = false;
-      #endif
+      // #ifndef YAKL_SEPARATE_MEMORY_SPACE
+      //   use_pool = false;
+      // #endif
 
       yakl_is_initialized = true;
 
