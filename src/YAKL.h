@@ -10,6 +10,10 @@ namespace yakl {
 
   #include "YAKL_sycldevice.h"
 
+  using std::cos;
+  using std::sin;
+  using std::pow;
+
   extern std::mutex yakl_mtx;
 
   typedef unsigned int index_t;
@@ -39,6 +43,9 @@ namespace yakl {
     // Buffer to hold large functors for the CUDA and SYCL backends to avoid exceeding the max stack frame
     extern void *functorBuffer;
   #endif
+
+
+  #include "YAKL_simd.h"
 
 
   #include "YAKL_alloc_free.h"
