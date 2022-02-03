@@ -41,6 +41,9 @@ namespace yakl {
   #endif
 
 
+  #include "YAKL_simd.h"
+
+
   #include "YAKL_alloc_free.h"
   #include "YAKL_Gator.h"
 
