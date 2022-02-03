@@ -10,6 +10,10 @@ namespace yakl {
 
   #include "YAKL_sycldevice.h"
 
+  using std::cos;
+  using std::sin;
+  using std::pow;
+
   extern std::mutex yakl_mtx;
 
   typedef unsigned int index_t;

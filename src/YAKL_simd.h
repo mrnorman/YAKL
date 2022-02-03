@@ -166,7 +166,7 @@ template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmeti
 YAKL_INLINE Pack<T,N> pow(Pack<T,N> lhs , TLOC val) {
   Pack<T,N> ret;
   GET_SIMD_PRAGMA()
-  for (uint i=0; i < N; i++) { ret(i) = std::pow( lhs(i) , val ); }
+  for (uint i=0; i < N; i++) { ret(i) = pow( lhs(i) , val ); }
   return ret;
 }
 
