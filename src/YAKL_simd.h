@@ -2,12 +2,14 @@
 #pragma once
 
 
-#if defined(__GNUG__) && !defined(__clang__)
+#if defined(__GNUG__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
 # define GET_SIMD_PRAGMA() _Pragma("GCC ivdep")
-#elif defined(__clang__)
-# define GET_SIMD_PRAGMA() _Pragma("ivdep")
+#elif defined(__clang__) && !defined(__INTEL_COMPILER)
+# define GET_SIMD_PRAGMA() _Pragma("clang loop vectorize(enable)")
 #elif defined(__INTEL_COMPILER)
 # define GET_SIMD_PRAGMA() _Pragma("ivdep")
+#else
+# define GET_SIMD_PRAGMA()
 #endif
 
 template <class T, int N>
