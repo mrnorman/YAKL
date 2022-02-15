@@ -2,15 +2,15 @@
 
 source $MODULESHOME/init/bash
 module purge
-module load oneapi cmake
+module load oneapi cmake/3.22.1
 
 ../../cmakeclean.sh
 
 unset GATOR_DISABLE
 
-export CC=mpiicx
-export CXX=mpiicpx
-export FC=mpiifx
+export CC=mpicc
+export CXX=mpicxx
+export FC=mpifort
 unset CXXFLAGS
 unset FFLAGS
 

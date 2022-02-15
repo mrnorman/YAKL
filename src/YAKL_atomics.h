@@ -114,9 +114,9 @@
   template <typename T, sycl::access::address_space addressSpace =
       sycl::access::address_space::global_space>
   using relaxed_atomic_ref =
-        sycl::ext::oneapi::atomic_ref< T,
-        sycl::ext::oneapi::memory_order::seq_cst,
-        sycl::ext::oneapi::memory_scope::device,
+        sycl::atomic_ref< T,
+        sycl::memory_order::seq_cst,
+        sycl::memory_scope::device,
         addressSpace>;
 
   template <typename T, sycl::access::address_space addressSpace =
