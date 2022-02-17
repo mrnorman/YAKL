@@ -127,7 +127,9 @@ namespace yakl {
       #endif
       yakl_is_initialized = false;
       #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
-        GPTLpr_file("");
+        if (yakl_masterproc()) {
+          GPTLpr_file("");
+        }
         GPTLpr_file("yakl_timer_output.txt");
       #endif
       // YAKL allocator and deallocator
