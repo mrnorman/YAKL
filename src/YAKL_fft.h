@@ -139,17 +139,25 @@ namespace yakl {
 
     real1d trig;
 
-    RealFFT1D() {
-      trig = real1d("trig",2*mylog2<SIZE/2>::value + SIZE);
+    YAKL_INLINE RealFFT1D() {
+      #if YAKL_CURRENTLY_ON_HOST()
+        trig = real1d("trig",2*mylog2<SIZE/2>::value + SIZE);
+      #endif
     }
 
 
     YAKL_INLINE ~RealFFT1D() {
-      trig = real1d();
+      #if YAKL_CURRENTLY_ON_HOST()
+        trig = real1d();
+      #endif
     }
 
 
-    inline void init(real1d &trig) {
+    #ifdef YAKL_ARCH_CUDA
+      __attribute__((noinline))
+    #endif
+    void init() {
+      YAKL_SCOPE( trig , this->trig );
       int constexpr log2_no2 = mylog2<SIZE/2>::value;
       c::parallel_for( log2_no2 , YAKL_LAMBDA (int i) {
         unsigned int m = 1;
@@ -165,7 +173,7 @@ namespace yakl {
 
 
     template <class ARR>
-    YAKL_INLINE void forward(ARR &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) const {
+    YAKL_INLINE static void forward(ARR const &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) {
       SArray<real,1,SIZE> tmp;
       int constexpr n = SIZE;
       bit_reverse_copy_real_forward(data,tmp);
@@ -195,7 +203,7 @@ namespace yakl {
 
 
     template <class ARR>
-    YAKL_INLINE void inverse(ARR &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) const {
+    YAKL_INLINE static void inverse(ARR const &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) {
       SArray<real,1,SIZE> tmp;
       int constexpr  n = SIZE;
       bit_reverse_copy_real_inverse(data,tmp,trig);
@@ -220,7 +228,7 @@ namespace yakl {
 
     private:
 
-    YAKL_INLINE unsigned int reverse_bits(unsigned int num) const {
+    YAKL_INLINE static unsigned int reverse_bits(unsigned int num) {
       int constexpr num_bits = mylog2<SIZE/2>::value;
       unsigned int reverse_num = 0;
       int i;
@@ -233,7 +241,7 @@ namespace yakl {
 
 
     template <class ARR_IN, class ARR_OUT>
-    YAKL_INLINE void bit_reverse_copy_real_forward(ARR_IN const &in, ARR_OUT &out) const {
+    YAKL_INLINE static void bit_reverse_copy_real_forward(ARR_IN const &in, ARR_OUT const &out) {
       int constexpr n = SIZE/2;
       for (unsigned int k=0; k < n; k++) {
         unsigned int br_ind = reverse_bits(k);
@@ -244,7 +252,7 @@ namespace yakl {
 
 
     template <class ARR_IN, class ARR_OUT>
-    YAKL_INLINE void bit_reverse_copy_real_inverse(ARR_IN const &in, ARR_OUT &out, real1d const &trig) const {
+    YAKL_INLINE static void bit_reverse_copy_real_inverse(ARR_IN const &in, ARR_OUT const &out, real1d const &trig) {
       int constexpr n = SIZE/2;
       for (unsigned int k=0; k < n; k++) {
         real a = in(2*k  );
@@ -263,7 +271,7 @@ namespace yakl {
 
 
     template <class ARR>
-    YAKL_INLINE void fft_post_bit_reverse(ARR &data, real1d const &trig) const {
+    YAKL_INLINE static void fft_post_bit_reverse(ARR const &data, real1d const &trig) {
       unsigned int m = 1;
       int constexpr n = SIZE/2;
       int constexpr log2_n = mylog2<n>::value;
