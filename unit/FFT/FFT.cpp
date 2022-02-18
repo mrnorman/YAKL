@@ -39,7 +39,7 @@ int main() {
     yakl::fence();
 
     yakl::RealFFT1D<n,real> fft;
-    fft.init(fft.trig);
+    fft.init();
 
     parallel_for( 1 , YAKL_LAMBDA (int i) {
       fft.forward(data,fft.trig);
