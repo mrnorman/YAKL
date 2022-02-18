@@ -58,10 +58,10 @@ Example usage:
   });
 
   yakl::RealFFT1D<n,double> fft_x;
-  fft_x.init(fft_x.trig);
+  fft_x.init();
 
   yakl::RealFFT1D<n,double> fft_y;
-  fft_y.init(fft_y.trig);
+  fft_y.init();
 
   // x-direction forward FFTs
   parallel_for( Bounds<2>(nz,ny) , YAKL_LAMBDA (int k, int j) {
