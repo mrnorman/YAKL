@@ -7,6 +7,20 @@ template <class T, int myMem> class ParallelMax;
 template <class T, int myMem> class ParallelSum;
 
 
+// It is highly recommended that the user use yakl::intrinsics::minval, yakl::intrinsics::maxval, and
+// yakl::intrinsics::sum instead of the classes in this file.
+
+
+// These are parallel reduction classes for host and device
+// They handle all memory allocation and deallocation internally to reduce the chance of memory errors
+// setup and constructor take an integer of the number of items needing to be reduced
+// operator() will perform a reduction on the device and return the result as a scalar value
+// after copying to the host
+// deviceReduce will perform a reduciton on the device and leave hte result on the device as a pointer
+// Array is passed to the device as a pointer, so it's not completely safe is the user makes an error
+// where the repested nItems differs from the actual number of items in the array.
+
+
 #ifdef YAKL_ARCH_HIP
 
 

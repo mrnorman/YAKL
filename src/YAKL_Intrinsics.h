@@ -1,6 +1,10 @@
 
 #pragma once
 
+// These are some convenient intrinsics functions (think Fortran intrinsics library)
+
+// Once again, for redutions, please use the minval, maxval, and sum routines from here. They're simpler and safer
+
 namespace intrinsics {
 
   template <class T> YAKL_INLINE int  size(T const &arr, int dim) { return arr.get_dimensions()(dim); }

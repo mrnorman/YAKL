@@ -10,8 +10,6 @@ public:
   typedef typename std::add_const<type>::type const_value_type;
   typedef typename std::remove_const<type>::type non_const_value_type;
 
-  int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
-
 
   // Start off all constructors making sure the pointers are null
   YAKL_INLINE void nullify() {
@@ -50,11 +48,11 @@ public:
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->dimension[0] = d1;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2) {
@@ -69,12 +67,12 @@ public:
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3) {
@@ -89,13 +87,13 @@ public:
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     this->dimension[2] = d3;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4) {
@@ -110,14 +108,14 @@ public:
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->dimension[0] = d1;
     this->dimension[1] = d2;
     this->dimension[2] = d3;
     this->dimension[3] = d4;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5) {
@@ -132,7 +130,7 @@ public:
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->dimension[0] = d1;
     this->dimension[1] = d2;
@@ -140,7 +138,7 @@ public:
     this->dimension[3] = d4;
     this->dimension[4] = d5;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6) {
@@ -155,7 +153,7 @@ public:
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->dimension[0] = d1;
     this->dimension[1] = d2;
@@ -164,7 +162,7 @@ public:
     this->dimension[4] = d5;
     this->dimension[5] = d6;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7) {
@@ -179,7 +177,7 @@ public:
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->dimension[0] = d1;
     this->dimension[1] = d2;
@@ -189,7 +187,7 @@ public:
     this->dimension[5] = d6;
     this->dimension[6] = d7;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, index_t const d1, index_t const d2, index_t const d3, index_t const d4, index_t const d5, index_t const d6, index_t const d7, index_t const d8) {
@@ -204,7 +202,7 @@ public:
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->dimension[0] = d1;
     this->dimension[1] = d2;
@@ -215,7 +213,7 @@ public:
     this->dimension[6] = d7;
     this->dimension[7] = d8;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
@@ -226,11 +224,11 @@ public:
       if ( rank < 1 || rank > 8 ) { yakl_throw("ERROR: Invalid rank, must be between 1 and 8"); }
       this->myname = label;
     #endif
-    deallocate();
+    this->deallocate();
     for (int i=0; i < rank; i++) {
       this->dimension[i] = dims[i];
     }
-    allocate(label);
+    this->allocate(label);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Non-owned constructors
@@ -454,11 +452,9 @@ public:
 
 
   YAKL_INLINE Array & operator=(Array<non_const_value_type,rank,myMem,styleC> const &rhs) {
-    if (this == &rhs) {
-      return *this;
-    }
+    if (this == &rhs) { return *this; }
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     for (int i=0; i<rank; i++) {
       this->dimension[i] = rhs.dimension[i];
@@ -483,13 +479,11 @@ public:
     return *this;
   }
   YAKL_INLINE Array & operator=(Array<const_value_type,rank,myMem,styleC> const &rhs) {
-    if (this == &rhs) {
-      return *this;
-    }
     static_assert( std::is_const<T>::value , 
                    "ERROR: Cannot create non-const Array using const Array" );
+    if (this == &rhs) { return *this; }
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     for (int i=0; i<rank; i++) {
       this->dimension[i] = rhs.dimension[i];
@@ -540,7 +534,7 @@ public:
   YAKL_INLINE Array& operator=(Array &&rhs) {
     if (this == &rhs) { return *this; }
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     for (int i=0; i<rank; i++) {
       this->dimension[i] = rhs.dimension[i];
@@ -564,7 +558,7 @@ public:
   */
   YAKL_INLINE ~Array() {
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
   }
 
@@ -614,90 +608,6 @@ public:
     }
     yakl_mtx_unlock();
     return ret;
-  }
-
-
-  /* ACCESSORS */
-  inline int use_count() const {
-    if (this->refCount != nullptr) {
-      return *(this->refCount);
-    } else {
-      return 0;
-    }
-  }
-
-
-  template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
-  inline void allocate(char const * label = "") {
-    // static_assert( std::is_arithmetic<T>() || myMem == memHost , 
-    //                "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
-    yakl_mtx_lock();
-    this->refCount = new int;
-    (*(this->refCount)) = 1;
-    if (myMem == memDevice) {
-      this->myData = (T *) yaklAllocDevice( this->totElems()*sizeof(T) , label );
-    } else {
-      this->myData = new T[this->totElems()];
-    }
-    yakl_mtx_unlock();
-  }
-
-
-  template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
-  inline void deallocate() {
-    yakl_mtx_lock();
-    typedef typename std::remove_cv<T>::type T_non_const;
-    T_non_const *data = const_cast<T_non_const *>(this->myData);
-    if (this->refCount != nullptr) {
-      (*(this->refCount))--;
-
-      if (*this->refCount == 0) {
-        delete this->refCount;
-        this->refCount = nullptr;
-        if (this->totElems() > 0) {
-          if (myMem == memDevice) {
-            #ifdef YAKL_DEBUG
-              yaklFreeDevice(data,this->myname);
-            #else
-              yaklFreeDevice(data,"");
-            #endif
-          } else {
-            delete[] data;
-          }
-          this->myData = nullptr;
-        }
-      }
-
-    }
-    yakl_mtx_unlock();
-  }
-
-
-  template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
-  inline void deallocate() {
-    yakl_mtx_lock();
-    if (this->refCount != nullptr) {
-      (*(this->refCount))--;
-
-      if (*this->refCount == 0) {
-        delete this->refCount;
-        this->refCount = nullptr;
-        if (this->totElems() > 0) {
-          if (myMem == memDevice) {
-            #ifdef YAKL_DEBUG
-              yaklFreeDevice(this->myData,this->myname);
-            #else
-              yaklFreeDevice(this->myData,"");
-            #endif
-          } else {
-            delete[] this->myData;
-          }
-          this->myData = nullptr;
-        }
-      }
-
-    }
-    yakl_mtx_unlock();
   }
 
 };

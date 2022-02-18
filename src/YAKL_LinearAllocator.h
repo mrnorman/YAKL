@@ -1,9 +1,10 @@
 
 #pragma once
 
+// Describes a single allocation entry
 struct AllocNode {
-  size_t start;       // Offset of this allocation in "blocks"
-  size_t length;      // Length of this allocation in "blocks"
+  size_t start;        // Offset of this allocation in "blocks"
+  size_t length;       // Length of this allocation in "blocks"
   char const * label;  // Label for this allocation
   AllocNode() {
     this->start  = 0;
@@ -17,6 +18,8 @@ struct AllocNode {
   }
 };
 
+
+// This class encapsulates a single "pool"
 class LinearAllocator {
 public:
 
@@ -50,7 +53,7 @@ public:
     this->myzero    = myzero  ;
     this->pool      = mymalloc( poolSize() );
     this->allocs    = std::vector<AllocNode>();
-    this->allocs.reserve(128);
+    this->allocs.reserve(128);  // Make sure there is initial room for 128 entries
     if (pool == nullptr) {
       std::cerr << "ERROR: Could not create pool of size " << bytes << "\n" <<
                    "You have run out of memory. If GATOR_INITIAL_MB and GATOR_GROW_MB are too small " <<
@@ -64,6 +67,7 @@ public:
   }
 
 
+  // Allow the pool to be moved, but not copied
   LinearAllocator( LinearAllocator && rhs) {
     this->pool      = rhs.pool     ;
     this->nBlocks   = rhs.nBlocks  ;
@@ -132,6 +136,7 @@ public:
   }
 
 
+  // Mostly for debug purposes. Print all existing allocations
   void printAllocsLeft() {
     if (allocs.size() != 0) {
       std::cerr << "The following allocations have not been deallocated:" << std::endl;
@@ -145,9 +150,9 @@ public:
   }
 
 
-  static constexpr const char *classname() { return "LinearAllocator"; }
-
-
+  // Allocate the requested number of bytes if there is room for it.
+  // If there isn't room or bytes == 0, then nullptr is returned.
+  // Otherwise, the correct pointer is returned
   void * allocate(size_t bytes, char const * label="") {
     #ifdef MEMORY_DEBUG
       if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: LinearAllocator attempting to allocate "
@@ -157,6 +162,7 @@ public:
       return nullptr;
     }
     size_t blocksReq = (bytes-1)/blockSize + 1; // Number of blocks needed for this allocation
+    // If there are no allocations, then place this allocaiton at the beginning.
     if (allocs.empty()) {
       if (nBlocks >= blocksReq) {
         allocs.push_back( AllocNode( (size_t) 0 , blocksReq , label ) );
@@ -184,10 +190,13 @@ public:
       }
     }
 
+    // Return nullptr if there was no room for the allocation
+    // If the caller used "iGotRoom", then this should never actually happen
     return nullptr;
   };
 
 
+  // Free the requested pointer
   void free(void *ptr, char const * label = "") {
     #ifdef MEMORY_DEBUG
       if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: LinearAllocator attempting to free "
@@ -203,6 +212,7 @@ public:
   };
 
 
+  // Determine if there is room for an allocation of the requested number of bytes
   bool iGotRoom( size_t bytes ) const {
     size_t blocksReq = (bytes-1)/blockSize + 1; // Number of blocks needed for this allocation
 
@@ -225,6 +235,7 @@ public:
   }
 
 
+  // Determine if the requested pointer belongs to this pool
   bool thisIsMyPointer(void *ptr) const {
     long long offset = ( (size_t *) ptr - (size_t *) pool ) / blockInc;
     return (offset >= 0 && offset <= nBlocks-1);

@@ -1,9 +1,13 @@
 
 #pragma once
 
+// The one template to rule them all for the Array class
+// This ultimately describes dynamics and static / stack Arrays in all types, ranks, memory spaces, and styles
 template <class T, int rank, int myMem=memDefault, int myStyle=styleDefault> class Array;
 
 
+// This class is used to describe a set of dimensions used for Array slicing. One can call a constructor
+// with std::initialize_list (i.e., {1,2,3...} syntax)
 class Dims {
 public:
   int data[8];
@@ -78,7 +82,7 @@ public:
 
 
 
-// Dynamic (runtime) Array Bounds
+// Describes a single array bound. Used for Fortran array bounds
 class Bnd {
 public:
   int l, u;
@@ -89,6 +93,7 @@ public:
 
 
 
+// Describes a set of array bounds. use for Fortran array bounds
 class Bnds {
 public:
   int l[8];
@@ -243,10 +248,14 @@ public:
 
 
 #include "YAKL_CSArray.h"
+// Simplify the syntax for this Array type with the SArray syntax
+// One now needs to declare SArray<T,rank,D0[,D1,...]>
 template <class T, int rank, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1>
 using SArray  = Array< CSPEC< T , D0 , D1 , D2 , D3 > , rank , memStack , styleC >;
 
 #include "YAKL_FSArray.h"
+// Simplify the syntax for this Array type with the SArray syntax
+// One now needs to declare SArray<T,rank,B0[,B1,...]>
 template <class T, int rank, class B0 , class B1=SB<1,1> , class B2=SB<1,1> , class B3=SB<1,1> >
 using FSArray = Array< FSPEC< T , B0 , B1 , B2 , B3 > , rank , memStack , styleFortran >;
         

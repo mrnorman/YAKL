@@ -1,13 +1,9 @@
 
 #pragma once
 
-/*
-  This is intended to be a simple, low-overhead class to do multi-dimensional arrays
-  without pointer dereferencing. It supports indexing and cout only up to 3-D.
-
-  It templates based on array dimension sizes, which conveniently allows overloaded
-  functions in the TransformMatrices class.
-*/
+// This is a low-overhead class to represent a multi-dimensional C-style array with compile-time
+// known bounds placed on the stack of whatever context it is declared just like "int var[20];"
+// except with multiple dimensions, index checking, and printing
 
 template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
 class Array< CSPEC< T , D0 , D1 , D2 , D3 > , rank , memStack , styleC > {
@@ -27,6 +23,7 @@ public :
 
   T mutable myData[D0*D1*D2*D3];
 
+  // All copies are deep, so be wary of copies. Use references where possible
   YAKL_INLINE Array() { }
   YAKL_INLINE Array           (Array      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
   YAKL_INLINE Array           (Array const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
@@ -83,11 +80,6 @@ public :
     for (uint i=0; i<totElems(); i++) { os << std::setw(12) << v.myData[i] << "\n"; }
     os << "\n";
     return os;
-  }
-
-
-  template <class I> YAKL_INLINE void operator/= (I const val) {
-    for (uint i=0; i < totElems(); i++) { myData[i] /= val; }
   }
 
   

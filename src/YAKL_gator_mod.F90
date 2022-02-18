@@ -1,5 +1,9 @@
 
 
+! These are Fortran routines to initialize YAKL, finalize YAKL, and allocate and deallocate
+! through YAKL's memory pool so that the same data is accessible in both C++ and Fortran codes
+! Also gives Fortran access to efficient managed memory allocations through YAKL's pool
+
 module gator_mod
   use iso_c_binding
   implicit none

@@ -1,6 +1,8 @@
 
 #pragma once
 
+// Set the memory in a dynamically or statically sized MD Array class to the provided value
+
 template <class T, int rank, int myMem, int myStyle, class I>
 void memset( Array<T,rank,myMem,myStyle> &arr , I val ) {
   #ifdef YAKL_DEBUG
