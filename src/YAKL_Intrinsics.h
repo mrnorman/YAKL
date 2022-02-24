@@ -73,6 +73,29 @@ namespace intrinsics {
 
 
   ////////////////////////////////////////////////////////////////////////
+  // abs
+  ////////////////////////////////////////////////////////////////////////
+  template <class T, int rank, int myStyle>
+  inline Array<T,rank,memHost,myStyle> abs( Array<T,rank,memHost,myStyle> const &arr ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
+    #endif
+    auto ret = arr.createHostCopy();
+    for (int i=0; i < ret.totElems(); i++) { ret.myData[i] = std::abs(ret.myData[i]); };
+    return ret;
+  }
+  template <class T, int rank, int myStyle>
+  inline Array<T,rank,memDevice,myStyle> abs( Array<T,rank,memDevice,myStyle> const &arr ) {
+    #ifdef YAKL_DEBUG
+      if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
+    #endif
+    auto ret = arr.createDeviceCopy();
+    c::parallel_for( c::Bounds<1>(ret.totElems()) , YAKL_LAMBDA (int i) { ret.myData[i] = std::abs(ret.myData[i]); });
+    return ret;
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////
   // minval
   ////////////////////////////////////////////////////////////////////////
   template <class T, int rank, int myStyle>

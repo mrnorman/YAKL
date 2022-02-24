@@ -13,6 +13,7 @@ namespace yakl {
   using std::cos;
   using std::sin;
   using std::pow;
+  using std::abs;
 
   extern std::mutex yakl_mtx;
 
