@@ -1,20 +1,23 @@
 
 #pragma once
 
+// Set the allocation and deallocation functions for YAKL
 inline void set_alloc_free(std::function<void *( size_t )> &alloc , std::function<void ( void * )> &dealloc) {
   #if   defined(YAKL_ARCH_CUDA)
     #if defined (YAKL_MANAGED_MEMORY)
       alloc   = [] ( size_t bytes ) -> void* {
         if (bytes == 0) return nullptr;
         void *ptr;
-        cudaMallocManaged(&ptr,bytes);
+        cudaMallocManaged(&ptr,bytes);      // Allocate managed memory
         check_last_error();
-        cudaMemPrefetchAsync(ptr,bytes,0);
+        cudaMemPrefetchAsync(ptr,bytes,0);  // Prefetch the memory into device memory
         check_last_error();
         #ifdef _OPENMP45
+          // if using OMP target offload, make sure OMP runtime knows to leave this memory alone
           omp_target_associate_ptr(ptr,ptr,bytes,0,0);
         #endif
         #ifdef _OPENACC
+          // if using OpenACC, make sure OpenACC runtime knows to leave this memory alone
           acc_map_data(ptr,ptr,bytes);
         #endif
         return ptr;
@@ -41,7 +44,15 @@ inline void set_alloc_free(std::function<void *( size_t )> &alloc , std::functio
       alloc = [] ( size_t bytes ) -> void* {
         if (bytes == 0) return nullptr;
         void *ptr;
-        hipMallocHost(&ptr,bytes);
+        hipMallocHost(&ptr,bytes);  // This is the current standin for managed memory for HIP
+        #ifdef _OPENMP45
+          // if using OMP target offload, make sure OMP runtime knows to leave this memory alone
+          omp_target_associate_ptr(ptr,ptr,bytes,0,0);
+        #endif
+        #ifdef _OPENACC
+          // if using OpenACC, make sure OpenACC runtime knows to leave this memory alone
+          acc_map_data(ptr,ptr,bytes);
+        #endif
         check_last_error();
         return ptr;
       };
@@ -66,10 +77,19 @@ inline void set_alloc_free(std::function<void *( size_t )> &alloc , std::functio
     #if defined (YAKL_MANAGED_MEMORY)
       alloc = [] ( size_t bytes ) -> void* {
         if (bytes == 0) return nullptr;
+        // Allocate unified shared memory
         void *ptr = sycl::malloc_shared(bytes,sycl_default_stream());
         sycl_default_stream().memset(ptr, 0, bytes);
         check_last_error();
         sycl_default_stream().prefetch(ptr,bytes);
+        #ifdef _OPENMP45
+          // if using OMP target offload, make sure OMP runtime knows to leave this memory alone
+          omp_target_associate_ptr(ptr,ptr,bytes,0,0);
+        #endif
+        #ifdef _OPENACC
+          // if using OpenACC, make sure OpenACC runtime knows to leave this memory alone
+          acc_map_data(ptr,ptr,bytes);
+        #endif
         return ptr;
       };
       dealloc = [] ( void *ptr ) {

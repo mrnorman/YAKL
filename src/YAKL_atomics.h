@@ -2,6 +2,11 @@
 #pragma once
 
 
+// These are YAKL's atomic operations: atomicAdd, atomicMin, and atomicMax
+// Where possible, hardware atomics are used. Where that's not possible, CompareAndSwap (CAS)
+// implementations are used. 
+
+
 #ifdef YAKL_ARCH_CUDA
 
 

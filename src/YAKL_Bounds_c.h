@@ -3,27 +3,32 @@
 
 ///////////////////////////////////////////////////////////
 // LBnd: Loop Bound -- Describes the bounds of one loop
+// C defaults to lower bound of 1
 ///////////////////////////////////////////////////////////
 class LBnd {
 public:
   int static constexpr default_lbound = 0;
   int l, u, s;
+  // Lower bound of zero, stride of one
   LBnd(index_t u) {
     this->l = 0;
     this->u = u-1;
     this->s = 1;
   }
+  // Lower bound of zero, stride of one
   LBnd(int u) {
     this->l = 0;
     this->u = u-1;
     this->s = 1;
   }
+  // Lower and upper bounds specified, stride of one
   LBnd(int l, int u) {
     this->l = l;
     this->u = u;
     this->s = 1;
     if (u < l) yakl_throw("ERROR: cannot specify an upper bound < lower bound");
   }
+  // Lower bound, upper bound, and stride all specified
   LBnd(int l, int u, int s) {
     this->l = l;
     this->u = u;
@@ -36,9 +41,11 @@ public:
 };
 
 
-///////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
 // Bounds: Describes a set of loop bounds
-///////////////////////////////////////////////////////////
+// Simple bounds have constexpr lower bounds and strides for greater compiler optimizations
+// unpackIndices transforms a global index ID into a set of multi-loop indices
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 // N == number of loops
 // simple == all lower bounds are 0, and all strides are 1
@@ -52,7 +59,8 @@ public:
   int     lbounds[8];
   index_t dims[8];
   index_t strides[8];
-  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 , LBnd const &b6 , LBnd const &b7 ) {
+  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 ,
+          LBnd const &b6 , LBnd const &b7 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     lbounds[1] = b1.l;   strides[1] =  b1.s;   dims[1] = ( b1.u - b1.l + 1 ) / b1.s;
     lbounds[2] = b2.l;   strides[2] =  b2.s;   dims[2] = ( b2.u - b2.l + 1 ) / b2.s;
@@ -125,7 +133,8 @@ public:
   int     lbounds[7];
   index_t dims[7];
   index_t strides[7];
-  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 , LBnd const &b6 ) {
+  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 ,
+          LBnd const &b6 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     lbounds[1] = b1.l;   strides[1] =  b1.s;   dims[1] = ( b1.u - b1.l + 1 ) / b1.s;
     lbounds[2] = b2.l;   strides[2] =  b2.s;   dims[2] = ( b2.u - b2.l + 1 ) / b2.s;

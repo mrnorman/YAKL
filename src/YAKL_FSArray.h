@@ -37,6 +37,7 @@ public :
 
   T mutable myData[D0*D1*D2*D3];
 
+  // All copies are deep, so be wary of copies. Use references where possible
   YAKL_INLINE Array() {}
   YAKL_INLINE Array           (Array      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
   YAKL_INLINE Array           (Array const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
@@ -78,6 +79,11 @@ public :
     #endif
     return myData[(i3-L3)*OFF3 + (i2-L2)*OFF2 + (i1-L1)*OFF1 + i0-L0];
   }
+
+
+  template <class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,int>::type = 0 >
+  YAKL_INLINE void operator= (TLOC val) { for (int i=0 ; i < totElems() ; i++) { myData[i] = val; } }
+
 
   YAKL_INLINE T *data() {
     return myData;

@@ -1,6 +1,14 @@
 
 #pragma once
 
+// Handles the case where a scalar value is written to in a kernel and must be read on the host after the kernel
+// completes.
+// Passing a value to the constructor will initialize the device pointer with that data from the host
+// Using the = operator will assign to the value inside a kernel. This is the most common operation
+// To access the value as a reference that is writable, use the operator() (e.g., in an atomic operation perhaps)
+// To read on the host afterward, using hostRead()
+// To write after construction, use hostWrite()
+
 template <class T> class ScalarLiveOut {
 public:
   Array<T,1,memDevice,styleC> data;

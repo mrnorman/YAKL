@@ -1,45 +1,55 @@
 
 // #pragma once is purposefully omitted here because it needs to be included twice: once in each namespace: c and fortran
 
-////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 // Convenience functions to handle the indexing
-////////////////////////////////////////////////
-template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<1,simple> const &bnd , int const i ) {
+// Reduces code for the rest of the parallel_for implementations
+// Calls the functor for the specified global index ID "i" using the specified loop bounds
+//////////////////////////////////////////////////////////////////////////////////////////////
+template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<1,simple> const &bnd ,
+                                                                    int const i ) {
   int ind[1];
   bnd.unpackIndices( i , ind );
   f(ind[0]);
 }
-template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<2,simple> const &bnd , int const i ) {
+template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<2,simple> const &bnd ,
+                                                                    int const i ) {
   int ind[2];
   bnd.unpackIndices( i , ind );
   f(ind[0],ind[1]);
 }
-template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<3,simple> const &bnd , int const i ) {
+template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<3,simple> const &bnd ,
+                                                                    int const i ) {
   int ind[3];
   bnd.unpackIndices( i , ind );
   f(ind[0],ind[1],ind[2]);
 }
-template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<4,simple> const &bnd , int const i ) {
+template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<4,simple> const &bnd ,
+                                                                    int const i ) {
   int ind[4];
   bnd.unpackIndices( i , ind );
   f(ind[0],ind[1],ind[2],ind[3]);
 }
-template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<5,simple> const &bnd , int const i ) {
+template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<5,simple> const &bnd ,
+                                                                    int const i ) {
   int ind[5];
   bnd.unpackIndices( i , ind );
   f(ind[0],ind[1],ind[2],ind[3],ind[4]);
 }
-template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<6,simple> const &bnd , int const i ) {
+template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<6,simple> const &bnd ,
+                                                                    int const i ) {
   int ind[6];
   bnd.unpackIndices( i , ind );
   f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5]);
 }
-template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<7,simple> const &bnd , int const i ) {
+template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<7,simple> const &bnd ,
+                                                                    int const i ) {
   int ind[7];
   bnd.unpackIndices( i , ind );
   f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6]);
 }
-template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<8,simple> const &bnd , int const i ) {
+template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f , Bounds<8,simple> const &bnd ,
+                                                                    int const i ) {
   int ind[8];
   bnd.unpackIndices( i , ind );
   f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],ind[7]);
@@ -51,6 +61,14 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
 // HARDWARE BACKENDS FOR KERNEL LAUNCHING
 ////////////////////////////////////////////////
 #ifdef YAKL_ARCH_CUDA
+  // CUDA has a limit on the parameter space for a kernel launch. When it's exceeded, then the kernel
+  // needs to be launched by reference from device memory (i.e., "cudaKernelRef").
+  // otherwise, it needs to be launched by value (i.e., "cudaKernelVal")
+  // A kernel launch will get the global ID and then use the callFunctor intermediate to tranform that
+  // ID into a set of indices for multiple loops and then call the functor with those indices
+  // The __launch_bounds__ matches the number of threads used to launch the kernels so that the compiler
+  // does not compile for more threads per block than the user plans to use. This is for optimal register
+  // usage and reduced register spilling.
   template <class F, int N, bool simple, int VecLen> __global__ __launch_bounds__(VecLen)
   void cudaKernelVal( Bounds<N,simple> bounds , F f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
     size_t i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -67,6 +85,7 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
     }
   }
 
+  // If the functor is small enough, then launch it like normal
   template<class F , int N , bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN ,
            typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0>
   void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
@@ -74,6 +93,8 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
     check_last_error();
   }
 
+  // Otherwise, have to copy the functor to device memory, dereference it in device memory, and launch it
+  // by reference
   template<class F , int N , bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN ,
            typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0>
   void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
@@ -88,6 +109,11 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
 
 
 #ifdef YAKL_ARCH_HIP
+  // A kernel launch will get the global ID and then use the callFunctor intermediate to tranform that
+  // ID into a set of indices for multiple loops and then call the functor with those indices
+  // The __launch_bounds__ matches the number of threads used to launch the kernels so that the compiler
+  // does not compile for more threads per block than the user plans to use. This is for optimal register
+  // usage and reduced register spilling.
   template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN> __global__ __launch_bounds__(VecLen)
   void hipKernel( Bounds<N,simple> bounds , F f , LaunchConfig<VecLen> config = LaunchConfig<>()) {
     size_t i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -107,6 +133,10 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
 
 
 #ifdef YAKL_ARCH_SYCL
+  // Kernels are launched with the SYCL parallel_for routine. 
+  // Currently, SYCL must copy this to the device manually and then run from the device
+  // Also, there is a violation of dependence wherein the stream must synchronized with a wait()
+  // call after launch
   template<class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
   void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
     if constexpr (sycl::is_device_copyable<F>::value) {
@@ -129,6 +159,11 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
 
 
 
+// These are the CPU routines for parallel_for without a device target. These rely on
+// constexpr lower bounds and strides for the compiler to optimize loop arithmetic for
+// simple bounds.
+// For OMP target offload backend, target teams distribute parallel for simd is used.
+// For OMP CPU threading backend, parallel for is used
 template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f ) {
   #ifdef YAKL_ARCH_OPENMP45
     #pragma omp target teams distribute parallel for simd
@@ -283,6 +318,7 @@ inline void parallel_for( Bounds<N,simple> const &bounds , F const &f ,
 template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
 inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f ,
                           LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
   #ifdef YAKL_ARCH_CUDA
     nvtxRangePushA(str);
   #endif
@@ -315,6 +351,7 @@ inline void parallel_for( LBnd bnd , F const &f , LaunchConfig<VecLen> config = 
 // Since "bnd" is accepted by value, integers will be accepted as well
 template <class F, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
 inline void parallel_for( char const * str , LBnd bnd , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
   #ifdef YAKL_ARCH_CUDA
     nvtxRangePushA(str);
   #endif

@@ -10,8 +10,6 @@ public:
   typedef typename std::add_const<type>::type const_value_type;
   typedef typename std::remove_const<type>::type non_const_value_type;
 
-  int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
-
 
   // Start off all constructors making sure the pointers are null
   YAKL_INLINE void nullify() {
@@ -39,6 +37,7 @@ public:
   // Owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   YAKL_INLINE Array(char const * label, Bnd const &b1) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 1 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -46,20 +45,18 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;  
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 2 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -67,21 +64,19 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
     this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 3 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -89,22 +84,20 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
     this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
     this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 4 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -112,23 +105,21 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
     this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
     this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
     this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 5 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -136,13 +127,10 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
     this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
@@ -150,10 +138,11 @@ public:
     this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
     this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 6 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -161,13 +150,10 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
     this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
@@ -176,10 +162,11 @@ public:
     this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
     this->lbounds[5] = b6.l; this->dimension[5] = b6.u - b6.l + 1;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 7 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -187,13 +174,10 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
     this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
@@ -203,10 +187,11 @@ public:
     this->lbounds[5] = b6.l; this->dimension[5] = b6.u - b6.l + 1;
     this->lbounds[6] = b7.l; this->dimension[6] = b7.u - b7.l + 1;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 8 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -214,13 +199,10 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
     this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
@@ -231,54 +213,51 @@ public:
     this->lbounds[6] = b7.l; this->dimension[6] = b7.u - b7.l + 1;
     this->lbounds[7] = b8.l; this->dimension[7] = b8.u - b8.l + 1;
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   Array(char const * label, std::vector<Bnd> const &bnds) {
+    nullify();
     #ifdef YAKL_DEBUG
       if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
       if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     for (int i=0; i < rank; i++) {
       this->lbounds[i] = bnds[i].l;
       this->dimension[i] = bnds[i].u - bnds[i].l + 1;
     }
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
   Array(char const * label, std::vector<INT> const &bnds) {
+    nullify();
     #ifdef YAKL_DEBUG
       if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
       if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     for (int i=0; i < rank; i++) {
       this->lbounds[i] = 1;
       this->dimension[i] = bnds[i];
     }
     #if YAKL_CURRENTLY_ON_HOST()
-      allocate(label);
+      this->allocate(label);
     #endif
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Non-owned constructors
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   YAKL_INLINE Array(char const * label, T * data, Bnd const &b1) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 1 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -286,9 +265,6 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;  
@@ -296,6 +272,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 2 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -303,9 +280,6 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;  
@@ -314,6 +288,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 3 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -321,9 +296,6 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
@@ -333,6 +305,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 4 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -340,9 +313,6 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
@@ -353,6 +323,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 5 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -360,9 +331,6 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
@@ -374,6 +342,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 6 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -381,9 +350,6 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;  
@@ -396,6 +362,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 7 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -403,9 +370,6 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
@@ -419,6 +383,7 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
+    nullify();
     #ifdef YAKL_DEBUG
       if( rank != 8 ) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -426,9 +391,6 @@ public:
         #endif
         yakl_throw("Calling an invalid constructor");
       }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
@@ -443,12 +405,10 @@ public:
     this->refCount = nullptr;
   }
   YAKL_INLINE Array(char const * label, T * data, std::vector<Bnd> const &bnds) {
+    nullify();
     #ifdef YAKL_DEBUG
       if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
       if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     for (int i=0; i < rank; i++) {
@@ -460,12 +420,10 @@ public:
   }
   template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
   YAKL_INLINE Array(char const * label, T * data, std::vector<INT> const &bnds) {
+    nullify();
     #ifdef YAKL_DEBUG
       if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
       if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
-    #endif
-    nullify();
-    #ifdef YAKL_DEBUG
       this->myname = label;
     #endif
     for (int i=0; i < rank; i++) {
@@ -496,7 +454,7 @@ public:
       yakl_mtx_lock();
     #endif
     this->refCount = rhs.refCount;
-    if (refCount != nullptr) {
+    if (this->refCount != nullptr) {
       #if YAKL_CURRENTLY_ON_HOST()
         (*(this->refCount))++;
       #endif
@@ -522,7 +480,7 @@ public:
       yakl_mtx_lock();
     #endif
     this->refCount = rhs.refCount;
-    if (refCount != nullptr) {
+    if (this->refCount != nullptr) {
       #if YAKL_CURRENTLY_ON_HOST()
         (*(this->refCount))++;
       #endif
@@ -536,7 +494,7 @@ public:
   YAKL_INLINE Array & operator=(Array<non_const_value_type,rank,myMem,styleFortran> const &rhs) {
     if (this == &rhs) { return *this; }
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     for (int i=0; i<rank; i++) {
       this->lbounds  [i] = rhs.lbounds  [i];
@@ -550,7 +508,7 @@ public:
       yakl_mtx_lock();
     #endif
     this->refCount = rhs.refCount;
-    if (refCount != nullptr) {
+    if (this->refCount != nullptr) {
       #if YAKL_CURRENTLY_ON_HOST()
         (*(this->refCount))++;
       #endif
@@ -565,7 +523,7 @@ public:
                    "ERROR: Cannot create non-const Array using const Array" );
     if (this == &rhs) { return *this; }
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     for (int i=0; i<rank; i++) {
       this->lbounds  [i] = rhs.lbounds  [i];
@@ -579,7 +537,7 @@ public:
       yakl_mtx_lock();
     #endif
     this->refCount = rhs.refCount;
-    if (refCount != nullptr) {
+    if (this->refCount != nullptr) {
       #if YAKL_CURRENTLY_ON_HOST()
         (*(this->refCount))++;
       #endif
@@ -617,7 +575,7 @@ public:
   YAKL_INLINE Array& operator=(Array &&rhs) {
     if (this == &rhs) { return *this; }
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
     for (int i=0; i<rank; i++) {
       this->lbounds  [i] = rhs.lbounds  [i];
@@ -642,7 +600,7 @@ public:
   */
   YAKL_INLINE ~Array() {
     #if YAKL_CURRENTLY_ON_HOST()
-      deallocate();
+      this->deallocate();
     #endif
   }
 
@@ -694,90 +652,6 @@ public:
     }
     yakl_mtx_unlock();
     return ret;
-  }
-
-
-  /* ACCESSORS */
-  inline int use_count() const {
-    if (this->refCount != nullptr) {
-      return *(this->refCount);
-    } else {
-      return 0;
-    }
-  }
-
-
-  template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
-  inline void allocate(char const * label = "") {
-    // static_assert( std::is_arithmetic<T>() || myMem == memHost , 
-    //                "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
-    yakl_mtx_lock();
-    this->refCount = new int;
-    (*(this->refCount)) = 1;
-    if (myMem == memDevice) {
-      this->myData = (T *) yaklAllocDevice( this->totElems()*sizeof(T) , label);
-    } else {
-      this->myData = new T[this->totElems()];
-    }
-    yakl_mtx_unlock();
-  }
-
-
-  template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
-  inline void deallocate() {
-    yakl_mtx_lock();
-    typedef typename std::remove_cv<T>::type T_non_const;
-    T_non_const *data = const_cast<T_non_const *>(this->myData);
-    if (this->refCount != nullptr) {
-      (*(this->refCount))--;
-
-      if (*this->refCount == 0) {
-        delete this->refCount;
-        this->refCount = nullptr;
-        if (this->totElems() > 0) {
-          if (myMem == memDevice) {
-            #ifdef YAKL_DEBUG
-              yaklFreeDevice(data,this->myname);
-            #else
-              yaklFreeDevice(data,"");
-            #endif
-          } else {
-            delete[] data;
-          }
-          this->myData = nullptr;
-        }
-      }
-
-    }
-    yakl_mtx_unlock();
-  }
-
-
-  template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
-  inline void deallocate() {
-    yakl_mtx_lock();
-    if (this->refCount != nullptr) {
-      (*(this->refCount))--;
-
-      if (*this->refCount == 0) {
-        delete this->refCount;
-        this->refCount = nullptr;
-        if (this->totElems() > 0) {
-          if (myMem == memDevice) {
-            #ifdef YAKL_DEBUG
-              yaklFreeDevice(this->myData,this->myname);
-            #else
-              yaklFreeDevice(this->myData,"");
-            #endif
-          } else {
-            delete[] this->myData;
-          }
-          this->myData = nullptr;
-        }
-      }
-
-    }
-    yakl_mtx_unlock();
   }
 
 };

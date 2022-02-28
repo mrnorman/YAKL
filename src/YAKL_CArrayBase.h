@@ -192,6 +192,9 @@ public:
   }
 
 
+  // Array slicing
+  // This routine is the "master form" of the array slicing routine.
+  // To allow array slicing inside device kernels, this does not add to the reference count of the starting array object
   template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleC> &store ) const {
     #ifdef YAKL_DEBUG
       if (rank != dims.size()) {
@@ -284,6 +287,8 @@ public:
   }
 
 
+  // Create a host copy of this array. Even if the array exists on the host, a deep copy to a separate
+  // object is still performed to avoid any potential bugs when the user expects this behavior
   inline Array<T,rank,memHost,styleC> createHostCopy() const {
     #ifdef YAKL_DEBUG
       if (! this->initialized()) {
@@ -313,6 +318,8 @@ public:
   }
 
 
+  // Create a device copy of this array. Even if the array exists on the host, a deep copy to a separate
+  // object is still performed to avoid any potential bugs when the user expects this behavior
   inline Array<T,rank,memDevice,styleC> createDeviceCopy() const {
     #ifdef YAKL_DEBUG
       if (! this->initialized()) {

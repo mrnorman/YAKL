@@ -1,7 +1,6 @@
 
 #pragma once
 
-
 #if defined(__GNUG__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
 # define GET_SIMD_PRAGMA() _Pragma("GCC ivdep")
 #elif defined(__clang__) && !defined(__INTEL_COMPILER)
@@ -11,6 +10,13 @@
 #else
 # define GET_SIMD_PRAGMA()
 #endif
+
+
+// Packs can be used by the user in order to encourage compilers to SIMD vectorize in cases where the compiler
+// is having trouble determining when vector instructions can be generated. For recent versions of compilers,
+// this is not very necessary.
+// 
+// Pack objects are fairly bare bones in terms of functionality
 
 template <class T, int N>
 class Pack {

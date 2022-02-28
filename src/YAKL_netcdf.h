@@ -22,6 +22,10 @@ namespace yakl {
   int constexpr NETCDF_MODE_REPLACE = NC_CLOBBER;
   int constexpr NETCDF_MODE_NEW     = NC_NOCLOBBER;
 
+  // Evidently there were ton of issues when using the C++ interface for NetCDF
+  // People can't seem to install it correctly.
+  // Therefore, I'm replicating the basic functionality so that I can use the code
+  // I previously wrote for handling netCDF files for YAKL Array objects
   class SimpleNetCDF {
   public:
 

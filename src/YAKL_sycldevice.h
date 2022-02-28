@@ -1,7 +1,9 @@
 #pragma once
 
 
+// This exists to create a queue for SYCL kernels and data transfers
 #ifdef YAKL_ARCH_SYCL
+  // Triggered when asynchronous exceptions arise from the SYCL runtime
   auto asyncHandler = [](sycl::exception_list exceptions) {
     for (std::exception_ptr const &e : exceptions) {
       try {
@@ -15,6 +17,7 @@
     }
   };
 
+  // Singleton pattern to initialize a SYCL queue upon first instantiation
   class dev_mgr {
   public:
     sycl::queue &default_queue() {
@@ -56,7 +59,7 @@
     }
     void check_id(unsigned int id) const {
       if (id >= _devs.size()) {
-	std::cerr << "ERROR: invalid SYCL device id \n";
+        std::cerr << "ERROR: invalid SYCL device id \n";
       }
     }
     std::vector<std::shared_ptr<sycl::device>> _devs;
