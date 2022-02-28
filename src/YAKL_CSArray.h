@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL_Array.h
+// Inside the yakl namespace
 
 // This is a low-overhead class to represent a multi-dimensional C-style array with compile-time
 // known bounds placed on the stack of whatever context it is declared just like "int var[20];"

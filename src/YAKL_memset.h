@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // Set the memory in a dynamically or statically sized MD Array class to the provided value
 

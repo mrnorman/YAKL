@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL_parallel_for_fortran.h
+// Inside the yakl::fortran namespace
 
 ///////////////////////////////////////////////////////////
 // LBnd: Loop Bound -- Describes the bounds of one loop

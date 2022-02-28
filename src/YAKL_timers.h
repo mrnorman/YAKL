@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
 #include "gptl.h"

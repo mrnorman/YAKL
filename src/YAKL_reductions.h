@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 
 template <class T, int myMem> class ParallelMin;

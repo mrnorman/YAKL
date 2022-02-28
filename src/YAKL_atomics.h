@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 
 // These are YAKL's atomic operations: atomicAdd, atomicMin, and atomicMax

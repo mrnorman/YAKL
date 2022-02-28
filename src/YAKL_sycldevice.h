@@ -1,5 +1,7 @@
-#pragma once
 
+#pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // This exists to create a queue for SYCL kernels and data transfers
 #ifdef YAKL_ARCH_SYCL

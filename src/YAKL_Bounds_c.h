@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL_parallel_for_c.h
+// Inside the yakl::c namespace
 
 ///////////////////////////////////////////////////////////
 // LBnd: Loop Bound -- Describes the bounds of one loop

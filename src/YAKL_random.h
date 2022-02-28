@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // Simple, low-overhead random numbers
 // https://burtleburtle.net/bob/rand/smallprng.html

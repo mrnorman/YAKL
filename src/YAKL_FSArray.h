@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL_Array.h
+// Inside the yakl namespace
 
 /*
   This is intended to be a simple, low-overhead class to do multi-dimensional arrays

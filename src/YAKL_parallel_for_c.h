@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL_parallel_for.h
+// Inside the yakl namespace
 
 namespace c {
 

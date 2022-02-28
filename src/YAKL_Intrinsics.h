@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // These are some convenient intrinsics functions (think Fortran intrinsics library)
 

@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 #if defined(__GNUG__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
 # define GET_SIMD_PRAGMA() _Pragma("GCC ivdep")

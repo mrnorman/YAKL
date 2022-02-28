@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 
 // Block the CPU code until the device code and data transfers are all completed

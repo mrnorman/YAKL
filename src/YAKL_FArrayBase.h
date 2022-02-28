@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL_Array.h
+// Inside the yakl namespace
 
 template <class T, int rank, int myMem>
 class FArrayBase : public ArrayBase<T,rank,myMem,styleFortran> {

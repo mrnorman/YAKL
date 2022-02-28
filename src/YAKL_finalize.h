@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // Free the functorBuffer, free the memory pools, reset global std::functions for alloc and free
 inline void finalize() {

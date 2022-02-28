@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL_Array.h
+// Inside the yakl namespace
 
 // This implements all functionality used by all dynamically allocated arrays
 

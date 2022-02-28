@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL_Gator.h
+// Inside the yakl namespace
 
 // Describes a single allocation entry
 struct AllocNode {

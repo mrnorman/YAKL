@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 
 // Your one-stop shop for memory transfers to / from host / device

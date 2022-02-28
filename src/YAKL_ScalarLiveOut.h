@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // Handles the case where a scalar value is written to in a kernel and must be read on the host after the kernel
 // completes.

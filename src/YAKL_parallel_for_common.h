@@ -1,5 +1,7 @@
 
 // #pragma once is purposefully omitted here because it needs to be included twice: once in each namespace: c and fortran
+// Included by YAKL_parallel_for_c.h and YAKL_parallel_for_fortran.h
+// Inside the yakl::c and yakl::fortran namespaces
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 // Convenience functions to handle the indexing

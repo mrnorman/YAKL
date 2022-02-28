@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // Allows the user to throw an exception from the host or the device
 YAKL_INLINE void yakl_throw(const char * msg) {

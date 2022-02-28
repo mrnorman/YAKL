@@ -1,5 +1,6 @@
 
 #pragma once
+// Included by YAKL.h
 
 #ifdef YAKL_ARCH_CUDA
 

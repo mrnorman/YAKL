@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // The one template to rule them all for the Array class
 // This ultimately describes dynamics and static / stack Arrays in all types, ranks, memory spaces, and styles

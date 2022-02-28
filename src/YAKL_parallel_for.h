@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // Useful for slightly faster modulo when computing indices from global thread IDs
 template <class T> constexpr T fastmod(T a , T b) {

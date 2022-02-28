@@ -1,5 +1,7 @@
 
 #pragma once
+// Included by YAKL.h
+// Inside the yakl namespace
 
 // Initialize the YAKL framework
 // Initialize timers, set global std::functions for alloc and free, allocate functorBuffer
