@@ -3,23 +3,16 @@
 // Included by YAKL.h
 // Inside the yakl namespace
 
-#if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
-#include "gptl.h"
-#endif
+#include "YAKL_Toney.h"
 
-inline void timer_start(char const * label) {
-  #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
-    fence();
-    GPTLstart(label);
-  #endif
+namespace yakl {
+  extern std::function<void ()>             timer_init;
+  extern std::function<void ()>             timer_finalize;
+  extern std::function<void (char const *)> timer_start;
+  extern std::function<void (char const *)> timer_stop;
+  inline void set_timer_init    ( std::function<void ()>             func ) { timer_init     = func; }
+  inline void set_timer_finalize( std::function<void ()>             func ) { timer_finalize = func; }
+  inline void set_timer_start   ( std::function<void (char const *)> func ) { timer_start    = func; }
+  inline void set_timer_stop    ( std::function<void (char const *)> func ) { timer_stop     = func; }
 }
-
-inline void timer_stop(char const * label) {
-  #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
-    fence();
-    GPTLstop(label);
-  #endif
-}
-
-
 

@@ -10,7 +10,7 @@ export FC=gfortran
 unset CXXFLAGS
 unset FFLAGS
 
-cmake -DYAKL_CXX_FLAGS="-O3"  \
+cmake -DYAKL_CXX_FLAGS="-O3 -DYAKL_AUTO_PROFILE"  \
       -DYAKL_F90_FLAGS="-O3"  \
       -DYAKL_C_FLAGS="-O3"    \
       ../../..

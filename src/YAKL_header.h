@@ -2,6 +2,11 @@
 #pragma once 
 // Included by YAKL.h
 
+
+#include <chrono>
+#include <string>
+#include <unordered_map>
+#include <thread>
 #include <iostream>
 #include <iomanip>
 #include <time.h>
