@@ -29,9 +29,8 @@ inline void finalize() {
     // Finalize the timers
     #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
       if (yakl_masterproc()) {
-        GPTLpr_file("");
+        timer.print_all_threads();
       }
-      GPTLpr_file("yakl_timer_output.txt");
     #endif
 
     // Reset the global std::functions for host and device alloc and free

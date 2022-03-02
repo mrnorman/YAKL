@@ -4,15 +4,9 @@ if ("${YAKL_ARCH}" STREQUAL "CUDA")
   enable_language(CUDA)
 endif()
 
-
-set(YAKL_C_SOURCE src/gptl/GPTLget_memusage.c
-                  src/gptl/GPTLprint_memusage.c
-                  src/gptl/GPTLutil.c
-                  src/gptl/gptl.c
-                  src/gptl/gptl_papi.c)
 set(YAKL_CXX_SOURCE src/YAKL.cpp)
 set(YAKL_F90_SOURCE src/YAKL_gator_mod.F90)
-set(YAKL_SOURCE ${YAKL_C_SOURCE} ${YAKL_CXX_SOURCE} ${YAKL_F90_SOURCE})
+set(YAKL_SOURCE ${YAKL_CXX_SOURCE} ${YAKL_F90_SOURCE})
 
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   message(STATUS "** Building YAKL for a CUDA backend **")
@@ -49,7 +43,6 @@ include(yakl_utils.cmake)
 yakl_process_cxx_source_files("${YAKL_CXX_SOURCE}")
 message(STATUS "** YAKL is using the following C++ flags: ${YAKL_COMPILER_FLAGS} **")
 
-set_source_files_properties(${YAKL_C_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_C_FLAGS}")
 set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
 
 add_library(yakl STATIC ${YAKL_SOURCE})
@@ -60,7 +53,6 @@ else()
 endif()
 
 target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/gptl)
 
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)

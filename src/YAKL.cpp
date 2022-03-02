@@ -15,6 +15,8 @@ namespace yakl {
 
   bool yakl_is_initialized = false;  // Determine if YAKL has been initialized
 
+  Toney timer;
+
   // YAKL default allocaiton and deallocation functions on host and device. Init to give errors
   // when used before initializing the YAKL runtime with yakl::init()
   std::function<void *( size_t , char const *)> yaklAllocDeviceFunc = [] ( size_t bytes , char const *label ) -> void* {

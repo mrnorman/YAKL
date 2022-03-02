@@ -12,7 +12,6 @@ inline void init() {
   if ( ! isInitialized() ) {
     #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
       if (yakl_masterproc()) std::cout << "Using YAKL Timers\n";
-      GPTLinitialize();
     #endif
     bool use_pool = true;
 
