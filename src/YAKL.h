@@ -16,16 +16,17 @@ namespace yakl {
   extern std::mutex yakl_mtx;
 
   // YAKL allocator and deallocator on host and device as std::function's
-  extern std::function<void *( size_t , char const *)> yaklAllocHostFunc;
-  extern std::function<void *( size_t , char const *)> yaklAllocDeviceFunc;
-  extern std::function<void ( void * , char const *)>  yaklFreeHostFunc;
-  extern std::function<void ( void * , char const *)>  yaklFreeDeviceFunc;
+  extern std::function<void *( size_t , char const *)> yaklAllocHost;
+  extern std::function<void *( size_t , char const *)> yaklAllocDevice;
+  extern std::function<void ( void * , char const *)>  yaklFreeHost;
+  extern std::function<void ( void * , char const *)>  yaklFreeDevice;
+
+  inline void set_host_allocator    ( std::function<void *(size_t,char const *)> func ) { yaklAllocHost   = func; }
+  inline void set_device_allocator  ( std::function<void *(size_t,char const *)> func ) { yaklAllocDevice = func; }
+  inline void set_host_deallocator  ( std::function<void (void *,char const *)>  func ) { yaklFreeHost    = func; }
+  inline void set_device_deallocator( std::function<void (void *,char const *)>  func ) { yaklFreeDevice  = func; }
 
   // YAKL's default allocation, free, mutex lock, and mutex unlock routines.
-  inline void *yaklAllocHost  ( size_t bytes , char const *label ) { return yaklAllocHostFunc  (bytes,label); }
-  inline void *yaklAllocDevice( size_t bytes , char const *label ) { return yaklAllocDeviceFunc(bytes,label); }
-  inline void yaklFreeHost  ( void *ptr , char const *label ) { yaklFreeHostFunc  (ptr,label); }
-  inline void yaklFreeDevice( void *ptr , char const *label ) { yaklFreeDeviceFunc(ptr,label); }
   inline void yakl_mtx_lock  () { yakl_mtx.lock  (); }
   inline void yakl_mtx_unlock() { yakl_mtx.unlock(); }
 
@@ -63,42 +64,24 @@ namespace yakl {
   int constexpr styleDefault = styleC;
 
   int constexpr COLON = std::numeric_limits<int>::min(); // Label for the ":" from Fortrna array slicing
-
-  #include "YAKL_error.h"
-
-  #include "YAKL_fence.h"
-
-  #include "YAKL_sycldevice.h"
-
-  #include "YAKL_simd.h"
-
-  #include "YAKL_alloc_free.h"
-
-  #include "YAKL_Gator.h"
-  extern Gator pool;
-
-  #include "YAKL_timers.h"
-
-  #include "YAKL_init.h"
-
-  #include "YAKL_finalize.h"
-
-  #include "YAKL_parallel_for.h"
-
-  #include "YAKL_reductions.h"
-
-  #include "YAKL_atomics.h"
-
-  #include "YAKL_random.h"
-
-  #include "YAKL_mem_transfers.h"
-
-  #include "YAKL_Array.h"
-
-  #include "YAKL_ScalarLiveOut.h"
-
-  #include "YAKL_Intrinsics.h"
-
-  #include "YAKL_memset.h"
 }
+
+#include "YAKL_error.h"
+#include "YAKL_fence.h"
+#include "YAKL_sycldevice.h"
+#include "YAKL_simd.h"
+#include "YAKL_alloc_free.h"
+#include "YAKL_memory_pool.h"
+#include "YAKL_timers.h"
+#include "YAKL_init.h"
+#include "YAKL_finalize.h"
+#include "YAKL_parallel_for.h"
+#include "YAKL_reductions.h"
+#include "YAKL_atomics.h"
+#include "YAKL_random.h"
+#include "YAKL_mem_transfers.h"
+#include "YAKL_Array.h"
+#include "YAKL_ScalarLiveOut.h"
+#include "YAKL_Intrinsics.h"
+#include "YAKL_memset.h"
 

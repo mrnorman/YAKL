@@ -17,20 +17,44 @@ namespace yakl {
 
   Toney timer;
 
+  std::function<void ()> timer_init = [] () {};
+
+  std::function<void ()> timer_finalize = [] () {
+    #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
+      if (yakl_masterproc()) {
+        timer.print_all_threads();
+      }
+    #endif
+  };
+
+  std::function<void (char const *)> timer_start = [] (char const *label) {
+    #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
+      fence();
+      timer.start( label );
+    #endif
+  };
+
+  std::function<void (char const *)> timer_stop = [] (char const * label) {
+    #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
+      fence();
+      timer.stop( label );
+    #endif
+  };
+
   // YAKL default allocaiton and deallocation functions on host and device. Init to give errors
   // when used before initializing the YAKL runtime with yakl::init()
-  std::function<void *( size_t , char const *)> yaklAllocDeviceFunc = [] ( size_t bytes , char const *label ) -> void* {
+  std::function<void *( size_t , char const *)> yaklAllocDevice = [] ( size_t bytes , char const *label ) -> void* {
     yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
     return nullptr;
   };
-  std::function<void *( size_t , char const *)> yaklAllocHostFunc = [] ( size_t bytes , char const *label ) -> void* {
+  std::function<void *( size_t , char const *)> yaklAllocHost = [] ( size_t bytes , char const *label ) -> void* {
     yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
     return nullptr;
   };
-  std::function<void ( void * , char const *)>  yaklFreeDeviceFunc  = [] ( void *ptr    , char const *label )          {
+  std::function<void ( void * , char const *)>  yaklFreeDevice  = [] ( void *ptr    , char const *label )          {
     yakl_throw("ERROR: attempting memory free before calling yakl::init()");
   };
-  std::function<void ( void * , char const *)>  yaklFreeHostFunc  = [] ( void *ptr    , char const *label )          {
+  std::function<void ( void * , char const *)>  yaklFreeHost  = [] ( void *ptr    , char const *label )          {
     yakl_throw("ERROR: attempting memory free before calling yakl::init()");
   };
 }
