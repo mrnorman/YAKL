@@ -184,7 +184,7 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<1,si
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for
   #endif
-  for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
+  for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     f( i0 );
   }
 }
@@ -195,8 +195,8 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<2,si
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(2) 
   #endif
-  for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
-  for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
+  for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+  for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
     f( i0 , i1 );
   } }
 }
@@ -207,9 +207,9 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<3,si
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(3)
   #endif
-  for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
-  for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
-  for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
+  for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+  for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+  for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
     f( i0 , i1 , i2 );
   } } }
 }
@@ -220,10 +220,10 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<4,si
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(4)
   #endif
-  for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
-  for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
-  for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
-  for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
+  for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+  for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+  for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+  for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
     f( i0 , i1 , i2 , i3 );
   } } } }
 }
@@ -234,11 +234,11 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<5,si
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(5)
   #endif
-  for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
-  for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
-  for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
-  for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
-  for (int i4 = bounds.lbounds[4]; i4 < (int) (bounds.lbounds[4]+bounds.dims[4]*bounds.strides[4]); i4+=bounds.strides[4]) {
+  for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+  for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+  for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+  for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+  for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
     f( i0 , i1 , i2 , i3 , i4 );
   } } } } }
 }
@@ -249,12 +249,12 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<6,si
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(6)
   #endif
-  for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
-  for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
-  for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
-  for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
-  for (int i4 = bounds.lbounds[4]; i4 < (int) (bounds.lbounds[4]+bounds.dims[4]*bounds.strides[4]); i4+=bounds.strides[4]) {
-  for (int i5 = bounds.lbounds[5]; i5 < (int) (bounds.lbounds[5]+bounds.dims[5]*bounds.strides[5]); i5+=bounds.strides[5]) {
+  for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+  for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+  for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+  for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+  for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+  for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
     f( i0 , i1 , i2 , i3 , i4 , i5 );
   } } } } } }
 }
@@ -265,13 +265,13 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<7,si
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(7)
   #endif
-  for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
-  for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
-  for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
-  for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
-  for (int i4 = bounds.lbounds[4]; i4 < (int) (bounds.lbounds[4]+bounds.dims[4]*bounds.strides[4]); i4+=bounds.strides[4]) {
-  for (int i5 = bounds.lbounds[5]; i5 < (int) (bounds.lbounds[5]+bounds.dims[5]*bounds.strides[5]); i5+=bounds.strides[5]) {
-  for (int i6 = bounds.lbounds[6]; i6 < (int) (bounds.lbounds[6]+bounds.dims[6]*bounds.strides[6]); i6+=bounds.strides[6]) {
+  for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+  for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+  for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+  for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+  for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+  for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
+  for (int i6 = bounds.lbound(6); i6 < (int) (bounds.lbound(6)+bounds.dim(6)*bounds.stride(6)); i6+=bounds.stride(6)) {
     f( i0 , i1 , i2 , i3 , i4 , i5 , i6 );
   } } } } } } }
 }
@@ -282,14 +282,14 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<8,si
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(8)
   #endif
-  for (int i0 = bounds.lbounds[0]; i0 < (int) (bounds.lbounds[0]+bounds.dims[0]*bounds.strides[0]); i0+=bounds.strides[0]) {
-  for (int i1 = bounds.lbounds[1]; i1 < (int) (bounds.lbounds[1]+bounds.dims[1]*bounds.strides[1]); i1+=bounds.strides[1]) {
-  for (int i2 = bounds.lbounds[2]; i2 < (int) (bounds.lbounds[2]+bounds.dims[2]*bounds.strides[2]); i2+=bounds.strides[2]) {
-  for (int i3 = bounds.lbounds[3]; i3 < (int) (bounds.lbounds[3]+bounds.dims[3]*bounds.strides[3]); i3+=bounds.strides[3]) {
-  for (int i4 = bounds.lbounds[4]; i4 < (int) (bounds.lbounds[4]+bounds.dims[4]*bounds.strides[4]); i4+=bounds.strides[4]) {
-  for (int i5 = bounds.lbounds[5]; i5 < (int) (bounds.lbounds[5]+bounds.dims[5]*bounds.strides[5]); i5+=bounds.strides[5]) {
-  for (int i6 = bounds.lbounds[6]; i6 < (int) (bounds.lbounds[6]+bounds.dims[6]*bounds.strides[6]); i6+=bounds.strides[6]) {
-  for (int i7 = bounds.lbounds[7]; i7 < (int) (bounds.lbounds[7]+bounds.dims[7]*bounds.strides[7]); i7+=bounds.strides[7]) {
+  for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+  for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+  for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+  for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+  for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+  for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
+  for (int i6 = bounds.lbound(6); i6 < (int) (bounds.lbound(6)+bounds.dim(6)*bounds.stride(6)); i6+=bounds.stride(6)) {
+  for (int i7 = bounds.lbound(7); i7 < (int) (bounds.lbound(7)+bounds.dim(7)*bounds.stride(7)); i7+=bounds.stride(7)) {
     f( i0 , i1 , i2 , i3 , i4 , i5 , i6 , i7 );
   } } } } } } } }
 }
