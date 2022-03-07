@@ -105,6 +105,34 @@ int main() {
       if ( abs(max.hostRead() - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
     }
 
+    {
+      typedef int T;
+
+      Array<T,1,yakl::memHost,styleC> data("data",n);
+      for (int i=0; i < n; i++) {
+        data(i) = i - (n-1)/2.;
+      }
+
+      int min = 99999;
+      for (int i=0; i < n; i++) {
+        yakl::atomicMin(min,data(i));
+      }
+
+      int sum = 0;
+      for (int i=0; i < n; i++) {
+        yakl::atomicAdd(sum,data(i));
+      }
+
+      int max = -99999;
+      for (int i=0; i < n; i++) {
+        yakl::atomicMax(max,data(i));
+      }
+      
+      if ( abs(sum) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
+      if ( abs(min + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
+      if ( abs(max - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
+    }
+
   }
   yakl::finalize();
   
