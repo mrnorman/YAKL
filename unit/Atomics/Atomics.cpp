@@ -30,17 +30,17 @@ int main() {
       });
 
       yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMin(min(),data(i));
       });
 
       yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicAdd(sum(),data(i));
       });
 
       yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMax(max(),data(i));
       });
       
@@ -58,17 +58,17 @@ int main() {
       });
 
       yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMin(min(),data(i));
       });
 
       yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicAdd(sum(),data(i));
       });
 
       yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMax(max(),data(i));
       });
       
@@ -86,17 +86,17 @@ int main() {
       });
 
       yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMin(min(),data(i));
       });
 
       yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicAdd(sum(),data(i));
       });
 
       yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMax(max(),data(i));
       });
       
