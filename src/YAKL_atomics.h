@@ -168,7 +168,7 @@ namespace yakl {
   #elif defined(YAKL_ARCH_HIP)
 
 
-    __device__ __forceinline__ void atomicMin(float &update , float value) {
+    __device__ __forceinline__ void atomicMin_device(float &update , float value) {
       int oldval, newval, readback;
       oldval = __float_as_int(update);
       newval = __float_as_int( __int_as_float(oldval) < value ? __int_as_float(oldval) : value );
@@ -178,7 +178,7 @@ namespace yakl {
       }
     }
 
-    __device__ __forceinline__ void atomicMin(double &update , double value) {
+    __device__ __forceinline__ void atomicMin_device(double &update , double value) {
       unsigned long long oldval, newval, readback;
       oldval = __double_as_longlong(update);
       newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
@@ -187,13 +187,13 @@ namespace yakl {
         newval = __double_as_longlong( __longlong_as_double(oldval) < value ? __longlong_as_double(oldval) : value );
       }
     }
-    __device__ __forceinline__ void atomicMin(int &update , int value) {
+    __device__ __forceinline__ void atomicMin_device(int &update , int value) {
       ::atomicMin( &update , value );
     }
-    __device__ __forceinline__ void atomicMin(unsigned int &update , unsigned int value) {
+    __device__ __forceinline__ void atomicMin_device(unsigned int &update , unsigned int value) {
       ::atomicMin( &update , value );
     }
-    __device__ __forceinline__ void atomicMin(unsigned long long int &update , unsigned long long int value) {
+    __device__ __forceinline__ void atomicMin_device(unsigned long long int &update , unsigned long long int value) {
       ::atomicMin( &update , value );
     }
     template <class T> __host__ __device__ __forceinline__ void atomicMin(T &update , T value) {
@@ -204,7 +204,7 @@ namespace yakl {
       #endif
     }
 
-    __device__ __forceinline__ void atomicMax(float &update , float value) {
+    __device__ __forceinline__ void atomicMax_device(float &update , float value) {
       int oldval, newval, readback;
       oldval = __float_as_int(update);
       newval = __float_as_int( __int_as_float(oldval) > value ? __int_as_float(oldval) : value );
@@ -214,7 +214,7 @@ namespace yakl {
       }
     }
 
-    __device__ __forceinline__ void atomicMax(double &update , double value) {
+    __device__ __forceinline__ void atomicMax_device(double &update , double value) {
       unsigned long long oldval, newval, readback;
       oldval = __double_as_longlong(update);
       newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
@@ -223,13 +223,13 @@ namespace yakl {
         newval = __double_as_longlong( __longlong_as_double(oldval) > value ? __longlong_as_double(oldval) : value );
       }
     }
-    __device__ __forceinline__ void atomicMax(int &update , int value) {
+    __device__ __forceinline__ void atomicMax_device(int &update , int value) {
       ::atomicMax( &update , value );
     }
-    __device__ __forceinline__ void atomicMax(unsigned int &update , unsigned int value) {
+    __device__ __forceinline__ void atomicMax_device(unsigned int &update , unsigned int value) {
       ::atomicMax( &update , value );
     }
-    __device__ __forceinline__ void atomicMax(unsigned long long int &update , unsigned long long int value) {
+    __device__ __forceinline__ void atomicMax_device(unsigned long long int &update , unsigned long long int value) {
       ::atomicMax( &update , value );
     }
     template <class T> __host__ __device__ __forceinline__ void atomicMax(T &update , T value) {
@@ -240,10 +240,10 @@ namespace yakl {
       #endif
     }
 
-    __device__ __forceinline__ void atomicAdd(float &update , float value) {
+    __device__ __forceinline__ void atomicAdd_device(float &update , float value) {
       ::atomicAdd( &update , value );
     }
-    __device__ __forceinline__ void atomicAdd(double &update , double value) {
+    __device__ __forceinline__ void atomicAdd_device(double &update , double value) {
       unsigned long long oldval, newval, readback;
       oldval = __double_as_longlong(update);
       newval = __double_as_longlong( __longlong_as_double(oldval) + value );
@@ -252,13 +252,13 @@ namespace yakl {
         newval = __double_as_longlong( __longlong_as_double(oldval) + value );
       }
     }
-    __device__ __forceinline__ void atomicAdd(int &update , int value) {
+    __device__ __forceinline__ void atomicAdd_device(int &update , int value) {
       ::atomicAdd( &update , value );
     }
-    __device__ __forceinline__ void atomicAdd(unsigned int &update , unsigned int value) {
+    __device__ __forceinline__ void atomicAdd_device(unsigned int &update , unsigned int value) {
       ::atomicAdd( &update , value );
     }
-    __device__ __forceinline__ void atomicAdd(unsigned long long int &update , unsigned long long int value) {
+    __device__ __forceinline__ void atomicAdd_device(unsigned long long int &update , unsigned long long int value) {
       ::atomicAdd( &update , value );
     }
     template <class T> __host__ __device__ __forceinline__ void atomicAdd(T &update , T value) {
