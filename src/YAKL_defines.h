@@ -17,7 +17,7 @@
 
   #define YAKL_LAMBDA [=] __host__ __device__
   #define YAKL_DEVICE_LAMBDA [=] __device__
-  #define YAKL_INLINE inline __host__ __device__ __forceinline__
+  #define YAKL_INLINE __host__ __device__ __forceinline__
   #define YAKL_DEVICE_INLINE inline __device__
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
   #define YAKL_SEPARATE_MEMORY_SPACE
