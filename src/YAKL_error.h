@@ -37,7 +37,6 @@ namespace yakl {
         auto ierr = hipGetLastError();
         if (ierr != hipSuccess) { yakl_throw( hipGetErrorString( ierr ) ); }
       #elif defined(YAKL_ARCH_SYCL)
-      #elif defined(YAKL_ARCH_OPENMP45)
       #endif
     #endif
   }

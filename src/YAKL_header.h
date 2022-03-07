@@ -47,8 +47,6 @@
   #include <hipcub/hipcub.hpp>
 #elif defined(YAKL_ARCH_SYCL)
   #include <CL/sycl.hpp>
-#elif defined(YAKL_ARCH_OPENMP45)
-  #include <omp.h>
 #elif defined(YAKL_ARCH_OPENMP)
   #include <omp.h>
 #endif

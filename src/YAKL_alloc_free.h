@@ -113,24 +113,6 @@ namespace yakl {
           // ptr = nullptr;
         };
       #endif
-    #elif defined(YAKL_ARCH_OPENMP45)
-      alloc = [] ( size_t bytes ) -> void* {
-        if (bytes == 0) return nullptr;
-        void *ptr;
-        int device;
-        device = omp_get_default_device();
-        ptr = omp_target_alloc(bytes,device);
-        //check does nothing
-        check_last_error();
-        return ptr;
-      };
-      dealloc = [] (void *ptr) {
-        int device;
-        device = omp_get_default_device();
-        omp_target_free(ptr,device);
-        //check does nothing
-        check_last_error();
-      };
     #else
       alloc   = [] ( size_t bytes ) -> void* { if (bytes == 0) return nullptr; return ::malloc(bytes); };
       dealloc = [] ( void *ptr ) { ::free(ptr); };
