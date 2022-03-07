@@ -51,7 +51,7 @@ namespace yakl {
   int constexpr memDevice = 1;
   int constexpr memHost   = 2;
   int constexpr memStack  = 3;
-  #if defined(YAKL_ARCH_CUDA) || defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL) || defined(YAKL_ARCH_OPENMP45)
+  #if defined(YAKL_ARCH_CUDA) || defined(YAKL_ARCH_HIP) || defined(YAKL_ARCH_SYCL)
     int constexpr memDefault = memDevice;
   #else
     int constexpr memDefault = memHost;
@@ -67,8 +67,8 @@ namespace yakl {
 }
 
 #include "YAKL_error.h"
-#include "YAKL_fence.h"
 #include "YAKL_sycldevice.h"
+#include "YAKL_fence.h"
 #include "YAKL_simd.h"
 #include "YAKL_alloc_free.h"
 #include "YAKL_memory_pool.h"

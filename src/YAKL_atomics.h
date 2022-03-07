@@ -270,25 +270,6 @@ namespace yakl {
     }
 
 
-  #elif defined(YAKL_ARCH_OPENMP45)
-
-
-    template <class T> inline void atomicMin(T&update, T value) {
-      #pragma omp critical
-      { update = value < update ? value : update; }
-    }
-
-    template <class T> inline void atomicMax(T &update, T value) {
-      #pragma omp critical
-      { update = value > update ? value : update; }
-    }
-
-    template <class T> inline void atomicAdd(T &update, T value) {
-      #pragma omp atomic update 
-      update += value;
-    }
-
-
   #elif defined(YAKL_ARCH_OPENMP)
 
 

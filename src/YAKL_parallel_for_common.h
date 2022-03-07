@@ -167,9 +167,6 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
 // For OMP target offload backend, target teams distribute parallel for simd is used.
 // For OMP CPU threading backend, parallel for is used
 template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f ) {
-  #ifdef YAKL_ARCH_OPENMP45
-    #pragma omp target teams distribute parallel for simd
-  #endif
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for
   #endif
@@ -178,9 +175,6 @@ template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f )
   }
 }
 template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<1,simple> const &bounds , F const &f ) {
-  #ifdef YAKL_ARCH_OPENMP45
-    #pragma omp target teams distribute parallel for simd
-  #endif
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for
   #endif
@@ -189,9 +183,6 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<1,si
   }
 }
 template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<2,simple> const &bounds , F const &f ) {
-  #ifdef YAKL_ARCH_OPENMP45
-    #pragma omp target teams distribute parallel for simd collapse(2) 
-  #endif
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(2) 
   #endif
@@ -201,9 +192,6 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<2,si
   } }
 }
 template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<3,simple> const &bounds , F const &f ) {
-  #ifdef YAKL_ARCH_OPENMP45
-    #pragma omp target teams distribute parallel for simd collapse(3)
-  #endif
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(3)
   #endif
@@ -214,9 +202,6 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<3,si
   } } }
 }
 template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<4,simple> const &bounds , F const &f ) {
-  #ifdef YAKL_ARCH_OPENMP45
-    #pragma omp target teams distribute parallel for simd collapse(4)
-  #endif
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(4)
   #endif
@@ -228,9 +213,6 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<4,si
   } } } }
 }
 template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<5,simple> const &bounds , F const &f ) {
-  #ifdef YAKL_ARCH_OPENMP45
-    #pragma omp target teams distribute parallel for simd collapse(5)
-  #endif
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(5)
   #endif
@@ -243,9 +225,6 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<5,si
   } } } } }
 }
 template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<6,simple> const &bounds , F const &f ) {
-  #ifdef YAKL_ARCH_OPENMP45
-    #pragma omp target teams distribute parallel for simd collapse(6)
-  #endif
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(6)
   #endif
@@ -259,9 +238,6 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<6,si
   } } } } } }
 }
 template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<7,simple> const &bounds , F const &f ) {
-  #ifdef YAKL_ARCH_OPENMP45
-    #pragma omp target teams distribute parallel for simd collapse(7)
-  #endif
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(7)
   #endif
@@ -276,9 +252,6 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<7,si
   } } } } } } }
 }
 template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<8,simple> const &bounds , F const &f ) {
-  #ifdef YAKL_ARCH_OPENMP45
-    #pragma omp target teams distribute parallel for simd collapse(8)
-  #endif
   #ifdef YAKL_ARCH_OPENMP
     #pragma omp parallel for collapse(8)
   #endif

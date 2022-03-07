@@ -77,9 +77,36 @@ namespace yakl {
       rank = 8;
     }
 
-    YAKL_INLINE int size() const {
-      return rank;
+    YAKL_INLINE Dims(Dims const &dims) {
+      rank = dims.rank;
+      for (int i=0; i < rank; i++) { data[i] = dims[i]; }
     }
+    YAKL_INLINE Dims &operator=(Dims const &dims) {
+      if (this == &dims) { return *this; }
+      rank = dims.rank;
+      for (int i=0; i < rank; i++) { data[i] = dims[i]; }
+      return *this;
+    }
+    YAKL_INLINE Dims(Dims &&dims) {
+      rank = dims.rank;
+      for (int i=0; i < rank; i++) { data[i] = dims[i]; }
+    }
+    YAKL_INLINE Dims &operator=(Dims &&dims) {
+      if (this == &dims) { return *this; }
+      rank = dims.rank;
+      for (int i=0; i < rank; i++) { data[i] = dims[i]; }
+      return *this;
+    }
+
+    template <class INT, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    Dims(std::vector<INT> const dims) {
+      rank = dims.size();
+      for (int i=0; i < rank; i++) { data[i] = dims[i]; }
+    }
+
+    YAKL_INLINE int operator[] (int i) const { return data[i]; }
+
+    YAKL_INLINE int size() const { return rank; }
   };
 
 
@@ -104,121 +131,98 @@ namespace yakl {
 
     YAKL_INLINE Bnds() {rank = 0;}
     YAKL_INLINE Bnds(Bnd b0) {
-      l[0] = b0.l;
-
-      u[0] = b0.u;
-
+      l[0] = b0.l;   u[0] = b0.u;
       rank = 1;
     }
     YAKL_INLINE Bnds(Bnd b0, Bnd b1) {
-      l[0] = b0.l;
-      l[1] = b1.l;
-
-      u[0] = b0.u;
-      u[1] = b1.u;
-
+      l[0] = b0.l;   u[0] = b0.u;
+      l[1] = b1.l;   u[1] = b1.u;
       rank = 2;
     }
     YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2) {
-      l[0] = b0.l;
-      l[1] = b1.l;
-      l[2] = b2.l;
-
-      u[0] = b0.u;
-      u[1] = b1.u;
-      u[2] = b2.u;
-
+      l[0] = b0.l;   u[0] = b0.u;
+      l[1] = b1.l;   u[1] = b1.u;
+      l[2] = b2.l;   u[2] = b2.u;
       rank = 3;
     }
     YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3) {
-      l[0] = b0.l;
-      l[1] = b1.l;
-      l[2] = b2.l;
-      l[3] = b3.l;
-
-      u[0] = b0.u;
-      u[1] = b1.u;
-      u[2] = b2.u;
-      u[3] = b3.u;
-
+      l[0] = b0.l;   u[0] = b0.u;
+      l[1] = b1.l;   u[1] = b1.u;
+      l[2] = b2.l;   u[2] = b2.u;
+      l[3] = b3.l;   u[3] = b3.u;
       rank = 4;
     }
     YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4) {
-      l[0] = b0.l;
-      l[1] = b1.l;
-      l[2] = b2.l;
-      l[3] = b3.l;
-      l[4] = b4.l;
-
-      u[0] = b0.u;
-      u[1] = b1.u;
-      u[2] = b2.u;
-      u[3] = b3.u;
-      u[4] = b4.u;
-
+      l[0] = b0.l;   u[0] = b0.u;
+      l[1] = b1.l;   u[1] = b1.u;
+      l[2] = b2.l;   u[2] = b2.u;
+      l[3] = b3.l;   u[3] = b3.u;
+      l[4] = b4.l;   u[4] = b4.u;
       rank = 5;
     }
     YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5) {
-      l[0] = b0.l;
-      l[1] = b1.l;
-      l[2] = b2.l;
-      l[3] = b3.l;
-      l[4] = b4.l;
-      l[5] = b5.l;
-
-      u[0] = b0.u;
-      u[1] = b1.u;
-      u[2] = b2.u;
-      u[3] = b3.u;
-      u[4] = b4.u;
-      u[5] = b5.u;
-
+      l[0] = b0.l;   u[0] = b0.u;
+      l[1] = b1.l;   u[1] = b1.u;
+      l[2] = b2.l;   u[2] = b2.u;
+      l[3] = b3.l;   u[3] = b3.u;
+      l[4] = b4.l;   u[4] = b4.u;
+      l[5] = b5.l;   u[5] = b5.u;
       rank = 6;
     }
     YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6) {
-      l[0] = b0.l;
-      l[1] = b1.l;
-      l[2] = b2.l;
-      l[3] = b3.l;
-      l[4] = b4.l;
-      l[5] = b5.l;
-      l[6] = b6.l;
-
-      u[0] = b0.u;
-      u[1] = b1.u;
-      u[2] = b2.u;
-      u[3] = b3.u;
-      u[4] = b4.u;
-      u[5] = b5.u;
-      u[6] = b6.u;
-
+      l[0] = b0.l;    u[0] = b0.u;
+      l[1] = b1.l;    u[1] = b1.u;
+      l[2] = b2.l;    u[2] = b2.u;
+      l[3] = b3.l;    u[3] = b3.u;
+      l[4] = b4.l;    u[4] = b4.u;
+      l[5] = b5.l;    u[5] = b5.u;
+      l[6] = b6.l;    u[6] = b6.u;
       rank = 7;
     }
     YAKL_INLINE Bnds(Bnd b0, Bnd b1, Bnd b2, Bnd b3, Bnd b4, Bnd b5, Bnd b6, Bnd b7) {
-      l[0] = b0.l;
-      l[1] = b1.l;
-      l[2] = b2.l;
-      l[3] = b3.l;
-      l[4] = b4.l;
-      l[5] = b5.l;
-      l[6] = b6.l;
-      l[7] = b7.l;
-
-      u[0] = b0.u;
-      u[1] = b1.u;
-      u[2] = b2.u;
-      u[3] = b3.u;
-      u[4] = b4.u;
-      u[5] = b5.u;
-      u[6] = b6.u;
-      u[7] = b7.u;
-
+      l[0] = b0.l;   u[0] = b0.u;
+      l[1] = b1.l;   u[1] = b1.u;
+      l[2] = b2.l;   u[2] = b2.u;
+      l[3] = b3.l;   u[3] = b3.u;
+      l[4] = b4.l;   u[4] = b4.u;
+      l[5] = b5.l;   u[5] = b5.u;
+      l[6] = b6.l;   u[6] = b6.u;
+      l[7] = b7.l;   u[7] = b7.u;
       rank = 8;
     }
-
-    int size() const {
-      return rank;
+    YAKL_INLINE Bnds(Bnds const &bnds) {
+      rank = bnds.rank;
+      for (int i=0; i < rank; i++) { l[i] = bnds.l[i]; u[i] = bnds.u[i]; }
     }
+    YAKL_INLINE Bnds &operator=(Bnds const &bnds) {
+      if (this == &bnds) { return *this; }
+      rank = bnds.rank;
+      for (int i=0; i < rank; i++) { l[i] = bnds.l[i]; u[i] = bnds.u[i]; }
+      return *this;
+    }
+    YAKL_INLINE Bnds(Bnds &&bnds) {
+      rank = bnds.rank;
+      for (int i=0; i < rank; i++) { l[i] = bnds.l[i]; u[i] = bnds.u[i]; }
+    }
+    YAKL_INLINE Bnds &operator=(Bnds &&bnds) {
+      if (this == &bnds) { return *this; }
+      rank = bnds.rank;
+      for (int i=0; i < rank; i++) { l[i] = bnds.l[i]; u[i] = bnds.u[i]; }
+      return *this;
+    }
+    Bnds(std::vector<Bnd> const bnds) {
+      rank = bnds.size();
+      for (int i=0; i < rank; i++) { l[i] = bnds[i].l;   u[i] = bnds[i].u; }
+    }
+    template <class INT, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    Bnds(std::vector<INT> const bnds) {
+      rank = bnds.size();
+      for (int i=0; i < rank; i++) { l[i] = 1;   u[i] = bnds[i]; }
+    }
+
+    YAKL_INLINE Bnd operator[] (int i) const { return Bnd(l[i],u[i]); }
+
+    YAKL_INLINE int size() const { return rank; }
   };
 
 

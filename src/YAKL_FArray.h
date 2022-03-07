@@ -35,190 +35,44 @@ public:
       this->myname = label;
     #endif
   }
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Owned constructors
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  YAKL_INLINE Array(char const * label, Bnd const &b1) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 1 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 1 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->deallocate();
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;  
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
-    #endif
-  }
-  YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 2 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 2 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->deallocate();
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
-    #endif
-  }
-  YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 3 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 3 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->deallocate();
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
-    #endif
-  }
-  YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 4 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 4 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->deallocate();
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
-    #endif
-  }
-  YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 5 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 5 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->deallocate();
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
-    #endif
-  }
-  YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 6 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 6 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->deallocate();
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
-    this->lbounds[5] = b6.l; this->dimension[5] = b6.u - b6.l + 1;
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
-    #endif
-  }
-  YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 7 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 7 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->deallocate();
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
-    this->lbounds[5] = b6.l; this->dimension[5] = b6.u - b6.l + 1;
-    this->lbounds[6] = b7.l; this->dimension[6] = b7.u - b7.l + 1;
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
-    #endif
-  }
-  YAKL_INLINE Array(char const * label, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 8 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 8 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->deallocate();
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
-    this->lbounds[5] = b6.l; this->dimension[5] = b6.u - b6.l + 1;
-    this->lbounds[6] = b7.l; this->dimension[6] = b7.u - b7.l + 1;
-    this->lbounds[7] = b8.l; this->dimension[7] = b8.u - b8.l + 1;
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
-    #endif
-  }
-  Array(char const * label, std::vector<Bnd> const &bnds) {
+  YAKL_INLINE Array( char const* label , Bnd b1 ) : Array(label,Bnds(b1)) {}
+  YAKL_INLINE Array( char const* label , Bnd b1 ,
+                                         Bnd b2 ) : Array(label,Bnds(b1,b2)) {}
+  YAKL_INLINE Array( char const* label , Bnd b1 ,
+                                         Bnd b2 ,
+                                         Bnd b3 ) : Array(label,Bnds(b1,b2,b3)) {}
+  YAKL_INLINE Array( char const* label , Bnd b1 ,
+                                         Bnd b2 ,
+                                         Bnd b3 ,
+                                         Bnd b4 ) : Array(label,Bnds(b1,b2,b3,b4)) {}
+  YAKL_INLINE Array( char const* label , Bnd b1 ,
+                                         Bnd b2 ,
+                                         Bnd b3 ,
+                                         Bnd b4 ,
+                                         Bnd b5 ) : Array(label,Bnds(b1,b2,b3,b4,b5)) {}
+  YAKL_INLINE Array( char const* label , Bnd b1 ,
+                                         Bnd b2 ,
+                                         Bnd b3 ,
+                                         Bnd b4 ,
+                                         Bnd b5 ,
+                                         Bnd b6 ) : Array(label,Bnds(b1,b2,b3,b4,b5,b6)) {}
+  YAKL_INLINE Array( char const* label , Bnd b1 ,
+                                         Bnd b2 ,
+                                         Bnd b3 ,
+                                         Bnd b4 ,
+                                         Bnd b5 ,
+                                         Bnd b6 ,
+                                         Bnd b7 ) : Array(label,Bnds(b1,b2,b3,b4,b5,b6,b7)) {}
+  YAKL_INLINE Array( char const* label , Bnd b1 ,
+                                         Bnd b2 ,
+                                         Bnd b3 ,
+                                         Bnd b4 ,
+                                         Bnd b5 ,
+                                         Bnd b6 ,
+                                         Bnd b7 ,
+                                         Bnd b8 ) : Array(label,Bnds(b1,b2,b3,b4,b5,b6,b7,b8)) {}
+  YAKL_INLINE Array(char const * label, Bnds bnds) {
     nullify();
     #ifdef YAKL_DEBUG
       if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
@@ -228,210 +82,57 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
-    for (int i=0; i < rank; i++) {
-      this->lbounds[i] = bnds[i].l;
-      this->dimension[i] = bnds[i].u - bnds[i].l + 1;
-    }
+    for (int i=0; i < rank; i++) { this->lbounds[i] = bnds[i].l; this->dimension[i] = bnds[i].u - bnds[i].l + 1; }
     #if YAKL_CURRENTLY_ON_HOST()
       this->allocate(label);
     #endif
   }
-  template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
-  Array(char const * label, std::vector<INT> const &bnds) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
-      if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
-      this->myname = label;
-    #endif
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->deallocate();
-    #endif
-    for (int i=0; i < rank; i++) {
-      this->lbounds[i] = 1;
-      this->dimension[i] = bnds[i];
-    }
-    #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
-    #endif
-  }
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Non-owned constructors
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 1 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 1 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;  
-    this->myData = data;
-    this->refCount = nullptr;
-  }
-  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 2 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 2 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;  
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->myData = data;
-    this->refCount = nullptr;
-  }
-  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 3 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 3 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->myData = data;
-    this->refCount = nullptr;
-  }
-  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 4 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 4 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    this->myData = data;
-    this->refCount = nullptr;
-  }
-  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 5 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 5 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
-    this->myData = data;
-    this->refCount = nullptr;
-  }
-  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 6 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 6 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;  
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
-    this->lbounds[5] = b6.l; this->dimension[5] = b6.u - b6.l + 1;
-    this->myData = data;
-    this->refCount = nullptr;
-  }
-  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 7 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 7 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
-    this->lbounds[5] = b6.l; this->dimension[5] = b6.u - b6.l + 1;
-    this->lbounds[6] = b7.l; this->dimension[6] = b7.u - b7.l + 1;
-    this->myData = data;
-    this->refCount = nullptr;
-  }
-  YAKL_INLINE Array(char const * label, T * data, Bnd const &b1, Bnd const &b2, Bnd const &b3, Bnd const &b4, Bnd const &b5, Bnd const &b6, Bnd const &b7, Bnd const &b8) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if( rank != 8 ) {
-        #ifndef YAKL_SEPARATE_MEMORY_SPACE
-          std::cerr << "For Array named " << label << "ERROR: Calling a constructor with 8 dimension for an Array templated for " << rank << " dimensions.";
-        #endif
-        yakl_throw("Calling an invalid constructor");
-      }
-      this->myname = label;
-    #endif
-    this->lbounds[0] = b1.l; this->dimension[0] = b1.u - b1.l + 1;
-    this->lbounds[1] = b2.l; this->dimension[1] = b2.u - b2.l + 1;
-    this->lbounds[2] = b3.l; this->dimension[2] = b3.u - b3.l + 1;
-    this->lbounds[3] = b4.l; this->dimension[3] = b4.u - b4.l + 1;
-    this->lbounds[4] = b5.l; this->dimension[4] = b5.u - b5.l + 1;
-    this->lbounds[5] = b6.l; this->dimension[5] = b6.u - b6.l + 1;
-    this->lbounds[6] = b7.l; this->dimension[6] = b7.u - b7.l + 1;
-    this->lbounds[7] = b8.l; this->dimension[7] = b8.u - b8.l + 1;
-    this->myData = data;
-    this->refCount = nullptr;
-  }
-  YAKL_INLINE Array(char const * label, T * data, std::vector<Bnd> const &bnds) {
+  YAKL_INLINE Array( char const *label , T *data, Bnd b1 ) : Array(label,data,Bnds(b1)) {}
+  YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
+                                                  Bnd b2 ) : Array(label,data,Bnds(b1,b2)) {}
+  YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
+                                                  Bnd b2 ,
+                                                  Bnd b3 ) : Array(label,data,Bnds(b1,b2,b3)) {}
+  YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
+                                                  Bnd b2 ,
+                                                  Bnd b3 ,
+                                                  Bnd b4 ) : Array(label,data,Bnds(b1,b2,b3,b4)) {}
+  YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
+                                                  Bnd b2 ,
+                                                  Bnd b3 ,
+                                                  Bnd b4 ,
+                                                  Bnd b5 ) : Array(label,data,Bnds(b1,b2,b3,b4,b5)) {}
+  YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
+                                                  Bnd b2 ,
+                                                  Bnd b3 ,
+                                                  Bnd b4 ,
+                                                  Bnd b5 ,
+                                                  Bnd b6 ) : Array(label,data,Bnds(b1,b2,b3,b4,b5,b6)) {}
+  YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
+                                                  Bnd b2 ,
+                                                  Bnd b3 ,
+                                                  Bnd b4 ,
+                                                  Bnd b5 ,
+                                                  Bnd b6 ,
+                                                  Bnd b7 ) : Array(label,data,Bnds(b1,b2,b3,b4,b5,b6,b7)) {}
+  YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
+                                                  Bnd b2 ,
+                                                  Bnd b3 ,
+                                                  Bnd b4 ,
+                                                  Bnd b5 ,
+                                                  Bnd b6 ,
+                                                  Bnd b7 ,
+                                                  Bnd b8 ) : Array(label,data,Bnds(b1,b2,b3,b4,b5,b6,b7,b8)) {}
+  YAKL_INLINE Array(char const *label, T *data, Bnds bnds) {
     nullify();
     #ifdef YAKL_DEBUG
       if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
       if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
+      if (data == nullptr) yakl_throw("ERROR: wrapping nullptr with a YAKL Array object");
       this->myname = label;
     #endif
-    for (int i=0; i < rank; i++) {
-      this->lbounds[i] = bnds[i].l;
-      this->dimension[i] = bnds[i].u - bnds[i].l + 1;
-    }
-    this->myData = data;
-    this->refCount = nullptr;
-  }
-  template <class INT, typename std::enable_if< std::is_integral<INT>::value , int >::type = 0>
-  YAKL_INLINE Array(char const * label, T * data, std::vector<INT> const &bnds) {
-    nullify();
-    #ifdef YAKL_DEBUG
-      if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
-      if ( rank < 1 || rank > 8) { yakl_throw("ERROR: Invalid number of ranks. Must be between 1 and 8"); }
-      this->myname = label;
-    #endif
-    for (int i=0; i < rank; i++) {
-      this->lbounds[i] = 1;
-      this->dimension[i] = bnds[i];
-    }
+    for (int i=0; i < rank; i++) { this->lbounds[i] = bnds[i].l; this->dimension[i] = bnds[i].u - bnds[i].l + 1; }
     this->myData = data;
     this->refCount = nullptr;
   }
@@ -444,52 +145,14 @@ public:
   YAKL_INLINE Array(Array<non_const_value_type,rank,myMem,styleFortran> const &rhs) {
     // This is a constructor, so no need to deallocate
     nullify();
-    for (int i=0; i<rank; i++) {
-      this->lbounds  [i] = rhs.lbounds  [i];
-      this->dimension[i] = rhs.dimension[i];
-    }
-    #ifdef YAKL_DEBUG
-      this->myname = rhs.myname;
-    #endif
-    this->myData   = rhs.myData;
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_lock();
-    #endif
-    this->refCount = rhs.refCount;
-    if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        (*(this->refCount))++;
-      #endif
-    }
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_unlock();
-    #endif
+    copy_constructor_common(rhs);
   }
   YAKL_INLINE Array(Array<const_value_type,rank,myMem,styleFortran> const &rhs) {
     static_assert( std::is_const<T>::value , 
                    "ERROR: Cannot create non-const Array using const Array" );
     // This is a constructor, so no need to deallocate
     nullify();
-    for (int i=0; i<rank; i++) {
-      this->lbounds  [i] = rhs.lbounds  [i];
-      this->dimension[i] = rhs.dimension[i];
-    }
-    #ifdef YAKL_DEBUG
-      this->myname = rhs.myname;
-    #endif
-    this->myData   = rhs.myData;
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_lock();
-    #endif
-    this->refCount = rhs.refCount;
-    if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        (*(this->refCount))++;
-      #endif
-    }
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_unlock();
-    #endif
+    copy_constructor_common(rhs);
   }
 
 
@@ -498,26 +161,7 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
-    for (int i=0; i<rank; i++) {
-      this->lbounds  [i] = rhs.lbounds  [i];
-      this->dimension[i] = rhs.dimension[i];
-    }
-    #ifdef YAKL_DEBUG
-      this->myname = rhs.myname;
-    #endif
-    this->myData   = rhs.myData;
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_lock();
-    #endif
-    this->refCount = rhs.refCount;
-    if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        (*(this->refCount))++;
-      #endif
-    }
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_unlock();
-    #endif
+    copy_constructor_common(rhs);
     return *this;
   }
   YAKL_INLINE Array & operator=(Array<const_value_type,rank,myMem,styleFortran> const &rhs) {
@@ -527,9 +171,14 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
+    copy_constructor_common(rhs);
+    return *this;
+  }
+
+  template <class TLOC>
+  YAKL_INLINE void copy_constructor_common(Array<TLOC,rank,myMem,styleFortran> const &rhs) {
     for (int i=0; i<rank; i++) {
-      this->lbounds  [i] = rhs.lbounds  [i];
-      this->dimension[i] = rhs.dimension[i];
+      this->lbounds[i] = rhs.lbounds[i]; this->dimension[i] = rhs.dimension[i];
     }
     #ifdef YAKL_DEBUG
       this->myname = rhs.myname;
@@ -547,7 +196,6 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_unlock();
     #endif
-    return *this;
   }
 
 
@@ -560,8 +208,7 @@ public:
     // This is a constructor, so no need to deallocate
     nullify();
     for (int i=0; i<rank; i++) {
-      this->lbounds  [i] = rhs.lbounds  [i];
-      this->dimension[i] = rhs.dimension[i];
+      this->lbounds[i] = rhs.lbounds[i]; this->dimension[i] = rhs.dimension[i];
     }
     #ifdef YAKL_DEBUG
       this->myname = rhs.myname;
@@ -580,8 +227,7 @@ public:
       this->deallocate();
     #endif
     for (int i=0; i<rank; i++) {
-      this->lbounds  [i] = rhs.lbounds  [i];
-      this->dimension[i] = rhs.dimension[i];
+      this->lbounds  [i] = rhs.lbounds  [i]; this->dimension[i] = rhs.dimension[i];
     }
     #ifdef YAKL_DEBUG
       this->myname = rhs.myname;
@@ -619,8 +265,7 @@ public:
     #endif
     Array<T,N,myMem,styleFortran> ret;
     for (int i=0; i < N; i++) {
-      ret.dimension[i] = bnds.u[i] - bnds.l[i] + 1;
-      ret.lbounds  [i] = bnds.l[i];
+      ret.dimension[i] = bnds.u[i] - bnds.l[i] + 1;  ret.lbounds  [i] = bnds.l[i];
     }
     #ifdef YAKL_DEBUG
       ret.myname = this->myname;
@@ -641,8 +286,7 @@ public:
       if (! this->initialized()) { yakl_throw("ERROR: Trying to collapse an Array that hasn't been initialized"); }
     #endif
     Array<T,1,myMem,styleFortran> ret;
-    ret.dimension[0] = this->totElems();
-    ret.lbounds  [0] = lbnd;
+    ret.dimension[0] = this->totElems();  ret.lbounds  [0] = lbnd;
     #ifdef YAKL_DEBUG
       ret.myname = this->myname;
     #endif

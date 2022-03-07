@@ -26,18 +26,11 @@ public:
   template <int theirRank, int theirStyle>
   inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> &lhs) const {
     #ifdef YAKL_DEBUG
-      if (this->totElems() != lhs.totElems()) {
-        yakl_throw("ERROR: deep_copy_to with different number of elements");
-      }
-      if (this->myData == nullptr || lhs.myData == nullptr) {
-        yakl_throw("ERROR: deep_copy_to with nullptr");
-      }
+      if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
+      if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
     #endif
-    if (myMem == memHost) {
-      memcpy_host_to_host( lhs.myData , this->myData , this->totElems() );
-    } else {
-      memcpy_device_to_host( lhs.myData , this->myData , this->totElems() );
-    }
+    if (myMem == memHost) { memcpy_host_to_host  ( lhs.myData , this->myData , this->totElems() ); }
+    else                  { memcpy_device_to_host( lhs.myData , this->myData , this->totElems() ); }
   }
 
 
@@ -45,18 +38,11 @@ public:
   template <int theirRank, int theirStyle>
   inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> &lhs) const {
     #ifdef YAKL_DEBUG
-      if (this->totElems() != lhs.totElems()) {
-        yakl_throw("ERROR: deep_copy_to with different number of elements");
-      }
-      if (this->myData == nullptr || lhs.myData == nullptr) {
-        yakl_throw("ERROR: deep_copy_to with nullptr");
-      }
+      if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
+      if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
     #endif
-    if (myMem == memHost) {
-      memcpy_host_to_device( lhs.myData , this->myData , this->totElems() );
-    } else {
-      memcpy_device_to_device( lhs.myData , this->myData , this->totElems() );
-    }
+    if (myMem == memHost) { memcpy_host_to_device  ( lhs.myData , this->myData , this->totElems() ); }
+    else                  { memcpy_device_to_device( lhs.myData , this->myData , this->totElems() ); }
   }
 
 
@@ -81,11 +67,8 @@ public:
     #endif
   }
   inline int use_count() const {
-    if (this->refCount != nullptr) {
-      return *(this->refCount);
-    } else {
-      return 0;
-    }
+    if (this->refCount != nullptr) { return *(this->refCount); }
+    else                           { return 0;                 }
   }
 
 
