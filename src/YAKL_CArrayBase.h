@@ -7,6 +7,11 @@ template <class T, int rank, int myMem>
 class CArrayBase : public ArrayBase<T,rank,myMem,styleC> {
 public:
 
+  typedef typename std::remove_cv<T>::type type;
+  typedef          T value_type;
+  typedef typename std::add_const<type>::type const_value_type;
+  typedef typename std::remove_const<type>::type non_const_value_type;
+
   /* ARRAY INDEXERS (FORTRAN index ordering)
   Return the element at the given index (either read-only or read-write)
   */
@@ -168,9 +173,7 @@ public:
 
 
   // Array slicing
-  // This routine is the "master form" of the array slicing routine.
-  // To allow array slicing inside device kernels, this does not add to the reference count of the starting array object
-  template <int N> YAKL_INLINE void slice( Dims const &dims , Array<T,N,myMem,styleC> &store ) const {
+  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( Dims const &dims ) const {
     #ifdef YAKL_DEBUG
       if (rank != dims.size()) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -193,9 +196,10 @@ public:
         yakl_throw("ERROR: calling slice() on an Array that hasn't been allocated");
       }
     #endif
+    Array<T,N,myMem,styleC> ret;
     index_t offset = 1;
     for (int i = rank-1; i > rank-1-N; i--) {
-      store.dimension[i-(rank-N)] = this->dimension[i];
+      ret.dimension[i-(rank-N)] = this->dimension[i];
       offset *= this->dimension[i];
     }
     index_t retOff = 0;
@@ -203,72 +207,34 @@ public:
       retOff += dims.data[i]*offset;
       offset *= this->dimension[i];
     }
-    store.myData = &(this->myData[retOff]);
-  }
-  template <int N> YAKL_INLINE void slice( int i0 ,
-                                           Array<T,N,myMem,styleC> &store ) const {
-    slice( {i0} , store );
-  }
-  template <int N> YAKL_INLINE void slice( int i0, int i1 ,
-                                           Array<T,N,myMem,styleC> &store ) const {
-    slice( {i0,i1} , store );
-  }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2,
-                                           Array<T,N,myMem,styleC> &store ) const {
-    slice( {i0,i1,i2} , store );
-  }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3,
-                                           Array<T,N,myMem,styleC> &store ) const {
-    slice( {i0,i1,i2,i3} , store );
-  }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4,
-                                           Array<T,N,myMem,styleC> &store ) const {
-    slice( {i0,i1,i2,i3,i4} , store );
-  }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5,
-                                           Array<T,N,myMem,styleC> &store ) const {
-    slice( {i0,i1,i2,i3,i4,i5} , store );
-  }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6,
-                                           Array<T,N,myMem,styleC> &store ) const {
-    slice( {i0,i1,i2,i3,i4,i5,i6} , store );
-  }
-  template <int N> YAKL_INLINE void slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7,
-                                           Array<T,N,myMem,styleC> &store ) const {
-    slice( {i0,i1,i2,i3,i4,i5,i6,i7} , store );
-  }
-
-
-  template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( Dims const &dims ) const {
-    Array<T,N,myMem,styleC> ret;
-    slice( dims , ret );
+    ret.myData = &(this->myData[retOff]);
     return ret;
   }
   template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0 ) const {
-    return slice<N>( {i0} );
+    return slice<N>( Dims(i0) );
   }
   template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1 ) const {
-    return slice<N>( {i0,i1} );
+    return slice<N>( Dims(i0,i1) );
   }
   template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2 ) const {
-    return slice<N>( {i0,i1,i2} );
+    return slice<N>( Dims(i0,i1,i2) );
   }
   template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3 ) const {
-    return slice<N>( {i0,i1,i2,i3} );
+    return slice<N>( Dims(i0,i1,i2,i3) );
   }
   template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4 ) const {
-    return slice<N>( {i0,i1,i2,i3,i4} );
+    return slice<N>( Dims(i0,i1,i2,i3,i4) );
   }
   template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5 ) const {
-    return slice<N>( {i0,i1,i2,i3,i4,i5} );
+    return slice<N>( Dims(i0,i1,i2,i3,i4,i5) );
   }
   template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5,
                                                               int i6 ) const {
-    return slice<N>( {i0,i1,i2,i3,i4,i5,i6} );
+    return slice<N>( Dims(i0,i1,i2,i3,i4,i5,i6) );
   }
   template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6,
                                                               int i7 ) const {
-    return slice<N>( {i0,i1,i2,i3,i4,i5,i6,i7} );
+    return slice<N>( Dims(i0,i1,i2,i3,i4,i5,i6,i7) );
   }
 
 
