@@ -15,13 +15,6 @@ public:
   YAKL_INLINE T &operator()(int i0) const {
     #ifdef YAKL_DEBUG
       check(1,i0);
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
-      #endif
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
-      #endif
-
     #endif
     index_t ind = (i0-this->lbounds[0]);
     return this->myData[ind];
@@ -29,13 +22,6 @@ public:
   YAKL_INLINE T &operator()(int i0, int i1) const {
     #ifdef YAKL_DEBUG
       check(2,i0,i1);
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
-      #endif
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
-      #endif
-
     #endif
     index_t ind =                       (i1-this->lbounds[1])  *
                    this->dimension[0] + (i0-this->lbounds[0]) ;
@@ -44,13 +30,6 @@ public:
   YAKL_INLINE T &operator()(int i0, int i1, int i2) const {
     #ifdef YAKL_DEBUG
       check(3,i0,i1,i2);
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
-      #endif
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
-      #endif
-
     #endif
     index_t ind = (                      (i2-this->lbounds[2])  *
                     this->dimension[1] + (i1-this->lbounds[1]) )*
@@ -60,13 +39,6 @@ public:
   YAKL_INLINE T &operator()(int i0, int i1, int i2, int i3) const {
     #ifdef YAKL_DEBUG
       check(4,i0,i1,i2,i3);
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
-      #endif
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
-      #endif
-
     #endif
     index_t ind = ((                      (i3-this->lbounds[3])  *
                      this->dimension[2] + (i2-this->lbounds[2]) )*
@@ -77,13 +49,6 @@ public:
   YAKL_INLINE T &operator()(int i0, int i1, int i2, int i3, int i4) const {
     #ifdef YAKL_DEBUG
       check(5,i0,i1,i2,i3,i4);
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
-      #endif
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
-      #endif
-
     #endif
     index_t ind = (((                      (i4-this->lbounds[4])  *
                       this->dimension[3] + (i3-this->lbounds[3]) )*
@@ -95,13 +60,6 @@ public:
   YAKL_INLINE T &operator()(int i0, int i1, int i2, int i3, int i4, int i5) const {
     #ifdef YAKL_DEBUG
       check(6,i0,i1,i2,i3,i4,i5);
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
-      #endif
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
-      #endif
-
     #endif
     index_t ind = ((((                      (i5-this->lbounds[5])  *
                        this->dimension[4] + (i4-this->lbounds[4]) )*
@@ -114,13 +72,6 @@ public:
   YAKL_INLINE T &operator()(int i0, int i1, int i2, int i3, int i4, int i5, int i6) const {
     #ifdef YAKL_DEBUG
       check(7,i0,i1,i2,i3,i4,i5,i6);
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
-      #endif
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
-      #endif
-
     #endif
     index_t ind = (((((                      (i6-this->lbounds[6])  *
                         this->dimension[5] + (i5-this->lbounds[5]) )*
@@ -134,13 +85,6 @@ public:
   YAKL_INLINE T &operator()(int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7) const {
     #ifdef YAKL_DEBUG
       check(8,i0,i1,i2,i3,i4,i5,i6,i7);
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-        if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
-      #endif
-      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-        if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
-      #endif
-
     #endif
     index_t ind = ((((((                      (i7-this->lbounds[7])  *
                          this->dimension[6] + (i6-this->lbounds[6]) )*
@@ -168,6 +112,13 @@ public:
          (rank >= 8 && (i7 < this->lbounds[7] || i7 >= this->lbounds[7]+this->dimension[7])) ) {
       print_error_message(rank,i0,i1,i2,i3,i4,i5,i6,i7);
     }
+    #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+      if (myMem == memHost) yakl_throw("ERROR: Accessing host memory on the device");
+    #endif
+    #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+      if (myMem == memDevice) yakl_throw("ERROR: Accessing device memory on the host without managed memory");
+    #endif
+
   }
 
 

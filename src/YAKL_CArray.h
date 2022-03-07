@@ -145,50 +145,14 @@ public:
   YAKL_INLINE Array(Array<non_const_value_type,rank,myMem,styleC> const &rhs) {
     // constructor, so no need to deallocate
     nullify();
-    for (int i=0; i<rank; i++) {
-      this->dimension[i] = rhs.dimension[i];
-    }
-    #ifdef YAKL_DEBUG
-      this->myname = rhs.myname;
-    #endif
-    this->myData   = rhs.myData;
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_lock();
-    #endif
-    this->refCount = rhs.refCount;
-    if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        (*(this->refCount))++;
-      #endif
-    }
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_unlock();
-    #endif
+    copy_constructor_common(rhs);
   }
   YAKL_INLINE Array(Array<const_value_type,rank,myMem,styleC> const &rhs) {
     static_assert( std::is_const<T>::value , 
                    "ERROR: Cannot create non-const Array using const Array" );
     // constructor, so no need to deallocate
     nullify();
-    for (int i=0; i<rank; i++) {
-      this->dimension[i] = rhs.dimension[i];
-    }
-    #ifdef YAKL_DEBUG
-      this->myname = rhs.myname;
-    #endif
-    this->myData   = rhs.myData;
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_lock();
-    #endif
-    this->refCount = rhs.refCount;
-    if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        (*(this->refCount))++;
-      #endif
-    }
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_unlock();
-    #endif
+    copy_constructor_common(rhs);
   }
 
 
@@ -197,25 +161,7 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
-    for (int i=0; i<rank; i++) {
-      this->dimension[i] = rhs.dimension[i];
-    }
-    #ifdef YAKL_DEBUG
-      this->myname = rhs.myname;
-    #endif
-    this->myData   = rhs.myData;
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_lock();
-    #endif
-    this->refCount = rhs.refCount;
-    if (this->refCount != nullptr) {
-      #if YAKL_CURRENTLY_ON_HOST()
-        (*(this->refCount))++;
-      #endif
-    }
-    #if YAKL_CURRENTLY_ON_HOST()
-      yakl_mtx_unlock();
-    #endif
+    copy_constructor_common(rhs);
     return *this;
   }
   YAKL_INLINE Array & operator=(Array<const_value_type,rank,myMem,styleC> const &rhs) {
@@ -225,6 +171,12 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
+    copy_constructor_common(rhs);
+    return *this;
+  }
+
+  template <class TLOC>
+  YAKL_INLINE void copy_constructor_common(Array<TLOC,rank,myMem,styleC> const &rhs) {
     for (int i=0; i<rank; i++) {
       this->dimension[i] = rhs.dimension[i];
     }
@@ -244,7 +196,6 @@ public:
     #if YAKL_CURRENTLY_ON_HOST()
       yakl_mtx_unlock();
     #endif
-    return *this;
   }
 
 
