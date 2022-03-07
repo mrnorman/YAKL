@@ -30,17 +30,17 @@ int main() {
       });
 
       yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMin(min(),data(i));
       });
 
       yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicAdd(sum(),data(i));
       });
 
       yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMax(max(),data(i));
       });
       
@@ -58,17 +58,17 @@ int main() {
       });
 
       yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMin(min(),data(i));
       });
 
       yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicAdd(sum(),data(i));
       });
 
       yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMax(max(),data(i));
       });
       
@@ -86,23 +86,51 @@ int main() {
       });
 
       yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMin(min(),data(i));
       });
 
       yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicAdd(sum(),data(i));
       });
 
       yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , YAKL_DEVICE_LAMBDA (int i) {
+      parallel_for( n , YAKL_LAMBDA (int i) {
         yakl::atomicMax(max(),data(i));
       });
       
       if ( abs(sum.hostRead()) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
       if ( abs(min.hostRead() + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
       if ( abs(max.hostRead() - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
+    }
+
+    {
+      typedef int T;
+
+      Array<T,1,yakl::memHost,styleC> data("data",n);
+      for (int i=0; i < n; i++) {
+        data(i) = i - (n-1)/2.;
+      }
+
+      int min = 99999;
+      for (int i=0; i < n; i++) {
+        yakl::atomicMin(min,data(i));
+      }
+
+      int sum = 0;
+      for (int i=0; i < n; i++) {
+        yakl::atomicAdd(sum,data(i));
+      }
+
+      int max = -99999;
+      for (int i=0; i < n; i++) {
+        yakl::atomicMax(max,data(i));
+      }
+      
+      if ( abs(sum) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
+      if ( abs(min + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
+      if ( abs(max - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
     }
 
   }
