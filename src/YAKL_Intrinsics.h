@@ -86,7 +86,8 @@ namespace yakl {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
       #endif
-      auto ret = arr.createHostCopy();
+      // https://en.cppreference.com/w/cpp/language/dependent_name#The_template_disambiguator_for_dependent_names
+      auto ret = arr.template createHostCopy<typename std::remove_cv<T>::type>();
       for (int i=0; i < ret.totElems(); i++) { ret.myData[i] = std::abs(ret.myData[i]); };
       return ret;
     }
@@ -95,7 +96,8 @@ namespace yakl {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
       #endif
-      auto ret = arr.createDeviceCopy();
+      // https://en.cppreference.com/w/cpp/language/dependent_name#The_template_disambiguator_for_dependent_names
+      auto ret = arr.template createDeviceCopy<typename std::remove_cv<T>::type>();
       c::parallel_for( c::Bounds<1>(ret.totElems()) , YAKL_LAMBDA (int i) { ret.myData[i] = std::abs(ret.myData[i]); });
       return ret;
     }

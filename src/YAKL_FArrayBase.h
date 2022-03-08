@@ -257,7 +257,18 @@ public:
 
   // Create a host copy of this array. Even if the array exists on the host, a deep copy to a separate
   // object is still performed to avoid any potential bugs when the user expects this behavior
-  inline Array<T,rank,memHost,styleFortran> createHostCopy() const {
+  template <class TLOC=T>
+  inline Array<TLOC,rank,memHost,styleFortran> createHostCopy() const {
+    auto ret = createHostObject();
+    if (myMem == memHost) { memcpy_host_to_host  ( ret.myData , this->myData , this->totElems() ); }
+    else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() ); }
+    fence();
+    return Array<TLOC,rank,memHost,styleFortran>(ret);
+  }
+
+
+  // Create a separate host Array with the same rank memory space and style
+  inline Array<typename std::remove_cv<T>::type,rank,memHost,styleFortran> createHostObject() const {
     #ifdef YAKL_DEBUG
       if (! this->initialized()) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -267,29 +278,30 @@ public:
       }
     #endif
     // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
-    typedef typename std::remove_cv<T>::type T_NONCONST;
-    Array<T_NONCONST,rank,memHost,styleFortran> ret;  // nullified + owned == true
-    for (int i=0; i<rank; i++) {
-      ret.lbounds  [i] = this->lbounds  [i];
-      ret.dimension[i] = this->dimension[i];
-    }
+    Array<typename std::remove_cv<T>::type,rank,memHost,styleFortran> ret;  // nullified + owned == true
+    for (int i=0; i<rank; i++) { ret.lbounds[i] = this->lbounds[i];  ret.dimension[i] = this->dimension[i]; }
     #ifdef YAKL_DEBUG
       ret.myname = this->myname;
     #endif
     ret.allocate();
-    if (myMem == memHost) {
-      memcpy_host_to_host( ret.myData , this->myData , this->totElems() );
-    } else {
-      memcpy_device_to_host( ret.myData , this->myData , this->totElems() );
-    }
-    fence();
-    return Array<T,rank,memHost,styleFortran>(ret);
+    return ret;
   }
 
 
   // Create a device copy of this array. Even if the array exists on the host, a deep copy to a separate
   // object is still performed to avoid any potential bugs when the user expects this behavior
-  inline Array<T,rank,memDevice,styleFortran> createDeviceCopy() const {
+  template <class TLOC=T>
+  inline Array<TLOC,rank,memDevice,styleFortran> createDeviceCopy() const {
+    auto ret = createDeviceObject();
+    if (myMem == memHost) { memcpy_host_to_device  ( ret.myData , this->myData , this->totElems() ); }
+    else                  { memcpy_device_to_device( ret.myData , this->myData , this->totElems() ); }
+    fence();
+    return Array<TLOC,rank,memDevice,styleFortran>(ret);
+  }
+
+
+  // Create separate device array with the same rank, memory space, and style
+  inline Array<typename std::remove_cv<T>::type,rank,memDevice,styleFortran> createDeviceObject() const {
     #ifdef YAKL_DEBUG
       if (! this->initialized()) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -299,23 +311,13 @@ public:
       }
     #endif
     // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
-    typedef typename std::remove_cv<T>::type T_NONCONST;
-    Array<T_NONCONST,rank,memDevice,styleFortran> ret;  // nullified + owned == true
-    for (int i=0; i<rank; i++) {
-      ret.lbounds  [i] = this->lbounds  [i];
-      ret.dimension[i] = this->dimension[i];
-    }
+    Array<typename std::remove_cv<T>::type,rank,memDevice,styleFortran> ret;  // nullified + owned == true
+    for (int i=0; i<rank; i++) { ret.lbounds[i] = this->lbounds[i];  ret.dimension[i] = this->dimension[i]; }
     #ifdef YAKL_DEBUG
       ret.myname = this->myname;
     #endif
     ret.allocate();
-    if (myMem == memHost) {
-      memcpy_host_to_device( ret.myData , this->myData , this->totElems() );
-    } else {
-      memcpy_device_to_device( ret.myData , this->myData , this->totElems() );
-    }
-    fence();
-    return Array<T,rank,memDevice,styleFortran>(ret);
+    return ret;
   }
 
 
