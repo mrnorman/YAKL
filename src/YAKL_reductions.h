@@ -23,6 +23,61 @@ namespace yakl {
   // where the repested nItems differs from the actual number of items in the array.
 
 
+  template <class T> class ParallelMinHost {
+    int    nItems; // Number of items in the array that will be reduced
+    public:
+    ParallelMinHost() {}
+    ParallelMinHost(int const nItems) { this->nItems = nItems; }
+    ~ParallelMinHost() {}
+    void setup(int nItems) { this->nItems = nItems; }
+    T operator() (T *data) {
+      T rslt = data[0];
+      for (int i=1; i<nItems; i++) { rslt = data[i] < rslt ? data[i] : rslt; }
+      return rslt;
+    }
+    void deviceReduce(T *data, T *rslt) {
+      *(rslt) = data[0];
+      for (int i=1; i<nItems; i++) { *(rslt) = data[i] < *(rslt) ? data[i] : rslt; }
+    }
+  };
+
+  template <class T> class ParallelMaxHost {
+    int    nItems; // Number of items in the array that will be reduced
+    public:
+    ParallelMaxHost() {}
+    ParallelMaxHost(int const nItems) { this->nItems = nItems; }
+    ~ParallelMaxHost() {}
+    void setup(int nItems) { this->nItems = nItems; }
+    T operator() (T *data) {
+      T rslt = data[0];
+      for (int i=1; i<nItems; i++) { rslt = data[i] > rslt ? data[i] : rslt; }
+      return rslt;
+    }
+    void deviceReduce(T *data, T *rslt) {
+      *(rslt) = data[0];
+      for (int i=1; i<nItems; i++) { *(rslt) = data[i] > *(rslt) ? data[i] : rslt; }
+    }
+  };
+
+  template <class T> class ParallelSumHost {
+    int    nItems; // Number of items in the array that will be reduced
+    public:
+    ParallelSumHost() {}
+    ParallelSumHost(int const nItems) { this->nItems = nItems; }
+    ~ParallelSumHost() {}
+    void setup(int nItems) { this->nItems = nItems; }
+    T operator() (T *data) {
+      T rslt = data[0];
+      for (int i=1; i<nItems; i++) { rslt += data[i]; }
+      return rslt;
+    }
+    void deviceReduce(T *data, T *rslt) {
+      *(rslt) = data[0];
+      for (int i=1; i<nItems; i++) { *(rslt) += data[i]; }
+    }
+  };
+
+
   #ifdef YAKL_ARCH_HIP
 
 
@@ -493,158 +548,50 @@ namespace yakl {
   #else
 
 
-    template <class T> class ParallelMin<T,memDevice> {
-      int    nItems; // Number of items in the array that will be reduced
-      public:
+    template <class T> class ParallelMin<T,memDevice> : public ParallelMinHost<T> {
+    public:
       ParallelMin() {}
-      ParallelMin(int const nItems) {
-        this->nItems = nItems;
-      }
-      ~ParallelMin() {
-      }
-      void setup(int nItems) { this->nItems = nItems; }
-      T operator() (T *data) {
-        T rslt = data[0];
-        for (int i=1; i<nItems; i++) {
-          rslt = data[i] < rslt ? data[i] : rslt;
-        }
-        return rslt;
-      }
-      void deviceReduce(T *data, T *rslt) {
-        *(rslt) = data[0];
-        for (int i=1; i<nItems; i++) {
-          *(rslt) = data[i] < *(rslt) ? data[i] : rslt;
-        }
-      }
+      ParallelMin(int const nItems) : ParallelMinHost<T>(nItems) {}
+      ~ParallelMin() {}
     };
 
-    template <class T> class ParallelMax<T,memDevice> {
-      int    nItems; // Number of items in the array that will be reduced
-      public:
+    template <class T> class ParallelMax<T,memDevice> : public ParallelMaxHost<T> {
+    public:
       ParallelMax() {}
-      ParallelMax(int const nItems) {
-        this->nItems = nItems;
-      }
-      ~ParallelMax() {
-      }
-      void setup(int nItems) { this->nItems = nItems; }
-      T operator() (T *data) {
-        T rslt = data[0];
-        for (int i=1; i<nItems; i++) {
-          rslt = data[i] > rslt ? data[i] : rslt;
-        }
-        return rslt;
-      }
-      void deviceReduce(T *data, T *rslt) {
-        *(rslt) = data[0];
-        for (int i=1; i<nItems; i++) {
-          *(rslt) = data[i] > *(rslt) ? data[i] : rslt;
-        }
-      }
+      ParallelMax(int const nItems) : ParallelMaxHost<T>(nItems) {}
+      ~ParallelMax() {}
     };
 
-    template <class T> class ParallelSum<T,memDevice> {
-      int    nItems; // Number of items in the array that will be reduced
-      public:
+    template <class T> class ParallelSum<T,memDevice> : public ParallelSumHost<T> {
+    public:
       ParallelSum() {}
-      ParallelSum(int const nItems) {
-        this->nItems = nItems;
-      }
-      ~ParallelSum() {
-      }
-      void setup(int nItems) { this->nItems = nItems; }
-      T operator() (T *data) {
-        T rslt = data[0];
-        for (int i=1; i<nItems; i++) {
-          rslt += data[i];
-        }
-        return rslt;
-      }
-      void deviceReduce(T *data, T *rslt) {
-        *(rslt) = data[0];
-        for (int i=1; i<nItems; i++) {
-          *(rslt) += data[i];
-        }
-      }
+      ParallelSum(int const nItems) : ParallelSumHost<T>(nItems) {}
+      ~ParallelSum() {}
     };
 
 
   #endif
 
 
-  template <class T> class ParallelMin<T,memHost> {
-    int    nItems; // Number of items in the array that will be reduced
-    public:
+  template <class T> class ParallelMin<T,memHost> : public ParallelMinHost<T> {
+  public:
     ParallelMin() {}
-    ParallelMin(int const nItems) {
-      this->nItems = nItems;
-    }
-    ~ParallelMin() {
-    }
-    void setup(int nItems) { this->nItems = nItems; }
-    T operator() (T *data) {
-      T rslt = data[0];
-      for (int i=1; i<nItems; i++) {
-        rslt = data[i] < rslt ? data[i] : rslt;
-      }
-      return rslt;
-    }
-    void deviceReduce(T *data, T *rslt) {
-      *(rslt) = data[0];
-      for (int i=1; i<nItems; i++) {
-        *(rslt) = data[i] < *(rslt) ? data[i] : rslt;
-      }
-    }
+    ParallelMin(int const nItems) : ParallelMinHost<T>(nItems) {}
+    ~ParallelMin() {}
   };
 
-  template <class T> class ParallelMax<T,memHost> {
-    int    nItems; // Number of items in the array that will be reduced
-    public:
+  template <class T> class ParallelMax<T,memHost> : public ParallelMaxHost<T> {
+  public:
     ParallelMax() {}
-    ParallelMax(int const nItems) {
-      this->nItems = nItems;
-    }
-    ~ParallelMax() {
-    }
-    void setup(int nItems) { this->nItems = nItems; }
-    T operator() (T *data) {
-      T rslt = data[0];
-      for (int i=1; i<nItems; i++) {
-        rslt = data[i] > rslt ? data[i] : rslt;
-      }
-      return rslt;
-    }
-    void deviceReduce(T *data, T *rslt) {
-      *(rslt) = data[0];
-      for (int i=1; i<nItems; i++) {
-        *(rslt) = data[i] > *(rslt) ? data[i] : rslt;
-      }
-    }
+    ParallelMax(int const nItems) : ParallelMaxHost<T>(nItems) {}
+    ~ParallelMax() {}
   };
 
-  template <class T> class ParallelSum<T,memHost> {
-    int    nItems; // Number of items in the array that will be reduced
-    public:
+  template <class T> class ParallelSum<T,memHost> : public ParallelSumHost<T> {
+  public:
     ParallelSum() {}
-    ParallelSum(int const nItems) {
-      this->nItems = nItems;
-    }
-    ~ParallelSum() {
-    }
-    void setup(int nItems) { this->nItems = nItems; }
-    T operator() (T *data) {
-      T rslt = data[0];
-      for (int i=1; i<nItems; i++) {
-        rslt += data[i];
-      }
-      return rslt;
-    }
-    void deviceReduce(T *data, T *rslt) {
-      *(rslt) = data[0];
-      for (int i=1; i<nItems; i++) {
-        *(rslt) += data[i];
-      }
-    }
+    ParallelSum(int const nItems) : ParallelSumHost<T>(nItems) {}
+    ~ParallelSum() {}
   };
 
 }

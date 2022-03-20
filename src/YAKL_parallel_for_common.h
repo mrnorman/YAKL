@@ -268,12 +268,18 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<8,si
 }
 
 
-
-// Bounds class, No label
-// This serves as the template, which all other user-level functions route into
+// Bounds class, Label
 template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
-inline void parallel_for( Bounds<N,simple> const &bounds , F const &f ,
+inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f ,
                           LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
+  #ifdef YAKL_ARCH_CUDA
+    nvtxRangePushA(str);
+  #endif
+  #ifdef YAKL_AUTO_PROFILE
+    timer_start(str);
+  #endif
+
   #ifdef YAKL_ARCH_CUDA
     parallel_for_cuda( bounds , f , config );
   #elif defined(YAKL_ARCH_HIP)
@@ -287,21 +293,6 @@ inline void parallel_for( Bounds<N,simple> const &bounds , F const &f ,
   #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
     fence();
   #endif
-}
-
-// Bounds class, Label
-template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
-inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f ,
-                          LaunchConfig<VecLen> config = LaunchConfig<>() ) {
-  // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
-  #ifdef YAKL_ARCH_CUDA
-    nvtxRangePushA(str);
-  #endif
-  #ifdef YAKL_AUTO_PROFILE
-    timer_start(str);
-  #endif
-
-  parallel_for( bounds , f , config );
 
   #ifdef YAKL_AUTO_PROFILE
     timer_stop(str);
@@ -311,40 +302,30 @@ inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F 
   #endif
 }
 
-// Single bound or integer, no label
-// Since "bnd" is accepted by value, integers will be accepted as well
+
+template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
+inline void parallel_for( Bounds<N,simple> const &bounds , F const &f ,
+                          LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  parallel_for( "Unlabeled" , bounds , f );
+}
+
+
 template <class F, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
 inline void parallel_for( LBnd bnd , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
   if (bnd.l == bnd.default_lbound && bnd.s == 1) {
-    parallel_for( Bounds<1,true>(bnd.to_scalar()) , f , config );
+    parallel_for( "Unlabeled" , Bounds<1,true>(bnd.to_scalar()) , f , config );
   } else {
-    parallel_for( Bounds<1,false>(bnd) , f , config );
+    parallel_for( "Unlabeled" , Bounds<1,false>(bnd) , f , config );
   }
 }
 
-// Single bound or integer, label
-// Since "bnd" is accepted by value, integers will be accepted as well
+
 template <class F, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
 inline void parallel_for( char const * str , LBnd bnd , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
-  // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
-  #ifdef YAKL_ARCH_CUDA
-    nvtxRangePushA(str);
-  #endif
-  #ifdef YAKL_AUTO_PROFILE
-    timer_start(str);
-  #endif
-
   if (bnd.l == bnd.default_lbound && bnd.s == 1) {
-    parallel_for( Bounds<1,true>(bnd.to_scalar()) , f , config );
+    parallel_for( str , Bounds<1,true>(bnd.to_scalar()) , f , config );
   } else {
-    parallel_for( Bounds<1,false>(bnd) , f , config );
+    parallel_for( str , Bounds<1,false>(bnd) , f , config );
   }
-
-  #ifdef YAKL_AUTO_PROFILE
-    timer_stop(str);
-  #endif
-  #ifdef YAKL_ARCH_CUDA
-    nvtxRangePop();
-  #endif
 }
 

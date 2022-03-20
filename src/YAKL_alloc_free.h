@@ -13,8 +13,6 @@ namespace yakl {
           void *ptr;
           cudaMallocManaged(&ptr,bytes);      // Allocate managed memory
           check_last_error();
-          cudaMemPrefetchAsync(ptr,bytes,0);  // Prefetch the memory into device memory
-          check_last_error();
           #ifdef _OPENMP45
             // if using OMP target offload, make sure OMP runtime knows to leave this memory alone
             omp_target_associate_ptr(ptr,ptr,bytes,0,0);
