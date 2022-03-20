@@ -280,15 +280,20 @@ inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F 
     timer_start(str);
   #endif
 
-  #ifdef YAKL_ARCH_CUDA
-    parallel_for_cuda( bounds , f , config );
-  #elif defined(YAKL_ARCH_HIP)
-    parallel_for_hip ( bounds , f , config );
-  #elif defined(YAKL_ARCH_SYCL)
-    parallel_for_sycl( bounds , f , config );
-  #else
+  if (config.b4b) {
+    fence();
     parallel_for_cpu_serial( bounds , f );
-  #endif
+  } else {
+    #ifdef YAKL_ARCH_CUDA
+      parallel_for_cuda( bounds , f , config );
+    #elif defined(YAKL_ARCH_HIP)
+      parallel_for_hip ( bounds , f , config );
+    #elif defined(YAKL_ARCH_SYCL)
+      parallel_for_sycl( bounds , f , config );
+    #else
+      parallel_for_cpu_serial( bounds , f );
+    #endif
+  }
 
   #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
     fence();

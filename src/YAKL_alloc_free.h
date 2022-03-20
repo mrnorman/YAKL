@@ -45,7 +45,7 @@ namespace yakl {
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
           void *ptr;
-          hipMallocHost(&ptr,bytes);  // This is the current standin for managed memory for HIP
+          hipMallocManaged(&ptr,bytes);  // This is the current standin for managed memory for HIP
           #ifdef _OPENMP45
             // if using OMP target offload, make sure OMP runtime knows to leave this memory alone
             omp_target_associate_ptr(ptr,ptr,bytes,0,0);

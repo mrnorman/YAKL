@@ -133,6 +133,18 @@ int main() {
       if ( abs(max - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
     }
 
+    {
+      typedef double real;
+      int constexpr n = 1024*16;
+      Array<real,1,yakl::memDevice,styleC> data("data",n);
+      parallel_for( n , YAKL_LAMBDA (int i) { data(i) = yakl::Random(i).genFP<real>(); });
+      for (int k=0; k < 10; k++) {
+        yakl::ScalarLiveOut<real> sum(0.);
+        parallel_for( n , YAKL_LAMBDA (int i) { yakl::atomicAdd( sum() , data(i) ); } , yakl::DefaultLaunchConfig().enable_b4b() );
+        std::cout << std::scientific << std::setprecision(18) << sum.hostRead() << "\n";
+      }
+    }
+
   }
   yakl::finalize();
   
