@@ -73,10 +73,10 @@ public:
     nIter = 1;
     for (int i=0; i<8; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return lbounds[i]; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return strides[i]; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
+  YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return strides[i]; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
     // Compute base indices
     index_t fac   ; indices[7] = fastmod( (iGlob    ) , dims[7] );
     fac  = dims[7]; indices[6] = fastmod( (iGlob/fac) , dims[6] );
@@ -114,10 +114,10 @@ public:
     nIter = 1;
     for (int i=0; i<8; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return 1; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return 1; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
+  YAKL_INLINE int lbound(int i) const { return 1; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return 1; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[8] ) const {
     // Compute base indices
     index_t fac   ; indices[7] = fastmod( (iGlob    ) , dims[7] ) + 1;
     fac  = dims[7]; indices[6] = fastmod( (iGlob/fac) , dims[6] ) + 1;
@@ -150,10 +150,10 @@ public:
     nIter = 1;
     for (int i=0; i<7; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return lbounds[i]; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return strides[i]; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
+  YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return strides[i]; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
     // Compute base indices
     index_t fac   ; indices[6] = fastmod( (iGlob    ) , dims[6] );
     fac  = dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] );
@@ -188,10 +188,10 @@ public:
     nIter = 1;
     for (int i=0; i<7; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return 1; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return 1; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
+  YAKL_INLINE int lbound(int i) const { return 1; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return 1; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[7] ) const {
     // Compute base indices
     index_t fac   ; indices[6] = fastmod( (iGlob    ) , dims[6] ) + 1;
     fac  = dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] ) + 1;
@@ -221,10 +221,10 @@ public:
     nIter = 1;
     for (int i=0; i<6; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return lbounds[i]; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return strides[i]; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
+  YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return strides[i]; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
     // Compute base indices
     index_t fac   ; indices[5] = fastmod( (iGlob    ) , dims[5] );
     fac  = dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] );
@@ -256,10 +256,10 @@ public:
     nIter = 1;
     for (int i=0; i<6; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return 1; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return 1; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
+  YAKL_INLINE int lbound(int i) const { return 1; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return 1; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[6] ) const {
     // Compute base indices
     index_t fac   ; indices[5] = fastmod( (iGlob    ) , dims[5] ) + 1;
     fac  = dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] ) + 1;
@@ -287,10 +287,10 @@ public:
     nIter = 1;
     for (int i=0; i<5; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return lbounds[i]; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return strides[i]; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
+  YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return strides[i]; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
     // Compute base indices
     index_t fac   ; indices[4] = fastmod( (iGlob    ) , dims[4] );
     fac  = dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] );
@@ -319,10 +319,10 @@ public:
     nIter = 1;
     for (int i=0; i<5; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return 1; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return 1; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
+  YAKL_INLINE int lbound(int i) const { return 1; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return 1; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[5] ) const {
     // Compute base indices
     index_t fac   ; indices[4] = fastmod( (iGlob    ) , dims[4] ) + 1;
     fac  = dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] ) + 1;
@@ -348,10 +348,10 @@ public:
     nIter = 1;
     for (int i=0; i<4; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return lbounds[i]; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return strides[i]; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
+  YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return strides[i]; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
     // Compute base indices
     index_t fac   ; indices[3] = fastmod( (iGlob    ) , dims[3] );
     fac  = dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
@@ -377,10 +377,10 @@ public:
     nIter = 1;
     for (int i=0; i<4; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return 1; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return 1; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
+  YAKL_INLINE int lbound(int i) const { return 1; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return 1; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[4] ) const {
     // Compute base indices
     index_t fac   ; indices[3] = fastmod( (iGlob    ) , dims[3] ) + 1;
     fac  = dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] ) + 1;
@@ -404,10 +404,10 @@ public:
     nIter = 1;
     for (int i=0; i<3; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return lbounds[i]; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return strides[i]; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
+  YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return strides[i]; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
     // Compute base indices
     index_t fac   ; indices[2] = fastmod( (iGlob    ) , dims[2] );
     fac  = dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
@@ -430,10 +430,10 @@ public:
     nIter = 1;
     for (int i=0; i<3; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return 1; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return 1; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
+  YAKL_INLINE int lbound(int i) const { return 1; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return 1; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[3] ) const {
     // Compute base indices
     index_t fac   ; indices[2] = fastmod( (iGlob    ) , dims[2] ) + 1;
     fac  = dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] ) + 1;
@@ -455,10 +455,10 @@ public:
     nIter = 1;
     for (int i=0; i<2; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return lbounds[i]; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return strides[i]; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
+  YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return strides[i]; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
     // Compute base indices
     indices[1] = fastmod( (iGlob        ) , dims[1] );
     indices[0] =          (iGlob/dims[1])            ;
@@ -478,10 +478,10 @@ public:
     nIter = 1;
     for (int i=0; i<2; i++) { nIter *= dims[i]; }
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return 1; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return 1; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
+  YAKL_INLINE int lbound(int i) const { return 1; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return 1; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[2] ) const {
     // Compute base indices
     indices[1] = fastmod( (iGlob        ) , dims[1] ) + 1;
     indices[0] =          (iGlob/dims[1])             + 1;
@@ -500,10 +500,10 @@ public:
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     nIter = dims[0];
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return lbounds[i]; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return strides[i]; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
+  YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return strides[i]; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
     // Compute base indices
     indices[0] = iGlob;
     // Apply strides and lower bounds
@@ -519,10 +519,10 @@ public:
     dims[0] = b0;
     nIter = dims[0];
   }
-  YAKL_DEVICE_INLINE int lbound(int i) const { return 1; }
-  YAKL_DEVICE_INLINE int dim   (int i) const { return dims   [i]; }
-  YAKL_DEVICE_INLINE int stride(int i) const { return 1; }
-  YAKL_DEVICE_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
+  YAKL_INLINE int lbound(int i) const { return 1; }
+  YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+  YAKL_INLINE int stride(int i) const { return 1; }
+  YAKL_INLINE void unpackIndices( index_t iGlob , int indices[1] ) const {
     // Compute base indices
     indices[0] = iGlob + 1;
   }

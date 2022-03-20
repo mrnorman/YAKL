@@ -1100,7 +1100,7 @@ namespace yakl {
         if (!mask.initialized()) { yakl_throw("ERROR: calling count on an array that has not been initialized"); }
       #endif
       ScalarLiveOut<int> numTrue(0);
-      c::parallel_for( c::SimpleBounds<1>( mask.totElems() ) , YAKL_DEVICE_LAMBDA (int i) {
+      c::parallel_for( c::SimpleBounds<1>( mask.totElems() ) , YAKL_LAMBDA (int i) {
         if (mask.myData[i]) { atomicAdd(numTrue(),1); }
       });
       return numTrue.hostRead();
