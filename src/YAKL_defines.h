@@ -2,6 +2,10 @@
 #pragma once
 // Included by YAKL.h
 
+#ifdef YAKL_B4B
+  #define YAKL_MANAGED_MEMORY
+#endif
+
 #ifdef YAKL_ARCH_CUDA
 
   #define YAKL_LAMBDA [=] __host__ __device__
