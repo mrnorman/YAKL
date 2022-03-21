@@ -90,7 +90,8 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
   // If the functor is small enough, then launch it like normal
   template<class F , int N , bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN ,
            typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0>
-  void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f ,
+                          LaunchConfig<VecLen> config = LaunchConfig<>() ) {
     cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , f , config );
     check_last_error();
   }
@@ -99,12 +100,61 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
   // by reference
   template<class F , int N , bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN ,
            typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0>
-  void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f ,
+                          LaunchConfig<VecLen> config = LaunchConfig<>() ) {
     F *fp = (F *) functorBuffer;
     cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
     check_last_error();
     cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , *fp , config );
     check_last_error();
+  }
+
+
+
+  template <class F, int N, bool simple, int VecLen> __global__ __launch_bounds__(VecLen)
+  void cudaKernelOuterVal( Bounds<N,simple> bounds , F f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+    size_t i = blockIdx.x;
+    callFunctor( f , bounds , i );
+  }
+
+  template <class F, int N, bool simple, int VecLen> __global__ __launch_bounds__(VecLen)
+  void cudaKernelOuterRef( Bounds<N,simple> bounds , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+    callFunctor( f , bounds , (int) blockIdx.x );
+  }
+
+  // If the functor is small enough, then launch it like normal
+  template<class F , int N , bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN ,
+           typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0>
+  void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f ,
+                            LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+    std::cout << bounds.nIter << " , " << config.inner_size << std::endl;
+    cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , f , config );
+    check_last_error();
+  }
+
+  // Otherwise, have to copy the functor to device memory, dereference it in device memory, and launch it
+  // by reference
+  template<class F , int N , bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN ,
+           typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0>
+  void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f ,
+                            LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+    F *fp = (F *) functorBuffer;
+    cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
+    check_last_error();
+    cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , *fp , config );
+    check_last_error();
+  }
+
+
+
+  template <class F, int N, bool simple, int VecLen>
+  YAKL_INLINE void parallel_inner_cuda( Bounds<N,simple> bounds , F const &f ,
+                                        LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+    #if YAKL_CURRENTLY_ON_DEVICE()
+      if (threadIdx.x < bounds.nIter) callFunctor( f , bounds , threadIdx.x );
+    #else
+      (void)f;
+    #endif
   }
 #endif
 
@@ -268,7 +318,9 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<8,si
 }
 
 
-// Bounds class, Label
+////////////////////////////////////////////////////////////////////////////////////
+// parallel_for
+////////////////////////////////////////////////////////////////////////////////////
 template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
 inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f ,
                           LaunchConfig<VecLen> config = LaunchConfig<>() ) {
@@ -307,13 +359,11 @@ inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F 
   #endif
 }
 
-
 template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
 inline void parallel_for( Bounds<N,simple> const &bounds , F const &f ,
                           LaunchConfig<VecLen> config = LaunchConfig<>() ) {
   parallel_for( "Unlabeled" , bounds , f );
 }
-
 
 template <class F, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
 inline void parallel_for( LBnd bnd , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
@@ -324,7 +374,6 @@ inline void parallel_for( LBnd bnd , F const &f , LaunchConfig<VecLen> config = 
   }
 }
 
-
 template <class F, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
 inline void parallel_for( char const * str , LBnd bnd , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
   if (bnd.l == bnd.default_lbound && bnd.s == 1) {
@@ -333,4 +382,108 @@ inline void parallel_for( char const * str , LBnd bnd , F const &f , LaunchConfi
     parallel_for( str , Bounds<1,false>(bnd) , f , config );
   }
 }
+
+
+////////////////////////////////////////////////////////////////////////////////////
+// parallel_outer
+////////////////////////////////////////////////////////////////////////////////////
+template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
+inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , F const &f ,
+                            LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
+  #ifdef YAKL_ARCH_CUDA
+    nvtxRangePushA(str);
+  #endif
+  #ifdef YAKL_AUTO_PROFILE
+    timer_start(str);
+  #endif
+
+  if (config.b4b) {
+    fence();
+    parallel_for_cpu_serial( bounds , f );
+  } else {
+    #ifdef YAKL_ARCH_CUDA
+      parallel_outer_cuda( bounds , f , config );
+    #elif defined(YAKL_ARCH_HIP)
+      parallel_outer_hip ( bounds , f , config );
+    #elif defined(YAKL_ARCH_SYCL)
+      parallel_outer_sycl( bounds , f , config );
+    #else
+      parallel_for_cpu_serial( bounds , f );
+    #endif
+  }
+
+  #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+    fence();
+  #endif
+
+  #ifdef YAKL_AUTO_PROFILE
+    timer_stop(str);
+  #endif
+  #ifdef YAKL_ARCH_CUDA
+    nvtxRangePop();
+  #endif
+}
+
+template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
+inline void parallel_outer( Bounds<N,simple> const &bounds , F const &f ,
+                            LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  parallel_outer( "Unlabeled" , bounds , f );
+}
+
+template <class F, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
+inline void parallel_outer( LBnd bnd , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  if (bnd.l == bnd.default_lbound && bnd.s == 1) {
+    parallel_outer( "Unlabeled" , Bounds<1,true>(bnd.to_scalar()) , f , config );
+  } else {
+    parallel_outer( "Unlabeled" , Bounds<1,false>(bnd) , f , config );
+  }
+}
+
+template <class F, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
+inline void parallel_outer( char const * str , LBnd bnd , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  if (bnd.l == bnd.default_lbound && bnd.s == 1) {
+    parallel_outer( str , Bounds<1,true>(bnd.to_scalar()) , f , config );
+  } else {
+    parallel_outer( str , Bounds<1,false>(bnd) , f , config );
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////
+// parallel_inner
+////////////////////////////////////////////////////////////////////////////////////
+template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
+YAKL_INLINE void parallel_inner( Bounds<N,simple> const &bounds , F const &f ,
+                                 LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  if (config.b4b) {
+    #if YAKL_CURRENTLY_ON_HOST()
+      parallel_for_cpu_serial( bounds , f );
+    #endif
+  } else {
+    #ifdef YAKL_ARCH_CUDA
+      parallel_inner_cuda( bounds , f , config );
+    #elif defined(YAKL_ARCH_HIP)
+      parallel_inner_hip ( bounds , f , config );
+    #elif defined(YAKL_ARCH_SYCL)
+      parallel_inner_sycl( bounds , f , config );
+    #else
+      parallel_for_cpu_serial( bounds , f );
+    #endif
+  }
+}
+
+template <class F, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
+YAKL_INLINE void parallel_inner( LBnd bnd , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  if (bnd.l == bnd.default_lbound && bnd.s == 1) {
+    parallel_inner( Bounds<1,true>(bnd.to_scalar()) , f , config );
+  } else {
+    parallel_inner( Bounds<1,false>(bnd) , f , config );
+  }
+}
+
+
+
+
+
 

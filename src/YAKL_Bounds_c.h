@@ -12,32 +12,32 @@ public:
   int static constexpr default_lbound = 0;
   int l, u, s;
   // Lower bound of zero, stride of one
-  LBnd(index_t u) {
+  YAKL_INLINE LBnd(index_t u) {
     this->l = 0;
     this->u = u-1;
     this->s = 1;
   }
   // Lower bound of zero, stride of one
-  LBnd(int u) {
+  YAKL_INLINE LBnd(int u) {
     this->l = 0;
     this->u = u-1;
     this->s = 1;
   }
   // Lower and upper bounds specified, stride of one
-  LBnd(int l, int u) {
+  YAKL_INLINE LBnd(int l, int u) {
     this->l = l;
     this->u = u;
     this->s = 1;
     if (u < l) yakl_throw("ERROR: cannot specify an upper bound < lower bound");
   }
   // Lower bound, upper bound, and stride all specified
-  LBnd(int l, int u, int s) {
+  YAKL_INLINE LBnd(int l, int u, int s) {
     this->l = l;
     this->u = u;
     this->s = s;
     if (s < 1) yakl_throw("ERROR: negative strides not yet supported.");
   }
-  index_t to_scalar() {
+  YAKL_INLINE index_t to_scalar() {
     return (index_t) u+1;
   }
 };
@@ -61,7 +61,7 @@ public:
   int     lbounds[8];
   index_t dims[8];
   index_t strides[8];
-  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 ,
+  YAKL_INLINE Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 ,
           LBnd const &b6 , LBnd const &b7 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     lbounds[1] = b1.l;   strides[1] =  b1.s;   dims[1] = ( b1.u - b1.l + 1 ) / b1.s;
@@ -103,7 +103,7 @@ template<> class Bounds<8,true> {
 public:
   index_t nIter;
   index_t dims[8];
-  Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 , index_t b4 , index_t b5 , index_t b6 , index_t b7 ) {
+  YAKL_INLINE Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 , index_t b4 , index_t b5 , index_t b6 , index_t b7 ) {
     dims[0] = b0;
     dims[1] = b1;
     dims[2] = b2;
@@ -139,7 +139,7 @@ public:
   int     lbounds[7];
   index_t dims[7];
   index_t strides[7];
-  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 ,
+  YAKL_INLINE Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 ,
           LBnd const &b6 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     lbounds[1] = b1.l;   strides[1] =  b1.s;   dims[1] = ( b1.u - b1.l + 1 ) / b1.s;
@@ -178,7 +178,7 @@ template<> class Bounds<7,true> {
 public:
   index_t nIter;
   index_t dims[7];
-  Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 , index_t b4 , index_t b5 , index_t b6 ) {
+  YAKL_INLINE Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 , index_t b4 , index_t b5 , index_t b6 ) {
     dims[0] = b0;
     dims[1] = b1;
     dims[2] = b2;
@@ -212,7 +212,7 @@ public:
   int     lbounds[6];
   index_t dims[6];
   index_t strides[6];
-  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 ) {
+  YAKL_INLINE Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 , LBnd const &b5 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     lbounds[1] = b1.l;   strides[1] =  b1.s;   dims[1] = ( b1.u - b1.l + 1 ) / b1.s;
     lbounds[2] = b2.l;   strides[2] =  b2.s;   dims[2] = ( b2.u - b2.l + 1 ) / b2.s;
@@ -247,7 +247,7 @@ template<> class Bounds<6,true> {
 public:
   index_t nIter;
   index_t dims[6];
-  Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 , index_t b4 , index_t b5 ) {
+  YAKL_INLINE Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 , index_t b4 , index_t b5 ) {
     dims[0] = b0;
     dims[1] = b1;
     dims[2] = b2;
@@ -279,7 +279,7 @@ public:
   int     lbounds[5];
   index_t dims[5];
   index_t strides[5];
-  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 ) {
+  YAKL_INLINE Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 , LBnd const &b4 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     lbounds[1] = b1.l;   strides[1] =  b1.s;   dims[1] = ( b1.u - b1.l + 1 ) / b1.s;
     lbounds[2] = b2.l;   strides[2] =  b2.s;   dims[2] = ( b2.u - b2.l + 1 ) / b2.s;
@@ -311,7 +311,7 @@ template<> class Bounds<5,true> {
 public:
   index_t nIter;
   index_t dims[5];
-  Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 , index_t b4 ) {
+  YAKL_INLINE Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 , index_t b4 ) {
     dims[0] = b0;
     dims[1] = b1;
     dims[2] = b2;
@@ -341,7 +341,7 @@ public:
   int     lbounds[4];
   index_t dims[4];
   index_t strides[4];
-  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 ) {
+  YAKL_INLINE Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 , LBnd const &b3 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     lbounds[1] = b1.l;   strides[1] =  b1.s;   dims[1] = ( b1.u - b1.l + 1 ) / b1.s;
     lbounds[2] = b2.l;   strides[2] =  b2.s;   dims[2] = ( b2.u - b2.l + 1 ) / b2.s;
@@ -370,7 +370,7 @@ template<> class Bounds<4,true> {
 public:
   index_t nIter;
   index_t dims[4];
-  Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 ) {
+  YAKL_INLINE Bounds( index_t b0 , index_t b1 , index_t b2 , index_t b3 ) {
     dims[0] = b0;
     dims[1] = b1;
     dims[2] = b2;
@@ -398,7 +398,7 @@ public:
   int     lbounds[3];
   index_t dims[3];
   index_t strides[3];
-  Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 ) {
+  YAKL_INLINE Bounds( LBnd const &b0 , LBnd const &b1 , LBnd const &b2 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     lbounds[1] = b1.l;   strides[1] =  b1.s;   dims[1] = ( b1.u - b1.l + 1 ) / b1.s;
     lbounds[2] = b2.l;   strides[2] =  b2.s;   dims[2] = ( b2.u - b2.l + 1 ) / b2.s;
@@ -424,7 +424,7 @@ template<> class Bounds<3,true> {
 public:
   index_t nIter;
   index_t dims[3];
-  Bounds( index_t b0 , index_t b1 , index_t b2 ) {
+  YAKL_INLINE Bounds( index_t b0 , index_t b1 , index_t b2 ) {
     dims[0] = b0;
     dims[1] = b1;
     dims[2] = b2;
@@ -450,7 +450,7 @@ public:
   int     lbounds[2];
   index_t dims[2];
   index_t strides[2];
-  Bounds( LBnd const &b0 , LBnd const &b1 ) {
+  YAKL_INLINE Bounds( LBnd const &b0 , LBnd const &b1 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     lbounds[1] = b1.l;   strides[1] =  b1.s;   dims[1] = ( b1.u - b1.l + 1 ) / b1.s;
     nIter = 1;
@@ -473,7 +473,7 @@ template<> class Bounds<2,true> {
 public:
   index_t nIter;
   index_t dims[2];
-  Bounds( index_t b0 , index_t b1 ) {
+  YAKL_INLINE Bounds( index_t b0 , index_t b1 ) {
     dims[0] = b0;
     dims[1] = b1;
     nIter = 1;
@@ -497,7 +497,7 @@ public:
   int     lbounds[1];
   index_t dims[1];
   index_t strides[1];
-  Bounds( LBnd const &b0 ) {
+  YAKL_INLINE Bounds( LBnd const &b0 ) {
     lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s;
     nIter = dims[0];
   }
@@ -516,7 +516,7 @@ template<> class Bounds<1,true> {
 public:
   index_t nIter;
   index_t dims[1];
-  Bounds( index_t b0 ) {
+  YAKL_INLINE Bounds( index_t b0 ) {
     dims[0] = b0;
     nIter = dims[0];
   }

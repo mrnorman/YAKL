@@ -28,15 +28,39 @@ namespace yakl {
   struct LaunchConfig {
   public:
     bool b4b;
-    LaunchConfig() {b4b = false;}
-    LaunchConfig            (LaunchConfig const &config) = default;
-    LaunchConfig            (LaunchConfig      &&config) = default;
-    LaunchConfig & operator=(LaunchConfig const &config) = default;
-    LaunchConfig & operator=(LaunchConfig      &&config) = default;
+    int  inner_size;
+    YAKL_INLINE LaunchConfig() {
+      b4b = false;
+      inner_size = VL;
+    }
+    YAKL_INLINE LaunchConfig            (LaunchConfig const &rhs) {
+      this->b4b=rhs.b4b;
+      this->inner_size=rhs.inner_size;
+    }
+    YAKL_INLINE LaunchConfig            (LaunchConfig      &&rhs) {
+      this->b4b=rhs.b4b;
+      this->inner_size=rhs.inner_size;
+    }
+    YAKL_INLINE LaunchConfig & operator=(LaunchConfig const &rhs) {
+      if (this == &rhs) return *this;
+      this->b4b=rhs.b4b;
+      this->inner_size=rhs.inner_size;
+      return *this;
+    }
+    YAKL_INLINE LaunchConfig & operator=(LaunchConfig      &&rhs) {
+      if (this == &rhs) return *this;
+      this->b4b=rhs.b4b;
+      this->inner_size=rhs.inner_size;
+      return *this;
+    }
     LaunchConfig enable_b4b() {
       #ifdef YAKL_B4B
         this->b4b = true;
       #endif
+      return *this;
+    }
+    LaunchConfig set_inner_size(int num) {
+      this->inner_size = num;
       return *this;
     }
   };
