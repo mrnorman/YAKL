@@ -150,6 +150,7 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
     #if YAKL_CURRENTLY_ON_DEVICE()
       if (threadIdx.x < bounds.nIter) callFunctor( f , bounds , threadIdx.x );
     #else
+      // Avoid not used warning
       (void) f;
     #endif
   }
@@ -161,6 +162,7 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
     #if YAKL_CURRENTLY_ON_DEVICE()
       if (threadIdx.x == 0) f();
     #else
+      // Avoid not used warning
       (void) f;
     #endif
   }
@@ -187,6 +189,44 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
     hipLaunchKernelGGL( hipKernel , dim3((bounds.nIter-1)/VecLen+1) , dim3(VecLen) ,
                         (std::uint32_t) 0 , (hipStream_t) 0 , bounds , f , config );
     check_last_error();
+  }
+
+
+
+  template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN> __global__ __launch_bounds__(VecLen)
+  void hipOuterKernel( Bounds<N,simple> bounds , F f , LaunchConfig<VecLen> config = LaunchConfig<>()) {
+    callFunctor( f , bounds , blockIdx.x );
+  }
+
+  template<class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
+  void parallel_outer_hip( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+    hipLaunchKernelGGL( hipOuterKernel , dim3(bounds.nIter) , dim3(config.inner_size) ,
+                        (std::uint32_t) 0 , (hipStream_t) 0 , bounds , f , config );
+    check_last_error();
+  }
+
+
+
+  template <class F, int N, bool simple>
+  YAKL_INLINE void parallel_inner_hip( Bounds<N,simple> bounds , F const &f ) {
+    #if YAKL_CURRENTLY_ON_DEVICE()
+      if (threadIdx.x < bounds.nIter) callFunctor( f , bounds , threadIdx.x );
+    #else
+      // Avoid not used warning
+      (void) f;
+    #endif
+  }
+
+
+
+  template <class F>
+  YAKL_INLINE void single_inner_hip( F const &f ) {
+    #if YAKL_CURRENTLY_ON_DEVICE()
+      if (threadIdx.x == 0) f();
+    #else
+      // Avoid not used warning
+      (void) f;
+    #endif
   }
 #endif
 
