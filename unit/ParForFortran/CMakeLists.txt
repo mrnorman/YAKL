@@ -3,7 +3,6 @@
 set(MYSRC ParForFortran.cpp)
 
 add_executable(ParForFortran ${MYSRC})
-target_compile_features(ParForFortran PUBLIC cxx_std_14)
 include(../../yakl_utils.cmake)
 yakl_process_target(ParForFortran)
 

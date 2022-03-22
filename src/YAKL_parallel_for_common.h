@@ -147,23 +147,18 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<8,simple> const &bn
   }
 
   // If the functor is small enough, then launch it like normal
-  template<class F , int N , bool simple, int VecLen ,
-           typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0>
+  template<class F , int N , bool simple, int VecLen>
   void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config ) {
-    cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , f , config );
-    check_last_error();
-  }
-
-  // Otherwise, have to copy the functor to device memory, dereference it in device memory, and launch it
-  // by reference
-  template<class F , int N , bool simple, int VecLen ,
-           typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0>
-  void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config ) {
-    F *fp = (F *) functorBuffer;
-    cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-    check_last_error();
-    cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , *fp , config );
-    check_last_error();
+    if constexpr (sizeof(F) <= 4000) {
+      cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , f , config );
+      check_last_error();
+    } else {
+      F *fp = (F *) functorBuffer;
+      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
+      check_last_error();
+      cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , *fp , config );
+      check_last_error();
+    }
   }
 
 
@@ -171,33 +166,27 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<8,simple> const &bn
   template <class F, int N, bool simple, int VecLen> __global__ __launch_bounds__(VecLen)
   void cudaKernelOuterVal( Bounds<N,simple> bounds , F f , LaunchConfig<VecLen> config ,
                            InnerHandler handler ) {
-    callFunctorOuter( f , bounds , blockIdx.x , InnerHandler );
+    callFunctorOuter( f , bounds , blockIdx.x , handler );
   }
 
   template <class F, int N, bool simple, int VecLen> __global__ __launch_bounds__(VecLen)
   void cudaKernelOuterRef( Bounds<N,simple> bounds , F const &f , LaunchConfig<VecLen> config ,
                            InnerHandler handler ) {
-    callFunctorOuter( f , bounds , blockIdx.x , InnerHandler );
+    callFunctorOuter( f , bounds , blockIdx.x , handler );
   }
 
-  // If the functor is small enough, then launch it like normal
-  template<class F , int N , bool simple, int VecLen ,
-           typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0>
+  template<class F , int N , bool simple, int VecLen>
   void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config ) {
-    cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , f , config , InnerHandler() );
-    check_last_error();
-  }
-
-  // Otherwise, have to copy the functor to device memory, dereference it in device memory, and launch it
-  // by reference
-  template<class F , int N , bool simple, int VecLen ,
-           typename std::enable_if< sizeof(F) >= 4001 , int >::type = 0>
-  void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen> config ) {
-    F *fp = (F *) functorBuffer;
-    cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
-    check_last_error();
-    cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , *fp , config , InnerHandler() );
-    check_last_error();
+    if constexpr (sizeof(F) <= 4000) {
+      cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , f , config , InnerHandler() );
+      check_last_error();
+    } else {
+      F *fp = (F *) functorBuffer;
+      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
+      check_last_error();
+      cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , *fp , config , InnerHandler() );
+      check_last_error();
+    }
   }
 
 
