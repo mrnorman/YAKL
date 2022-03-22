@@ -46,11 +46,7 @@ message(STATUS "** YAKL is using the following C++ flags: ${YAKL_COMPILER_FLAGS}
 set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
 
 add_library(yakl STATIC ${YAKL_SOURCE})
-if ("${YAKL_ARCH}" STREQUAL "SYCL")
-  target_compile_features(yakl PUBLIC cxx_std_17)
-else()
-  target_compile_features(yakl PUBLIC cxx_std_14)
-endif()
+set_property(TARGET yakl PROPERTY CXX_STANDARD 17)
 
 target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
