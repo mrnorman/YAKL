@@ -15,6 +15,7 @@ using yakl::c::parallel_outer;
 using yakl::c::parallel_inner;
 using yakl::c::single_inner;
 using yakl::LaunchConfig;
+using yakl::InnerHandler;
 using yakl::c::parallel_for;
 using yakl::c::Bounds;
 using yakl::c::SimpleBounds;
@@ -54,18 +55,18 @@ int main() {
 
     yakl::memset(arr3d,0.);
 
-    parallel_outer( "blah" , Bounds<1>(n1) , YAKL_LAMBDA (int k) {
+    parallel_outer( "blah" , Bounds<1>(n1) , YAKL_LAMBDA (int k, InnerHandler handler ) {
       parallel_inner( Bounds<2>(n2,n3) , [&] (int j, int i) {
         arr3d(k,j,i) = 2.;
-      });
-      fence_inner();
+      } , handler );
+      fence_inner( handler );
       parallel_inner( Bounds<2>(n2,n3) , [&] (int j, int i) {
         arr3d(k,j,i) = 3.;
-      });
-      fence_inner();
+      } , handler );
+      fence_inner( handler );
       single_inner( [&] () {
         arr3d(k,0,0) = 0;
-      });
+      } , handler );
     } , LaunchConfig<n2*n3>() );
 
     real exact = (double) n1*n2*n3*3 - (double) n1*3;

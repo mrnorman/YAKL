@@ -68,6 +68,7 @@ namespace yakl {
 
 #include "YAKL_error.h"
 #include "YAKL_sycldevice.h"
+#include "YAKL_LaunchConfig.h"
 #include "YAKL_fence.h"
 #include "YAKL_simd.h"
 #include "YAKL_alloc_free.h"

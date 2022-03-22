@@ -6,32 +6,29 @@ namespace yakl {
 
   // Block the CPU code until the device code and data transfers are all completed
   inline void fence() {
-    #ifdef YAKL_ARCH_CUDA
+    #if   defined(YAKL_ARCH_CUDA)
       cudaDeviceSynchronize();
-      check_last_error();
-    #endif
-    #ifdef YAKL_ARCH_HIP
+    #elif defined(YAKL_ARCH_HIP)
       hipDeviceSynchronize();
-      check_last_error();
-    #endif
-    #ifdef YAKL_ARCH_SYCL
+    #elif defined(YAKL_ARCH_SYCL)
       sycl_default_stream().wait();
-      check_last_error();
+    #elif defined(YAKL_ARCH_OPENMP)
+      #pragma omp barrier
     #endif
+    check_last_error();
   }
 
-  // Block the CPU code until the device code and data transfers are all completed
-  YAKL_INLINE void fence_inner() {
+  // Block further work on the inner parallelism level until previous work is completed
+  YAKL_INLINE void fence_inner(InnerHandler &handler) {
     #if YAKL_CURRENTLY_ON_DEVICE()
-      #ifdef YAKL_ARCH_CUDA
+      #if   defined(YAKL_ARCH_CUDA)
         __syncthreads();
-      #endif
-      #ifdef YAKL_ARCH_HIP
+      #elif defined(YAKL_ARCH_HIP)
         __syncthreads();
-      #endif
-      #ifdef YAKL_ARCH_SYCL
-        sycl_default_stream().wait();
-        check_last_error();
+      #elif defined(YAKL_ARCH_SYCL)
+        handler.get_item().barrier(sycl::access::fence_space::local_space);
+      #elif defined(YAKL_ARCH_OPENMP)
+        // OpenMP doesn't do parallelism at the inner level, so nothing needed here
       #endif
     #endif
   }
