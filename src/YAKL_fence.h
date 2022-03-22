@@ -20,6 +20,22 @@ namespace yakl {
     #endif
   }
 
+  // Block the CPU code until the device code and data transfers are all completed
+  YAKL_INLINE void fence_inner() {
+    #if YAKL_CURRENTLY_ON_DEVICE()
+      #ifdef YAKL_ARCH_CUDA
+        __syncthreads();
+      #endif
+      #ifdef YAKL_ARCH_HIP
+        __syncthreads();
+      #endif
+      #ifdef YAKL_ARCH_SYCL
+        sycl_default_stream().wait();
+        check_last_error();
+      #endif
+    #endif
+  }
+
 }
 
 

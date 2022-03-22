@@ -13,11 +13,13 @@ using yakl::memHost;
 using yakl::memDevice;
 using yakl::c::parallel_outer;
 using yakl::c::parallel_inner;
+using yakl::c::single_inner;
 using yakl::LaunchConfig;
 using yakl::c::parallel_for;
 using yakl::c::Bounds;
 using yakl::c::SimpleBounds;
 using yakl::COLON;
+using yakl::fence_inner;
 using yakl::intrinsics::sum;
 
 typedef double real;
@@ -44,11 +46,11 @@ int main() {
     parallel_for( "mylabel" , n1 , YAKL_LAMBDA (int i) {
       arr1d(i) = 1;
     });
-    if ( abs(sum(arr1d) - n1) / (n1) > 1.e-6) die("ERROR: Wrong sum for arr1d");
+    if ( abs(sum(arr1d) - n1) / (n1) > 1.e-13) die("ERROR: Wrong sum for arr1d");
     parallel_for( "mylabel" , SimpleBounds<3>(n1,n2,n3) , YAKL_LAMBDA (int k, int j, int i) {
       arr3d(k,j,i) = 1;
     });
-    if ( abs(sum(arr3d) - (double) n1*n2*n3) / (double) (n1*n2*n3) > 1.e-12) die("ERROR: Wrong sum for arr3d");
+    if ( abs(sum(arr3d) - (double) n1*n2*n3) / (double) (n1*n2*n3) > 1.e-13) die("ERROR: Wrong sum for arr3d");
 
     yakl::memset(arr3d,0.);
 
@@ -56,13 +58,18 @@ int main() {
       parallel_inner( Bounds<2>(n2,n3) , [&] (int j, int i) {
         arr3d(k,j,i) = 2.;
       });
+      fence_inner();
+      parallel_inner( Bounds<2>(n2,n3) , [&] (int j, int i) {
+        arr3d(k,j,i) = 3.;
+      });
+      fence_inner();
+      single_inner( [&] () {
+        arr3d(k,0,0) = 0;
+      });
     } , LaunchConfig<n2*n3>() );
 
-    yakl::fence();
-
-    std::cout << arr3d;
-
-    if ( abs(sum(arr3d) - (double) n1*n2*n3*2) / (double) (n1*n2*n3*2) > 1.e-12) die("ERROR: Wrong sum for arr3d");
+    real exact = (double) n1*n2*n3*3 - (double) n1*3;
+    if ( abs(sum(arr3d) - exact) / exact > 1.e-13) die("ERROR: Wrong sum for arr3d");
   }
   yakl::finalize();
   

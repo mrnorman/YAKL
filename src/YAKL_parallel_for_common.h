@@ -113,13 +113,12 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
 
   template <class F, int N, bool simple, int VecLen> __global__ __launch_bounds__(VecLen)
   void cudaKernelOuterVal( Bounds<N,simple> bounds , F f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
-    size_t i = blockIdx.x;
-    callFunctor( f , bounds , i );
+    callFunctor( f , bounds , blockIdx.x );
   }
 
   template <class F, int N, bool simple, int VecLen> __global__ __launch_bounds__(VecLen)
   void cudaKernelOuterRef( Bounds<N,simple> bounds , F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
-    callFunctor( f , bounds , (int) blockIdx.x );
+    callFunctor( f , bounds , blockIdx.x );
   }
 
   // If the functor is small enough, then launch it like normal
@@ -127,7 +126,6 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
            typename std::enable_if< sizeof(F) <= 4000 , int >::type = 0>
   void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f ,
                             LaunchConfig<VecLen> config = LaunchConfig<>() ) {
-    std::cout << bounds.nIter << " , " << config.inner_size << std::endl;
     cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , f , config );
     check_last_error();
   }
@@ -147,13 +145,23 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
 
 
 
-  template <class F, int N, bool simple, int VecLen>
-  YAKL_INLINE void parallel_inner_cuda( Bounds<N,simple> bounds , F const &f ,
-                                        LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  template <class F, int N, bool simple>
+  YAKL_INLINE void parallel_inner_cuda( Bounds<N,simple> bounds , F const &f ) {
     #if YAKL_CURRENTLY_ON_DEVICE()
       if (threadIdx.x < bounds.nIter) callFunctor( f , bounds , threadIdx.x );
     #else
-      (void)f;
+      (void) f;
+    #endif
+  }
+
+
+
+  template <class F>
+  YAKL_INLINE void single_inner_cuda( F const &f ) {
+    #if YAKL_CURRENTLY_ON_DEVICE()
+      if (threadIdx.x == 0) f();
+    #else
+      (void) f;
     #endif
   }
 #endif
@@ -216,34 +224,38 @@ template <class F, bool simple> YAKL_DEVICE_INLINE void callFunctor(F const &f ,
 // simple bounds.
 // For OMP target offload backend, target teams distribute parallel for simd is used.
 // For OMP CPU threading backend, parallel for is used
-template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f ) {
+template <class F> inline void parallel_for_cpu_serial( LBnd &bnd , F const &f ,
+                                                        bool omp_par = true ) {
   #ifdef YAKL_ARCH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if (omp_par)
   #endif
   for (int i0 = bnd.l; i0 < (int) (bnd.l+(bnd.u-bnd.l+1)); i0+=bnd.s) {
     f( i0 );
   }
 }
-template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<1,simple> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<1,simple> const &bounds , F const &f ,
+                                                                     bool omp_par = true ) {
   #ifdef YAKL_ARCH_OPENMP
-    #pragma omp parallel for
+    #pragma omp parallel for if (omp_par)
   #endif
   for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     f( i0 );
   }
 }
-template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<2,simple> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<2,simple> const &bounds , F const &f ,
+                                                                     bool omp_par = true ) {
   #ifdef YAKL_ARCH_OPENMP
-    #pragma omp parallel for collapse(2) 
+    #pragma omp parallel for collapse(2) if (omp_par)
   #endif
   for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
   for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
     f( i0 , i1 );
   } }
 }
-template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<3,simple> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<3,simple> const &bounds , F const &f ,
+                                                                     bool omp_par = true ) {
   #ifdef YAKL_ARCH_OPENMP
-    #pragma omp parallel for collapse(3)
+    #pragma omp parallel for collapse(3) if (omp_par)
   #endif
   for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
   for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -251,9 +263,10 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<3,si
     f( i0 , i1 , i2 );
   } } }
 }
-template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<4,simple> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<4,simple> const &bounds , F const &f ,
+                                                                     bool omp_par = true ) {
   #ifdef YAKL_ARCH_OPENMP
-    #pragma omp parallel for collapse(4)
+    #pragma omp parallel for collapse(4) if (omp_par)
   #endif
   for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
   for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -262,9 +275,10 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<4,si
     f( i0 , i1 , i2 , i3 );
   } } } }
 }
-template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<5,simple> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<5,simple> const &bounds , F const &f ,
+                                                                     bool omp_par = true ) {
   #ifdef YAKL_ARCH_OPENMP
-    #pragma omp parallel for collapse(5)
+    #pragma omp parallel for collapse(5) if (omp_par)
   #endif
   for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
   for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -274,9 +288,10 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<5,si
     f( i0 , i1 , i2 , i3 , i4 );
   } } } } }
 }
-template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<6,simple> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<6,simple> const &bounds , F const &f ,
+                                                                     bool omp_par = true ) {
   #ifdef YAKL_ARCH_OPENMP
-    #pragma omp parallel for collapse(6)
+    #pragma omp parallel for collapse(6) if (omp_par)
   #endif
   for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
   for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -287,9 +302,10 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<6,si
     f( i0 , i1 , i2 , i3 , i4 , i5 );
   } } } } } }
 }
-template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<7,simple> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<7,simple> const &bounds , F const &f ,
+                                                                     bool omp_par = true ) {
   #ifdef YAKL_ARCH_OPENMP
-    #pragma omp parallel for collapse(7)
+    #pragma omp parallel for collapse(7) if (omp_par)
   #endif
   for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
   for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -301,9 +317,10 @@ template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<7,si
     f( i0 , i1 , i2 , i3 , i4 , i5 , i6 );
   } } } } } } }
 }
-template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<8,simple> const &bounds , F const &f ) {
+template <class F, bool simple> inline void parallel_for_cpu_serial( Bounds<8,simple> const &bounds , F const &f ,
+                                                                     bool omp_par = true ) {
   #ifdef YAKL_ARCH_OPENMP
-    #pragma omp parallel for collapse(8)
+    #pragma omp parallel for collapse(8) if (omp_par)
   #endif
   for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
   for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -458,17 +475,17 @@ YAKL_INLINE void parallel_inner( Bounds<N,simple> const &bounds , F const &f ,
                                  LaunchConfig<VecLen> config = LaunchConfig<>() ) {
   if (config.b4b) {
     #if YAKL_CURRENTLY_ON_HOST()
-      parallel_for_cpu_serial( bounds , f );
+      parallel_for_cpu_serial( bounds , f , false );
     #endif
   } else {
     #ifdef YAKL_ARCH_CUDA
-      parallel_inner_cuda( bounds , f , config );
+      parallel_inner_cuda( bounds , f );
     #elif defined(YAKL_ARCH_HIP)
-      parallel_inner_hip ( bounds , f , config );
+      parallel_inner_hip ( bounds , f );
     #elif defined(YAKL_ARCH_SYCL)
-      parallel_inner_sycl( bounds , f , config );
+      parallel_inner_sycl( bounds , f );
     #else
-      parallel_for_cpu_serial( bounds , f );
+      parallel_for_cpu_serial( bounds , f , false );
     #endif
   }
 }
@@ -479,6 +496,26 @@ YAKL_INLINE void parallel_inner( LBnd bnd , F const &f , LaunchConfig<VecLen> co
     parallel_inner( Bounds<1,true>(bnd.to_scalar()) , f , config );
   } else {
     parallel_inner( Bounds<1,false>(bnd) , f , config );
+  }
+}
+
+
+template <class F, int VecLen=YAKL_DEFAULT_VECTOR_LEN>
+YAKL_INLINE void single_inner( F const &f , LaunchConfig<VecLen> config = LaunchConfig<>() ) {
+  if (config.b4b) {
+    #if YAKL_CURRENTLY_ON_HOST()
+      f();
+    #endif
+  } else {
+    #ifdef YAKL_ARCH_CUDA
+      single_inner_cuda( f );
+    #elif defined(YAKL_ARCH_HIP)
+      single_inner_hip ( f );
+    #elif defined(YAKL_ARCH_SYCL)
+      single_inner_sycl( f );
+    #else
+      f();
+    #endif
   }
 }
 
