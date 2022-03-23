@@ -140,7 +140,7 @@ int main() {
       parallel_for( n , YAKL_LAMBDA (int i) { data(i) = yakl::Random(i).genFP<real>(); });
       for (int k=0; k < 10; k++) {
         yakl::ScalarLiveOut<real> sum(0.);
-        parallel_for( n , YAKL_LAMBDA (int i) { yakl::atomicAdd( sum() , data(i) ); } , yakl::DefaultLaunchConfig().enable_b4b() );
+        parallel_for( n , YAKL_LAMBDA (int i) { yakl::atomicAdd( sum() , data(i) ); } , yakl::DefaultLaunchConfigB4b() );
         std::cout << std::scientific << std::setprecision(18) << sum.hostRead() << "\n";
       }
     }
