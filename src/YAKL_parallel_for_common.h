@@ -557,6 +557,3 @@ YAKL_INLINE void single_inner( F const &f , InnerHandler handler ) {
 
 
 
-
-
-
