@@ -30,6 +30,7 @@ macro(yakl_process_cxx_source_files files)
   endif()
 
   set_source_files_properties(${files} PROPERTIES COMPILE_FLAGS "${YAKL_COMPILER_FLAGS}")
+  set_source_files_properties(${files} PROPERTIES CXX_STANDARD 17)
 endmacro(yakl_process_cxx_source_files)
 
 
