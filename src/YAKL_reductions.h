@@ -59,20 +59,26 @@ namespace yakl {
   #ifdef YAKL_ARCH_HIP
 
 
-    template <class T> class ParallelMin<T,memDevice> {
+    template <class T, int RED> class ParallelReduction<T,memDevice,RED> {
       void   *tmp;   // Temporary storage
       size_t nTmp;   // Size of temporary storage
       int    nItems; // Number of items in the array that will be reduced
       T      *rsltP; // Device pointer for reduction result
       public:
-      ParallelMin() { tmp = NULL; }
-      ParallelMin(int const nItems) { tmp = NULL; setup(nItems); }
-      ~ParallelMin() { finalize(); }
+      ParallelReduction() { tmp = NULL; }
+      ParallelReduction(int const nItems) { tmp = NULL; setup(nItems); }
+      ~ParallelReduction() { finalize(); }
       void setup(int const nItems) {
         finalize();
         rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
-        hipcub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
+        if constexpr        (RED == YAKL_REDUCTION_MIN) {
+          hipcub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
+        } else if constexpr (RED == YAKL_REDUCTION_MAX) {
+          hipcub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
+        } else if constexpr (RED == YAKL_REDUCTION_SUM) {
+          hipcub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
+        }
         tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
       }
@@ -85,94 +91,26 @@ namespace yakl {
       }
       T operator() (T *data) {
         T rslt;
-        hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
-        hipMemcpyAsync(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost,0);       // Copy result to host
-        check_last_error();
-        fence();
-        return rslt;
-      }
-      void deviceReduce(T *data, T *devP) {
-        hipcub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
-        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-          fence();
-        #endif
-      }
-    };
-
-    template <class T> class ParallelMax<T,memDevice> {
-      void   *tmp;   // Temporary storage
-      size_t nTmp;   // Size of temporary storage
-      int    nItems; // Number of items in the array that will be reduced
-      T      *rsltP; // Device pointer for reduction result
-      public:
-      ParallelMax() { tmp = NULL; }
-      ParallelMax(int const nItems) { tmp = NULL; setup(nItems); }
-      ~ParallelMax() { finalize(); }
-      void setup(int const nItems) {
-        finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
-        // Get the amount of temporary storage needed (call with NULL storage pointer)
-        hipcub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
-        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
-        this->nItems = nItems;
-      }
-      void finalize() {
-        if (tmp != NULL) {
-          yaklFreeDevice(rsltP,"");
-          yaklFreeDevice(tmp,"");
+        if constexpr        (RED == YAKL_REDUCTION_MIN) {
+          hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+        } else if constexpr (RED == YAKL_REDUCTION_MAX) {
+          hipcub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+        } else if constexpr (RED == YAKL_REDUCTION_SUM) {
+          hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         }
-        tmp = NULL;
-      }
-      T operator() (T *data) {
-        T rslt;
-        hipcub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         hipMemcpyAsync(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost,0);       // Copy result to host
         check_last_error();
         fence();
         return rslt;
       }
       void deviceReduce(T *data, T *devP) {
-        hipcub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
-        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-          fence();
-        #endif
-      }
-    };
-
-    template <class T> class ParallelSum<T,memDevice> {
-      void   *tmp;   // Temporary storage
-      size_t nTmp;   // Size of temporary storage
-      int    nItems; // Number of items in the array that will be reduced
-      T      *rsltP; // Device pointer for reduction result
-      public:
-      ParallelSum() { tmp = NULL; }
-      ParallelSum(int const nItems) { tmp = NULL; setup(nItems); }
-      ~ParallelSum() { finalize(); }
-      void setup(int const nItems) {
-        finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
-        // Get the amount of temporary storage needed (call with NULL storage pointer)
-        hipcub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
-        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
-        this->nItems = nItems;
-      }
-      void finalize() {
-        if (tmp != NULL) {
-          yaklFreeDevice(rsltP,"");
-          yaklFreeDevice(tmp,"");
+        if constexpr        (RED == YAKL_REDUCTION_MIN) {
+          hipcub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
+        } else if constexpr (RED == YAKL_REDUCTION_MAX) {
+          hipcub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
+        } else if constexpr (RED == YAKL_REDUCTION_SUM) {
+          hipcub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
         }
-        tmp = NULL;
-      }
-      T operator() (T *data) {
-        T rslt;
-        hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
-        hipMemcpyAsync(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost,0);       // Copy result to host
-        check_last_error();
-        fence();
-        return rslt;
-      }
-      void deviceReduce(T *data, T *devP) {
-        hipcub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
         #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
           fence();
         #endif
