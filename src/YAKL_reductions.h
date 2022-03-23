@@ -182,13 +182,13 @@ namespace yakl {
 
   #elif defined(YAKL_ARCH_SYCL)
 
-    template <class T> class ParallelMin<T,memDevice> {
+    template <class T, int RED> class ParallelReduction<T,memDevice,RED> {
       int    nItems; // Number of items in the array that will be reduced
       T      *rsltP; // Device pointer for reduction result
       public:
-      ParallelMin() { rsltP = nullptr; }
-      ParallelMin(int const nItems) { rsltP = nullptr; setup(nItems); }
-      ~ParallelMin() { finalize(); }
+      ParallelReduction() { rsltP = nullptr; }
+      ParallelReduction(int const nItems) { rsltP = nullptr; setup(nItems); }
+      ~ParallelReduction() { finalize(); }
       void setup(int const nItems) {
         finalize();
         rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
@@ -204,11 +204,22 @@ namespace yakl {
       T operator() (T *data) {
         T rslt=0;
         sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(sycl::range<1>(nItems),
-                           sycl::reduction(rsltP, sycl::minimum<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::id<1> idx, auto& min) {
-                             min.combine(data[idx]);
-                           });
+          if constexpr        (RED == YAKL_REDUCTION_MIN) {
+            cgh.parallel_for(sycl::range<1>(nItems),
+                             sycl::reduction(rsltP, sycl::minimum<>(),
+                             sycl::property::reduction::initialize_to_identity{}),
+                             [=] (sycl::id<1> idx, auto& min) { min.combine(data[idx]); });
+          } else if constexpr (RED == YAKL_REDUCTION_MAX) {
+            cgh.parallel_for(sycl::range<1>(nItems),
+                             sycl::reduction(rsltP, sycl::maximum<>(),
+                             sycl::property::reduction::initialize_to_identity{}),
+                             [=] (sycl::id<1> idx, auto& max) { max.combine(data[idx]); });
+          } else if constexpr (RED == YAKL_REDUCTION_SUM) {
+            cgh.parallel_for(sycl::range<1>(nItems),
+                             sycl::reduction(rsltP, std::plus<>(),
+                             sycl::property::reduction::initialize_to_identity{}),
+                             [=] (sycl::id<1> idx, auto& sum) { sum.combine(data[idx]); });
+          }
         });
         sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
         fence();
@@ -216,11 +227,22 @@ namespace yakl {
       }
       void deviceReduce(T *data, T *devP) {
         sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(sycl::range<1>(nItems),
-                           sycl::reduction(devP, sycl::minimum<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::id<1> idx, auto& min) {
-                             min.combine(data[idx]);
-                           });
+          if constexpr        (RED == YAKL_REDUCTION_MIN) {
+            cgh.parallel_for(sycl::range<1>(nItems),
+                             sycl::reduction(devP, sycl::minimum<>(),
+                             sycl::property::reduction::initialize_to_identity{}),
+                             [=] (sycl::id<1> idx, auto& min) { min.combine(data[idx]); });
+          } else if constexpr (RED == YAKL_REDUCTION_MAX) {
+            cgh.parallel_for(get_reduction_range(nItems, devP),
+                             sycl::reduction(devP, sycl::maximum<>(),
+                             sycl::property::reduction::initialize_to_identity{}),
+                             [=] (sycl::id<1> idx, auto& max) { max.combine(data[idx]); });
+          } else if constexpr (RED == YAKL_REDUCTION_SUM) {
+            cgh.parallel_for(sycl::range<1>(nItems),
+                             sycl::reduction(rsltP, std::plus<T>(),
+                             sycl::property::reduction::initialize_to_identity{}),
+                             [=] (sycl::id<1> idx, auto& sum) { sum.combine(data[idx]); });
+          }
         });
         #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
           fence();
@@ -228,95 +250,6 @@ namespace yakl {
       }
     };
 
-    template <class T> class ParallelMax<T,memDevice> {
-      int    nItems; // Number of items in the array that will be reduced
-      T      *rsltP; // Device pointer for reduction result
-      public:
-      ParallelMax() { rsltP = nullptr; }
-      ParallelMax(int const nItems) { rsltP = nullptr; setup(nItems); }
-      ~ParallelMax() { finalize(); }
-      void setup(int const nItems) {
-        finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
-        this->nItems = nItems;
-      }
-      void finalize() {
-        if(rsltP != nullptr) {
-          yaklFreeDevice(rsltP,"");
-        }
-        rsltP = nullptr;
-      }
-      T operator() (T *data) {
-        T rslt=0;
-        sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(sycl::range<1>(nItems),
-                           sycl::reduction(rsltP, sycl::maximum<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::id<1> idx, auto& max) {
-                             max.combine(data[idx]);
-                           });
-        });
-        sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
-        fence();
-        return rslt;
-      }
-      void deviceReduce(T *data, T *devP) {
-        sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(get_reduction_range(nItems, devP),
-                           sycl::reduction(devP, sycl::maximum<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::id<1> idx, auto& max) {
-                             max.combine(data[idx]);
-                           });
-        });
-        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-          fence();
-        #endif
-      }
-    };
-
-    template <class T> class ParallelSum<T,memDevice> {
-      int    nItems; // Number of items in the array that will be reduced
-      T      *rsltP; // Device pointer for reduction result
-      public:
-      ParallelSum() { rsltP = nullptr; }
-      ParallelSum(int const nItems) { rsltP = nullptr; setup(nItems); }
-      ~ParallelSum() { finalize(); }
-      void setup(int const nItems) {
-        finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
-        this->nItems = nItems;
-      }
-      void finalize() {
-        if(rsltP != nullptr) {
-          yaklFreeDevice(rsltP,"");
-        }
-        rsltP = nullptr;
-      }
-      T operator() (T *data) {
-        T rslt=0;
-        sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(sycl::range<1>(nItems),
-                           sycl::reduction(rsltP, std::plus<>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::id<1> idx, auto& sum) {
-           sum.combine(data[idx]);
-                           });
-        });
-        sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T));
-        fence();
-        return rslt;
-      }
-      void deviceReduce(T *data, T *devP) {
-        sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          cgh.parallel_for(sycl::range<1>(nItems),
-                           sycl::reduction(rsltP, std::plus<T>(), sycl::property::reduction::initialize_to_identity{}),
-                           [=](sycl::id<1> idx, auto& sum) {
-           sum.combine(data[idx]);
-                           });
-        });
-        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-          fence();
-        #endif
-      }
-    };
 
 
   #elif defined(YAKL_ARCH_OPENMP)
