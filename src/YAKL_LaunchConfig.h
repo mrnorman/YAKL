@@ -18,43 +18,30 @@ namespace yakl {
 
 
   // Empty launch config struct to set the vector length for a kernel launch
-  template <int VL = YAKL_DEFAULT_VECTOR_LEN>
+  template <int VL = YAKL_DEFAULT_VECTOR_LEN, bool B4B = false>
   struct LaunchConfig {
   public:
-    bool b4b;
     int  inner_size;
     YAKL_INLINE LaunchConfig() {
-      b4b = false;
       inner_size = VL;
     }
     YAKL_INLINE ~LaunchConfig() {
-      b4b = false;
       inner_size = VL;
     }
     YAKL_INLINE LaunchConfig            (LaunchConfig const &rhs) {
-      this->b4b = rhs.b4b;
       this->inner_size = rhs.inner_size;
     }
     YAKL_INLINE LaunchConfig            (LaunchConfig      &&rhs) {
-      this->b4b = rhs.b4b;
       this->inner_size = rhs.inner_size;
     }
     YAKL_INLINE LaunchConfig & operator=(LaunchConfig const &rhs) {
       if (this == &rhs) return *this;
-      this->b4b = rhs.b4b;
       this->inner_size = rhs.inner_size;
       return *this;
     }
     YAKL_INLINE LaunchConfig & operator=(LaunchConfig      &&rhs) {
       if (this == &rhs) return *this;
-      this->b4b = rhs.b4b;
       this->inner_size = rhs.inner_size;
-      return *this;
-    }
-    LaunchConfig enable_b4b() {
-      #ifdef YAKL_B4B
-        this->b4b = true;
-      #endif
       return *this;
     }
     LaunchConfig set_inner_size(int num) {
@@ -65,6 +52,8 @@ namespace yakl {
 
 
   using DefaultLaunchConfig = LaunchConfig<>;
+  template <int VecLen=YAKL_DEFAULT_VECTOR_LEN> using LaunchConfigB4b = LaunchConfig<VecLen,true>;
+  using DefaultLaunchConfigB4b = LaunchConfig<YAKL_DEFAULT_VECTOR_LEN,true>;
 
 
   #if defined(YAKL_ARCH_SYCL)
