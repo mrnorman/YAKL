@@ -40,8 +40,7 @@ namespace yakl {
 
     private:
       dev_mgr() {
-        sycl::platform platform(sycl::gpu_selector{});
-        auto gpu_devs = platform.get_devices(sycl::info::device_type::gpu);
+        auto gpu_devs = sycl::device::get_devices(sycl::info::device_type::gpu);
         for (auto &dev : gpu_devs) {
           if (dev.get_info<sycl::info::device::partition_max_sub_devices>() > 0) {
             auto subDevs = dev.create_sub_devices<sycl::info::partition_property::partition_by_affinity_domain>(sycl::info::partition_affinity_domain::numa);
@@ -58,6 +57,15 @@ namespace yakl {
                                                             sycl::property_list{sycl::property::queue::in_order{}}));
           }
         }
+
+#ifdef HAVE_MPI
+        MPI_Comm shmcomm;
+        MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0,
+                            MPI_INFO_NULL, &shmcomm);
+        int shmrank;
+        MPI_Comm_rank(shmcomm, &shmrank);
+        DEFAULT_DEVICE_ID = (shmrank % _devs.size());
+#endif // HAVE_MPI
       }
       void check_id(unsigned int id) const {
         if (id >= _devs.size()) {
@@ -75,4 +83,3 @@ namespace yakl {
     }
   #endif // YAKL_ARCH_SYCL
 }
-
