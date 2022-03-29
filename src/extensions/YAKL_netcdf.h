@@ -579,19 +579,19 @@ namespace yakl {
     Determine the type of a template T
     ***************************************************************************************************/
     template <class T> int getType() const {
-           if ( std::is_same<T,signed        char>::value ) { return NC_BYTE;   }
-      else if ( std::is_same<T,unsigned      char>::value ) { return NC_UBYTE;  }
-      else if ( std::is_same<T,             short>::value ) { return NC_SHORT;  }
-      else if ( std::is_same<T,unsigned     short>::value ) { return NC_USHORT; }
-      else if ( std::is_same<T,               int>::value ) { return NC_INT;    }
-      else if ( std::is_same<T,unsigned       int>::value ) { return NC_UINT;   }
-      else if ( std::is_same<T,              long>::value ) { return NC_INT;    }
-      else if ( std::is_same<T,unsigned      long>::value ) { return NC_UINT;   }
-      else if ( std::is_same<T,         long long>::value ) { return NC_INT64;  }
-      else if ( std::is_same<T,unsigned long long>::value ) { return NC_UINT64; }
-      else if ( std::is_same<T,             float>::value ) { return NC_FLOAT;  }
-      else if ( std::is_same<T,            double>::value ) { return NC_DOUBLE; }
-           if ( std::is_same<T,              char>::value ) { return NC_CHAR;   }
+           if ( std::is_same<typename std::remove_cv<T>::type,signed        char>::value ) { return NC_BYTE;   }
+      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned      char>::value ) { return NC_UBYTE;  }
+      else if ( std::is_same<typename std::remove_cv<T>::type,             short>::value ) { return NC_SHORT;  }
+      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned     short>::value ) { return NC_USHORT; }
+      else if ( std::is_same<typename std::remove_cv<T>::type,               int>::value ) { return NC_INT;    }
+      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned       int>::value ) { return NC_UINT;   }
+      else if ( std::is_same<typename std::remove_cv<T>::type,              long>::value ) { return NC_INT;    }
+      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned      long>::value ) { return NC_UINT;   }
+      else if ( std::is_same<typename std::remove_cv<T>::type,         long long>::value ) { return NC_INT64;  }
+      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned long long>::value ) { return NC_UINT64; }
+      else if ( std::is_same<typename std::remove_cv<T>::type,             float>::value ) { return NC_FLOAT;  }
+      else if ( std::is_same<typename std::remove_cv<T>::type,            double>::value ) { return NC_DOUBLE; }
+           if ( std::is_same<typename std::remove_cv<T>::type,              char>::value ) { return NC_CHAR;   }
       else { yakl_throw("Invalid type"); }
       return -1;
     }
