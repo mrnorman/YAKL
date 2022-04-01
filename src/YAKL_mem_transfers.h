@@ -14,6 +14,11 @@ namespace yakl {
   }
 
 
+  inline void memcpy_host_to_host_void(void *dst , void *src , size_t bytes) {
+    memcpy( dst , src , bytes );
+  }
+
+
   template <class T1, class T2,
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
@@ -37,6 +42,7 @@ namespace yakl {
       fence();
     #endif
   }
+
 
 
   template <class T1, class T2,
@@ -82,6 +88,25 @@ namespace yakl {
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
+    #endif
+    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+      fence();
+    #endif
+  }
+
+
+  inline void memcpy_device_to_device_void(void *dst , void *src , size_t bytes) {
+    #ifdef YAKL_ARCH_CUDA
+      cudaMemcpyAsync(dst,src,bytes,cudaMemcpyDeviceToDevice,0);
+      check_last_error();
+    #elif defined(YAKL_ARCH_HIP)
+      hipMemcpyAsync(dst,src,bytes,hipMemcpyDeviceToDevice,0);
+      check_last_error();
+    #elif defined (YAKL_ARCH_SYCL)
+      sycl_default_stream().memcpy(dst, src, bytes);
+      check_last_error();
+    #else
+      memcpy( dst , src , bytes );
     #endif
     #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
       fence();
