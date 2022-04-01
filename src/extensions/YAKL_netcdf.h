@@ -345,6 +345,7 @@ namespace yakl {
 
 
     void createDim( std::string dimName , size_t len ) { file.addDim( dimName , len ); }
+    void createDim( std::string dimName ) { file.addDim( dimName ); }
 
 
     /***************************************************************************************************
