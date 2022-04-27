@@ -14,25 +14,25 @@ namespace yakl {
 
 
 
-    template <class T> YAKL_INLINE auto shape(T const &arr) -> decltype(arr.get_dimensions()) { return arr.get_dimensions(); }
+    template <class T> YAKL_INLINE auto shape(T const &arr) { return arr.get_dimensions(); }
 
 
 
     template <class T> YAKL_INLINE int  lbound (T const &arr, int dim) { return arr.get_lbounds()(dim); }
-    template <class T> YAKL_INLINE auto lbound (T const &arr) -> decltype(arr.get_lbounds()) { return arr.get_lbounds(); }
+    template <class T> YAKL_INLINE auto lbound (T const &arr) { return arr.get_lbounds(); }
 
 
 
     template <class T> YAKL_INLINE int  ubound (T const &arr, int dim) { return arr.get_ubounds()(dim); }
-    template <class T> YAKL_INLINE auto ubound (T const &arr) -> decltype(arr.get_ubounds()) { return arr.get_ubounds(); }
+    template <class T> YAKL_INLINE auto ubound (T const &arr) { return arr.get_ubounds(); }
 
 
 
-    template <class T> YAKL_INLINE bool allocated (T const &arr) { return arr.myData != nullptr; }
+    template <class T> YAKL_INLINE bool allocated (T const &arr) { return arr.data() != nullptr; }
 
 
 
-    template <class T> YAKL_INLINE bool associated (T const &arr) { return arr.myData != nullptr; }
+    template <class T> YAKL_INLINE bool associated (T const &arr) { return arr.data() != nullptr; }
 
 
 
@@ -84,21 +84,19 @@ namespace yakl {
     template <class T, int rank, int myStyle>
     inline Array<T,rank,memHost,myStyle> abs( Array<T,rank,memHost,myStyle> const &arr ) {
       #ifdef YAKL_DEBUG
-        if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
+        if (!arr.initialized()) { yakl_throw("ERROR: calling abs on an array that has not been initialized"); }
       #endif
-      // https://en.cppreference.com/w/cpp/language/dependent_name#The_template_disambiguator_for_dependent_names
-      auto ret = arr.template createHostCopy<typename std::remove_cv<T>::type>();
-      for (int i=0; i < ret.totElems(); i++) { ret.myData[i] = std::abs(ret.myData[i]); };
+      auto ret = arr.createHostObject();
+      for (int i=0; i < ret.totElems(); i++) { ret.data()[i] = std::abs(arr.data()[i]); };
       return ret;
     }
     template <class T, int rank, int myStyle>
     inline Array<T,rank,memDevice,myStyle> abs( Array<T,rank,memDevice,myStyle> const &arr ) {
       #ifdef YAKL_DEBUG
-        if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
+        if (!arr.initialized()) { yakl_throw("ERROR: calling abs on an array that has not been initialized"); }
       #endif
-      // https://en.cppreference.com/w/cpp/language/dependent_name#The_template_disambiguator_for_dependent_names
-      auto ret = arr.template createDeviceCopy<typename std::remove_cv<T>::type>();
-      c::parallel_for( c::Bounds<1>(ret.totElems()) , YAKL_LAMBDA (int i) { ret.myData[i] = std::abs(ret.myData[i]); });
+      auto ret = arr.createDeviceObject();
+      c::parallel_for( ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = std::abs(arr.data()[i]); });
       return ret;
     }
 
@@ -111,9 +109,9 @@ namespace yakl {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
       #endif
-      typename std::remove_cv<T>::type m = arr.myData[0];
+      typename std::remove_cv<T>::type m = arr.data()[0];
       for (int i=1; i<arr.totElems(); i++) {
-        if (arr.myData[i] < m) { m = arr.myData[i]; }
+        if (arr.data()[i] < m) { m = arr.data()[i]; }
       }
       return m;
     }
@@ -128,17 +126,17 @@ namespace yakl {
     }
     template <class T, int rank, class D0, class D1, class D2, class D3>
     YAKL_INLINE T minval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
-      typename std::remove_cv<T>::type m = arr.myData[0];
+      typename std::remove_cv<T>::type m = arr.data()[0];
       for (int i=1; i<arr.totElems(); i++) {
-        if (arr.myData[i] < m) { m = arr.myData[i]; }
+        if (arr.data()[i] < m) { m = arr.data()[i]; }
       }
       return m;
     }
     template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
     YAKL_INLINE T minval( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
-      typename std::remove_cv<T>::type m = arr.myData[0];
+      typename std::remove_cv<T>::type m = arr.data()[0];
       for (int i=1; i<arr.totElems(); i++) {
-        if (arr.myData[i] < m) { m = arr.myData[i]; }
+        if (arr.data()[i] < m) { m = arr.data()[i]; }
       }
       return m;
     }
@@ -149,7 +147,7 @@ namespace yakl {
     // minloc (only for rank-1 stack Arrays)
     ////////////////////////////////////////////////////////////////////////
     template <class T, class D0> YAKL_INLINE int minloc( FSArray<T,1,D0> const &arr ) {
-      T m = arr.myData[0];
+      T m = arr.data()[0];
       int loc = lbound(arr,1);
       for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
         if (arr(i) < m) {
@@ -160,7 +158,7 @@ namespace yakl {
       return loc;
     }
     template <class T, unsigned D0> YAKL_INLINE int minloc( SArray<T,1,D0> const &arr ) {
-      T m = arr.myData[0];
+      T m = arr.data()[0];
       int loc = 0;
       for (int i=1; i < arr.get_dimensions()(0); i++) {
         if (arr(i) < m) {
@@ -181,9 +179,9 @@ namespace yakl {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling maxval on an array that has not been initialized"); }
       #endif
-      typename std::remove_cv<T>::type m = arr.myData[0];
+      typename std::remove_cv<T>::type m = arr.data()[0];
       for (int i=1; i<arr.totElems(); i++) {
-        if (arr.myData[i] > m) { m = arr.myData[i]; }
+        if (arr.data()[i] > m) { m = arr.data()[i]; }
       }
       return m;
     }
@@ -198,17 +196,17 @@ namespace yakl {
     }
     template <class T, int rank, class D0, class D1, class D2, class D3>
     YAKL_INLINE T maxval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
-      typename std::remove_cv<T>::type m = arr.myData[0];
+      typename std::remove_cv<T>::type m = arr.data()[0];
       for (int i=1; i<arr.totElems(); i++) {
-        if (arr.myData[i] > m) { m = arr.myData[i]; }
+        if (arr.data()[i] > m) { m = arr.data()[i]; }
       }
       return m;
     }
     template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
     YAKL_INLINE T maxval( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
-      typename std::remove_cv<T>::type m = arr.myData[0];
+      typename std::remove_cv<T>::type m = arr.data()[0];
       for (int i=1; i<arr.totElems(); i++) {
-        if (arr.myData[i] > m) { m = arr.myData[i]; }
+        if (arr.data()[i] > m) { m = arr.data()[i]; }
       }
       return m;
     }
@@ -219,7 +217,7 @@ namespace yakl {
     // maxloc (only for rank-1 stack Arrays)
     ////////////////////////////////////////////////////////////////////////
     template <class T, class D0> YAKL_INLINE int maxloc( FSArray<T,1,D0> const &arr ) {
-      T m = arr.myData[0];
+      T m = arr.data()[0];
       int loc = lbound(arr,1);
       for (int i=lbound(arr,1); i<=ubound(arr,1); i++) {
         if (arr(i) > m) {
@@ -230,7 +228,7 @@ namespace yakl {
       return loc;
     }
     template <class T, unsigned D0> YAKL_INLINE int maxloc( SArray<T,1,D0> const &arr ) {
-      T m = arr.myData[0];
+      T m = arr.data()[0];
       int loc = 0;
       for (int i=1; i<arr.get_dimensions()(0); i++) {
         if (arr(i) > m) {
@@ -251,8 +249,8 @@ namespace yakl {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling sum on an array that has not been initialized"); }
       #endif
-      typename std::remove_cv<T>::type m = arr.myData[0];
-      for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
+      typename std::remove_cv<T>::type m = arr.data()[0];
+      for (int i=1; i<arr.totElems(); i++) { m += arr.data()[i]; }
       return m;
     }
     template <class T, int rank, int myStyle>
@@ -266,14 +264,14 @@ namespace yakl {
     }
     template <class T, int rank, class D0, class D1, class D2, class D3>
     YAKL_INLINE T sum( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
-      typename std::remove_cv<T>::type m = arr.myData[0];
-      for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
+      typename std::remove_cv<T>::type m = arr.data()[0];
+      for (int i=1; i<arr.totElems(); i++) { m += arr.data()[i]; }
       return m;
     }
     template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
     YAKL_INLINE T sum( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
-      typename std::remove_cv<T>::type m = arr.myData[0];
-      for (int i=1; i<arr.totElems(); i++) { m += arr.myData[i]; }
+      typename std::remove_cv<T>::type m = arr.data()[0];
+      for (int i=1; i<arr.totElems(); i++) { m += arr.data()[i]; }
       return m;
     }
 
@@ -285,14 +283,14 @@ namespace yakl {
     ////////////////////////////////////////////////////////////////////////
     template <class T, int rank, class D0, class D1, class D2, class D3>
     YAKL_INLINE T product( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
-      T m = arr.myData[0];
-      for (int i=1; i<arr.totElems(); i++) { m *= arr.myData[i]; }
+      T m = arr.data()[0];
+      for (int i=1; i<arr.totElems(); i++) { m *= arr.data()[i]; }
       return m;
     }
     template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
     YAKL_INLINE T product( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
-      T m = arr.myData[0];
-      for (int i=1; i<arr.totElems(); i++) { m *= arr.myData[i]; }
+      T m = arr.data()[0];
+      for (int i=1; i<arr.totElems(); i++) { m *= arr.data()[i]; }
       return m;
     }
 
@@ -308,7 +306,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( arr.myData[i] < val ) { ret = true; }
+        if ( arr.data()[i] < val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -319,7 +317,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( arr.myData[i] <= val ) { ret = true; }
+        if ( arr.data()[i] <= val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -330,7 +328,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( arr.myData[i] > val ) { ret = true; }
+        if ( arr.data()[i] > val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -341,7 +339,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( arr.myData[i] >= val ) { ret = true; }
+        if ( arr.data()[i] >= val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -352,7 +350,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( arr.myData[i] == val ) { ret = true; }
+        if ( arr.data()[i] == val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -363,7 +361,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( arr.myData[i] != val ) { ret = true; }
+        if ( arr.data()[i] != val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -379,7 +377,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] < val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -390,7 +388,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] <= val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -401,7 +399,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] > val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -412,7 +410,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] >= val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -423,7 +421,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] == val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -434,7 +432,7 @@ namespace yakl {
       #endif
       ScalarLiveOut<bool> ret(false);
       c::parallel_for( c::SimpleBounds<1>(arr.totElems()) , YAKL_LAMBDA (int i) {
-        if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] != val ) { ret = true; }
       });
       return ret.hostRead();
     }
@@ -451,7 +449,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( arr.myData[i] < val ) { ret = true; }
+        if ( arr.data()[i] < val ) { ret = true; }
       }
       return ret;
     }
@@ -462,7 +460,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( arr.myData[i] <= val ) { ret = true; }
+        if ( arr.data()[i] <= val ) { ret = true; }
       }
       return ret;
     }
@@ -473,7 +471,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( arr.myData[i] > val ) { ret = true; }
+        if ( arr.data()[i] > val ) { ret = true; }
       }
       return ret;
     }
@@ -484,7 +482,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( arr.myData[i] >= val ) { ret = true; }
+        if ( arr.data()[i] >= val ) { ret = true; }
       }
       return ret;
     }
@@ -495,7 +493,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( arr.myData[i] == val ) { ret = true; }
+        if ( arr.data()[i] == val ) { ret = true; }
       }
       return ret;
     }
@@ -506,7 +504,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( arr.myData[i] != val ) { ret = true; }
+        if ( arr.data()[i] != val ) { ret = true; }
       }
       return ret;
     }
@@ -523,7 +521,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] < val ) { ret = true; }
       }
       return ret;
     }
@@ -534,7 +532,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] <= val ) { ret = true; }
       }
       return ret;
     }
@@ -545,7 +543,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] > val ) { ret = true; }
       }
       return ret;
     }
@@ -556,7 +554,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] >= val ) { ret = true; }
       }
       return ret;
     }
@@ -567,7 +565,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] == val ) { ret = true; }
       }
       return ret;
     }
@@ -578,7 +576,7 @@ namespace yakl {
       #endif
       bool ret = false;
       for (int i=0; i < arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] != val ) { ret = true; }
       }
       return ret;
     }
@@ -592,7 +590,7 @@ namespace yakl {
     YAKL_INLINE bool anyLT( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] < val ) { ret = true; }
+        if ( arr.data()[i] < val ) { ret = true; }
       }
       return ret;
     }
@@ -600,7 +598,7 @@ namespace yakl {
     YAKL_INLINE bool anyLTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] <= val ) { ret = true; }
+        if ( arr.data()[i] <= val ) { ret = true; }
       }
       return ret;
     }
@@ -608,7 +606,7 @@ namespace yakl {
     YAKL_INLINE bool anyGT( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] > val ) { ret = true; }
+        if ( arr.data()[i] > val ) { ret = true; }
       }
       return ret;
     }
@@ -616,7 +614,7 @@ namespace yakl {
     YAKL_INLINE bool anyGTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] >= val ) { ret = true; }
+        if ( arr.data()[i] >= val ) { ret = true; }
       }
       return ret;
     }
@@ -624,7 +622,7 @@ namespace yakl {
     YAKL_INLINE bool anyEQ( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] == val ) { ret = true; }
+        if ( arr.data()[i] == val ) { ret = true; }
       }
       return ret;
     }
@@ -632,7 +630,7 @@ namespace yakl {
     YAKL_INLINE bool anyNEQ( FSArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] != val ) { ret = true; }
+        if ( arr.data()[i] != val ) { ret = true; }
       }
       return ret;
     }
@@ -645,7 +643,7 @@ namespace yakl {
     YAKL_INLINE bool anyLT( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] < val ) { ret = true; }
       }
       return ret;
     }
@@ -653,7 +651,7 @@ namespace yakl {
     YAKL_INLINE bool anyLTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] <= val ) { ret = true; }
       }
       return ret;
     }
@@ -661,7 +659,7 @@ namespace yakl {
     YAKL_INLINE bool anyGT( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] > val ) { ret = true; }
       }
       return ret;
     }
@@ -669,7 +667,7 @@ namespace yakl {
     YAKL_INLINE bool anyGTE( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] >= val ) { ret = true; }
       }
       return ret;
     }
@@ -677,7 +675,7 @@ namespace yakl {
     YAKL_INLINE bool anyEQ( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] == val ) { ret = true; }
       }
       return ret;
     }
@@ -685,7 +683,7 @@ namespace yakl {
     YAKL_INLINE bool anyNEQ( FSArray<T,rank,D0,D1,D2,D3> const &arr , FSArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] != val ) { ret = true; }
       }
       return ret;
     }
@@ -698,7 +696,7 @@ namespace yakl {
     YAKL_INLINE bool anyLT( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] < val ) { ret = true; }
+        if ( arr.data()[i] < val ) { ret = true; }
       }
       return ret;
     }
@@ -706,7 +704,7 @@ namespace yakl {
     YAKL_INLINE bool anyLTE( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] <= val ) { ret = true; }
+        if ( arr.data()[i] <= val ) { ret = true; }
       }
       return ret;
     }
@@ -714,7 +712,7 @@ namespace yakl {
     YAKL_INLINE bool anyGT( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] > val ) { ret = true; }
+        if ( arr.data()[i] > val ) { ret = true; }
       }
       return ret;
     }
@@ -722,7 +720,7 @@ namespace yakl {
     YAKL_INLINE bool anyGTE( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] >= val ) { ret = true; }
+        if ( arr.data()[i] >= val ) { ret = true; }
       }
       return ret;
     }
@@ -730,7 +728,7 @@ namespace yakl {
     YAKL_INLINE bool anyEQ( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] == val ) { ret = true; }
+        if ( arr.data()[i] == val ) { ret = true; }
       }
       return ret;
     }
@@ -738,7 +736,7 @@ namespace yakl {
     YAKL_INLINE bool anyNEQ( SArray<T,rank,D0,D1,D2,D3> const &arr , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( arr.myData[i] != val ) { ret = true; }
+        if ( arr.data()[i] != val ) { ret = true; }
       }
       return ret;
     }
@@ -751,7 +749,7 @@ namespace yakl {
     YAKL_INLINE bool anyLT( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] < val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] < val ) { ret = true; }
       }
       return ret;
     }
@@ -759,7 +757,7 @@ namespace yakl {
     YAKL_INLINE bool anyLTE( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] <= val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] <= val ) { ret = true; }
       }
       return ret;
     }
@@ -767,7 +765,7 @@ namespace yakl {
     YAKL_INLINE bool anyGT( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] > val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] > val ) { ret = true; }
       }
       return ret;
     }
@@ -775,7 +773,7 @@ namespace yakl {
     YAKL_INLINE bool anyGTE( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] >= val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] >= val ) { ret = true; }
       }
       return ret;
     }
@@ -783,7 +781,7 @@ namespace yakl {
     YAKL_INLINE bool anyEQ( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] == val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] == val ) { ret = true; }
       }
       return ret;
     }
@@ -791,7 +789,7 @@ namespace yakl {
     YAKL_INLINE bool anyNEQ( SArray<T,rank,D0,D1,D2,D3> const &arr , SArray<bool,rank,D0,D1,D2,D3> const &mask , TVAL val ) {
       bool ret = false;
       for (int i=0; i<arr.totElems(); i++) {
-        if ( mask.myData[i] && arr.myData[i] != val ) { ret = true; }
+        if ( mask.data()[i] && arr.data()[i] != val ) { ret = true; }
       }
       return ret;
     }
@@ -1090,7 +1088,7 @@ namespace yakl {
       #endif
       int numTrue = 0;
       for (int i=0; i < mask.totElems(); i++) {
-        if (mask.myData[i]) { numTrue++; }
+        if (mask.data()[i]) { numTrue++; }
       }
       return numTrue;
     }
@@ -1099,17 +1097,15 @@ namespace yakl {
       #ifdef YAKL_DEBUG
         if (!mask.initialized()) { yakl_throw("ERROR: calling count on an array that has not been initialized"); }
       #endif
-      ScalarLiveOut<int> numTrue(0);
-      c::parallel_for( c::SimpleBounds<1>( mask.totElems() ) , YAKL_LAMBDA (int i) {
-        if (mask.myData[i]) { atomicAdd(numTrue(),1); }
-      });
-      return numTrue.hostRead();
+      auto intarr = mask.template createDeviceObject<int>();
+      c::parallel_for( mask.totElems() , YAKL_LAMBDA (int i) { intarr.data()[i] = mask.data()[i] ? 1 : 0; });
+      return yakl::intrinsics::sum(intarr);
     }
     template <int rank, class D0, class D1, class D2, class D3>
     YAKL_INLINE int count( FSArray<bool,rank,D0,D1,D2,D3> const &mask ) {
       int numTrue = 0;
       for (int i=0; i < mask.totElems(); i++) {
-        if (mask.myData[i]) { numTrue++; }
+        if (mask.data()[i]) { numTrue++; }
       }
       return numTrue;
     }
@@ -1117,7 +1113,7 @@ namespace yakl {
     YAKL_INLINE int count( SArray<bool,rank,D0,D1,D2,D3> const &mask ) {
       int numTrue = 0;
       for (int i=0; i < mask.totElems(); i++) {
-        if (mask.myData[i]) { numTrue++; }
+        if (mask.data()[i]) { numTrue++; }
       }
       return numTrue;
     }
@@ -1139,13 +1135,13 @@ namespace yakl {
         Array<T,1,memHost,myStyle> ret("packReturn",numTrue);
         int slot = 0;
         for (int i=0; i < arr.totElems(); i++) {
-          if (mask.myData[i]) { ret.myData[slot] = arr.myData[i]; slot++; }
+          if (mask.data()[i]) { ret.data()[slot] = arr.data()[i]; slot++; }
         }
         return ret;
       } else {
         Array<T,1,memHost,myStyle> ret("packReturn",arr.totElems());
         for (int i=0; i < arr.totElems(); i++) {
-          ret.myData[i] = arr.myData[i];
+          ret.data()[i] = arr.data()[i];
         }
         return ret;
       }
