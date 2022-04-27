@@ -83,6 +83,7 @@ namespace yakl {
 #include "YAKL_mem_transfers.h"
 #include "YAKL_Array.h"
 #include "YAKL_ScalarLiveOut.h"
+#include "YAKL_componentwise.h"
 #include "YAKL_Intrinsics.h"
 #include "YAKL_memset.h"
 

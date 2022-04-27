@@ -268,7 +268,8 @@ public:
 
 
   // Create a separate host Array with the same rank memory space and style
-  inline Array<typename std::remove_cv<T>::type,rank,memHost,styleFortran> createHostObject() const {
+  template <class TLOC=typename std::remove_cv<T>::type>
+  inline Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleFortran> createHostObject() const {
     #ifdef YAKL_DEBUG
       if (! this->initialized()) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -278,7 +279,7 @@ public:
       }
     #endif
     // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
-    Array<typename std::remove_cv<T>::type,rank,memHost,styleFortran> ret;  // nullified + owned == true
+    Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleFortran> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) { ret.lbounds[i] = this->lbounds[i];  ret.dimension[i] = this->dimension[i]; }
     #ifdef YAKL_DEBUG
       ret.myname = this->myname;
@@ -301,7 +302,8 @@ public:
 
 
   // Create separate device array with the same rank, memory space, and style
-  inline Array<typename std::remove_cv<T>::type,rank,memDevice,styleFortran> createDeviceObject() const {
+  template <class TLOC=typename std::remove_cv<T>::type>
+  inline Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleFortran> createDeviceObject() const {
     #ifdef YAKL_DEBUG
       if (! this->initialized()) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -311,7 +313,7 @@ public:
       }
     #endif
     // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
-    Array<typename std::remove_cv<T>::type,rank,memDevice,styleFortran> ret;  // nullified + owned == true
+    Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleFortran> ret;  // nullified + owned == true
     for (int i=0; i<rank; i++) { ret.lbounds[i] = this->lbounds[i];  ret.dimension[i] = this->dimension[i]; }
     #ifdef YAKL_DEBUG
       ret.myname = this->myname;

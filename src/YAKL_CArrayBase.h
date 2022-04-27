@@ -251,7 +251,8 @@ public:
 
 
   // Create a separately allocate host object with the same rank, memory space, and style
-  inline Array<typename std::remove_cv<T>::type,rank,memHost,styleC> createHostObject() const {
+  template <class TLOC=typename std::remove_cv<T>::type>
+  inline Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleC> createHostObject() const {
     #ifdef YAKL_DEBUG
       if (! this->initialized()) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -261,7 +262,7 @@ public:
       }
     #endif
     // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
-    Array<typename std::remove_cv<T>::type,rank,memHost,styleC> ret;
+    Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleC> ret;
     for (int i=0; i<rank; i++) { ret.dimension[i] = this->dimension[i]; }
     #ifdef YAKL_DEBUG
       ret.myname = this->myname;
@@ -284,7 +285,8 @@ public:
 
 
   // Create a separately allocate device object with the same rank, memory space, and style
-  inline Array<typename std::remove_cv<T>::type,rank,memDevice,styleC> createDeviceObject() const {
+  template <class TLOC=typename std::remove_cv<T>::type>
+  inline Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleC> createDeviceObject() const {
     #ifdef YAKL_DEBUG
       if (! this->initialized()) {
         #ifndef YAKL_SEPARATE_MEMORY_SPACE
@@ -294,7 +296,7 @@ public:
       }
     #endif
     // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
-    Array<typename std::remove_cv<T>::type,rank,memDevice,styleC> ret;
+    Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleC> ret;
     for (int i=0; i<rank; i++) { ret.dimension[i] = this->dimension[i]; }
     #ifdef YAKL_DEBUG
       ret.myname = this->myname;

@@ -24,7 +24,7 @@ namespace yakl {
         sycl_default_stream().memset( arr.data() , 0 , sizeof(T)*arr.totElems() );
       #else
         c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
-          arr.myData[i] = 0;
+          arr.data()[i] = 0;
         });
       #endif
     } else {
@@ -34,7 +34,7 @@ namespace yakl {
           sycl_default_stream().fill<T>( arr.data() , val , arr.totElems() );
         #else
           c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
-            arr.myData[i] = val;
+            arr.data()[i] = val;
           });
         #endif
       } else if (myMem == memHost) {
@@ -50,7 +50,7 @@ namespace yakl {
   template <class T, int rank, class B0, class B1, class B2, class B3, class I>
   void memset( FSArray<T,rank,B0,B1,B2,B3> &arr , I val ) {
     for (index_t i = 0; i < arr.totElems(); i++) {
-      arr.myData[i] = val;
+      arr.data()[i] = val;
     }
   }
 
@@ -58,7 +58,7 @@ namespace yakl {
   template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3, class I>
   void memset( SArray<T,rank,D0,D1,D2,D3> &arr , I val ) {
     for (index_t i = 0; i < arr.totElems(); i++) {
-      arr.myData[i] = val;
+      arr.data()[i] = val;
     }
   }
 

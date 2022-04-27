@@ -591,6 +591,182 @@ int main() {
     }
 
 
+    {
+      using namespace yakl::componentwise;
+      using yakl::intrinsics::sum;
+      using yakl::intrinsics::count;
+      int constexpr n = 1024;
+      Array  <float ,1,memDevice,styleC> a("a",n);
+      Array  <double,1,memDevice,styleC> b("b",n);
+      Array  <float ,1,memHost  ,styleC> c("c",n);
+      Array  <double,1,memHost  ,styleC> d("d",n);
+      SArray <float ,1,n>                e;
+      SArray <double,1,n>                f;
+      FSArray<float ,1,SB<n>>            g;
+      FSArray<double,1,SB<n>>            h;
+      double                             i;
+      float  av = 1; memset( a , av );
+      double bv = 2; memset( b , bv );
+      float  cv = 3; memset( c , cv );
+      double dv = 4; memset( d , dv );
+      float  ev = 5; memset( e , ev );
+      double fv = 6; memset( f , fv );
+      float  gv = 7; memset( g , gv );
+      double hv = 8; memset( h , hv );
+      double iv = 9;         i = iv  ;
+
+      if ( std::abs( sum(a+b) - n*(av+bv) ) / (n*(av+bv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a+b)");
+      if ( std::abs( sum(a+i) - n*(av+iv) ) / (n*(av+iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a+i)");
+      if ( std::abs( sum(i+b) - n*(iv+bv) ) / (n*(iv+bv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i+b)");
+      if ( std::abs( sum(c+d) - n*(cv+dv) ) / (n*(cv+dv)) > 1.e-7 ) die("ERROR: wrong sum: sum(c+d)");
+      if ( std::abs( sum(c+i) - n*(cv+iv) ) / (n*(cv+iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(c+i)");
+      if ( std::abs( sum(i+d) - n*(iv+dv) ) / (n*(iv+dv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i+d)");
+      if ( std::abs( sum(e+f) - n*(ev+fv) ) / (n*(ev+fv)) > 1.e-7 ) die("ERROR: wrong sum: sum(e+f)");
+      if ( std::abs( sum(e+i) - n*(ev+iv) ) / (n*(ev+iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(e+i)");
+      if ( std::abs( sum(i+f) - n*(iv+fv) ) / (n*(iv+fv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i+f)");
+      if ( std::abs( sum(g+h) - n*(gv+hv) ) / (n*(gv+hv)) > 1.e-7 ) die("ERROR: wrong sum: sum(g+h)");
+      if ( std::abs( sum(g+i) - n*(gv+iv) ) / (n*(gv+iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(g+i)");
+      if ( std::abs( sum(i+h) - n*(iv+hv) ) / (n*(iv+hv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i+h)");
+
+      if ( std::abs( sum(a-b) - n*(av-bv) ) / (n*(av-bv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a-b)");
+      if ( std::abs( sum(a-i) - n*(av-iv) ) / (n*(av-iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a-i)");
+      if ( std::abs( sum(i-b) - n*(iv-bv) ) / (n*(iv-bv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i-b)");
+      if ( std::abs( sum(c-d) - n*(cv-dv) ) / (n*(cv-dv)) > 1.e-7 ) die("ERROR: wrong sum: sum(c-d)");
+      if ( std::abs( sum(c-i) - n*(cv-iv) ) / (n*(cv-iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(c-i)");
+      if ( std::abs( sum(i-d) - n*(iv-dv) ) / (n*(iv-dv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i-d)");
+      if ( std::abs( sum(e-f) - n*(ev-fv) ) / (n*(ev-fv)) > 1.e-7 ) die("ERROR: wrong sum: sum(e-f)");
+      if ( std::abs( sum(e-i) - n*(ev-iv) ) / (n*(ev-iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(e-i)");
+      if ( std::abs( sum(i-f) - n*(iv-fv) ) / (n*(iv-fv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i-f)");
+      if ( std::abs( sum(g-h) - n*(gv-hv) ) / (n*(gv-hv)) > 1.e-7 ) die("ERROR: wrong sum: sum(g-h)");
+      if ( std::abs( sum(g-i) - n*(gv-iv) ) / (n*(gv-iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(g-i)");
+      if ( std::abs( sum(i-h) - n*(iv-hv) ) / (n*(iv-hv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i-h)");
+
+      if ( std::abs( sum(a*b) - n*(av*bv) ) / (n*(av*bv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a*b)");
+      if ( std::abs( sum(a*i) - n*(av*iv) ) / (n*(av*iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a*i)");
+      if ( std::abs( sum(i*b) - n*(iv*bv) ) / (n*(iv*bv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i*b)");
+      if ( std::abs( sum(c*d) - n*(cv*dv) ) / (n*(cv*dv)) > 1.e-7 ) die("ERROR: wrong sum: sum(c*d)");
+      if ( std::abs( sum(c*i) - n*(cv*iv) ) / (n*(cv*iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(c*i)");
+      if ( std::abs( sum(i*d) - n*(iv*dv) ) / (n*(iv*dv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i*d)");
+      if ( std::abs( sum(e*f) - n*(ev*fv) ) / (n*(ev*fv)) > 1.e-7 ) die("ERROR: wrong sum: sum(e*f)");
+      if ( std::abs( sum(e*i) - n*(ev*iv) ) / (n*(ev*iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(e*i)");
+      if ( std::abs( sum(i*f) - n*(iv*fv) ) / (n*(iv*fv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i*f)");
+      if ( std::abs( sum(g*h) - n*(gv*hv) ) / (n*(gv*hv)) > 1.e-7 ) die("ERROR: wrong sum: sum(g*h)");
+      if ( std::abs( sum(g*i) - n*(gv*iv) ) / (n*(gv*iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(g*i)");
+      if ( std::abs( sum(i*h) - n*(iv*hv) ) / (n*(iv*hv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i*h)");
+
+      if ( std::abs( sum(a/b) - n*(av/bv) ) / (n*(av/bv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a/b)");
+      if ( std::abs( sum(a/i) - n*(av/iv) ) / (n*(av/iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a/i)");
+      if ( std::abs( sum(i/b) - n*(iv/bv) ) / (n*(iv/bv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i/b)");
+      if ( std::abs( sum(c/d) - n*(cv/dv) ) / (n*(cv/dv)) > 1.e-7 ) die("ERROR: wrong sum: sum(c/d)");
+      if ( std::abs( sum(c/i) - n*(cv/iv) ) / (n*(cv/iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(c/i)");
+      if ( std::abs( sum(i/d) - n*(iv/dv) ) / (n*(iv/dv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i/d)");
+      if ( std::abs( sum(e/f) - n*(ev/fv) ) / (n*(ev/fv)) > 1.e-7 ) die("ERROR: wrong sum: sum(e/f)");
+      if ( std::abs( sum(e/i) - n*(ev/iv) ) / (n*(ev/iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(e/i)");
+      if ( std::abs( sum(i/f) - n*(iv/fv) ) / (n*(iv/fv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i/f)");
+      if ( std::abs( sum(g/h) - n*(gv/hv) ) / (n*(gv/hv)) > 1.e-7 ) die("ERROR: wrong sum: sum(g/h)");
+      if ( std::abs( sum(g/i) - n*(gv/iv) ) / (n*(gv/iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(g/i)");
+      if ( std::abs( sum(i/h) - n*(iv/hv) ) / (n*(iv/hv)) > 1.e-7 ) die("ERROR: wrong sum: sum(i/h)");
+
+      if ( count( a > 0 ) != n ) die("ERROR: wrong count: a > 0");
+      if ( count( 1 < b ) != n ) die("ERROR: wrong count: 1 < b");
+      if ( count( c > 2 ) != n ) die("ERROR: wrong count: c > 2");
+      if ( count( 3 < d ) != n ) die("ERROR: wrong count: 3 < d");
+      if ( count( e > 4 ) != n ) die("ERROR: wrong count: e > 4");
+      if ( count( 5 < f ) != n ) die("ERROR: wrong count: 5 < f");
+      if ( count( g > 6 ) != n ) die("ERROR: wrong count: g > 6");
+      if ( count( 7 < h ) != n ) die("ERROR: wrong count: 7 < h");
+      if ( count( b > a ) != n ) die("ERROR: wrong count: b > a");
+      if ( count( d > c ) != n ) die("ERROR: wrong count: d > c");
+      if ( count( f > e ) != n ) die("ERROR: wrong count: f > e");
+      if ( count( h > g ) != n ) die("ERROR: wrong count: h > g");
+
+      if ( count( a >= 1 ) != n ) die("ERROR: wrong count: a >= 1");
+      if ( count( 2 <= b ) != n ) die("ERROR: wrong count: 2 <= b");
+      if ( count( c >= 3 ) != n ) die("ERROR: wrong count: c >= 3");
+      if ( count( 4 <= d ) != n ) die("ERROR: wrong count: 4 <= d");
+      if ( count( e >= 5 ) != n ) die("ERROR: wrong count: e >= 5");
+      if ( count( 6 <= f ) != n ) die("ERROR: wrong count: 6 <= f");
+      if ( count( g >= 7 ) != n ) die("ERROR: wrong count: g >= 7");
+      if ( count( 8 <= h ) != n ) die("ERROR: wrong count: 8 <= h");
+      if ( count( b >= (a+1) ) != n ) die("ERROR: wrong count: b >= (a+1)");
+      if ( count( d >= (c+1) ) != n ) die("ERROR: wrong count: d >= (c+1)");
+      if ( count( f >= (e+1) ) != n ) die("ERROR: wrong count: f >= (e+1)");
+      if ( count( h >= (g+1) ) != n ) die("ERROR: wrong count: h >= (g+1)");
+
+      if ( count( a < 2 ) != n ) die("ERROR: wrong count: a < 2");
+      if ( count( 3 > b ) != n ) die("ERROR: wrong count: 3 > b");
+      if ( count( c < 4 ) != n ) die("ERROR: wrong count: c < 4");
+      if ( count( 5 > d ) != n ) die("ERROR: wrong count: 5 > d");
+      if ( count( e < 6 ) != n ) die("ERROR: wrong count: e < 6");
+      if ( count( 7 > f ) != n ) die("ERROR: wrong count: 7 > f");
+      if ( count( g < 8 ) != n ) die("ERROR: wrong count: g < 8");
+      if ( count( 9 > h ) != n ) die("ERROR: wrong count: 9 > h");
+      if ( count( a < b ) != n ) die("ERROR: wrong count: a < b");
+      if ( count( c < d ) != n ) die("ERROR: wrong count: c < d");
+      if ( count( e < f ) != n ) die("ERROR: wrong count: e < f");
+      if ( count( g < h ) != n ) die("ERROR: wrong count: g < h");
+
+      if ( count( a <= 1 ) != n ) die("ERROR: wrong count: a <= 1");
+      if ( count( 2 >= b ) != n ) die("ERROR: wrong count: 2 >= b");
+      if ( count( c <= 3 ) != n ) die("ERROR: wrong count: c <= 3");
+      if ( count( 4 >= d ) != n ) die("ERROR: wrong count: 4 >= d");
+      if ( count( e <= 5 ) != n ) die("ERROR: wrong count: e <= 5");
+      if ( count( 6 >= f ) != n ) die("ERROR: wrong count: 6 >= f");
+      if ( count( g <= 7 ) != n ) die("ERROR: wrong count: g <= 7");
+      if ( count( 8 >= h ) != n ) die("ERROR: wrong count: 8 >= h");
+      if ( count( (a+1) <= b ) != n ) die("ERROR: wrong count: (a+1) <= b");
+      if ( count( (c+1) <= d ) != n ) die("ERROR: wrong count: (c+1) <= d");
+      if ( count( (e+1) <= f ) != n ) die("ERROR: wrong count: (e+1) <= f");
+      if ( count( (g+1) <= h ) != n ) die("ERROR: wrong count: (g+1) <= h");
+
+      if ( count( a == 1 ) != n ) die("ERROR: wrong count: a == 1");
+      if ( count( 2 == b ) != n ) die("ERROR: wrong count: 2 == b");
+      if ( count( c == 3 ) != n ) die("ERROR: wrong count: c == 3");
+      if ( count( 4 == d ) != n ) die("ERROR: wrong count: 4 == d");
+      if ( count( e == 5 ) != n ) die("ERROR: wrong count: e == 5");
+      if ( count( 6 == f ) != n ) die("ERROR: wrong count: 6 == f");
+      if ( count( g == 7 ) != n ) die("ERROR: wrong count: g == 7");
+      if ( count( 8 == h ) != n ) die("ERROR: wrong count: 8 == h");
+
+      if ( count( ! (a == 1) ) != 0 ) die("ERROR: wrong count: a == 1");
+      if ( count( ! (2 == b) ) != 0 ) die("ERROR: wrong count: 2 == b");
+      if ( count( ! (c == 3) ) != 0 ) die("ERROR: wrong count: c == 3");
+      if ( count( ! (4 == d) ) != 0 ) die("ERROR: wrong count: 4 == d");
+      if ( count( ! (e == 5) ) != 0 ) die("ERROR: wrong count: e == 5");
+      if ( count( ! (6 == f) ) != 0 ) die("ERROR: wrong count: 6 == f");
+      if ( count( ! (g == 7) ) != 0 ) die("ERROR: wrong count: g == 7");
+      if ( count( ! (8 == h) ) != 0 ) die("ERROR: wrong count: 8 == h");
+
+      if ( count( a != 0 ) != n ) die("ERROR: wrong count: a != 0");
+      if ( count( 0 != b ) != n ) die("ERROR: wrong count: 0 != b");
+      if ( count( c != 0 ) != n ) die("ERROR: wrong count: c != 0");
+      if ( count( 0 != d ) != n ) die("ERROR: wrong count: 0 != d");
+      if ( count( e != 0 ) != n ) die("ERROR: wrong count: e != 0");
+      if ( count( 0 != f ) != n ) die("ERROR: wrong count: 0 != f");
+      if ( count( g != 0 ) != n ) die("ERROR: wrong count: g != 0");
+      if ( count( 0 != h ) != n ) die("ERROR: wrong count: 0 != h");
+
+      if ( count( true && ( ( (a > 0) && (b > 0) ) && true ) ) != n ) die("ERROR: wrong count: true && ( ( (a > 0) && (b > 0) ) && true )");
+      if ( count( true && ( ( (c > 0) && (d > 0) ) && true ) ) != n ) die("ERROR: wrong count: true && ( ( (c > 0) && (d > 0) ) && true )");
+      if ( count( true && ( ( (e > 0) && (f > 0) ) && true ) ) != n ) die("ERROR: wrong count: true && ( ( (e > 0) && (f > 0) ) && true )");
+      if ( count( true && ( ( (g > 0) && (h > 0) ) && true ) ) != n ) die("ERROR: wrong count: true && ( ( (g > 0) && (h > 0) ) && true )");
+
+      if ( count( false || ( ( (a > 0) || (b < 0) ) || false ) ) != n ) die("ERROR: wrong count: false || ( ( (a > 0) || (b < 0) ) || false )");
+      if ( count( false || ( ( (c > 0) || (d < 0) ) || false ) ) != n ) die("ERROR: wrong count: false || ( ( (c > 0) || (d < 0) ) || false )");
+      if ( count( false || ( ( (e > 0) || (f < 0) ) || false ) ) != n ) die("ERROR: wrong count: false || ( ( (e > 0) || (f < 0) ) || false )");
+      if ( count( false || ( ( (g > 0) || (h < 0) ) || false ) ) != n ) die("ERROR: wrong count: false || ( ( (g > 0) || (h < 0) ) || false )");
+
+      if ( std::abs( sum(a++) - n*(av+1) ) / (n*(av+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(a++)");
+      if ( std::abs( sum(++b) - n*(bv+1) ) / (n*(bv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(++b)");
+      if ( std::abs( sum(c++) - n*(cv+1) ) / (n*(cv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(c++)");
+      if ( std::abs( sum(++d) - n*(dv+1) ) / (n*(dv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(++d)");
+      if ( std::abs( sum(e++) - n*(ev+1) ) / (n*(ev+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(e++)");
+      if ( std::abs( sum(++f) - n*(fv+1) ) / (n*(fv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(++f)");
+      if ( std::abs( sum(g++) - n*(gv+1) ) / (n*(gv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(g++)");
+      if ( std::abs( sum(++h) - n*(hv+1) ) / (n*(hv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(++h)");
+    }
+
+
 
   }
   yakl::finalize();

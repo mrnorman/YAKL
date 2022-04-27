@@ -25,8 +25,6 @@ public :
   static unsigned constexpr D2 = rank >= 1 ? U2 - L2 + 1 : 1;
   static unsigned constexpr D3 = rank >= 1 ? U3 - L3 + 1 : 1;
 
-  static unsigned constexpr totElems() { return D0*D1*D2*D3; }
-
   static unsigned constexpr OFF0 = 1;
   static unsigned constexpr OFF1 = D0;
   static unsigned constexpr OFF2 = D0*D1;
@@ -109,9 +107,14 @@ public :
   YAKL_INLINE void operator= (TLOC val) { for (int i=0 ; i < totElems() ; i++) { myData[i] = val; } }
 
 
-  YAKL_INLINE T *data() {
-    return myData;
-  }
+  YAKL_INLINE T *data    () const { return myData; }
+  YAKL_INLINE T *get_data() const { return myData; }
+  static unsigned constexpr totElems      () { return D3*D2*D1*D0; }
+  static unsigned constexpr get_totElems  () { return D3*D2*D1*D0; }
+  static unsigned constexpr get_elem_count() { return D3*D2*D1*D0; }
+  static unsigned constexpr get_rank      () { return rank; }
+  static bool     constexpr span_is_contiguous() { return true; }
+  static bool     constexpr initialized() { return true; }
 
 
   inline friend std::ostream &operator<<(std::ostream& os, Array const &v) {
