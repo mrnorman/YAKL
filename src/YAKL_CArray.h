@@ -253,6 +253,13 @@ public:
   }
 
 
+  template <class TLOC, typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false>
+  YAKL_INLINE Array & operator=(TLOC const &rhs) {
+    memset( *this , rhs );
+    return *this;
+  }
+
+
   template <int N> inline Array<T,N,myMem,styleC> reshape(Dims const &dims) const {
     #ifdef YAKL_DEBUG
       if (! this->initialized()) { yakl_throw("ERROR: Trying to reshape an Array that hasn't been initialized"); }

@@ -70,11 +70,11 @@ namespace yakl {
 
 
 
-    template <class T> YAKL_INLINE T mod(T a, T b) { return a - ((int)(a/b) * b); }
+    template <class T1, class T2> YAKL_INLINE decltype(T1() - ((int)(T1()/T2()) * T2())) mod(T1 a, T2 b) { return a - ((int)(a/b) * b); }
 
 
 
-    template <class T> YAKL_INLINE T merge(T const t, T const f, bool cond) { return cond ? t : f; }
+    template <class T1, class T2> YAKL_INLINE decltype(T1()+T2()) merge(T1 const t, T2 const f, bool cond) { return cond ? t : f; }
 
 
 
@@ -99,8 +99,27 @@ namespace yakl {
       c::parallel_for( ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = std::abs(arr.data()[i]); });
       return ret;
     }
+    template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    inline SArray<T,rank,D0,D1,D2,D3> abs( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
+      #ifdef YAKL_DEBUG
+        if (!arr.initialized()) { yakl_throw("ERROR: calling abs on an array that has not been initialized"); }
+      #endif
+      SArray<T,rank,D0,D1,D2,D3> ret;
+      for (int i=0; i < ret.totElems(); i++) { ret.data()[i] = std::abs(arr.data()[i]); };
+      return ret;
+    }
+    template <class T, int rank, class B0, class B1, class B2, class B3>
+    inline FSArray<T,rank,B0,B1,B2,B3> abs( FSArray<T,rank,B0,B1,B2,B3> const &arr ) {
+      #ifdef YAKL_DEBUG
+        if (!arr.initialized()) { yakl_throw("ERROR: calling abs on an array that has not been initialized"); }
+      #endif
+      FSArray<T,rank,B0,B1,B2,B3> ret;
+      for (int i=0; i < ret.totElems(); i++) { ret.data()[i] = std::abs(arr.data()[i]); };
+      return ret;
+    }
 
 
+    // TODO: Create versions that accept dim and mask parameters
     ////////////////////////////////////////////////////////////////////////
     // minval
     ////////////////////////////////////////////////////////////////////////
@@ -143,6 +162,8 @@ namespace yakl {
 
 
 
+    // TODO: Create versions that accept dim and mask parameters
+    // TODO: Ensure user knows that device minloc gives indeterminant results for multiple equal min values
     ////////////////////////////////////////////////////////////////////////
     // minloc (only for rank-1 stack Arrays)
     ////////////////////////////////////////////////////////////////////////
@@ -171,6 +192,7 @@ namespace yakl {
 
 
 
+    // TODO: Create versions that accept dim and mask parameters
     ////////////////////////////////////////////////////////////////////////
     // maxval
     ////////////////////////////////////////////////////////////////////////
@@ -213,6 +235,8 @@ namespace yakl {
 
 
 
+    // TODO: Create versions that accept dim and mask parameters
+    // TODO: Ensure user knows that device minloc gives indeterminant results for multiple equal min values
     ////////////////////////////////////////////////////////////////////////
     // maxloc (only for rank-1 stack Arrays)
     ////////////////////////////////////////////////////////////////////////
@@ -241,6 +265,7 @@ namespace yakl {
 
 
 
+    // TODO: Create versions with dim and mask parameters
     ////////////////////////////////////////////////////////////////////////
     // sum
     ////////////////////////////////////////////////////////////////////////
@@ -278,6 +303,8 @@ namespace yakl {
 
 
 
+    // TODO: Create version with dim and mask parameters
+    // TODO: Create device parallel version with CUB and hipCUB
     ////////////////////////////////////////////////////////////////////////
     // product (only for stack arrays)
     ////////////////////////////////////////////////////////////////////////
@@ -296,6 +323,8 @@ namespace yakl {
 
 
 
+    // TODO: Get rid of these and just return count > 0 for a mask
+    // TODO: add dim option. Have use rely on componentwise library from now on.
     ///////////////////////////
     // any* device Array
     ///////////////////////////
@@ -796,6 +825,7 @@ namespace yakl {
 
 
 
+    // TODO: Create versions of this for dynamically allocated arrays
     ///////////////////////////////////////////////////////////
     // Matrix multiplication routines for column-row format
     ///////////////////////////////////////////////////////////
@@ -867,6 +897,7 @@ namespace yakl {
     }
 
 
+    // TODO: Create versions of this for dynamically allocated arrays
     ///////////////////////////////////////////////////////////
     // Matrix multiplication routines for row-column format
     ///////////////////////////////////////////////////////////
@@ -1052,6 +1083,7 @@ namespace yakl {
     }
 
 
+    // TODO: Create versions of this for dynamically allocated arrays
     /////////////////////////////////////////////////////////////////
     // Transpose
     /////////////////////////////////////////////////////////////////
@@ -1120,6 +1152,7 @@ namespace yakl {
 
 
 
+    // TODO: This is a mess. I'm not sure I want to deal with this routine or not...
     /////////////////////////////////////////////////////////////////
     // Pack
     /////////////////////////////////////////////////////////////////

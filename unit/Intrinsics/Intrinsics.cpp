@@ -53,9 +53,9 @@ int main() {
   {
     int constexpr n1 = 5;
     int constexpr n2 = 10;
-    ////////////////////////////////////////
-    // size, shape, lbound, ubound, epsilon
-    ////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // size, shape, lbound, ubound, epsilon, sign, mod, merge, abs, minval, maxval, minloc, maxloc
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     {
       using yakl::intrinsics::size;
       real_c_2d arr_c("arr_c",n1,n2);
@@ -155,6 +155,28 @@ int main() {
       if (huge(sarr_c) != std::numeric_limits<real>::max()) die("sarr_c wrong huge");
       if (huge(sarr_f) != std::numeric_limits<real>::max()) die("sarr_f wrong huge");
       if (huge(scalar) != std::numeric_limits<real>::max()) die("scalar wrong huge");
+
+      if (yakl::intrinsics::sign(-13.1) != -1.) die("ERROR: sign does not work");
+
+      if (yakl::intrinsics::mod(12,5) != 2) die("ERROR: mod doesn't work");
+
+      if (yakl::intrinsics::merge( 13. , -1 , false ) != -1) die("ERROR: merge doesn't work");
+
+      using yakl::intrinsics::sum;
+      using yakl::intrinsics::abs;
+      arr_c = -2;
+      arr_f = -3;
+      sarr_c = -4;
+      sarr_f = -5;
+      if (sum(abs(arr_c ))/size(arr_c ) != 2) die("ERROR: Wrong value for arr_c ");
+      if (sum(abs(arr_f ))/size(arr_f ) != 3) die("ERROR: Wrong value for arr_f ");
+      if (sum(abs(sarr_c))/size(sarr_c) != 4) die("ERROR: Wrong value for sarr_c");
+      if (sum(abs(sarr_f))/size(sarr_f) != 5) die("ERROR: Wrong value for sarr_f");
+
+      yakl::c::parallel_for( size(arr_c) , YAKL_LAMBDA (int i) { arr_c.data()[i] = i; });
+      yakl::c::parallel_for( size(arr_f) , YAKL_LAMBDA (int i) { arr_f.data()[i] = i; });
+      for (int i=0; i < size(sarr_c); i++) { sarr_c.data()[i] = i; }
+      for (int i=0; i < size(sarr_f); i++) { sarr_f.data()[i] = i; }
     }
 
 
