@@ -294,6 +294,37 @@ int main() {
       if (product(sarr_f) != 40) die("sarr_f error product");
     }
 
+    ////////////////////////////////////////////////
+    // product
+    ////////////////////////////////////////////////
+    {
+      int constexpr n = 1024;
+      using yakl::intrinsics::minloc;
+      using yakl::intrinsics::minval;
+      using yakl::intrinsics::maxloc;
+      using yakl::intrinsics::maxval;
+      using yakl::intrinsics::sum;
+      using yakl::intrinsics::product;
+      Array  <double,1,memDevice,styleC> d_arr("d_arr",n);
+      Array  <double,1,memHost  ,styleC> h_arr("h_arr",n);
+      SArray <double,1,n>                cs_arr;
+      FSArray<double,1,SB<n>>            fs_arr;
+      for (int i=0; i < n; i++) {
+        h_arr .data()[i] = 1 + i / 100000.;
+        cs_arr.data()[i] = 1 + i / 100000.;
+        fs_arr.data()[i] = 1 + i / 100000.;
+      }
+      h_arr.deep_copy_to(d_arr);
+
+      double answer = h_arr(0);
+      for (int i=1; i < n; i++) { answer *= h_arr(i); }
+        
+      if (std::abs(answer - product(d_arr )) > 1.e-10) die("ERROR: wrong product(d_arr )");
+      if (std::abs(answer - product(h_arr )) > 1.e-10) die("ERROR: wrong product(h_arr )");
+      if (std::abs(answer - product(cs_arr)) > 1.e-10) die("ERROR: wrong product(cs_arr)");
+      if (std::abs(answer - product(fs_arr)) > 1.e-10) die("ERROR: wrong product(fs_arr)");
+    }
+
 
 
     ////////////////////////////////////////////////

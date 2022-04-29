@@ -6,9 +6,10 @@ namespace yakl {
 
   template <class T, int memSpace, int RED> class ParallelReduction;
 
-  int constexpr YAKL_REDUCTION_MIN = 0;
-  int constexpr YAKL_REDUCTION_MAX = 1;
-  int constexpr YAKL_REDUCTION_SUM = 2;
+  int constexpr YAKL_REDUCTION_MIN  = 0;
+  int constexpr YAKL_REDUCTION_MAX  = 1;
+  int constexpr YAKL_REDUCTION_SUM  = 2;
+  int constexpr YAKL_REDUCTION_PROD = 3;
 
 
   // It is highly recommended that the user use yakl::intrinsics::minval, yakl::intrinsics::maxval, and
@@ -40,18 +41,10 @@ namespace yakl {
         for (int i=1; i<nItems; i++) { rslt = data[i] > rslt ? data[i] : rslt; }
       } else if constexpr (RED == YAKL_REDUCTION_SUM) {
         for (int i=1; i<nItems; i++) { rslt += data[i]; }
+      } else if constexpr (RED == YAKL_REDUCTION_PROD) {
+        for (int i=1; i<nItems; i++) { rslt *= data[i]; }
       }
       return rslt;
-    }
-    void deviceReduce(T *data, T *rslt) {
-      *(rslt) = data[0];
-      if constexpr        (RED == YAKL_REDUCTION_MIN) {
-        for (int i=1; i<nItems; i++) { *(rslt) = data[i] < *(rslt) ? data[i] : rslt; }
-      } else if constexpr (RED == YAKL_REDUCTION_MAX) {
-        for (int i=1; i<nItems; i++) { *(rslt) = data[i] > *(rslt) ? data[i] : rslt; }
-      } else if constexpr (RED == YAKL_REDUCTION_SUM) {
-        for (int i=1; i<nItems; i++) { *(rslt) += data[i]; }
-      }
     }
   };
 
@@ -78,6 +71,8 @@ namespace yakl {
           hipcub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
         } else if constexpr (RED == YAKL_REDUCTION_SUM) {
           hipcub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
+        } else if constexpr (RED == YAKL_REDUCTION_PROD) {
+          hipcub::DeviceReduce::Reduce(tmp, nTmp, rsltP, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1 );
         }
         tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
@@ -97,23 +92,13 @@ namespace yakl {
           hipcub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_SUM) {
           hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+        } else if constexpr (RED == YAKL_REDUCTION_PROD) {
+          hipcub::DeviceReduce::Reduce(tmp, nTmp, data, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, 0 );
         }
         hipMemcpyAsync(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost,0);       // Copy result to host
         check_last_error();
         fence();
         return rslt;
-      }
-      void deviceReduce(T *data, T *devP) {
-        if constexpr        (RED == YAKL_REDUCTION_MIN) {
-          hipcub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
-        } else if constexpr (RED == YAKL_REDUCTION_MAX) {
-          hipcub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
-        } else if constexpr (RED == YAKL_REDUCTION_SUM) {
-          hipcub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
-        }
-        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-          fence();
-        #endif
       }
     };
 
@@ -140,6 +125,8 @@ namespace yakl {
           cub::DeviceReduce::Max(tmp, nTmp, rsltP , rsltP , nItems );
         } else if constexpr (RED == YAKL_REDUCTION_SUM) {
           cub::DeviceReduce::Sum(tmp, nTmp, rsltP , rsltP , nItems );
+        } else if constexpr (RED == YAKL_REDUCTION_PROD) {
+          cub::DeviceReduce::Reduce(tmp, nTmp, rsltP, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1 );
         }
         tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
@@ -159,23 +146,13 @@ namespace yakl {
           cub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_SUM) {
           cub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+        } else if constexpr (RED == YAKL_REDUCTION_PROD) {
+          cub::DeviceReduce::Reduce(tmp, nTmp, data ,rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, 0 );
         }
         cudaMemcpyAsync(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost,0);       // Copy result to host
         check_last_error();
         fence();
         return rslt;
-      }
-      void deviceReduce(T *data, T *devP) {
-        if constexpr        (RED == YAKL_REDUCTION_MIN) {
-          cub::DeviceReduce::Min(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
-        } else if constexpr (RED == YAKL_REDUCTION_MAX) {
-          cub::DeviceReduce::Max(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
-        } else if constexpr (RED == YAKL_REDUCTION_SUM) {
-          cub::DeviceReduce::Sum(tmp, nTmp, data , devP , nItems , 0 ); // Compute the reduction
-        }
-        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-          fence();
-        #endif
       }
     };
 
@@ -219,34 +196,16 @@ namespace yakl {
                              sycl::reduction(rsltP, std::plus<>(),
                              sycl::property::reduction::initialize_to_identity{}),
                              [=] (sycl::id<1> idx, auto& sum) { sum.combine(data[idx]); });
+          } else if constexpr (RED == YAKL_REDUCTION_PROD) {
+            cgh.parallel_for(sycl::range<1>(nItems),
+                             sycl::reduction(rsltP, std::multiplies<>(),
+                             sycl::property::reduction::initialize_to_identity{}),
+                             [=] (sycl::id<1> idx, auto& prod) { prod.combine(data[idx]); });
           }
         });
         sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
         fence();
         return rslt;
-      }
-      void deviceReduce(T *data, T *devP) {
-        sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
-          if constexpr        (RED == YAKL_REDUCTION_MIN) {
-            cgh.parallel_for(sycl::range<1>(nItems),
-                             sycl::reduction(devP, sycl::minimum<>(),
-                             sycl::property::reduction::initialize_to_identity{}),
-                             [=] (sycl::id<1> idx, auto& min) { min.combine(data[idx]); });
-          } else if constexpr (RED == YAKL_REDUCTION_MAX) {
-            cgh.parallel_for(get_reduction_range(nItems, devP),
-                             sycl::reduction(devP, sycl::maximum<>(),
-                             sycl::property::reduction::initialize_to_identity{}),
-                             [=] (sycl::id<1> idx, auto& max) { max.combine(data[idx]); });
-          } else if constexpr (RED == YAKL_REDUCTION_SUM) {
-            cgh.parallel_for(sycl::range<1>(nItems),
-                             sycl::reduction(rsltP, std::plus<T>(),
-                             sycl::property::reduction::initialize_to_identity{}),
-                             [=] (sycl::id<1> idx, auto& sum) { sum.combine(data[idx]); });
-          }
-        });
-        #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-          fence();
-        #endif
       }
     };
 
@@ -273,22 +232,11 @@ namespace yakl {
         } else if constexpr (RED == YAKL_REDUCTION_SUM) {
           #pragma omp parallel for reduction(+:rslt)
           for (int i=1; i<nItems; i++) { rslt += data[i]; }
+        } else if constexpr (RED == YAKL_REDUCTION_PROD) {
+          #pragma omp parallel for reduction(*:rslt)
+          for (int i=1; i<nItems; i++) { rslt *= data[i]; }
         }
         return rslt;
-      }
-      void deviceReduce(T *data, T *devP) {
-        T rslt = data[0];
-        if constexpr        (RED == YAKL_REDUCTION_MIN) {
-          #pragma omp parallel for reduction(min:rslt)
-          for (int i=1; i<nItems; i++) { rslt = data[i] < rslt ? data[i] : rslt; }
-        } else if constexpr (RED == YAKL_REDUCTION_MAX) {
-          #pragma omp parallel for reduction(max:rslt)
-          for (int i=1; i<nItems; i++) { rslt = data[i] > rslt ? data[i] : rslt; }
-        } else if constexpr (RED == YAKL_REDUCTION_SUM) {
-          #pragma omp parallel for reduction(+:rslt)
-          for (int i=1; i<nItems; i++) { rslt += data[i]; }
-        }
-        *devP = rslt;
       }
     };
 
@@ -311,18 +259,10 @@ namespace yakl {
           for (int i=1; i<nItems; i++) { rslt = data[i] > rslt ? data[i] : rslt; }
         } else if constexpr (RED == YAKL_REDUCTION_SUM) {
           for (int i=1; i<nItems; i++) { rslt += data[i]; }
+        } else if constexpr (RED == YAKL_REDUCTION_PROD) {
+          for (int i=1; i<nItems; i++) { rslt *= data[i]; }
         }
         return rslt;
-      }
-      void deviceReduce(T *data, T *rslt) {
-        *(rslt) = data[0];
-        if constexpr        (RED == YAKL_REDUCTION_MIN) {
-          for (int i=1; i<nItems; i++) { *(rslt) = data[i] < *(rslt) ? data[i] : rslt; }
-        } else if constexpr (RED == YAKL_REDUCTION_MAX) {
-          for (int i=1; i<nItems; i++) { *(rslt) = data[i] > *(rslt) ? data[i] : rslt; }
-        } else if constexpr (RED == YAKL_REDUCTION_SUM) {
-          for (int i=1; i<nItems; i++) { *(rslt) += data[i]; }
-        }
       }
     };
 
@@ -330,9 +270,10 @@ namespace yakl {
   #endif
 
 
-  template <class T, int memSpace> using ParallelMin = ParallelReduction<T,memSpace,YAKL_REDUCTION_MIN>;
-  template <class T, int memSpace> using ParallelMax = ParallelReduction<T,memSpace,YAKL_REDUCTION_MAX>;
-  template <class T, int memSpace> using ParallelSum = ParallelReduction<T,memSpace,YAKL_REDUCTION_SUM>;
+  template <class T, int memSpace> using ParallelMin  = ParallelReduction<T,memSpace,YAKL_REDUCTION_MIN >;
+  template <class T, int memSpace> using ParallelMax  = ParallelReduction<T,memSpace,YAKL_REDUCTION_MAX >;
+  template <class T, int memSpace> using ParallelSum  = ParallelReduction<T,memSpace,YAKL_REDUCTION_SUM >;
+  template <class T, int memSpace> using ParallelProd = ParallelReduction<T,memSpace,YAKL_REDUCTION_PROD>;
 
 }
 
