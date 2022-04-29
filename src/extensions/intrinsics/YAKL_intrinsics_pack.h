@@ -7,8 +7,10 @@ namespace yakl {
 
     template <class T, int rank, int myStyle>
     inline Array<T,1,memHost,myStyle> pack( Array<T,rank,memHost,myStyle> const &arr ,
-                                            Array<bool,rank,memHost,myStyle> const &mask = Array<bool,rank,memHost,myStyle>() ) {
+                                            Array<bool,rank,memHost,myStyle> const &mask =
+                                                Array<bool,rank,memHost,myStyle>() ) {
       if (allocated(mask)) {
+
         if (mask.totElems() != arr.totElems()) {
           yakl_throw("Error: pack: arr and mask have a different number of elements");
         }
@@ -20,12 +22,26 @@ namespace yakl {
           if (mask.data()[i]) { ret.data()[slot] = arr.data()[i]; slot++; }
         }
         return ret;
+
       } else {
+
         Array<T,1,memHost,myStyle> ret("packReturn",arr.totElems());
         for (int i=0; i < arr.totElems(); i++) {
           ret.data()[i] = arr.data()[i];
         }
         return ret;
+
+      }
+    }
+
+    template <class T, int rank, int myStyle>
+    inline Array<T,1,memDevice,myStyle> pack( Array<T,rank,memDevice,myStyle> const &arr ,
+                                              Array<bool,rank,memDevice,myStyle> const &mask =
+                                                  Array<bool,rank,memDevice,myStyle>() ) {
+      if (allocated(mask)) {
+        return pack(arr.createHostCopy() , mask.createHostCopy()).createDeviceCopy();
+      } else {
+        return pack(arr.createHostCopy()                        ).createDeviceCopy();
       }
     }
 

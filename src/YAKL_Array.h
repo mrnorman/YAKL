@@ -233,6 +233,8 @@ namespace yakl {
   template <int L, int U=-999> class SB {
   public:
     SB() = delete;
+    static constexpr int lower() { return U == -999 ? 1 : L; }
+    static constexpr int upper() { return U == -999 ? L : U; }
   };
 
 

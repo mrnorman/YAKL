@@ -8,17 +8,17 @@
   without pointer dereferencing. It supports indexing and cout only up to 4-D.
 */
 
-template <class T, int rank, int L0_IN, int U0_IN, int L1_IN, int U1_IN, int L2_IN, int U2_IN, int L3_IN, int U3_IN>
-class Array< FSPEC< T , SB<L0_IN,U0_IN> , SB<L1_IN,U1_IN> , SB<L2_IN,U2_IN> , SB<L3_IN,U3_IN> > , rank , memStack , styleFortran > {
+template <class T, int rank, class B0, class B1, class B2, class B3>
+class Array< FSPEC<T,B0,B1,B2,B3> , rank , memStack , styleFortran > {
 public :
-  static int constexpr U0 = U0_IN == -999 ? L0_IN : U0_IN;
-  static int constexpr L0 = U0_IN == -999 ? 1     : L0_IN;
-  static int constexpr U1 = U1_IN == -999 ? L1_IN : U1_IN;
-  static int constexpr L1 = U1_IN == -999 ? 1     : L1_IN;
-  static int constexpr U2 = U2_IN == -999 ? L2_IN : U2_IN;
-  static int constexpr L2 = U2_IN == -999 ? 1     : L2_IN;
-  static int constexpr U3 = U3_IN == -999 ? L3_IN : U3_IN;
-  static int constexpr L3 = U3_IN == -999 ? 1     : L3_IN;
+  static int constexpr U0 = B0::upper();
+  static int constexpr L0 = B0::lower();
+  static int constexpr U1 = B1::upper();
+  static int constexpr L1 = B1::lower();
+  static int constexpr U2 = B2::upper();
+  static int constexpr L2 = B2::lower();
+  static int constexpr U3 = B3::upper();
+  static int constexpr L3 = B3::lower();
 
   static unsigned constexpr D0 =             U0 - L0 + 1;
   static unsigned constexpr D1 = rank >= 1 ? U1 - L1 + 1 : 1;
