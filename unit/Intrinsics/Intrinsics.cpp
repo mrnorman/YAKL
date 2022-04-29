@@ -156,11 +156,9 @@ int main() {
       if (huge(sarr_f) != std::numeric_limits<real>::max()) die("sarr_f wrong huge");
       if (huge(scalar) != std::numeric_limits<real>::max()) die("scalar wrong huge");
 
-      if (yakl::intrinsics::sign(-13.1) != -1.) die("ERROR: sign does not work");
+      if (yakl::intrinsics::sign(13.1 , -0.1 ) != -13.1) die("ERROR: sign does not work");
 
       if (yakl::intrinsics::mod(12,5) != 2) die("ERROR: mod doesn't work");
-
-      if (yakl::intrinsics::merge( 13. , -1 , false ) != -1) die("ERROR: merge doesn't work");
 
       using yakl::intrinsics::sum;
       using yakl::intrinsics::abs;
@@ -178,7 +176,59 @@ int main() {
       for (int i=0; i < size(sarr_c); i++) { sarr_c.data()[i] = i; }
       for (int i=0; i < size(sarr_f); i++) { sarr_f.data()[i] = i; }
     }
+    ///////////////////////////////////////////
+    // merge, minval, maxval
+    ///////////////////////////////////////////
+    {
+      using yakl::intrinsics::sum;
+      using yakl::intrinsics::merge;
+      int constexpr n = 1024;
+      Array<double,1,memHost,styleC> h_a1  ("h_a1"  ,n);
+      Array<double,1,memHost,styleC> h_a2  ("h_a2"  ,n);
+      Array<bool ,1,memHost,styleC> h_mask("h_mask",n);
+      SArray<double,1,n> sarr_a1  ;
+      SArray<double,1,n> sarr_a2  ;
+      SArray<bool ,1,n> sarr_mask;
+      FSArray<double,1,SB<n>> fsarr_a1  ;
+      FSArray<double,1,SB<n>> fsarr_a2  ;
+      FSArray<bool ,1,SB<n>> fsarr_mask;
+      for (int i=0; i < n; i++) {
+        h_a1.data()[i] = 2;
+        h_a2.data()[i] = 3;
+        h_mask.data()[i] = i%2 == 1;
+        sarr_a1.data()[i] = 2;
+        sarr_a2.data()[i] = 3;
+        sarr_mask.data()[i] = i%2 == 1;
+        fsarr_a1.data()[i] = 2;
+        fsarr_a2.data()[i] = 3;
+        fsarr_mask.data()[i] = i%2 == 1;
+      }
+      auto d_a1   = h_a1  .createDeviceCopy();
+      auto d_a2   = h_a2  .createDeviceCopy();
+      auto d_mask = h_mask.createDeviceCopy();
 
+      if (std::abs(sum(merge(h_a1    ,h_a2    ,h_mask    ))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(h_)");
+      if (std::abs(sum(merge(d_a1    ,d_a2    ,d_mask    ))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(h_)");
+      if (std::abs(sum(merge(sarr_a1 ,sarr_a2 ,sarr_mask ))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(sarr_)");
+      if (std::abs(sum(merge(fsarr_a1,fsarr_a2,fsarr_mask))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(fsarr_)");
+
+      using yakl::intrinsics::minval;
+      using yakl::intrinsics::maxval;
+      for (int i=0; i < n; i++) {
+        h_a1    .data()[i] = n-i;
+        sarr_a1 .data()[i] = n-i;
+        fsarr_a1.data()[i] = n-i;
+      }
+      h_a1.deep_copy_to(d_a1);
+      if ( minval(h_a1    ) != 1 ) die("ERROR: wrong minval h_a1    ");
+      if ( minval(d_a1    ) != 1 ) die("ERROR: wrong minval d_a1    ");
+      if ( minval(sarr_a1 ) != 1 ) die("ERROR: wrong minval sarr_a1 ");
+      if ( minval(fsarr_a1) != 1 ) die("ERROR: wrong minval fsarr_a1");
+      if ( maxval(h_a1    ) != n ) die("ERROR: wrong maxval h_a1    ");
+      if ( maxval(d_a1    ) != n ) die("ERROR: wrong maxval d_a1    ");
+      if ( maxval(sarr_a1 ) != n ) die("ERROR: wrong maxval sarr_a1 ");
+      if ( maxval(fsarr_a1) != n ) die("ERROR: wrong maxval fsarr_a1");
+    }
 
     ///////////////////////////////////////
     // allocated, associated
@@ -247,151 +297,31 @@ int main() {
 
 
     ////////////////////////////////////////////////
-    // anyLT, anyLTE, anyGT, anyGTE, anyEQ, anyNEQ
+    // any
     ////////////////////////////////////////////////
     {
-      using yakl::intrinsics::anyLT;
-      using yakl::intrinsics::anyLTE;
-      using yakl::intrinsics::anyGT;
-      using yakl::intrinsics::anyGTE;
-      using yakl::intrinsics::anyEQ;
-      using yakl::intrinsics::anyNEQ;
+      using yakl::intrinsics::any;
+      using yakl::componentwise::operator<;
 
       real_c_1d arr_c("arr_c",5);
       real_f_1d arr_f("arr_f",5);
       SArray<real,1,5> sarr_c;
       FSArray<real,1,SB<5>> sarr_f;
 
-      bool_c_1d mask_c("mask_c",5);
-      bool_f_1d mask_f("mask_f",5);
-      SArray<bool,1,5> smask_c;
-      FSArray<bool,1,SB<5>> smask_f;
-
       parallel_for( 5 , YAKL_LAMBDA (int i) {
         arr_c (i  ) = i-2;
         arr_f (i+1) = i-2;
-        mask_c(i  ) = (i+1)%2 == 0;
-        mask_f(i+1) = (i+1)%2 == 0;
       });
 
       for (int i=0; i < 5; i++) {
         sarr_c (i  ) = i-2;
         sarr_f (i+1) = i-2;
-        smask_c(i  ) = (i+1)%2 == 0;
-        smask_f(i+1) = (i+1)%2 == 0;
       }
 
-      if ( anyLT( arr_c  , -2 ) ) die("arr_c  anyLT fail 1");
-      if ( anyLT( arr_f  , -2 ) ) die("arr_f  anyLT fail 1");
-      if ( anyLT( sarr_c , -2 ) ) die("sarr_c anyLT fail 1");
-      if ( anyLT( sarr_f , -2 ) ) die("sarr_f anyLT fail 1");
-
-      if ( !anyLT( arr_c  , -1 ) ) die("arr_c  anyLT fail 2");
-      if ( !anyLT( arr_f  , -1 ) ) die("arr_f  anyLT fail 2");
-      if ( !anyLT( sarr_c , -1 ) ) die("sarr_c anyLT fail 2");
-      if ( !anyLT( sarr_f , -1 ) ) die("sarr_f anyLT fail 2");
-
-      if ( anyLT( arr_c  , mask_c  , -1 ) ) die("arr_c anyLT masked fail");
-      if ( anyLT( arr_f  , mask_f  , -1 ) ) die("arr_f anyLT masked fail");
-      if ( anyLT( sarr_c , smask_c , -1 ) ) die("sarr_c anyLT masked fail");
-      if ( anyLT( sarr_f , smask_f , -1 ) ) die("sarr_f anyLT masked fail");
-
-      if ( anyLTE( arr_c  , -3 ) ) die("arr_c  anyLTE fail 1");
-      if ( anyLTE( arr_f  , -3 ) ) die("arr_f  anyLTE fail 1");
-      if ( anyLTE( sarr_c , -3 ) ) die("sarr_c anyLTE fail 1");
-      if ( anyLTE( sarr_f , -3 ) ) die("sarr_f anyLTE fail 1");
-
-      if ( !anyLTE( arr_c  , -2 ) ) die("arr_c  anyLTE fail 2");
-      if ( !anyLTE( arr_f  , -2 ) ) die("arr_f  anyLTE fail 2");
-      if ( !anyLTE( sarr_c , -2 ) ) die("sarr_c anyLTE fail 2");
-      if ( !anyLTE( sarr_f , -2 ) ) die("sarr_f anyLTE fail 2");
-
-      if ( anyLTE( arr_c  , mask_c  , -2 ) ) die("arr_c anyLTE masked fail");
-      if ( anyLTE( arr_f  , mask_f  , -2 ) ) die("arr_f anyLTE masked fail");
-      if ( anyLTE( sarr_c , smask_c , -2 ) ) die("sarr_c anyLTE masked fail");
-      if ( anyLTE( sarr_f , smask_f , -2 ) ) die("sarr_f anyLTE masked fail");
-
-
-      if ( anyGT( arr_c  , 2 ) ) die("arr_c  anyGT fail 1");
-      if ( anyGT( arr_f  , 2 ) ) die("arr_f  anyGT fail 1");
-      if ( anyGT( sarr_c , 2 ) ) die("sarr_c anyGT fail 1");
-      if ( anyGT( sarr_f , 2 ) ) die("sarr_f anyGT fail 1");
-
-      if ( !anyGT( arr_c  , 1 ) ) die("arr_c  anyGT fail 2");
-      if ( !anyGT( arr_f  , 1 ) ) die("arr_f  anyGT fail 2");
-      if ( !anyGT( sarr_c , 1 ) ) die("sarr_c anyGT fail 2");
-      if ( !anyGT( sarr_f , 1 ) ) die("sarr_f anyGT fail 2");
-
-      if ( anyGT( arr_c  , mask_c  , 1 ) ) die("arr_c anyGT masked fail");
-      if ( anyGT( arr_f  , mask_f  , 1 ) ) die("arr_f anyGT masked fail");
-      if ( anyGT( sarr_c , smask_c , 1 ) ) die("sarr_c anyGT masked fail");
-      if ( anyGT( sarr_f , smask_f , 1 ) ) die("sarr_f anyGT masked fail");
-
-      if ( anyGTE( arr_c  , 3 ) ) die("arr_c  anyGTE fail 1");
-      if ( anyGTE( arr_f  , 3 ) ) die("arr_f  anyGTE fail 1");
-      if ( anyGTE( sarr_c , 3 ) ) die("sarr_c anyGTE fail 1");
-      if ( anyGTE( sarr_f , 3 ) ) die("sarr_f anyGTE fail 1");
-
-      if ( !anyGTE( arr_c  , 2 ) ) die("arr_c  anyGTE fail 2");
-      if ( !anyGTE( arr_f  , 2 ) ) die("arr_f  anyGTE fail 2");
-      if ( !anyGTE( sarr_c , 2 ) ) die("sarr_c anyGTE fail 2");
-      if ( !anyGTE( sarr_f , 2 ) ) die("sarr_f anyGTE fail 2");
-
-      if ( anyGTE( arr_c  , mask_c  , 2 ) ) die("arr_c anyGTE masked fail");
-      if ( anyGTE( arr_f  , mask_f  , 2 ) ) die("arr_f anyGTE masked fail");
-      if ( anyGTE( sarr_c , smask_c , 2 ) ) die("sarr_c anyGTE masked fail");
-      if ( anyGTE( sarr_f , smask_f , 2 ) ) die("sarr_f anyGTE masked fail");
-
-
-      if ( anyEQ( arr_c  , 3 ) ) die("arr_c  anyEQ fail 1");
-      if ( anyEQ( arr_f  , 3 ) ) die("arr_f  anyEQ fail 1");
-      if ( anyEQ( sarr_c , 3 ) ) die("sarr_c anyEQ fail 1");
-      if ( anyEQ( sarr_f , 3 ) ) die("sarr_f anyEQ fail 1");
-
-      if ( !anyEQ( arr_c  , 1 ) ) die("arr_c  anyEQ fail 2");
-      if ( !anyEQ( arr_f  , 1 ) ) die("arr_f  anyEQ fail 2");
-      if ( !anyEQ( sarr_c , 1 ) ) die("sarr_c anyEQ fail 2");
-      if ( !anyEQ( sarr_f , 1 ) ) die("sarr_f anyEQ fail 2");
-
-      if ( anyEQ( arr_c  , mask_c  , 2 ) ) die("arr_c anyEQ masked fail");
-      if ( anyEQ( arr_f  , mask_f  , 2 ) ) die("arr_f anyEQ masked fail");
-      if ( anyEQ( sarr_c , smask_c , 2 ) ) die("sarr_c anyEQ masked fail");
-      if ( anyEQ( sarr_f , smask_f , 2 ) ) die("sarr_f anyEQ masked fail");
-
-
-      parallel_for( 5 , YAKL_LAMBDA (int i) {
-        mask_c(i  ) = i == 2;
-        mask_f(i+1) = i == 2;
-      });
-      for (int i=0; i < 5; i++) {
-        smask_c(i  ) = i == 2;
-        smask_f(i+1) = i == 2;
-      }
-
-      if ( !anyNEQ( arr_c  , 0 ) ) die("arr_c  anyNEQ fail 1");
-      if ( !anyNEQ( arr_f  , 0 ) ) die("arr_f  anyNEQ fail 1");
-      if ( !anyNEQ( sarr_c , 0 ) ) die("sarr_c anyNEQ fail 1");
-      if ( !anyNEQ( sarr_f , 0 ) ) die("sarr_f anyNEQ fail 1");
-
-      if ( anyNEQ( arr_c  , mask_c  , 0 ) ) die("arr_c anyNEQ masked fail");
-      if ( anyNEQ( arr_f  , mask_f  , 0 ) ) die("arr_f anyNEQ masked fail");
-      if ( anyNEQ( sarr_c , smask_c , 0 ) ) die("sarr_c anyNEQ masked fail");
-      if ( anyNEQ( sarr_f , smask_f , 0 ) ) die("sarr_f anyNEQ masked fail");
-
-
-      parallel_for( 5 , YAKL_LAMBDA (int i) {
-        arr_c(i  ) = 1;
-        arr_f(i+1) = 1;
-      });
-      for (int i=0; i < 5; i++) {
-        sarr_c(i  ) = 1;
-        sarr_f(i+1) = 1;
-      }
-
-      if ( anyNEQ( arr_c  , 1 ) ) die("arr_c  anyNEQ fail 2");
-      if ( anyNEQ( arr_f  , 1 ) ) die("arr_f  anyNEQ fail 2");
-      if ( anyNEQ( sarr_c , 1 ) ) die("sarr_c anyNEQ fail 2");
-      if ( anyNEQ( sarr_f , 1 ) ) die("sarr_f anyNEQ fail 2");
+      if ( any( arr_c  < -2 ) ) die("arr_c  anyLT fail 1");
+      if ( any( arr_f  < -2 ) ) die("arr_f  anyLT fail 1");
+      if ( any( sarr_c < -2 ) ) die("sarr_c anyLT fail 1");
+      if ( any( sarr_f < -2 ) ) die("sarr_f anyLT fail 1");
     }
 
 
