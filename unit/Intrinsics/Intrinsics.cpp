@@ -524,6 +524,39 @@ int main() {
 
 
     //////////////////////////////////////////////////////////
+    // transpose (dyn arrays)
+    //////////////////////////////////////////////////////////
+    {
+      using yakl::intrinsics::transpose;
+      using yakl::intrinsics::size;
+      Array<int,2,memHost  ,styleC      > h_c("h_c",3,4);
+      Array<int,2,memDevice,styleC      > d_c("d_c",3,4);
+      Array<int,2,memHost  ,styleFortran> h_f("h_f",3,4);
+      Array<int,2,memDevice,styleFortran> d_f("d_f",3,4);
+      for (int i=0; i < h_c.totElems(); i++) {
+        h_c.data()[i] = i+1;
+        h_f.data()[i] = i+1;
+      }
+      h_c.deep_copy_to(d_c);
+      h_f.deep_copy_to(d_f);
+
+      auto h_f_t = transpose( h_f );
+      auto h_c_t = transpose( h_c );
+      auto d_f_t = transpose( h_f ).createHostCopy();
+      auto d_c_t = transpose( h_c ).createHostCopy();
+      if ( size(h_c_t,0) != 4 ) die("ERROR: transpose: size(h_c_t,0) != 4");
+      if ( size(h_f_t,1) != 4 ) die("ERROR: transpose: size(h_f_t,1) != 4");
+      if ( size(d_c_t,0) != 4 ) die("ERROR: transpose: size(d_c_t,0) != 4");
+      if ( size(d_f_t,1) != 4 ) die("ERROR: transpose: size(d_f_t,1) != 4");
+      if ( h_c_t(3,0) != h_c(0,3) ) die("ERROR: transpose: h_c_t(3,0) != h_c(0,3)");
+      if ( d_c_t(3,0) != d_c(0,3) ) die("ERROR: transpose: d_c_t(3,0) != d_c(0,3)");
+      if ( h_f_t(4,1) != h_f(1,4) ) die("ERROR: transpose: h_f_t(4,1) != h_f(1,4)");
+      if ( d_f_t(4,1) != d_f(1,4) ) die("ERROR: transpose: d_f_t(4,1) != d_f(1,4)");
+    }
+
+
+
+    //////////////////////////////////////////////////////////
     // count, pack
     //////////////////////////////////////////////////////////
     {
