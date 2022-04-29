@@ -214,12 +214,16 @@ int main() {
 
       using yakl::intrinsics::minval;
       using yakl::intrinsics::maxval;
+      Array<double,1,memDevice,styleFortran> d_a1_f("d_a1_f",n);
+      Array<double,1,memHost  ,styleFortran> h_a1_f("h_a1_f",n);
       for (int i=0; i < n; i++) {
         h_a1    .data()[i] = n-i;
         sarr_a1 .data()[i] = n-i;
         fsarr_a1.data()[i] = n-i;
+        h_a1_f  .data()[i] = n-i;
       }
-      h_a1.deep_copy_to(d_a1);
+      h_a1  .deep_copy_to(d_a1  );
+      h_a1_f.deep_copy_to(d_a1_f);
       if ( minval(h_a1    ) != 1 ) die("ERROR: wrong minval h_a1    ");
       if ( minval(d_a1    ) != 1 ) die("ERROR: wrong minval d_a1    ");
       if ( minval(sarr_a1 ) != 1 ) die("ERROR: wrong minval sarr_a1 ");
@@ -228,6 +232,15 @@ int main() {
       if ( maxval(d_a1    ) != n ) die("ERROR: wrong maxval d_a1    ");
       if ( maxval(sarr_a1 ) != n ) die("ERROR: wrong maxval sarr_a1 ");
       if ( maxval(fsarr_a1) != n ) die("ERROR: wrong maxval fsarr_a1");
+
+      using yakl::intrinsics::minloc;
+      using yakl::intrinsics::maxloc;
+      if ( minloc(h_a1    ) != n-1 ) die("ERROR: wrong minloc h_a1    ");
+      if ( minloc(d_a1    ) != n-1 ) die("ERROR: wrong minloc d_a1    ");
+      if ( minloc(sarr_a1 ) != n-1 ) die("ERROR: wrong minloc sarr_a1 ");
+      if ( minloc(fsarr_a1) != n   ) die("ERROR: wrong minloc fsarr_a1");
+      if ( minloc(h_a1_f  ) != n   ) die("ERROR: wrong minloc h_a1_f  ");
+      if ( minloc(d_a1_f  ) != n   ) die("ERROR: wrong minloc d_a1_f  ");
     }
 
     ///////////////////////////////////////
@@ -549,9 +562,9 @@ int main() {
       if ( size(d_c_t,0) != 4 ) die("ERROR: transpose: size(d_c_t,0) != 4");
       if ( size(d_f_t,1) != 4 ) die("ERROR: transpose: size(d_f_t,1) != 4");
       if ( h_c_t(3,0) != h_c(0,3) ) die("ERROR: transpose: h_c_t(3,0) != h_c(0,3)");
-      if ( d_c_t(3,0) != d_c(0,3) ) die("ERROR: transpose: d_c_t(3,0) != d_c(0,3)");
+      if ( d_c_t(3,0) != d_c.createHostCopy()(0,3) ) die("ERROR: transpose: d_c_t(3,0) != d_c(0,3)");
       if ( h_f_t(4,1) != h_f(1,4) ) die("ERROR: transpose: h_f_t(4,1) != h_f(1,4)");
-      if ( d_f_t(4,1) != d_f(1,4) ) die("ERROR: transpose: d_f_t(4,1) != d_f(1,4)");
+      if ( d_f_t(4,1) != d_f.createHostCopy()(1,4) ) die("ERROR: transpose: d_f_t(4,1) != d_f(1,4)");
     }
 
 
@@ -585,24 +598,38 @@ int main() {
         real_c_1d vals("vals",10);
         auto vals_host = vals.createHostCopy();
         for (int i=0; i < 10; i++) { vals_host(i) = i; }
+        vals_host.deep_copy_to(vals);
 
         auto packed        = pack(vals_host);
         auto packed_masked = pack(vals_host,c.createHostCopy());
 
-        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: packed c");
-        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: packed masked c");
+        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: host packed c");
+        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: host packed masked c");
+
+        packed        = pack(vals).createHostCopy();
+        packed_masked = pack(vals,c).createHostCopy();
+
+        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: device packed c");
+        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: device packed masked c");
       }
 
       {
         real_f_1d vals("vals",10);
         auto vals_host = vals.createHostCopy();
         for (int i=0; i < 10; i++) { vals_host(i+1) = i; }
+        vals_host.deep_copy_to(vals);
 
         auto packed        = pack(vals_host);
         auto packed_masked = pack(vals_host,f.createHostCopy());
 
-        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: packed f");
-        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: packed masked f");
+        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: host packed f");
+        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: host packed masked f");
+
+        packed        = pack(vals).createHostCopy();
+        packed_masked = pack(vals,f).createHostCopy();
+
+        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: device packed f");
+        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: device packed masked f");
       }
     }
 
