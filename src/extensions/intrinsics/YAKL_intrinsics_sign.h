@@ -11,6 +11,13 @@ namespace yakl {
     template <class T1, class T2, int rank, int myStyle>
     inline Array<T1,rank,memHost,myStyle> sign( Array<T1,rank,memHost,myStyle> const & a ,
                                                 Array<T2,rank,memHost,myStyle> const & b ) {
+      #ifdef YAKL_DEBUG
+        using yakl::componentwise::operator==;
+        using yakl::componentwise::operator!;
+        if (!allocated(a)) yakl_throw("ERROR: Calling sign with unallocated a");
+        if (!allocated(b)) yakl_throw("ERROR: Calling sign with unallocated b");
+        if (any(!(shape(a) == shape(b)))) yakl_throw("ERROR: Calling sign with differently arrays");
+      #endif
       auto ret = a.createHostObject();
       for( int i=0; i < a.totElems(); i++) {
         ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
@@ -20,6 +27,13 @@ namespace yakl {
     template <class T1, class T2, int rank, int myStyle>
     inline Array<T1,rank,memDevice,myStyle> sign( Array<T1,rank,memDevice,myStyle> const & a ,
                                                   Array<T2,rank,memDevice,myStyle> const & b ) {
+      #ifdef YAKL_DEBUG
+        using yakl::componentwise::operator==;
+        using yakl::componentwise::operator!;
+        if (!allocated(a)) yakl_throw("ERROR: Calling sign with unallocated a");
+        if (!allocated(b)) yakl_throw("ERROR: Calling sign with unallocated b");
+        if (any(!(shape(a) == shape(b)))) yakl_throw("ERROR: Calling sign with differently arrays");
+      #endif
       auto ret = a.createDeviceObject();
       parallel_for( a.totElems() , YAKL_LAMBDA (int i) {
         ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);

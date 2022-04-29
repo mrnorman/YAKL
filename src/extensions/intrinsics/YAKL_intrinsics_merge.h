@@ -14,6 +14,16 @@ namespace yakl {
     merge( Array<T1  ,rank,memHost,myStyle> const & arr_true  ,
            Array<T2  ,rank,memHost,myStyle> const & arr_false ,
            Array<bool,rank,memHost,myStyle> const & mask      ) {
+      #ifdef YAKL_DEBUG
+        using yakl::componentwise::operator==;
+        using yakl::componentwise::operator&&;
+        using yakl::componentwise::operator!;
+        if (!allocated(arr_true )) yakl_throw("ERROR: calling merge with arr_true  unallocated.");
+        if (!allocated(arr_false)) yakl_throw("ERROR: calling merge with arr_false unallocated.");
+        if (!allocated(mask     )) yakl_throw("ERROR: calling merge with mask      unallocated.");
+        if (any( !( (shape(arr_true) == shape(arr_false)) && (shape(arr_false) == shape(mask)) ) ))
+          yakl_throw("ERROR: calling merge with array shapes that do not match");
+      #endif
       Array<decltype(T1()+T2()),rank,memHost,myStyle> ret = arr_true.createHostObject();
       for (unsigned i=0; i < arr_true.totElems(); i++) {
         ret.data()[i] = mask.data()[i] ? arr_true.data()[i] : arr_false.data()[i];
@@ -26,6 +36,16 @@ namespace yakl {
     merge( Array<T1  ,rank,memDevice,myStyle> const & arr_true  ,
            Array<T2  ,rank,memDevice,myStyle> const & arr_false ,
            Array<bool,rank,memDevice,myStyle> const & mask      ) {
+      #ifdef YAKL_DEBUG
+        using yakl::componentwise::operator==;
+        using yakl::componentwise::operator&&;
+        using yakl::componentwise::operator!;
+        if (!allocated(arr_true )) yakl_throw("ERROR: calling merge with arr_true  unallocated.");
+        if (!allocated(arr_false)) yakl_throw("ERROR: calling merge with arr_false unallocated.");
+        if (!allocated(mask     )) yakl_throw("ERROR: calling merge with mask      unallocated.");
+        if (any( !( (shape(arr_true) == shape(arr_false)) && (shape(arr_false) == shape(mask)) ) ))
+          yakl_throw("ERROR: calling merge with array shapes that do not match");
+      #endif
       Array<decltype(T1()+T2()),rank,memDevice,myStyle> ret = arr_true.createDeviceObject();
       c::parallel_for( arr_true.totElems() , YAKL_LAMBDA (int i) {
         ret.data()[i] = mask.data()[i] ? arr_true.data()[i] : arr_false.data()[i];

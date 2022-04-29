@@ -27,9 +27,6 @@ namespace yakl {
 
     template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
     YAKL_INLINE SArray<T,rank,D0,D1,D2,D3> abs( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
-      #ifdef YAKL_DEBUG
-        if (!arr.initialized()) { yakl_throw("ERROR: calling abs on an array that has not been initialized"); }
-      #endif
       SArray<T,rank,D0,D1,D2,D3> ret;
       for (int i=0; i < ret.totElems(); i++) { ret.data()[i] = std::abs(arr.data()[i]); };
       return ret;
@@ -37,9 +34,6 @@ namespace yakl {
 
     template <class T, int rank, class B0, class B1, class B2, class B3>
     YAKL_INLINE FSArray<T,rank,B0,B1,B2,B3> abs( FSArray<T,rank,B0,B1,B2,B3> const &arr ) {
-      #ifdef YAKL_DEBUG
-        if (!arr.initialized()) { yakl_throw("ERROR: calling abs on an array that has not been initialized"); }
-      #endif
       FSArray<T,rank,B0,B1,B2,B3> ret;
       for (int i=0; i < ret.totElems(); i++) { ret.data()[i] = std::abs(arr.data()[i]); };
       return ret;

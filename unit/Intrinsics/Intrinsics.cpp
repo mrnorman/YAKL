@@ -241,6 +241,13 @@ int main() {
       if ( minloc(fsarr_a1) != n   ) die("ERROR: wrong minloc fsarr_a1");
       if ( minloc(h_a1_f  ) != n   ) die("ERROR: wrong minloc h_a1_f  ");
       if ( minloc(d_a1_f  ) != n   ) die("ERROR: wrong minloc d_a1_f  ");
+
+      if ( maxloc(h_a1    ) != 0 ) die("ERROR: maxloc(h_a1    ) != 0");
+      if ( maxloc(d_a1    ) != 0 ) die("ERROR: maxloc(d_a1    ) != 0");
+      if ( maxloc(sarr_a1 ) != 0 ) die("ERROR: maxloc(sarr_a1 ) != 0");
+      if ( maxloc(fsarr_a1) != 1 ) die("ERROR: maxloc(fsarr_a1) != 1");
+      if ( maxloc(h_a1_f  ) != 1 ) die("ERROR: maxloc(h_a1_f  ) != 1");
+      if ( maxloc(d_a1_f  ) != 1 ) die("ERROR: maxloc(d_a1_f  ) != 1");
     }
 
     ///////////////////////////////////////
@@ -345,7 +352,9 @@ int main() {
     ////////////////////////////////////////////////
     {
       using yakl::intrinsics::any;
+      using yakl::intrinsics::all;
       using yakl::componentwise::operator<;
+      using yakl::componentwise::operator>=;
 
       real_c_1d arr_c("arr_c",5);
       real_f_1d arr_f("arr_f",5);
@@ -362,10 +371,15 @@ int main() {
         sarr_f (i+1) = i-2;
       }
 
-      if ( any( arr_c  < -2 ) ) die("arr_c  anyLT fail 1");
-      if ( any( arr_f  < -2 ) ) die("arr_f  anyLT fail 1");
-      if ( any( sarr_c < -2 ) ) die("sarr_c anyLT fail 1");
-      if ( any( sarr_f < -2 ) ) die("sarr_f anyLT fail 1");
+      if ( any( arr_c  < -2 ) ) die("arr_c  any fail 1");
+      if ( any( arr_f  < -2 ) ) die("arr_f  any fail 1");
+      if ( any( sarr_c < -2 ) ) die("sarr_c any fail 1");
+      if ( any( sarr_f < -2 ) ) die("sarr_f any fail 1");
+
+      if ( ! all( arr_c  >= -2 ) ) die("! all( arr_c  >= -2 )");
+      if ( ! all( arr_f  >= -2 ) ) die("! all( arr_f  >= -2 )");
+      if ( ! all( sarr_c >= -2 ) ) die("! all( sarr_c >= -2 )");
+      if ( ! all( sarr_f >= -2 ) ) die("! all( sarr_f >= -2 )");
     }
 
 

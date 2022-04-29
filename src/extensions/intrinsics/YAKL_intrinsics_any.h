@@ -7,6 +7,9 @@ namespace yakl {
 
     template <class T, int rank, int myStyle>
     inline bool any( Array<T,rank,memHost,myStyle> arr ) {
+      #ifdef YAKL_DEBUG
+        if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+      #endif
       bool any_true = false;
       for (int i=0; i < arr.totElems(); i++) { if (arr.data()[i]) any_true = true; }
       return any_true;
@@ -14,6 +17,9 @@ namespace yakl {
 
     template <class T, int rank, int myStyle>
     inline bool any( Array<T,rank,memDevice,myStyle> arr ) {
+      #ifdef YAKL_DEBUG
+        if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+      #endif
       ScalarLiveOut<bool> any_true(false);
       c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) { if (arr.data()[i]) any_true = true; });
       return any_true.hostRead();

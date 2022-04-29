@@ -7,6 +7,9 @@ namespace yakl {
 
     template <class T, int myMem, int myStyle>
     inline Array<T,2,myMem,myStyle> transpose(Array<T,2,myMem,myStyle> const &in) {
+      #ifdef YAKL_DEBUG
+        if (!allocated(in)) yakl_throw("ERROR: Calling transpose on unallocated array");
+      #endif
       if constexpr (myStyle == styleC) {
         auto d0 = size(in,0);
         auto d1 = size(in,1);
