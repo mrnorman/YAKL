@@ -254,9 +254,20 @@ public:
 
 
   template <class TLOC, typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false>
-  YAKL_INLINE Array & operator=(TLOC const &rhs) {
-    memset( *this , rhs );
+  Array & operator=(TLOC const &rhs) {
+    memset_loc(rhs);
     return *this;
+  }
+
+
+  template <class TLOC>
+  void memset_loc(TLOC rhs) {
+    if (myMem == memDevice) {
+      YAKL_SCOPE( arr , *this );
+      c::parallel_for( this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
+    } else {
+      for (int i=0; i < this->totElems(); i++) { this->myData[i] = rhs; }
+    }
   }
 
 
