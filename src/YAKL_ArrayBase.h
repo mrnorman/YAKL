@@ -24,7 +24,7 @@ public:
 
   // Deep copy this array's contents to another array that's on the host
   template <int theirRank, int theirStyle>
-  inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> &lhs) const {
+  inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> const &lhs) const {
     #ifdef YAKL_DEBUG
       if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
       if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
@@ -36,7 +36,7 @@ public:
 
   // Deep copy this array's contents to another array that's on the device
   template <int theirRank, int theirStyle>
-  inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> &lhs) const {
+  inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> const &lhs) const {
     #ifdef YAKL_DEBUG
       if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
       if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
