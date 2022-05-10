@@ -262,7 +262,12 @@ public:
 
   template <class TLOC>
   void memset_loc(TLOC rhs) {
-    c::parallel_for( this->totElems() , YAKL_LAMBDA (int i) { this->myData[i] = rhs; });
+    if (myMem == memDevice) {
+      YAKL_SCOPE( arr , *this );
+      c::parallel_for( this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
+    } else {
+      for (int i=0; i < this->totElems(); i++) { this->myData[i] = rhs; }
+    }
   }
 
 
