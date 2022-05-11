@@ -157,7 +157,9 @@ public:
 
 
   YAKL_INLINE Array & operator=(Array<non_const_value_type,rank,myMem,styleC> const &rhs) {
-    if (this == &rhs) { return *this; }
+    if constexpr (! std::is_const<T>::value) {
+      if (this == &rhs) { return *this; }
+    }
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
@@ -167,7 +169,9 @@ public:
   YAKL_INLINE Array & operator=(Array<const_value_type,rank,myMem,styleC> const &rhs) {
     static_assert( std::is_const<T>::value , 
                    "ERROR: Cannot create non-const Array using const Array" );
-    if (this == &rhs) { return *this; }
+    if constexpr (std::is_const<T>::value) {
+      if (this == &rhs) { return *this; }
+    }
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
