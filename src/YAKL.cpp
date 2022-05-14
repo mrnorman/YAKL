@@ -21,7 +21,7 @@ namespace yakl {
 
   std::function<void ()> timer_finalize = [] () {
     #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
-      if (yakl_masterproc()) {
+      if (yakl_mainproc()) {
         timer.print_all_threads();
       }
     #endif

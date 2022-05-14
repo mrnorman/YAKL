@@ -6,8 +6,8 @@ namespace yakl {
 
   // Allows the user to throw an exception from the host or the device
   YAKL_INLINE void yakl_throw(const char * msg) {
-    // If the device memory isn't separate, then let's throw a real exception
-    #ifndef YAKL_SEPARATE_MEMORY_SPACE
+    // If we're on the host, then let's throw a real exception
+    #if YAKL_CURRENTLY_ON_HOST()
       std::cerr << "YAKL FATAL ERROR:\n";
       std::cerr << msg << std::endl;
       throw msg;
@@ -42,9 +42,9 @@ namespace yakl {
   }
 
 
-  // Determine if this is the master process in the case of multiple MPI tasks
+  // Determine if this is the main process in the case of multiple MPI tasks
   // This is nearly always used just to avoid printing to stdout or stderr from all MPI tasks
-  inline bool yakl_masterproc() {
+  inline bool yakl_mainproc() {
     // Only actually check if the user says MPI is available. Otherwise, always return true
     #ifdef HAVE_MPI
       int is_initialized;
