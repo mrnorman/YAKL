@@ -11,7 +11,7 @@ namespace yakl {
     // If YAKL is already initialized, then don't do anything
     if ( ! isInitialized() ) {
       #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
-        if (yakl_masterproc()) std::cout << "Using YAKL Timers\n";
+        if (yakl_mainproc()) std::cout << "Using YAKL Timers\n";
         timer_init();
       #endif
       bool use_pool = true;
@@ -66,9 +66,9 @@ namespace yakl {
         cudaMalloc(&functorBuffer,functorBufSize);
       #endif
       #ifdef YAKL_ARCH_SYCL
-        if (yakl_masterproc()) std::cout << "Running on "
-                                         << sycl_default_stream().get_device().get_info<sycl::info::device::name>()
-                                         << "\n";
+        if (yakl_mainproc()) std::cout << "Running on "
+                                       << sycl_default_stream().get_device().get_info<sycl::info::device::name>()
+                                       << "\n";
         functorBuffer = sycl::malloc_device(functorBufSize, sycl_default_stream());
         fence();
       #endif
@@ -79,7 +79,7 @@ namespace yakl {
         cudaGetDevice(&id);
         cudaDeviceProp props;
         cudaGetDeviceProperties(&props,id);
-        if (yakl_masterproc()) std::cout << props.name << std::endl;
+        if (yakl_mainproc()) std::cout << props.name << std::endl;
       #endif
 
       #if defined(YAKL_ARCH_HIP)
@@ -87,12 +87,12 @@ namespace yakl {
         hipGetDevice(&id);
         hipDeviceProp_t props;
         hipGetDeviceProperties(&props,id);
-        if (yakl_masterproc()) std::cout << props.name << std::endl;
+        if (yakl_mainproc()) std::cout << props.name << std::endl;
       #endif
 
       #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
-        if (yakl_masterproc()) std::cout << "INFORM: Automatically inserting fence() after every parallel_for"
-                                         << std::endl;
+        if (yakl_mainproc()) std::cout << "INFORM: Automatically inserting fence() after every parallel_for"
+                                       << std::endl;
       #endif
     } else {
       std::cerr << "WARNING: Calling yakl::initialize() when YAKL is already initialized. ";

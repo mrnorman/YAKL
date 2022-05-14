@@ -79,7 +79,7 @@ namespace yakl {
           initialSize = initial_mb*1024*1024;
           this->growSize = initialSize;
         } else {
-          if (yakl::yakl_masterproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
+          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
         }
       }
 
@@ -90,7 +90,7 @@ namespace yakl {
         if (grow_mb != 0) {
           this->growSize = grow_mb*1024*1024;
         } else {
-          if (yakl::yakl_masterproc()) std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
+          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
         }
       }
 
@@ -101,8 +101,8 @@ namespace yakl {
         if (block_bytes != 0 && block_bytes%sizeof(size_t) == 0) {
           this->blockSize = block_bytes;
         } else {
-          if (yakl::yakl_masterproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 128*sizeof(size_t)\n";
-          if (yakl::yakl_masterproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of sizeof(size_t)\n";
+          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 128*sizeof(size_t)\n";
+          if (yakl::yakl_mainproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of sizeof(size_t)\n";
         }
       }
 
@@ -132,8 +132,8 @@ namespace yakl {
     // Allocate memory with the specified number of bytes and the specified label
     void * allocate(size_t bytes, char const * label="") {
       #ifdef MEMORY_DEBUG
-        if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Gator attempting to allocate " << label << " with "
-                                               << bytes << " bytes\n";
+        if (yakl::yakl_mainproc()) std::cout << "MEMORY DEBUG: Gator attempting to allocate " << label << " with "
+                                             << bytes << " bytes\n";
       #endif
       if (bytes == 0) return nullptr;
       // Loop through the pools and see if there's room. If so, allocate in one of them
@@ -156,9 +156,9 @@ namespace yakl {
         // If you've gone through all of the existing pools, and room hasn't been found, then it's time to add a new pool
         if (!room_found) {
           #ifdef MEMORY_DEBUG
-            if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Current pools are not large enough. "
-                                                   << "Adding a new pool of size "
-                                                   << growSize << " bytes\n";
+            if (yakl::yakl_mainproc()) std::cout << "MEMORY DEBUG: Current pools are not large enough. "
+                                                 << "Adding a new pool of size "
+                                                 << growSize << " bytes\n";
           #endif
           if (bytes > growSize) {
             std::cerr << "ERROR: Trying to allocate " << bytes
@@ -186,8 +186,8 @@ namespace yakl {
     // Free the specified pointer with the specified label
     void free(void *ptr , char const * label = "") {
       #ifdef MEMORY_DEBUG
-        if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: Gator attempting to free " << label
-                                               << " with the pointer: " << ptr << "\n";
+        if (yakl::yakl_mainproc()) std::cout << "MEMORY DEBUG: Gator attempting to free " << label
+                                             << " with the pointer: " << ptr << "\n";
       #endif
       bool pointer_valid = false;
       // Protect against multiple threads trying to free at the same time

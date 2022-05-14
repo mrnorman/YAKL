@@ -343,7 +343,7 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test reshape
     ///////////////////////////////////////////////////////////
-    auto reshaped = test8d.reshape<3>({20,16,1134});
+    auto reshaped = test8d.reshape(20,16,1134);
     memset(reshaped,2.f);
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8*2) { die("SimpleBounds: wrong sum for reshaped test8d"); }
 

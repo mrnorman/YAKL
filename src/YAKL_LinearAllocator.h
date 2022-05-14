@@ -45,7 +45,7 @@ public:
                    std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
     nullify();
 
-    if (yakl::yakl_masterproc()) std::cout << "Create Pool\n";
+    if (yakl::yakl_mainproc()) std::cout << "Create Pool\n";
     if (blockSize%sizeof(size_t) != 0) { die("Error: blockSize must be a multiple of sizeof(size_t)"); }
     this->blockSize = blockSize;
     this->blockInc  = blockSize / sizeof(size_t);
@@ -107,7 +107,7 @@ public:
 
   ~LinearAllocator() {
     if (pool != nullptr) {
-      if (yakl::yakl_masterproc()) std::cout << "Destroy Pool\n";
+      if (yakl::yakl_mainproc()) std::cout << "Destroy Pool\n";
     }
     finalize();
   }
@@ -157,8 +157,8 @@ public:
   // Otherwise, the correct pointer is returned
   void * allocate(size_t bytes, char const * label="") {
     #ifdef MEMORY_DEBUG
-      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: LinearAllocator attempting to allocate "
-                                             << label << " with " << bytes << " bytes\n";
+      if (yakl::yakl_mainproc()) std::cout << "MEMORY DEBUG: LinearAllocator attempting to allocate "
+                                           << label << " with " << bytes << " bytes\n";
     #endif
     if (bytes == 0) {
       return nullptr;
@@ -201,8 +201,8 @@ public:
   // Free the requested pointer
   void free(void *ptr, char const * label = "") {
     #ifdef MEMORY_DEBUG
-      if (yakl::yakl_masterproc()) std::cout << "MEMORY DEBUG: LinearAllocator attempting to free "
-                                             << label << " with the pointer: " << ptr << "\n";
+      if (yakl::yakl_mainproc()) std::cout << "MEMORY DEBUG: LinearAllocator attempting to free "
+                                           << label << " with the pointer: " << ptr << "\n";
     #endif
     for (int i=allocs.size()-1; i >= 0; i--) {
       if (ptr == getPtr(allocs[i].start)) {
