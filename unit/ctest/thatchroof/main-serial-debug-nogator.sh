@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CTEST_BUILD_NAME=master-serial-gnu-debug-nogator
+export CTEST_BUILD_NAME=main-serial-gnu-debug-nogator
 
 unset GATOR_DISABLE
 unset OMP_NUM_THREADS
@@ -36,8 +36,8 @@ export CTEST_VALGRIND=1
 ctest_dir=`pwd`
 cd ${YAKL_CTEST_SRC}
 git fetch origin
-git checkout master
-git reset --hard origin/master
+git checkout main
+git reset --hard origin/main
 git submodule update --init --recursive
 
 rm -rf /home/imn/yakl_ctest/scratch/*

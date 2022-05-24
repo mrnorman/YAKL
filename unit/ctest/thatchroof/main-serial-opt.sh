@@ -1,9 +1,6 @@
 #!/bin/bash
 
-source /sw/andes/lmod/lmod/init/bash
-module load intel cmake
-
-export CTEST_BUILD_NAME=master-openmp-intel-opt
+export CTEST_BUILD_NAME=main-serial-gnu-opt
 
 unset GATOR_DISABLE
 unset OMP_NUM_THREADS
@@ -18,33 +15,30 @@ unset CUDAHOSTCXX
 unset HIPCXX
 unset HIPFLAGS
 
-export OMP_NUM_THREADS=32
+export CC=gcc
+export CXX=g++
+export FC=gfortran
 
-export CC=icc
-export CXX=icpc
-export FC=ifort
+test_home=/home/imn/yakl_ctest
 
-test_home=/gpfs/alpine/stf006/scratch/imn/yakl_ctest/andes
-
-export YAKL_CTEST_SRC=${test_home}/../YAKL
+export YAKL_CTEST_SRC=${test_home}/YAKL
 export YAKL_CTEST_BIN=${test_home}/scratch
-export CTEST_YAKL_ARCH="OPENMP"
-export CTEST_OPENMP_FLAGS="-O3 -qopenmp"
+export CTEST_YAKL_ARCH=""
+export CTEST_CXX_FLAGS="-O3"
 export CTEST_C_FLAGS="-O3"
 export CTEST_F90_FLAGS="-O3"
 export CTEST_LD_FLAGS=""
 export CTEST_GCOV=0
 export CTEST_VALGRIND=0
-export CTEST_MPI_COMMAND=""
 
 ctest_dir=`pwd`
 cd ${YAKL_CTEST_SRC}
 git fetch origin
-git checkout master
-git reset --hard origin/master
+git checkout main
+git reset --hard origin/main
 git submodule update --init --recursive
 
-rm -rf /gpfs/alpine/stf006/scratch/imn/yakl_ctest/andes/scratch/*
+rm -rf /home/imn/yakl_ctest/scratch/*
 
 cd ${ctest_dir}
 

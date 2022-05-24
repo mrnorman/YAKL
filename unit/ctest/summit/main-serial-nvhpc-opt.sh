@@ -1,9 +1,10 @@
 #!/bin/bash
 
-source /sw/andes/lmod/lmod/init/bash
-module load intel cmake
+source $MODULESHOME/init/bash
+module purge
+module load DefApps nvhpc cmake
 
-export CTEST_BUILD_NAME=master-serial-intel-opt
+export CTEST_BUILD_NAME=main-serial-nvhpc-opt
 
 unset GATOR_DISABLE
 unset OMP_NUM_THREADS
@@ -18,11 +19,11 @@ unset CUDAHOSTCXX
 unset HIPCXX
 unset HIPFLAGS
 
-export CC=icc
-export CXX=icpc
-export FC=ifort
+export CC=nvc
+export CXX=nvc++
+export FC=nvfortran
 
-test_home=/gpfs/alpine/stf006/scratch/imn/yakl_ctest/andes
+test_home=/gpfs/alpine/stf006/scratch/imn/yakl_ctest/summit
 
 export YAKL_CTEST_SRC=${test_home}/../YAKL
 export YAKL_CTEST_BIN=${test_home}/scratch
@@ -33,16 +34,16 @@ export CTEST_F90_FLAGS="-O3"
 export CTEST_LD_FLAGS=""
 export CTEST_GCOV=0
 export CTEST_VALGRIND=0
-export CTEST_MPI_COMMAND=""
+export CTEST_MPI_COMMAND="jsrun -n 1 -a 1 -c 1 -g 1"
 
 ctest_dir=`pwd`
 cd ${YAKL_CTEST_SRC}
 git fetch origin
-git checkout master
-git reset --hard origin/master
+git checkout main
+git reset --hard origin/main
 git submodule update --init --recursive
 
-rm -rf /gpfs/alpine/stf006/scratch/imn/yakl_ctest/andes/scratch/*
+rm -rf /gpfs/alpine/stf006/scratch/imn/yakl_ctest/summit/scratch/*
 
 cd ${ctest_dir}
 

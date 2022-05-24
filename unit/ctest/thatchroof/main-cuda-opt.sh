@@ -1,10 +1,6 @@
 #!/bin/bash
 
-source $MODULESHOME/init/bash
-module purge
-module load DefApps nvhpc cmake
-
-export CTEST_BUILD_NAME=master-serial-nvhpc-opt
+export CTEST_BUILD_NAME=main-cuda-gnu-opt
 
 unset GATOR_DISABLE
 unset OMP_NUM_THREADS
@@ -19,33 +15,31 @@ unset CUDAHOSTCXX
 unset HIPCXX
 unset HIPFLAGS
 
-export CC=nvc
-export CXX=nvc++
-export FC=nvfortran
+export CC=gcc
+export CXX=g++
+export FC=gfortran
 
-test_home=/gpfs/alpine/stf006/scratch/imn/yakl_ctest/summit
+test_home=/home/imn/yakl_ctest
 
-export YAKL_CTEST_SRC=${test_home}/../YAKL
+export YAKL_CTEST_SRC=${test_home}/YAKL
 export YAKL_CTEST_BIN=${test_home}/scratch
-export CTEST_YAKL_ARCH=""
-export CTEST_CXX_FLAGS="-O3"
+export CTEST_YAKL_ARCH="CUDA"
+export CTEST_CUDA_FLAGS="-O3 --use_fast_math -arch sm_35 -ccbin g++ -DTHRUST_IGNORE_CUB_VERSION_CHECK"
 export CTEST_C_FLAGS="-O3"
 export CTEST_F90_FLAGS="-O3"
 export CTEST_LD_FLAGS=""
 export CTEST_GCOV=0
 export CTEST_VALGRIND=0
-export CTEST_MPI_COMMAND="jsrun -n 1 -a 1 -c 1 -g 1"
 
 ctest_dir=`pwd`
 cd ${YAKL_CTEST_SRC}
 git fetch origin
-git checkout master
-git reset --hard origin/master
+git checkout main
+git reset --hard origin/main
 git submodule update --init --recursive
 
-rm -rf /gpfs/alpine/stf006/scratch/imn/yakl_ctest/summit/scratch/*
+rm -rf /home/imn/yakl_ctest/scratch/*
 
 cd ${ctest_dir}
 
 ctest -S ctest_script.cmake
-

@@ -10,16 +10,16 @@ cd /ccs/home/imn/yakl_ctest/scripts/summit
 
 source /ccs/home/imn/.bash_profile
 
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/ctest_script.cmake
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/master-cuda-gnu-opt.sh
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/master-openmp45-ibm-opt.sh
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/master-serial-gnu-debug-nogator.sh
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/master-serial-gnu-debug.sh
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/master-serial-gnu-opt.sh
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/master-serial-ibm-opt.sh
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/master-serial-llvm-opt.sh
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/master-serial-nvhpc-opt.sh
-curl -O https://raw.githubusercontent.com/mrnorman/YAKL/master/unit/ctest/summit/run_all.sh
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/ctest_script.cmake
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/main-cuda-gnu-opt.sh
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/main-openmp45-ibm-opt.sh
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/main-serial-gnu-debug-nogator.sh
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/main-serial-gnu-debug.sh
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/main-serial-gnu-opt.sh
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/main-serial-ibm-opt.sh
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/main-serial-llvm-opt.sh
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/main-serial-nvhpc-opt.sh
+curl -O https://raw.githubusercontent.com/mrnorman/YAKL/main/unit/ctest/summit/run_all.sh
 
 chmod 744 *.sh
 

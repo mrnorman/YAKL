@@ -1,5 +1,5 @@
 #!/bin/bash
 
-./master-openmp-intel-opt.sh
-./master-serial-intel-opt.sh
+./main-openmp-intel-opt.sh
+./main-serial-intel-opt.sh
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./master-hip-rocm-opt.sh
-./master-serial-gnu-debug.sh
-./master-serial-gnu-opt.sh
+./main-hip-rocm-opt.sh
+./main-serial-gnu-debug.sh
+./main-serial-gnu-opt.sh
 

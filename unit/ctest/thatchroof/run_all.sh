@@ -1,9 +1,9 @@
 #!/bin/bash
 
-./master-cuda-debug.sh
-./master-cuda-opt.sh
-./master-openmp-opt.sh
-./master-serial-debug-nogator.sh
-./master-serial-debug.sh
-./master-serial-opt.sh
+./main-cuda-debug.sh
+./main-cuda-opt.sh
+./main-openmp-opt.sh
+./main-serial-debug-nogator.sh
+./main-serial-debug.sh
+./main-serial-opt.sh
 
