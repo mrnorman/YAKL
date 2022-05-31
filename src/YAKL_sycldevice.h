@@ -79,7 +79,7 @@ namespace yakl {
       std::vector<std::shared_ptr<sycl::device>> _devs;
       std::vector<std::shared_ptr<sycl::queue>> _queues;
 
-      const unsigned int DEFAULT_DEVICE_ID = 0;
+      unsigned int DEFAULT_DEVICE_ID = 0;
     };
 
     static inline sycl::queue &sycl_default_stream() {
