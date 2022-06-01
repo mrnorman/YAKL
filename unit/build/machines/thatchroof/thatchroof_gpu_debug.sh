@@ -11,9 +11,8 @@ unset CXXFLAGS
 unset FFLAGS
 
 cmake -DYAKL_ARCH="CUDA"                                                                               \
-      -DYAKL_CUDA_FLAGS="-O0 -g -DYAKL_DEBUG -arch sm_35 -ccbin g++ -DTHRUST_IGNORE_CUB_VERSION_CHECK -I/opt/netcdf_gnu/include" \
-      -DYAKL_C_FLAGS="-O3"                                                                             \
+      -DYAKL_CUDA_FLAGS="-O0 -g -DYAKL_DEBUG -arch sm_35 -ccbin g++ -I`nc-config --includedir`" \
       -DYAKL_F90_FLAGS="-O3"                                                                           \
-      -DNETCDF_LINK_FLAGS="`/opt/netcdf_gnu/bin/nc-config --libs`"        \
+      -DNETCDF_LINK_FLAGS="`nc-config --libs`"        \
       ../../..
 

@@ -114,15 +114,17 @@ public:
     if constexpr (rank >= 6) { if (i5 >= this->dimension[5]) ind_out_bounds<5>(i5); }
     if constexpr (rank >= 7) { if (i6 >= this->dimension[6]) ind_out_bounds<6>(i6); }
     if constexpr (rank >= 8) { if (i7 >= this->dimension[7]) ind_out_bounds<7>(i7); }
-    #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-      if constexpr (myMem == memHost) yakl_throw("ERROR: host array being accessed in a device kernel");
-    #endif
-    #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-      if constexpr (myMem == memDevice) {
-        std::cerr << "ERROR: For Array labeled: " << this->myname << ":" << std::endl;
-        std::cerr << "Device array being accessed on the host without managed memory turned on";
-        yakl_throw("");
-      }
+    #ifndef YAKL_UVM
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if constexpr (myMem == memHost) yakl_throw("ERROR: host array being accessed in a device kernel");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if constexpr (myMem == memDevice) {
+          std::cerr << "ERROR: For Array labeled: " << this->myname << ":" << std::endl;
+          std::cerr << "Device array being accessed on the host without managed memory turned on";
+          yakl_throw("");
+        }
+      #endif
     #endif
   }
 
