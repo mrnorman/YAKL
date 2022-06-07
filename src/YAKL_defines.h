@@ -13,7 +13,9 @@
   #define YAKL_INLINE __host__ __device__ __forceinline__
   #define YAKL_DEVICE_INLINE __forceinline__ __device__
   #define YAKL_SCOPE(a,b) auto &a = b
-  #define YAKL_SEPARATE_MEMORY_SPACE
+  #ifndef YAKL_SINGLE_MEMORY_SPACE
+    #define YAKL_SEPARATE_MEMORY_SPACE
+  #endif
   #define YAKL_CURRENTLY_ON_HOST() (! defined(__CUDA_ARCH__))
   #define YAKL_CURRENTLY_ON_DEVICE() (defined(__CUDA_ARCH__))
 
@@ -24,7 +26,9 @@
   #define YAKL_INLINE __host__ __device__ __forceinline__
   #define YAKL_DEVICE_INLINE __forceinline__ __device__
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
-  #define YAKL_SEPARATE_MEMORY_SPACE
+  #ifndef YAKL_SINGLE_MEMORY_SPACE
+    #define YAKL_SEPARATE_MEMORY_SPACE
+  #endif
   #define YAKL_CURRENTLY_ON_HOST() (! defined(__HIP_DEVICE_COMPILE__))
   #define YAKL_CURRENTLY_ON_DEVICE() (defined(__HIP_DEVICE_COMPILE__))
 
@@ -35,7 +39,9 @@
   #define YAKL_INLINE __inline__ __attribute__((always_inline))
   #define YAKL_DEVICE_INLINE __inline__ __attribute__((always_inline))
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
-  #define YAKL_SEPARATE_MEMORY_SPACE
+  #ifndef YAKL_SINGLE_MEMORY_SPACE
+    #define YAKL_SEPARATE_MEMORY_SPACE
+  #endif
   #define YAKL_CURRENTLY_ON_HOST() (! defined(__SYCL_DEVICE_ONLY__))
   #define YAKL_CURRENTLY_ON_DEVICE() (defined(__SYCL_DEVICE_ONLY__))
   #ifdef __SYCL_DEVICE_ONLY__
