@@ -244,13 +244,7 @@ namespace yakl {
       ::atomicAdd( &update , value );
     }
     __device__ __forceinline__ void atomicAdd_device(double &update , double value) {
-      unsigned long long oldval, newval, readback;
-      oldval = __double_as_longlong(update);
-      newval = __double_as_longlong( __longlong_as_double(oldval) + value );
-      while ( ( readback = atomicCAS( (unsigned long long *) &update , oldval , newval ) ) != oldval ) {
-        oldval = readback;
-        newval = __double_as_longlong( __longlong_as_double(oldval) + value );
-      }
+      ::atomicAdd( &update , value );
     }
     __device__ __forceinline__ void atomicAdd_device(int &update , int value) {
       ::atomicAdd( &update , value );
