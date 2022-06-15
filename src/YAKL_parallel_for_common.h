@@ -460,6 +460,9 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
   #ifdef YAKL_ARCH_CUDA
     nvtxRangePushA(str);
   #endif
+  #ifdef YAKL_ARCH_HIP
+    roctxRangePush(str);
+  #endif
   #ifdef YAKL_AUTO_PROFILE
     timer_start(str);
   #endif
@@ -495,6 +498,9 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
 
   #ifdef YAKL_AUTO_PROFILE
     timer_stop(str);
+  #endif
+  #ifdef YAKL_ARCH_HIP
+    roctxRangePop();
   #endif
   #ifdef YAKL_ARCH_CUDA
     nvtxRangePop();

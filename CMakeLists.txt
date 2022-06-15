@@ -24,20 +24,6 @@ else()
   message(FATAL_ERROR "** YAKL_ARCH set to an invalid backend target: ${YAKL_ARCH} **")
 endif()
 
-# Have to ensure HIP configure has happened
-if ("${YAKL_ARCH}" STREQUAL "HIP")
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/rocPRIM/rocprim/include/rocprim/rocprim_version.hpp.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/rocPRIM/rocprim/include/rocprim/rocprim_version.hpp"
-    @ONLY
-  )
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/hipCUB/hipcub/include/hipcub/hipcub_version.hpp.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/hipCUB/hipcub/include/hipcub/hipcub_version.hpp"
-    @ONLY
-  )
-endif()
-
 include(yakl_utils.cmake)
 
 yakl_process_cxx_source_files("${YAKL_CXX_SOURCE}")
@@ -57,8 +43,7 @@ if ("${YAKL_ARCH}" STREQUAL "CUDA")
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "HIP")
-  target_include_directories(yakl PUBLIC hipCUB/hipcub/include)
-  target_include_directories(yakl PUBLIC rocPRIM/rocprim/include)
+  target_link_libraries(yakl roctx64)
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "SYCL")

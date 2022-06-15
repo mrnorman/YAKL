@@ -44,7 +44,8 @@
   #include <cub/cub.cuh>
 #elif defined(YAKL_ARCH_HIP)
   #include "hip/hip_runtime.h"
-  #include <hipcub/hipcub.hpp>
+  #include "hipcub/hipcub.hpp"
+  #include "roctracer/roctx.h"
 #elif defined(YAKL_ARCH_SYCL)
   #include <CL/sycl.hpp>
 #elif defined(YAKL_ARCH_OPENMP)
