@@ -461,7 +461,7 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
     nvtxRangePushA(str);
   #endif
   #ifdef YAKL_ARCH_HIP
-    roctxRangePush(str);
+    roctxRangePushA(str);
   #endif
   #ifdef YAKL_AUTO_PROFILE
     timer_start(str);
