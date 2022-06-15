@@ -15,7 +15,6 @@ namespace yakl {
     #elif defined(YAKL_ARCH_OPENMP)
       #pragma omp barrier
     #endif
-    check_last_error();
   }
 
   // Block further work on the inner parallelism level until previous work is completed

@@ -6,6 +6,19 @@
   #define YAKL_MANAGED_MEMORY
 #endif
 
+#ifdef YAKL_DEBUG
+  #ifndef YAKL_AUTO_FENCE
+    #define YAKL_AUTO_FENCE
+  #endif
+#endif
+
+#ifdef YAKL_AUTO_PROFILE
+  #ifndef YAKL_PROFILE
+    #define YAKL_PROFILE
+  #endif
+#endif
+
+
 #ifdef YAKL_ARCH_CUDA
 
   #define YAKL_LAMBDA [=] __host__ __device__

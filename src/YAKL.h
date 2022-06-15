@@ -66,10 +66,10 @@ namespace yakl {
   int constexpr COLON = std::numeric_limits<int>::min(); // Label for the ":" from Fortrna array slicing
 }
 
-#include "YAKL_error.h"
 #include "YAKL_sycldevice.h"
 #include "YAKL_LaunchConfig.h"
 #include "YAKL_fence.h"
+#include "YAKL_error.h"
 #include "YAKL_simd.h"
 #include "YAKL_alloc_free.h"
 #include "YAKL_memory_pool.h"
@@ -77,10 +77,10 @@ namespace yakl {
 #include "YAKL_init.h"
 #include "YAKL_finalize.h"
 #include "YAKL_parallel_for.h"
+#include "YAKL_mem_transfers.h"
 #include "YAKL_reductions.h"
 #include "YAKL_atomics.h"
 #include "YAKL_random.h"
-#include "YAKL_mem_transfers.h"
 #include "YAKL_Array.h"
 #include "YAKL_ScalarLiveOut.h"
 #include "extensions/YAKL_componentwise.h"

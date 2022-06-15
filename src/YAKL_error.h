@@ -8,6 +8,7 @@ namespace yakl {
   YAKL_INLINE void yakl_throw(const char * msg) {
     // If we're on the host, then let's throw a real exception
     #if YAKL_CURRENTLY_ON_HOST()
+      fence();
       std::cerr << "YAKL FATAL ERROR:\n";
       std::cerr << msg << std::endl;
       throw msg;
@@ -30,6 +31,7 @@ namespace yakl {
   // Check if any errors have been thrown by the runtimes
   inline void check_last_error() {
     #ifdef YAKL_DEBUG
+      fence();
       #ifdef YAKL_ARCH_CUDA
         auto ierr = cudaGetLastError();
         if (ierr != cudaSuccess) { yakl_throw( cudaGetErrorString( ierr ) ); }

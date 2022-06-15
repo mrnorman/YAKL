@@ -31,6 +31,9 @@ public:
     #endif
     if (myMem == memHost) { memcpy_host_to_host  ( lhs.myData , this->myData , this->totElems() ); }
     else                  { memcpy_device_to_host( lhs.myData , this->myData , this->totElems() ); }
+    #ifdef YAKL_AUTO_FENCE
+      fence();
+    #endif
   }
 
 
@@ -43,6 +46,9 @@ public:
     #endif
     if (myMem == memHost) { memcpy_host_to_device  ( lhs.myData , this->myData , this->totElems() ); }
     else                  { memcpy_device_to_device( lhs.myData , this->myData , this->totElems() ); }
+    #ifdef YAKL_AUTO_FENCE
+      fence();
+    #endif
   }
 
 

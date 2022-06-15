@@ -21,7 +21,7 @@ namespace yakl {
         if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
       #endif
       ScalarLiveOut<bool> any_true(false);
-      c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) { if (arr.data()[i]) any_true = true; });
+      c::parallel_for( "YAKL_internal_any" , arr.totElems() , YAKL_LAMBDA (int i) { if (arr.data()[i]) any_true = true; });
       return any_true.hostRead();
     }
 

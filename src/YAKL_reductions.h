@@ -62,6 +62,9 @@ namespace yakl {
       ParallelReduction(int const nItems) { tmp = NULL; setup(nItems); }
       ~ParallelReduction() { finalize(); }
       void setup(int const nItems) {
+        #ifdef YAKL_AUTO_PROFILE
+          timer_start("YAKL_internal_reduction_setup");
+        #endif
         finalize();
         rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
@@ -76,6 +79,9 @@ namespace yakl {
         }
         tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
+        #ifdef YAKL_AUTO_PROFILE
+          timer_stop("YAKL_internal_reduction_setup");
+        #endif
       }
       void finalize() {
         if (tmp != NULL) {
@@ -85,6 +91,9 @@ namespace yakl {
         tmp = NULL;
       }
       T operator() (T *data) {
+        #ifdef YAKL_AUTO_PROFILE
+          timer_start("YAKL_internal_reduction_apply");
+        #endif
         T rslt;
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
           hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
@@ -95,9 +104,12 @@ namespace yakl {
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
           hipcub::DeviceReduce::Reduce(tmp, nTmp, data, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, 0 );
         }
-        hipMemcpyAsync(&rslt,rsltP,sizeof(T),hipMemcpyDeviceToHost,0);       // Copy result to host
+        memcpy_device_to_host(&rslt , rsltP , 1 );
         check_last_error();
         fence();
+        #ifdef YAKL_AUTO_PROFILE
+          timer_stop("YAKL_internal_reduction_apply");
+        #endif
         return rslt;
       }
     };
@@ -116,6 +128,9 @@ namespace yakl {
       ParallelReduction(int const nItems) { tmp = NULL; setup(nItems); }
       ~ParallelReduction() { finalize(); }
       void setup(int const nItems) {
+        #ifdef YAKL_AUTO_PROFILE
+          timer_start("YAKL_internal_reduction_setup");
+        #endif
         finalize();
         rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
@@ -130,6 +145,9 @@ namespace yakl {
         }
         tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
         this->nItems = nItems;
+        #ifdef YAKL_AUTO_PROFILE
+          timer_stop("YAKL_internal_reduction_setup");
+        #endif
       }
       void finalize() {
         if (tmp != NULL) {
@@ -139,6 +157,9 @@ namespace yakl {
         tmp = NULL;
       }
       T operator() (T *data) {
+        #ifdef YAKL_AUTO_PROFILE
+          timer_start("YAKL_internal_reduction_apply");
+        #endif
         T rslt;
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
           cub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
@@ -149,9 +170,12 @@ namespace yakl {
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
           cub::DeviceReduce::Reduce(tmp, nTmp, data ,rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, 0 );
         }
-        cudaMemcpyAsync(&rslt,rsltP,sizeof(T),cudaMemcpyDeviceToHost,0);       // Copy result to host
+        memcpy_device_to_host(&rslt , rsltP , 1 );
         check_last_error();
         fence();
+        #ifdef YAKL_AUTO_PROFILE
+          timer_stop("YAKL_internal_reduction_apply");
+        #endif
         return rslt;
       }
     };
@@ -167,9 +191,15 @@ namespace yakl {
       ParallelReduction(int const nItems) { rsltP = nullptr; setup(nItems); }
       ~ParallelReduction() { finalize(); }
       void setup(int const nItems) {
+        #ifdef YAKL_AUTO_PROFILE
+          timer_start("YAKL_internal_reduction_setup");
+        #endif
         finalize();
         rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
         this->nItems = nItems;
+        #ifdef YAKL_AUTO_PROFILE
+          timer_stop("YAKL_internal_reduction_setup");
+        #endif
       }
 
       void finalize() {
@@ -179,6 +209,9 @@ namespace yakl {
         rsltP = nullptr;
       }
       T operator() (T *data) {
+        #ifdef YAKL_AUTO_PROFILE
+          timer_start("YAKL_internal_reduction_apply");
+        #endif
         T rslt=0;
         sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
           if constexpr        (RED == YAKL_REDUCTION_MIN) {
@@ -203,8 +236,11 @@ namespace yakl {
                              [=] (sycl::id<1> idx, auto& prod) { prod.combine(data[idx]); });
           }
         });
-        sycl_default_stream().memcpy(&rslt,rsltP,sizeof(T)); // Copy result to host
+        memcpy_device_to_host(&rslt , rsltP , 1 );
         fence();
+        #ifdef YAKL_AUTO_PROFILE
+          timer_stop("YAKL_internal_reduction_apply");
+        #endif
         return rslt;
       }
     };
@@ -222,6 +258,9 @@ namespace yakl {
       ~ParallelReduction() {}
       void setup(int nItems) { this->nItems = nItems; }
       T operator() (T *data) {
+        #ifdef YAKL_AUTO_PROFILE
+          timer_start("YAKL_internal_reduction_apply");
+        #endif
         T rslt = data[0];
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
           #pragma omp parallel for reduction(min:rslt)
@@ -236,6 +275,9 @@ namespace yakl {
           #pragma omp parallel for reduction(*:rslt)
           for (int i=1; i<nItems; i++) { rslt *= data[i]; }
         }
+        #ifdef YAKL_AUTO_PROFILE
+          timer_stop("YAKL_internal_reduction_apply");
+        #endif
         return rslt;
       }
     };

@@ -27,7 +27,7 @@ namespace yakl {
       yakl_is_initialized = false;
 
       // Finalize the timers
-      #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
+      #if defined(YAKL_PROFILE)
         timer_finalize();
       #endif
 

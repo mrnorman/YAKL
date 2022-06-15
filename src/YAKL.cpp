@@ -20,7 +20,7 @@ namespace yakl {
   std::function<void ()> timer_init = [] () {};
 
   std::function<void ()> timer_finalize = [] () {
-    #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
+    #if defined(YAKL_PROFILE)
       if (yakl_mainproc()) {
         timer.print_all_threads();
       }
@@ -28,14 +28,14 @@ namespace yakl {
   };
 
   std::function<void (char const *)> timer_start = [] (char const *label) {
-    #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
+    #if defined(YAKL_PROFILE)
       fence();
       timer.start( label );
     #endif
   };
 
   std::function<void (char const *)> timer_stop = [] (char const * label) {
-    #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
+    #if defined(YAKL_PROFILE)
       fence();
       timer.stop( label );
     #endif

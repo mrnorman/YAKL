@@ -300,7 +300,7 @@ public:
   void memset_loc(TLOC rhs) {
     if (myMem == memDevice) {
       YAKL_SCOPE( arr , *this );
-      c::parallel_for( this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
+      c::parallel_for( "YAKL_internal_Array=scalar" , this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
     } else {
       for (int i=0; i < this->totElems(); i++) { this->myData[i] = rhs; }
     }

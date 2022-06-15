@@ -10,7 +10,7 @@ namespace yakl {
 
     // If YAKL is already initialized, then don't do anything
     if ( ! isInitialized() ) {
-      #if defined(YAKL_PROFILE) || defined(YAKL_AUTO_PROFILE)
+      #if defined(YAKL_PROFILE)
         if (yakl_mainproc()) std::cout << "Using YAKL Timers\n";
         timer_init();
       #endif
@@ -64,6 +64,7 @@ namespace yakl {
       // Allocate functorBuffer
       #ifdef YAKL_ARCH_CUDA
         cudaMalloc(&functorBuffer,functorBufSize);
+        fence();
       #endif
       #ifdef YAKL_ARCH_SYCL
         if (yakl_mainproc()) std::cout << "Running on "
@@ -90,7 +91,7 @@ namespace yakl {
         if (yakl_mainproc()) std::cout << props.name << std::endl;
       #endif
 
-      #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+      #if defined(YAKL_AUTO_FENCE)
         if (yakl_mainproc()) std::cout << "INFORM: Automatically inserting fence() after every parallel_for"
                                        << std::endl;
       #endif
