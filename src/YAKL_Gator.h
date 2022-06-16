@@ -14,7 +14,6 @@ namespace yakl {
     std::function<void( void *, size_t )> myzero;   // zero function
     size_t growSize;   // Amount by which the pool grows in bytes
     size_t blockSize;  // Minimum allocation size
-    bool   enabled;    // Whether the pool allocation is to be used
 
     std::mutex mtx;    // Internal mutex used to protect alloc and free in threaded regions
 
@@ -27,14 +26,6 @@ namespace yakl {
   public:
 
     Gator() {
-      enabled = false;
-    }
-
-
-    Gator( std::function<void *( size_t )>       mymalloc ,
-           std::function<void( void * )>         myfree   ,
-           std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
-      init(mymalloc,myfree,myzero);
     }
 
 
@@ -50,75 +41,23 @@ namespace yakl {
 
     // Initialize the pool allocator using environment variables and the passed malloc, free, and zero functions
     void init( std::function<void *( size_t )>       mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); } ,
-               std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); } ,
-               std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ) {
-      this->mymalloc = mymalloc;
-      this->myfree   = myfree  ;
-      this->myzero   = myzero  ;
+               std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); }                         ,
+               std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {}                         ,
+               size_t initialSize = 1024*1024*1024                                                                       ,
+               size_t growSize    = 1024*1024*1024                                                                       ,
+               size_t blockSize   = sizeof(size_t) ) {
+      this->mymalloc  = mymalloc ;
+      this->myfree    = myfree   ;
+      this->myzero    = myzero   ;
+      this->growSize  = growSize ;
+      this->blockSize = blockSize;
 
-      // Default to 1GB initial size and grow size
-      size_t initialSize = 1024*1024*1024;
-      this->growSize     = initialSize;
-      this->blockSize    = sizeof(size_t);
-
-      enabled = true;
-      // Disable the pool if the GATOR_DISABLE environment variable is set to something that seems like "yes"
-      char * env = std::getenv("GATOR_DISABLE");
-      if ( env != nullptr ) {
-        std::string resp(env);
-        if (resp == "yes" || resp == "YES" || resp == "1" || resp == "true" || resp == "TRUE" || resp == "T") {
-          enabled = false;
-        }
-      }
-
-      // Check for GATOR_INITIAL_MB environment variable
-      env = std::getenv("GATOR_INITIAL_MB");
-      if ( env != nullptr ) {
-        long int initial_mb = atol(env);
-        if (initial_mb != 0) {
-          initialSize = initial_mb*1024*1024;
-          this->growSize = initialSize;
-        } else {
-          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
-        }
-      }
-
-      // Check for GATOR_GROW_MB environment variable
-      env = std::getenv("GATOR_GROW_MB");
-      if ( env != nullptr ) {
-        long int grow_mb = atol(env);
-        if (grow_mb != 0) {
-          this->growSize = grow_mb*1024*1024;
-        } else {
-          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
-        }
-      }
-
-      // Check for GATOR_BLOCK_BYTES environment variable
-      env = std::getenv("GATOR_BLOCK_BYTES");
-      if ( env != nullptr ) {
-        long int block_bytes = atol(env);
-        if (block_bytes != 0 && block_bytes%sizeof(size_t) == 0) {
-          this->blockSize = block_bytes;
-        } else {
-          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 128*sizeof(size_t)\n";
-          if (yakl::yakl_mainproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of sizeof(size_t)\n";
-        }
-      }
-
-      if (enabled) {
-        // Create the initial pool if the pool allocator is to be used
-        pools.push_back( LinearAllocator(initialSize , blockSize , mymalloc , myfree , myzero) );
-      }
+      // Create the initial pool if the pool allocator is to be used
+      pools.push_back( LinearAllocator(initialSize , blockSize , mymalloc , myfree , myzero) );
     }
 
 
-    void finalize() {
-      // Delete the existing pools
-      if (enabled) {
-        pools = std::list<LinearAllocator>();
-      }
-    }
+    void finalize() { pools = std::list<LinearAllocator>(); }
 
 
     void printAllocsLeft() {

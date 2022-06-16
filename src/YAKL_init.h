@@ -23,11 +23,47 @@ namespace yakl {
 
       // Initialize the memory pool and default allocators
       if (use_pool()) {
+        size_t initialSize = 1024*1024*1024;
+        size_t growSize    = 1024*1024*1024;
+        size_t blockSize   = sizeof(size_t);
+        // Check for GATOR_INITIAL_MB environment variable
+        char *env = std::getenv("GATOR_INITIAL_MB");
+        if ( env != nullptr ) {
+          long int initial_mb = atol(env);
+          if (initial_mb != 0) {
+            initialSize = initial_mb*1024*1024;
+            growSize = initialSize;
+          } else {
+            if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
+          }
+        }
+        // Check for GATOR_GROW_MB environment variable
+        env = std::getenv("GATOR_GROW_MB");
+        if ( env != nullptr ) {
+          long int grow_mb = atol(env);
+          if (grow_mb != 0) {
+            growSize = grow_mb*1024*1024;
+          } else {
+            if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
+          }
+        }
+        // Check for GATOR_BLOCK_BYTES environment variable
+        env = std::getenv("GATOR_BLOCK_BYTES");
+        if ( env != nullptr ) {
+          long int block_bytes = atol(env);
+          if (block_bytes != 0 && block_bytes%sizeof(size_t) == 0) {
+            blockSize = block_bytes;
+          } else {
+            if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 128*sizeof(size_t)\n";
+            if (yakl::yakl_mainproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of sizeof(size_t)\n";
+          }
+        }
         // Set the allocation and deallocation functions
         std::function<void *( size_t )> alloc;
         std::function<void ( void * )>  dealloc;
         set_device_alloc_free(alloc , dealloc);
-        pool.init(alloc,dealloc);
+        auto zero = [] (void *ptr, size_t bytes) {};
+        pool.init(alloc,dealloc,zero,initialSize,growSize,blockSize);
       }
 
       set_yakl_allocators_to_default();
