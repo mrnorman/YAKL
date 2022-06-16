@@ -3,6 +3,15 @@
 // Included by YAKL.h
 
 namespace yakl {
+
+  // Labels for Array styles. C has zero-based indexing with the last index varying the fastest.
+  // Fortran has 1-based indexing with arbitrary lower bounds and the index varying the fastest.
+  int constexpr styleC       = 1;
+  int constexpr styleFortran = 2;
+  int constexpr styleDefault = styleC;
+
+  int constexpr COLON = std::numeric_limits<int>::min(); // Label for the ":" from Fortrna array slicing
+
   // The one template to rule them all for the Array class
   // This ultimately describes dynamics and static / stack Arrays in all types, ranks, memory spaces, and styles
   template <class T, int rank, int myMem=memDefault, int myStyle=styleDefault> class Array;

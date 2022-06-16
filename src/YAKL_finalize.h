@@ -24,6 +24,8 @@ namespace yakl {
         check_last_error();
       #endif
 
+      functorBuffer = nullptr;
+
       yakl_is_initialized = false;
 
       // Finalize the timers
@@ -31,7 +33,18 @@ namespace yakl {
         timer_finalize();
       #endif
 
-      // Reset the global std::functions for host and device alloc and free
+      timer_init = [] () {
+        yakl_throw("ERROR: attempting to call the yakl::timer_init(); before calling yakl::init()");
+      };
+      timer_finalize = [] () {
+        yakl_throw("ERROR: attempting to call the yakl::timer_finalize(); before calling yakl::init()");
+      };
+      timer_start = [] (char const *label) {
+        yakl_throw("ERROR: attempting to call the yakl::timer_start(); before calling yakl::init()");
+      };
+      timer_stop = [] (char const * label) {
+        yakl_throw("ERROR: attempting to call the yakl::timer_stop(); before calling yakl::init()");
+      };
       yaklAllocDevice = [] ( size_t bytes , char const *label ) -> void* {
         yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
         return nullptr;

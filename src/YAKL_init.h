@@ -3,63 +3,62 @@
 // Included by YAKL.h
 
 namespace yakl {
+
+  extern bool yakl_is_initialized;
+
+  inline bool isInitialized() { return yakl_is_initialized; }
+
   // Initialize the YAKL framework
-  // Initialize timers, set global std::functions for alloc and free, allocate functorBuffer
-  inline void init() {
+  // Set global std::functions for alloc and free, allocate functorBuffer
+  inline void init( InitConfig config = InitConfig() ) {
     yakl_mtx.lock();
 
     // If YAKL is already initialized, then don't do anything
     if ( ! isInitialized() ) {
       #if defined(YAKL_PROFILE)
         if (yakl_mainproc()) std::cout << "Using YAKL Timers\n";
-        timer_init();
       #endif
-      bool use_pool = true;
 
       yakl_is_initialized = true;
 
-      // Check for pool allocator env var
-      char * env = std::getenv("GATOR_DISABLE");
-      if ( env != nullptr ) {
-        std::string resp(env);
-        if (resp == "yes" || resp == "YES" || resp == "1" || resp == "true" || resp == "TRUE" || resp == "T") {
-          use_pool = false;
-        }
-      }
-
-      if (use_pool) {
-
+      // Initialize the memory pool and default allocators
+      if (use_pool()) {
         // Set the allocation and deallocation functions
         std::function<void *( size_t )> alloc;
         std::function<void ( void * )>  dealloc;
-        yakl::set_alloc_free(alloc , dealloc);
+        set_device_alloc_free(alloc , dealloc);
         pool.init(alloc,dealloc);
-
-        // Assign the global std::functions for device allocation and free
-        // Perform all allocs and frees through the pool
-        yaklAllocDevice = [] (size_t bytes , char const *label) -> void * {
-          return pool.allocate( bytes , label );
-        };
-        yaklFreeDevice  = [] (void *ptr , char const *label)              {
-          pool.free( ptr , label );
-        };
-
-      } else {
-
-        // Set the allocation and deallocation functions
-        std::function<void *( size_t)> alloc;
-        std::function<void ( void *)>  dealloc;
-        set_alloc_free(alloc , dealloc);
-
-        // Assign the global std::functions for device allocation and free
-        yaklAllocDevice = [=] (size_t bytes , char const *label) -> void * { return alloc(bytes); };
-        yaklFreeDevice  = [=] (void *ptr , char const *label)              { dealloc(ptr); };
-
       }
 
-      // Assign the global std::functions for host allocation and free
-      yaklAllocHost = [] (size_t bytes , char const *label) -> void * { return malloc(bytes); };
-      yaklFreeHost  = [] (void *ptr , char const *label) { free(ptr); };
+      set_yakl_allocators_to_default();
+
+      // Initialize the default timers
+      timer_init = [] () {};
+      timer_finalize = [] () {
+        #if defined(YAKL_PROFILE)
+          if (yakl_mainproc()) { timer.print_all_threads(); }
+        #endif
+      };
+      timer_start = [] (char const *label) {
+        #if defined(YAKL_PROFILE)
+          fence();  timer.start( label );
+        #endif
+      };
+      timer_stop = [] (char const * label) {
+        #if defined(YAKL_PROFILE)
+          fence();  timer.stop( label );
+        #endif
+      };
+
+      // If the user specified overrides in the InitConfig, apply them here
+      if (config.get_host_allocator    ()) yaklAllocHost   = config.get_host_allocator    ();
+      if (config.get_device_allocator  ()) yaklAllocDevice = config.get_device_allocator  ();
+      if (config.get_host_deallocator  ()) yaklFreeHost    = config.get_host_deallocator  ();
+      if (config.get_device_deallocator()) yaklFreeDevice  = config.get_device_deallocator();
+      if (config.get_timer_init        ()) timer_init      = config.get_timer_init        ();
+      if (config.get_timer_finalize    ()) timer_finalize  = config.get_timer_finalize    ();
+      if (config.get_timer_start       ()) timer_start     = config.get_timer_start       ();
+      if (config.get_timer_stop        ()) timer_stop      = config.get_timer_stop        ();
 
       // Allocate functorBuffer
       #ifdef YAKL_ARCH_CUDA
