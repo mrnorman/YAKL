@@ -23,9 +23,11 @@ namespace yakl {
 
       // Initialize the memory pool and default allocators
       if (use_pool()) {
+        // Set pool defaults if environment variables are not set
         size_t initialSize = 1024*1024*1024;
         size_t growSize    = 1024*1024*1024;
         size_t blockSize   = sizeof(size_t);
+
         // Check for GATOR_INITIAL_MB environment variable
         char *env = std::getenv("GATOR_INITIAL_MB");
         if ( env != nullptr ) {
@@ -63,7 +65,13 @@ namespace yakl {
         std::function<void ( void * )>  dealloc;
         set_device_alloc_free(alloc , dealloc);
         auto zero = [] (void *ptr, size_t bytes) {};
-        pool.init(alloc,dealloc,zero,initialSize,growSize,blockSize);
+        std::string pool_name = "Gator: YAKL's primary memory pool";
+        std::string error_message_out_of_memory = "To set the initial pool size, set the shell environment variable "
+              "GATOR_INITIAL_MB. \nTo set the size of additional pools (grow size), set the shell environment variable "
+              "GATOR_GROW_MB.\n";
+        std::string error_message_cannot_grow = error_message_out_of_memory;
+        pool.init(alloc,dealloc,zero,initialSize,growSize,blockSize,pool_name,
+                  error_message_out_of_memory,error_message_cannot_grow);
       }
 
       set_yakl_allocators_to_default();
