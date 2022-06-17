@@ -66,7 +66,7 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_setup");
         #endif
         finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T),"Parallel Reduction Result"); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
           hipcub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
@@ -77,7 +77,7 @@ namespace yakl {
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
           hipcub::DeviceReduce::Reduce(tmp, nTmp, rsltP, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1 );
         }
-        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp,"Parallel Reduction Temporary");       // Allocate temporary storage
         this->nItems = nItems;
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_setup");
@@ -85,8 +85,8 @@ namespace yakl {
       }
       void finalize() {
         if (tmp != NULL) {
-          yaklFreeDevice(rsltP,"");
-          yaklFreeDevice(tmp,"");
+          yaklFreeDevice(rsltP,"Parallel Reduction Result");
+          yaklFreeDevice(tmp,"Parallel Reduction Temporary");
         }
         tmp = NULL;
       }
@@ -132,7 +132,7 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_setup");
         #endif
         finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T),"Parallel Reduction Result"); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
           cub::DeviceReduce::Min(tmp, nTmp, rsltP , rsltP , nItems );
@@ -143,7 +143,7 @@ namespace yakl {
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
           cub::DeviceReduce::Reduce(tmp, nTmp, rsltP, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1 );
         }
-        tmp = yaklAllocDevice(nTmp,"");       // Allocate temporary storage
+        tmp = yaklAllocDevice(nTmp,"Parallel Reduction Temporary");       // Allocate temporary storage
         this->nItems = nItems;
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_setup");
@@ -151,8 +151,8 @@ namespace yakl {
       }
       void finalize() {
         if (tmp != NULL) {
-          yaklFreeDevice(rsltP,"");
-          yaklFreeDevice(tmp,"");
+          yaklFreeDevice(rsltP,"Parallel Reduction Result");
+          yaklFreeDevice(tmp,"Parallel Reduction Temporary");
         }
         tmp = NULL;
       }
@@ -195,7 +195,7 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_setup");
         #endif
         finalize();
-        rsltP = (T *) yaklAllocDevice(sizeof(T),""); // Allocate device pointer for result
+        rsltP = (T *) yaklAllocDevice(sizeof(T),"Parallel Reduction Result"); // Allocate device pointer for result
         this->nItems = nItems;
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_setup");
@@ -204,7 +204,7 @@ namespace yakl {
 
       void finalize() {
         if(rsltP != nullptr) {
-          yaklFreeDevice(rsltP,"");
+          yaklFreeDevice(rsltP,"Parallel Reduction Result");
         }
         rsltP = nullptr;
       }

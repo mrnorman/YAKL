@@ -141,17 +141,59 @@ namespace yakl {
   inline void set_yakl_allocators_to_default() {
     fence();
     if (use_pool()) {
-      yaklAllocDevice = [] (size_t bytes , char const *label) -> void * { return pool.allocate( bytes , label ); };
-      yaklFreeDevice  = [] (void *ptr , char const *label)              { pool.free( ptr , label ); };
+      yaklAllocDevice = [] (size_t bytes , char const *label) -> void * {
+        #ifdef YAKL_MEMORY_DEBUG
+          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label " << label << " of size " << bytes << " bytes";
+        #endif
+        void * ptr = pool.allocate( bytes , label );
+        #ifdef YAKL_MEMORY_DEBUG
+          if (yakl_mainproc()) std::cout << " and pointer address " << ptr << std::endl;
+        #endif
+        return ptr;
+      };
+      yaklFreeDevice  = [] (void *ptr , char const *label)              {
+        #ifdef YAKL_MEMORY_DEBUG
+          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Freeing label " << label << " with pointer address " << ptr << std::endl;
+        #endif
+        pool.free( ptr , label );
+      };
     } else {
       std::function<void *( size_t)> alloc;
       std::function<void ( void *)>  dealloc;
       set_device_alloc_free(alloc , dealloc);
-      yaklAllocDevice = [=] (size_t bytes , char const *label) -> void * { return alloc(bytes); };
-      yaklFreeDevice  = [=] (void *ptr , char const *label)              { dealloc(ptr); };
+      yaklAllocDevice = [=] (size_t bytes , char const *label) -> void * {
+        #ifdef YAKL_MEMORY_DEBUG
+          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label " << label << " of size " << bytes << " bytes";
+        #endif
+        void * ptr = alloc(bytes);
+        #ifdef YAKL_MEMORY_DEBUG
+          if (yakl_mainproc()) std::cout << " and pointer address " << ptr << std::endl;
+        #endif
+        return ptr;
+      };
+      yaklFreeDevice  = [=] (void *ptr , char const *label)              {
+        #ifdef YAKL_MEMORY_DEBUG
+          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Freeing label " << label << " with pointer address " << ptr << std::endl;
+        #endif
+        dealloc(ptr);
+      };
     }
-    yaklAllocHost = [] (size_t bytes , char const *label) -> void * { return malloc(bytes); };
-    yaklFreeHost  = [] (void *ptr , char const *label) { free(ptr); };
+    yaklAllocHost = [] (size_t bytes , char const *label) -> void * {
+      #ifdef YAKL_MEMORY_DEBUG
+        if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label " << label << " of size " << bytes << " bytes";
+      #endif
+      void *ptr = malloc(bytes);
+      #ifdef YAKL_MEMORY_DEBUG
+        if (yakl_mainproc()) std::cout << " and pointer address " << ptr << std::endl;
+      #endif
+      return ptr;
+    };
+    yaklFreeHost  = [] (void *ptr , char const *label) {
+      #ifdef YAKL_MEMORY_DEBUG
+        if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Freeing label " << label << " with pointer address " << ptr << std::endl;
+      #endif
+      free(ptr);
+    };
   }
 
 
