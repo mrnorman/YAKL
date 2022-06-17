@@ -49,9 +49,11 @@ namespace yakl {
                      std::string                           error_message_out_of_memory = "" ) {
       nullify();
 
-      if (yakl::yakl_mainproc()) std::cout << "Create Pool\n";
+      #if defined(YAKL_DEBUG) || defined(YAKL_MEMORY_DEBUG)
+        if (yakl::yakl_mainproc()) std::cout << "Create Pool labeled: \"" << pool_name << "\"\n";
+      #endif
       if (blockSize%sizeof(size_t) != 0) {
-        std::cerr << "ERROR: Pool labeled " << pool_name << " -> LinearAllocator:" << std::endl;
+        std::cerr << "ERROR: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
         die("Error: LinearAllocator blockSize must be a multiple of sizeof(size_t)");
       }
       this->blockSize = blockSize;
@@ -63,8 +65,9 @@ namespace yakl {
       this->pool      = mymalloc( poolSize() );
       this->allocs    = std::vector<AllocNode>();
       this->allocs.reserve(128);  // Make sure there is initial room for 128 entries
+      this->pool_name = pool_name;
       if (pool == nullptr) {
-        std::cerr << "ERROR: Pool labeled " << pool_name << " -> LinearAllocator:" << std::endl;
+        std::cerr << "ERROR: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
         std::cerr << "Could not create pool of size " << bytes << " bytes (" << bytes/1024./1024./1024. << " GB)."
                   << "\nYou have run out of memory." << std::endl;
         std::cerr << "When individual variables consume sizable percentages of a pool, memory gets segmented, and "
@@ -89,6 +92,7 @@ namespace yakl {
       this->mymalloc  = rhs.mymalloc ;
       this->myfree    = rhs.myfree   ;
       this->myzero    = rhs.myzero   ;
+      this->pool_name = rhs.pool_name;
       rhs.nullify();
     }
 
@@ -104,6 +108,7 @@ namespace yakl {
       this->mymalloc  = rhs.mymalloc ;
       this->myfree    = rhs.myfree   ;
       this->myzero    = rhs.myzero   ;
+      this->pool_name = rhs.pool_name;
       rhs.nullify();
       return *this;
     }
@@ -117,7 +122,9 @@ namespace yakl {
 
     ~LinearAllocator() {
       if (pool != nullptr) {
-        if (yakl::yakl_mainproc()) std::cout << "Destroy Pool\n";
+        #if defined(YAKL_DEBUG) || defined(YAKL_MEMORY_DEBUG)
+          if (yakl::yakl_mainproc()) std::cout << "Destory Pool labeled: \"" << pool_name << "\"\n";
+        #endif
       }
       finalize();
     }
@@ -138,7 +145,7 @@ namespace yakl {
     void finalize() {
       if (allocs.size() != 0) {
         #if defined(YAKL_DEBUG)
-          std::cerr << "WARNING: Pool labeled " << pool_name << " -> LinearAllocator:" << std::endl;
+          std::cerr << "WARNING: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
           std::cerr << "WARNING: Not all allocations were deallocated before destroying this pool.\n" << std::endl;
           printAllocsLeft();
           std::cerr << "This probably won't end well, but carry on.\n" << std::endl;
@@ -213,7 +220,7 @@ namespace yakl {
           return;
         }
       }
-      std::cerr << "ERROR: Pool labeled " << pool_name << " -> LinearAllocator:" << std::endl;
+      std::cerr << "ERROR: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
       std::cerr << "Trying to free an invalid pointer.\n";
       die("This means you have either already freed the pointer, or its address has been corrupted somehow.");
     };

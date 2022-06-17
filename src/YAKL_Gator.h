@@ -101,7 +101,7 @@ namespace yakl {
         // If you've gone through all of the existing pools, and room hasn't been found, then it's time to add a new pool
         if (!room_found) {
           if (bytes > growSize) {
-            std::cerr << "ERROR: For the pool allocator labeled " << pool_name << ":" << std::endl;
+            std::cerr << "ERROR: For the pool allocator labeled \"" << pool_name << "\":" << std::endl;
             std::cerr << "ERROR: Trying to allocate " << bytes << " bytes (" << bytes/1024./1024./1024. << " GB), "
                       << "but the current pool is too small, and growSize is only "
                       << growSize << " bytes (" << growSize/1024./1024./1024. << " GB). \nThus, the allocation will never fit in pool memory.\n";
@@ -127,13 +127,13 @@ namespace yakl {
       }
       mtx.unlock();
       if (linear_bug) {
-        std::cerr << "ERROR: For the pool allocator labeled " << pool_name << ":" << std::endl;
+        std::cerr << "ERROR: For the pool allocator labeled \"" << pool_name << "\":" << std::endl;
         die("ERROR: It looks like you've found a bug in LinearAllocator. Please report this at github.com/mrnorman/YAKL");
       }
       if (ptr != nullptr) {
         return ptr;
       } else {
-        std::cerr << "ERROR: For the pool allocator labeled " << pool_name << ":" << std::endl;
+        std::cerr << "ERROR: For the pool allocator labeled \"" << pool_name << "\":" << std::endl;
         std::cerr << "Unable to allocate pointer. It looks like you might have run out of memory.";
         die( error_message_out_of_memory );
       }
@@ -158,7 +158,7 @@ namespace yakl {
       }
       mtx.unlock();
       if (!pointer_valid) {
-        std::cerr << "ERROR: For the pool allocator labeled " << pool_name << ":" << std::endl;
+        std::cerr << "ERROR: For the pool allocator labeled \"" << pool_name << "\":" << std::endl;
         std::cerr << "ERROR: Trying to free an invalid pointer\n";
         die("This means you have either already freed the pointer, or its address has been corrupted somehow.");
       }
