@@ -93,14 +93,16 @@ public:
     nullify();
     #ifdef YAKL_DEBUG
       if (dims.size() != rank) yakl_throw("ERROR: Number of constructor dimensions does not match the Array rank");
-      this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
+    #ifdef YAKL_DEBUG
+      this->myname = label;
+    #endif
     for (int i=0; i < rank; i++) { this->dimension[i] = dims[i]; }
     #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
+      this->allocate();
     #endif
   }
   // Non-owned constructors

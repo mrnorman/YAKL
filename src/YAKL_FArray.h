@@ -93,14 +93,16 @@ public:
     nullify();
     #ifdef YAKL_DEBUG
       if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
-      this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
+    #ifdef YAKL_DEBUG
+      this->myname = label;
+    #endif
     for (int i=0; i < rank; i++) { this->lbounds[i] = bnds[i].l; this->dimension[i] = bnds[i].u - bnds[i].l + 1; }
     #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
+      this->allocate();
     #endif
   }
   // Non-owned constructors

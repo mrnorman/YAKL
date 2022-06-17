@@ -113,24 +113,26 @@ public:
 
   YAKL_INLINE void check(int i0, int i1=1, int i2=1, int i3=1, int i4=1, int i5=1,
                          int i6=1, int i7=1) const {
-    if (! this->initialized()) { yakl_throw("Error: Using operator() on an Array that isn't allocated"); }
-    if constexpr (rank >= 1) { if (i0 < this->lbounds[0] || i0 >= this->lbounds[0]+this->dimension[0]) ind_out_bounds<0>(i0); }
-    if constexpr (rank >= 2) { if (i1 < this->lbounds[1] || i1 >= this->lbounds[1]+this->dimension[1]) ind_out_bounds<1>(i1); }
-    if constexpr (rank >= 3) { if (i2 < this->lbounds[2] || i2 >= this->lbounds[2]+this->dimension[2]) ind_out_bounds<2>(i2); }
-    if constexpr (rank >= 4) { if (i3 < this->lbounds[3] || i3 >= this->lbounds[3]+this->dimension[3]) ind_out_bounds<3>(i3); }
-    if constexpr (rank >= 5) { if (i4 < this->lbounds[4] || i4 >= this->lbounds[4]+this->dimension[4]) ind_out_bounds<4>(i4); }
-    if constexpr (rank >= 6) { if (i5 < this->lbounds[5] || i5 >= this->lbounds[5]+this->dimension[5]) ind_out_bounds<5>(i5); }
-    if constexpr (rank >= 7) { if (i6 < this->lbounds[6] || i6 >= this->lbounds[6]+this->dimension[6]) ind_out_bounds<6>(i6); }
-    if constexpr (rank >= 8) { if (i7 < this->lbounds[7] || i7 >= this->lbounds[7]+this->dimension[7]) ind_out_bounds<7>(i7); }
-    #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
-      if constexpr (myMem == memHost) yakl_throw("ERROR: host array being accessed in a device kernel");
-    #endif
-    #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
-      if constexpr (myMem == memDevice) {
-        std::cerr << "ERROR: For Array labeled: " << this->myname << ":" << std::endl;
-        std::cerr << "Device array being accessed on the host without managed memory turned on";
-        yakl_throw("");
-      }
+    #ifdef YAKL_DEBUG
+      if (! this->initialized()) { yakl_throw("Error: Using operator() on an Array that isn't allocated"); }
+      if constexpr (rank >= 1) { if (i0 < this->lbounds[0] || i0 >= this->lbounds[0]+this->dimension[0]) ind_out_bounds<0>(i0); }
+      if constexpr (rank >= 2) { if (i1 < this->lbounds[1] || i1 >= this->lbounds[1]+this->dimension[1]) ind_out_bounds<1>(i1); }
+      if constexpr (rank >= 3) { if (i2 < this->lbounds[2] || i2 >= this->lbounds[2]+this->dimension[2]) ind_out_bounds<2>(i2); }
+      if constexpr (rank >= 4) { if (i3 < this->lbounds[3] || i3 >= this->lbounds[3]+this->dimension[3]) ind_out_bounds<3>(i3); }
+      if constexpr (rank >= 5) { if (i4 < this->lbounds[4] || i4 >= this->lbounds[4]+this->dimension[4]) ind_out_bounds<4>(i4); }
+      if constexpr (rank >= 6) { if (i5 < this->lbounds[5] || i5 >= this->lbounds[5]+this->dimension[5]) ind_out_bounds<5>(i5); }
+      if constexpr (rank >= 7) { if (i6 < this->lbounds[6] || i6 >= this->lbounds[6]+this->dimension[6]) ind_out_bounds<6>(i6); }
+      if constexpr (rank >= 8) { if (i7 < this->lbounds[7] || i7 >= this->lbounds[7]+this->dimension[7]) ind_out_bounds<7>(i7); }
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_DEVICE()
+        if constexpr (myMem == memHost) yakl_throw("ERROR: host array being accessed in a device kernel");
+      #endif
+      #if defined(YAKL_SEPARATE_MEMORY_SPACE) && YAKL_CURRENTLY_ON_HOST() && !defined(YAKL_MANAGED_MEMORY)
+        if constexpr (myMem == memDevice) {
+          std::cerr << "ERROR: For Array labeled: " << this->myname << ":" << std::endl;
+          std::cerr << "Device array being accessed on the host without managed memory turned on";
+          yakl_throw("");
+        }
+      #endif
     #endif
   }
 
