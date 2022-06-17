@@ -12,14 +12,9 @@ namespace yakl {
   using std::max;
   using std::abs;
 
-  // SYCL and CUDA have situations where functors need to be explicitly copied to buffers
-  // and then run from device memory
-  #if defined(YAKL_ARCH_CUDA) || defined (YAKL_ARCH_SYCL)
-    // Size of the buffer to hold large functors for the CUDA and SYCL backends to avoid exceeding the max stack frame
-    int constexpr functorBufSize = 1024*128;
-    // Buffer to hold large functors for the CUDA and SYCL backends to avoid exceeding the max stack frame
-    extern void *functorBuffer;
-  #endif
+  // functorBuffer holds large functors in CUDA and all functors in SYCL
+  int constexpr functorBufSize = 1024*128;
+  extern void *functorBuffer;
 
   // Type for indexing. Rarely if ever is size_t going to be needed
   typedef unsigned int index_t;
