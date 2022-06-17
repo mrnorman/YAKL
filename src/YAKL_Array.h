@@ -3,6 +3,8 @@
 // Included by YAKL.h
 
 namespace yakl {
+  #include "YAKL_CSArray.h"
+  #include "YAKL_FSArray.h"
 
   // Labels for Array styles. C has zero-based indexing with the last index varying the fastest.
   // Fortran has 1-based indexing with arbitrary lower bounds and the index varying the fastest.
@@ -111,6 +113,12 @@ namespace yakl {
     Dims(std::vector<INT> const dims) {
       rank = dims.size();
       for (int i=0; i < rank; i++) { data[i] = dims[i]; }
+    }
+
+    template <class INT, int RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    Dims(CSArray<INT,1,RANK> const dims) {
+      rank = RANK;
+      for (int i=0; i < rank; i++) { data[i] = dims(i); }
     }
 
     YAKL_INLINE int operator[] (int i) const { return data[i]; }
@@ -229,58 +237,34 @@ namespace yakl {
       for (int i=0; i < rank; i++) { l[i] = 1;   u[i] = bnds[i]; }
     }
 
+    template <class INT, int RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    Bnds(CSArray<INT,1,RANK> const dims) {
+      rank = RANK;
+      for (int i=0; i < rank; i++) { l[i] = 1;   u[i] = dims(i); }
+    }
+
+    template <class INT, int LOWER, int UPPER, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    Bnds(FSArray<INT,1,SB<LOWER,UPPER>> const dims) {
+      rank = UPPER-LOWER+1;
+      for (int i=LOWER; i <= UPPER; i++) { l[i] = 1;   u[i] = dims(i); }
+    }
+
+    template <class INT, int LOWER1, int UPPER1, int LOWER2, int UPPER2, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    Bnds(FSArray<INT,1,SB<LOWER1,UPPER1>> const lbounds, FSArray<INT,1,SB<LOWER2,UPPER2>> const ubounds) {
+      static_assert( UPPER1-LOWER1+1 == UPPER2-LOWER2+1 , "ERROR: lbounds and ubounds sizes are not equal" );
+      rank = UPPER1-LOWER1+1;
+      for (int i=LOWER1; i <= UPPER1; i++) { l[i] = lbounds(i); }
+      for (int i=LOWER2; i <= UPPER2; i++) { u[i] = ubounds(i); }
+    }
+
     YAKL_INLINE Bnd operator[] (int i) const { return Bnd(l[i],u[i]); }
 
     YAKL_INLINE int size() const { return rank; }
   };
 
-
-
-  // [S]tatic (compile-time) Array [B]ounds (templated)
-  // It's only used for Fortran, so it takes on Fortran defaults
-  // with lower bound default to 1
-  template <int L, int U=-999> class SB {
-  public:
-    SB() = delete;
-    static constexpr int lower() { return U == -999 ? 1 : L; }
-    static constexpr int upper() { return U == -999 ? L : U; }
-  };
-
-
-
-  // Fortran list of static bounds
-  template <class T, class B0, class B1=SB<1,1>, class B2=SB<1,1>, class B3=SB<1,1>> class FSPEC {
-  public:
-    FSPEC() = delete;
-  };
-
-
-
-  // C list of static dimension sizes
-  template <class T, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1> class CSPEC {
-  public:
-    CSPEC() = delete;
-  };
-
-
-
-  #include "YAKL_CSArray.h"
-  // Simplify the syntax for this Array type with the SArray syntax
-  // One now needs to declare SArray<T,rank,D0[,D1,...]>
-  template <class T, int rank, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1>
-  using SArray  = Array< CSPEC< T , D0 , D1 , D2 , D3 > , rank , memStack , styleC >;
-
-  #include "YAKL_FSArray.h"
-  // Simplify the syntax for this Array type with the SArray syntax
-  // One now needs to declare SArray<T,rank,B0[,B1,...]>
-  template <class T, int rank, class B0 , class B1=SB<1,1> , class B2=SB<1,1> , class B3=SB<1,1> >
-  using FSArray = Array< FSPEC< T , B0 , B1 , B2 , B3 > , rank , memStack , styleFortran >;
-          
   #include "YAKL_ArrayBase.h"
-
   #include "YAKL_CArrayBase.h"
   #include "YAKL_CArray.h"
-
   #include "YAKL_FArrayBase.h"
   #include "YAKL_FArray.h"
 }

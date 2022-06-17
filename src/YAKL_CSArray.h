@@ -7,8 +7,8 @@
 // known bounds placed on the stack of whatever context it is declared just like "int var[20];"
 // except with multiple dimensions, index checking, and printing
 
-template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
-class Array< CSPEC< T , D0 , D1 , D2 , D3 > , rank , memStack , styleC > {
+template <class T, int rank, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1>
+class CSArray {
 public :
 
   typedef typename std::remove_cv<T>::type       type;
@@ -24,18 +24,18 @@ public :
   T mutable myData[D0*D1*D2*D3];
 
   // All copies are deep, so be wary of copies. Use references where possible
-  YAKL_INLINE Array() { }
-  YAKL_INLINE Array           (Array      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
-  YAKL_INLINE Array           (Array const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
-  YAKL_INLINE Array &operator=(Array      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
-  YAKL_INLINE Array &operator=(Array const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
-  YAKL_INLINE ~Array() { }
+  YAKL_INLINE CSArray() { }
+  YAKL_INLINE CSArray           (CSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
+  YAKL_INLINE CSArray           (CSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
+  YAKL_INLINE CSArray &operator=(CSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
+  YAKL_INLINE CSArray &operator=(CSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
+  YAKL_INLINE ~CSArray() { }
 
   YAKL_INLINE T &operator()(uint const i0) const {
     static_assert(rank==1,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef YAKL_DEBUG
       #if YAKL_CURRENTLY_ON_HOST()
-        if constexpr (rank >= 1) { if (i0>D0-1) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
+        if constexpr (rank >= 1) { if (i0>D0-1) { printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
       #else
         if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
       #endif
@@ -46,8 +46,8 @@ public :
     static_assert(rank==2,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef YAKL_DEBUG
       #if YAKL_CURRENTLY_ON_HOST()
-        if constexpr (rank >= 1) { if (i0>D0-1) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
-        if constexpr (rank >= 2) { if (i1>D1-1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); yakl_throw(""); } }
+        if constexpr (rank >= 1) { if (i0>D0-1) { printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
+        if constexpr (rank >= 2) { if (i1>D1-1) { printf("CSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); yakl_throw(""); } }
       #else
         if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
         if constexpr (rank >= 2) { if (i1>D1-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
@@ -59,9 +59,9 @@ public :
     static_assert(rank==3,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef YAKL_DEBUG
       #if YAKL_CURRENTLY_ON_HOST()
-        if constexpr (rank >= 1) { if (i0>D0-1) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
-        if constexpr (rank >= 2) { if (i1>D1-1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); yakl_throw(""); } }
-        if constexpr (rank >= 3) { if (i2>D2-1) { printf("Array i2 out of bounds (i2: %d; lb2: %d; ub2: %d)\n",i2,0,D2-1); yakl_throw(""); } }
+        if constexpr (rank >= 1) { if (i0>D0-1) { printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
+        if constexpr (rank >= 2) { if (i1>D1-1) { printf("CSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); yakl_throw(""); } }
+        if constexpr (rank >= 3) { if (i2>D2-1) { printf("CSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d)\n",i2,0,D2-1); yakl_throw(""); } }
       #else
         if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
         if constexpr (rank >= 2) { if (i1>D1-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
@@ -74,10 +74,10 @@ public :
     static_assert(rank==4,"ERROR: Improper number of dimensions specified in operator()");
     #ifdef YAKL_DEBUG
       #if YAKL_CURRENTLY_ON_HOST()
-        if constexpr (rank >= 1) { if (i0>D0-1) { printf("Array i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
-        if constexpr (rank >= 2) { if (i1>D1-1) { printf("Array i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); yakl_throw(""); } }
-        if constexpr (rank >= 3) { if (i2>D2-1) { printf("Array i2 out of bounds (i2: %d; lb2: %d; ub2: %d)\n",i2,0,D2-1); yakl_throw(""); } }
-        if constexpr (rank >= 4) { if (i3>D3-1) { printf("Array i3 out of bounds (i3: %d; lb3: %d; ub3: %d)\n",i3,0,D3-1); yakl_throw(""); } }
+        if constexpr (rank >= 1) { if (i0>D0-1) { printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
+        if constexpr (rank >= 2) { if (i1>D1-1) { printf("CSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); yakl_throw(""); } }
+        if constexpr (rank >= 3) { if (i2>D2-1) { printf("CSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d)\n",i2,0,D2-1); yakl_throw(""); } }
+        if constexpr (rank >= 4) { if (i3>D3-1) { printf("CSArray i3 out of bounds (i3: %d; lb3: %d; ub3: %d)\n",i3,0,D3-1); yakl_throw(""); } }
       #else
         if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
         if constexpr (rank >= 2) { if (i1>D1-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
@@ -103,37 +103,43 @@ public :
   static bool     constexpr initialized() { return true; }
 
 
-  inline friend std::ostream &operator<<(std::ostream& os, Array<CSPEC<T,D0,D1,D2,D3>,rank,memStack,styleC> const &v) {
+  inline friend std::ostream &operator<<(std::ostream& os, CSArray<T,rank,D0,D1,D2,D3> const &v) {
     for (uint i=0; i<totElems(); i++) { os << std::setw(12) << v.myData[i] << "\n"; }
     os << "\n";
     return os;
   }
 
   
-  YAKL_INLINE Array<CSPEC<uint,rank>,1,memStack,styleC> get_dimensions() const {
-    Array<CSPEC<uint,rank>,1,memStack,styleC> ret;
-                     ret(0) = D0;
-    if (rank >= 2) { ret(1) = D1; }
-    if (rank >= 3) { ret(2) = D2; }
-    if (rank >= 4) { ret(3) = D3; }
+  YAKL_INLINE CSArray<uint,1,rank> get_dimensions() const {
+    CSArray<uint,1,rank> ret;
+    if constexpr (rank >= 1) ret(0) = D0;
+    if constexpr (rank >= 2) ret(1) = D1;
+    if constexpr (rank >= 3) ret(2) = D2;
+    if constexpr (rank >= 4) ret(3) = D3;
     return ret;
   }
-  YAKL_INLINE Array<CSPEC<int,rank>,1,memStack,styleC> get_lbounds() const {
-    Array<CSPEC<int,rank>,1,memStack,styleC> ret;
-                     ret(0) = 0;
-    if (rank >= 2) { ret(1) = 0; }
-    if (rank >= 3) { ret(2) = 0; }
-    if (rank >= 4) { ret(3) = 0; }
+  YAKL_INLINE CSArray<uint,1,rank> get_lbounds() const {
+    CSArray<uint,1,rank> ret;
+    if constexpr (rank >= 1) ret(0) = 0;
+    if constexpr (rank >= 2) ret(1) = 0;
+    if constexpr (rank >= 3) ret(2) = 0;
+    if constexpr (rank >= 4) ret(3) = 0;
     return ret;
   }
-  YAKL_INLINE Array<CSPEC<int,rank>,1,memStack,styleC> get_ubounds() const {
-    Array<CSPEC<int,rank>,1,memStack,styleC> ret;
-                     ret(0) = D0-1;
-    if (rank >= 2) { ret(1) = D1-1; }
-    if (rank >= 3) { ret(2) = D2-1; }
-    if (rank >= 4) { ret(3) = D3-1; }
+  YAKL_INLINE CSArray<uint,1,rank> get_ubounds() const {
+    CSArray<uint,1,rank> ret;
+    if constexpr (rank >= 1) ret(0) = D0-1;
+    if constexpr (rank >= 2) ret(1) = D1-1;
+    if constexpr (rank >= 3) ret(2) = D2-1;
+    if constexpr (rank >= 4) ret(3) = D3-1;
     return ret;
   }
 
 };
+
+
+
+template <class T, int rank, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1>
+using SArray = CSArray<T,rank,D0,D1,D2,D3>;
+
 
