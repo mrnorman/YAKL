@@ -115,7 +115,7 @@ namespace yakl {
       for (int i=0; i < rank; i++) { data[i] = dims[i]; }
     }
 
-    template <class INT, int RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    template <class INT, unsigned int RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
     Dims(CSArray<INT,1,RANK> const dims) {
       rank = RANK;
       for (int i=0; i < rank; i++) { data[i] = dims(i); }
@@ -237,7 +237,7 @@ namespace yakl {
       for (int i=0; i < rank; i++) { l[i] = 1;   u[i] = bnds[i]; }
     }
 
-    template <class INT, int RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    template <class INT, unsigned int RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
     Bnds(CSArray<INT,1,RANK> const dims) {
       rank = RANK;
       for (int i=0; i < rank; i++) { l[i] = 1;   u[i] = dims(i); }
