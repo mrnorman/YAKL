@@ -23,7 +23,7 @@ namespace yakl {
           return out;
         } else {
           auto out = in.createDeviceCopy().template reshape<2>( { d1 , d0 } );
-          fortran::parallel_for( fortran::Bounds<2>(d0,d1) , YAKL_LAMBDA (int i, int j) {
+          c::parallel_for( "YAKL_internal_transpose" , c::Bounds<2>(d0,d1) , YAKL_LAMBDA (int i, int j) {
             out(j,i) = in(i,j);
           });
           return out;
@@ -43,7 +43,7 @@ namespace yakl {
           return out;
         } else {
           auto out = in.createDeviceCopy().template reshape<2>( { {l2,u2} , {l1,u1} } );
-          fortran::parallel_for( fortran::Bounds<2>({l1,u1},{l2,u2}) , YAKL_LAMBDA (int i, int j) {
+          fortran::parallel_for( "YAKL_internal_transpose" , fortran::Bounds<2>({l1,u1},{l2,u2}) , YAKL_LAMBDA (int i, int j) {
             out(j,i) = in(i,j);
           });
           return out;

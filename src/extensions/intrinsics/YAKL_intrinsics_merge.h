@@ -47,7 +47,7 @@ namespace yakl {
           yakl_throw("ERROR: calling merge with array shapes that do not match");
       #endif
       Array<decltype(T1()+T2()),rank,memDevice,myStyle> ret = arr_true.createDeviceObject();
-      c::parallel_for( arr_true.totElems() , YAKL_LAMBDA (int i) {
+      c::parallel_for( "YAKL_internal_merge" , arr_true.totElems() , YAKL_LAMBDA (int i) {
         ret.data()[i] = mask.data()[i] ? arr_true.data()[i] : arr_false.data()[i];
       });
       return ret;

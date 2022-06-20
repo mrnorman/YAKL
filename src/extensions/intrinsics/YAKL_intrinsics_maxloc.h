@@ -30,7 +30,7 @@ namespace yakl {
         for (int i=0; i < arr.totElems(); i++) { if (arr(i) == mv) return i; }
       #else
         ScalarLiveOut<int> ind(0);
-        c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) { if (arr(i) == mv) ind = i; });
+        c::parallel_for( "YAKL_internal_maxloc" , arr.totElems() , YAKL_LAMBDA (int i) { if (arr(i) == mv) ind = i; });
         return ind.hostRead();
       #endif
       // Never reaches here, but nvcc isn't smart enough to figure it out.
@@ -47,7 +47,7 @@ namespace yakl {
         for (int i=lbound(arr,1); i <= ubound(arr,1); i++) { if (arr(i) == mv) return i; }
       #else
         ScalarLiveOut<int> ind(lbound(arr,1));
-        fortran::parallel_for( {lbound(arr,1),ubound(arr,1)} , YAKL_LAMBDA (int i) { if (arr(i) == mv) ind = i; });
+        fortran::parallel_for( "YAKL_internal_maxloc" , {lbound(arr,1),ubound(arr,1)} , YAKL_LAMBDA (int i) { if (arr(i) == mv) ind = i; });
         return ind.hostRead();
       #endif
       // Never reaches here, but nvcc isn't smart enough to figure it out.

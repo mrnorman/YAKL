@@ -35,7 +35,7 @@ namespace yakl {
         if (any(!(shape(a) == shape(b)))) yakl_throw("ERROR: Calling sign with differently arrays");
       #endif
       auto ret = a.createDeviceObject();
-      parallel_for( a.totElems() , YAKL_LAMBDA (int i) {
+      parallel_for( "YAKL_internal_sign" , a.totElems() , YAKL_LAMBDA (int i) {
         ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
       });
     }

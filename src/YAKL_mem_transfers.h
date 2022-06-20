@@ -23,6 +23,9 @@ namespace yakl {
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
   inline void memcpy_device_to_host(T1 *dst , T2 *src , index_t elems) {
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start("YAKL_internal_memcpy_device_to_host");
+    #endif
     #ifdef YAKL_ARCH_CUDA
       cudaMemcpyAsync(dst,src,elems*sizeof(T1),cudaMemcpyDeviceToHost,0);
       check_last_error();
@@ -38,8 +41,11 @@ namespace yakl {
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #endif
-    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+    #if defined(YAKL_AUTO_FENCE)
       fence();
+    #endif
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop("YAKL_internal_memcpy_device_to_host");
     #endif
   }
 
@@ -49,6 +55,9 @@ namespace yakl {
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
   inline void memcpy_host_to_device(T1 *dst , T2 *src , index_t elems) {
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start("YAKL_internal_memcpy_host_to_device");
+    #endif
     #ifdef YAKL_ARCH_CUDA
       cudaMemcpyAsync(dst,src,elems*sizeof(T1),cudaMemcpyHostToDevice,0);
       check_last_error();
@@ -64,8 +73,11 @@ namespace yakl {
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #endif
-    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+    #if defined(YAKL_AUTO_FENCE)
       fence();
+    #endif
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop("YAKL_internal_memcpy_host_to_device");
     #endif
   }
 
@@ -74,6 +86,9 @@ namespace yakl {
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
   inline void memcpy_device_to_device(T1 *dst , T2 *src , index_t elems) {
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start("YAKL_internal_memcpy_device_to_device");
+    #endif
     #ifdef YAKL_ARCH_CUDA
       cudaMemcpyAsync(dst,src,elems*sizeof(T1),cudaMemcpyDeviceToDevice,0);
       check_last_error();
@@ -89,13 +104,19 @@ namespace yakl {
     #else
       for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
     #endif
-    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+    #if defined(YAKL_AUTO_FENCE)
       fence();
+    #endif
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop("YAKL_internal_memcpy_device_to_device");
     #endif
   }
 
 
   inline void memcpy_device_to_device_void(void *dst , void *src , size_t bytes) {
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start("YAKL_internal_memcpy_device_to_device");
+    #endif
     #ifdef YAKL_ARCH_CUDA
       cudaMemcpyAsync(dst,src,bytes,cudaMemcpyDeviceToDevice,0);
       check_last_error();
@@ -108,8 +129,11 @@ namespace yakl {
     #else
       memcpy( dst , src , bytes );
     #endif
-    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+    #if defined(YAKL_AUTO_FENCE)
       fence();
+    #endif
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop("YAKL_internal_memcpy_device_to_device");
     #endif
   }
 

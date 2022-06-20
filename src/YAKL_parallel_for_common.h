@@ -380,11 +380,14 @@ template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN , bool
 inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f ,
                           LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
   // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
+  #ifdef YAKL_AUTO_PROFILE
+    timer_start(str);
+  #endif
   #ifdef YAKL_ARCH_CUDA
     nvtxRangePushA(str);
   #endif
-  #ifdef YAKL_AUTO_PROFILE
-    timer_start(str);
+  #ifdef YAKL_ARCH_HIP
+    roctxRangePushA(str);
   #endif
 
   bool do_b4b = false;
@@ -412,15 +415,18 @@ inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F 
     #endif
   }
 
-  #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+  #if defined(YAKL_AUTO_FENCE)
     fence();
   #endif
 
-  #ifdef YAKL_AUTO_PROFILE
-    timer_stop(str);
+  #ifdef YAKL_ARCH_HIP
+    roctxRangePop();
   #endif
   #ifdef YAKL_ARCH_CUDA
     nvtxRangePop();
+  #endif
+  #ifdef YAKL_AUTO_PROFILE
+    timer_stop(str);
   #endif
 }
 
@@ -458,11 +464,14 @@ template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN, bool 
 inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , F const &f ,
                             LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
   // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
+  #ifdef YAKL_AUTO_PROFILE
+    timer_start(str);
+  #endif
   #ifdef YAKL_ARCH_CUDA
     nvtxRangePushA(str);
   #endif
-  #ifdef YAKL_AUTO_PROFILE
-    timer_start(str);
+  #ifdef YAKL_ARCH_HIP
+    roctxRangePushA(str);
   #endif
 
   bool do_b4b = false;
@@ -490,15 +499,18 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
     #endif
   }
 
-  #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+  #if defined(YAKL_AUTO_FENCE)
     fence();
   #endif
 
-  #ifdef YAKL_AUTO_PROFILE
-    timer_stop(str);
+  #ifdef YAKL_ARCH_HIP
+    roctxRangePop();
   #endif
   #ifdef YAKL_ARCH_CUDA
     nvtxRangePop();
+  #endif
+  #ifdef YAKL_AUTO_PROFILE
+    timer_stop(str);
   #endif
 }
 
@@ -547,6 +559,9 @@ YAKL_INLINE void parallel_inner( Bounds<N,simple> const &bounds , F const &f , I
       parallel_for_cpu_serial( bounds , f , false );
     #endif
   #endif
+  #ifdef YAKL_AUTO_FENCE
+    fence_inner(handler);
+  #endif
 }
 
 template <class F>
@@ -573,6 +588,9 @@ YAKL_INLINE void single_inner( F const &f , InnerHandler handler ) {
     #else
       f();
     #endif
+  #endif
+  #ifdef YAKL_AUTO_FENCE
+    fence_inner(handler);
   #endif
 }
 

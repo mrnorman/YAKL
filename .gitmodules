@@ -1,9 +1,0 @@
-[submodule "cub"]
-	path = cub
-	url = git@github.com:NVIDIA/cub.git
-[submodule "hipCUB"]
-	path = hipCUB
-	url = git@github.com:ROCmSoftwarePlatform/hipCUB.git
-[submodule "rocPRIM"]
-	path = rocPRIM
-	url = git@github.com:ROCmSoftwarePlatform/rocPRIM.git

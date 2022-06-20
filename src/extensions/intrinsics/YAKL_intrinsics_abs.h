@@ -21,7 +21,7 @@ namespace yakl {
         if (!arr.initialized()) { yakl_throw("ERROR: calling abs on an array that has not been initialized"); }
       #endif
       auto ret = arr.createDeviceObject();
-      c::parallel_for( ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = std::abs(arr.data()[i]); });
+      c::parallel_for( "YAKL_internal_abs" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = std::abs(arr.data()[i]); });
       return ret;
     }
 

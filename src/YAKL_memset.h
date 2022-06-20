@@ -23,7 +23,7 @@ namespace yakl {
       #elif defined(YAKL_ARCH_SYCL)
         sycl_default_stream().memset( arr.data() , 0 , sizeof(T)*arr.totElems() );
       #else
-        c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
+        c::parallel_for( "YAKL_internal_memset" , arr.totElems() , YAKL_LAMBDA (int i) {
           arr.data()[i] = 0;
         });
       #endif
@@ -33,7 +33,7 @@ namespace yakl {
         #if   defined(YAKL_ARCH_SYCL)
           sycl_default_stream().fill<T>( arr.data() , val , arr.totElems() );
         #else
-          c::parallel_for( arr.totElems() , YAKL_LAMBDA (int i) {
+          c::parallel_for( "YAKL_internal_memset" , arr.totElems() , YAKL_LAMBDA (int i) {
             arr.data()[i] = val;
           });
         #endif
@@ -41,7 +41,7 @@ namespace yakl {
         std::fill( arr.data(), arr.data()+arr.totElems(), val );
       }
     }
-    #if defined(YAKL_AUTO_FENCE) || defined(YAKL_DEBUG)
+    #if defined(YAKL_AUTO_FENCE)
       fence();
     #endif
   }

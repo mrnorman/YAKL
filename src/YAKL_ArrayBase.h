@@ -31,6 +31,9 @@ public:
     #endif
     if (myMem == memHost) { memcpy_host_to_host  ( lhs.myData , this->myData , this->totElems() ); }
     else                  { memcpy_device_to_host( lhs.myData , this->myData , this->totElems() ); }
+    #ifdef YAKL_AUTO_FENCE
+      fence();
+    #endif
   }
 
 
@@ -43,6 +46,9 @@ public:
     #endif
     if (myMem == memHost) { memcpy_host_to_device  ( lhs.myData , this->myData , this->totElems() ); }
     else                  { memcpy_device_to_device( lhs.myData , this->myData , this->totElems() ); }
+    #ifdef YAKL_AUTO_FENCE
+      fence();
+    #endif
   }
 
 
@@ -74,14 +80,18 @@ public:
 
   // Allocate the array and the reference counter (if owned)
   template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
-  inline void allocate(char const * label = "") {
+  inline void allocate() {
     // static_assert( std::is_arithmetic<T>() || myMem == memHost , 
     //                "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
     yakl_mtx_lock();
     this->refCount = new int;
     (*(this->refCount)) = 1;
     if (myMem == memDevice) {
-      this->myData = (T *) yaklAllocDevice( this->totElems()*sizeof(T) , label );
+      #ifdef YAKL_DEBUG
+        this->myData = (T *) yaklAllocDevice( this->totElems()*sizeof(T) , this->myname );
+      #else
+        this->myData = (T *) yaklAllocDevice( this->totElems()*sizeof(T) , "" );
+      #endif
     } else {
       this->myData = new T[this->totElems()];
     }

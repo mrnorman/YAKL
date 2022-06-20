@@ -93,14 +93,16 @@ public:
     nullify();
     #ifdef YAKL_DEBUG
       if (dims.size() != rank) yakl_throw("ERROR: Number of constructor dimensions does not match the Array rank");
-      this->myname = label;
     #endif
     #if YAKL_CURRENTLY_ON_HOST()
       this->deallocate();
     #endif
+    #ifdef YAKL_DEBUG
+      this->myname = label;
+    #endif
     for (int i=0; i < rank; i++) { this->dimension[i] = dims[i]; }
     #if YAKL_CURRENTLY_ON_HOST()
-      this->allocate(label);
+      this->allocate();
     #endif
   }
   // Non-owned constructors
@@ -300,7 +302,7 @@ public:
   void memset_loc(TLOC rhs) {
     if (myMem == memDevice) {
       YAKL_SCOPE( arr , *this );
-      c::parallel_for( this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
+      c::parallel_for( "YAKL_internal_Array=scalar" , this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
     } else {
       for (int i=0; i < this->totElems(); i++) { this->myData[i] = rhs; }
     }
