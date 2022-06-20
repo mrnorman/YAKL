@@ -57,19 +57,6 @@ namespace yakl {
                                                             sycl::property_list{sycl::property::queue::in_order{}}));
           }
         }
-
-#ifdef HAVE_MPI
-        int is_initialized;
-        MPI_Initialized(&is_initialized);
-        if (is_initialized) {
-          MPI_Comm shmcomm;
-          MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0,
-                              MPI_INFO_NULL, &shmcomm);
-          int shmrank;
-          MPI_Comm_rank(shmcomm, &shmrank);
-          DEFAULT_DEVICE_ID = (shmrank % _devs.size());
-        }
-#endif // HAVE_MPI
       }
       void check_id(unsigned int id) const {
         if (id >= _devs.size()) {
