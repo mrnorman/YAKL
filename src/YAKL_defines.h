@@ -23,6 +23,7 @@
 
   #define YAKL_LAMBDA [=] __host__ __device__
   #define YAKL_DEVICE_LAMBDA [=] __device__
+  #define YAKL_CLASS_LAMBDA [=, *this] __host__ __device__
   #define YAKL_INLINE __host__ __device__ __forceinline__
   #define YAKL_DEVICE_INLINE __forceinline__ __device__
   #define YAKL_SCOPE(a,b) auto &a = b
@@ -36,6 +37,7 @@
 
   #define YAKL_LAMBDA [=] __host__ __device__
   #define YAKL_DEVICE_LAMBDA [=] __device__
+  #define YAKL_CLASS_LAMBDA [=, *this] __host__ __device__
   #define YAKL_INLINE __host__ __device__ __forceinline__
   #define YAKL_DEVICE_INLINE __forceinline__ __device__
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
@@ -49,6 +51,7 @@
 
   #define YAKL_LAMBDA [=]
   #define YAKL_DEVICE_LAMBDA [=]
+  #define YAKL_CLASS_LAMBDA [=, *this]
   #define YAKL_INLINE __inline__ __attribute__((always_inline))
   #define YAKL_DEVICE_INLINE __inline__ __attribute__((always_inline))
   #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
@@ -67,6 +70,7 @@
 
   #define YAKL_LAMBDA [=] 
   #define YAKL_DEVICE_LAMBDA [=] 
+  #define YAKL_CLASS_LAMBDA [=, *this]
   #define YAKL_INLINE inline 
   #define YAKL_DEVICE_INLINE inline 
   #define YAKL_SCOPE(a,b) auto &a = b
@@ -77,6 +81,7 @@
 
   #define YAKL_LAMBDA [=]
   #define YAKL_DEVICE_LAMBDA [=]
+  #define YAKL_CLASS_LAMBDA [=, *this]
   #define YAKL_INLINE inline
   #define YAKL_DEVICE_INLINE inline
   #define YAKL_SCOPE(a,b) auto &a = b
