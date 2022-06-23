@@ -213,11 +213,11 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       sycl_default_stream().wait();
     } else {
       F *fp = (F *) functorBuffer;
-      sycl_default_stream().memcpy(fp, &f, sizeof(F));
-      sycl_default_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
+      auto copyEvent = sycl_default_stream().memcpy(fp, &f, sizeof(F));
+      auto kernelEvent = sycl_default_stream().parallel_for( sycl::range<1>(bounds.nIter) , copyEvent, [=] (sycl::id<1> i) {
         callFunctor( *fp , bounds , i );
       });
-      sycl_default_stream().wait();
+      kernelEvent.wait();
     }
 
     check_last_error();
@@ -235,12 +235,13 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       sycl_default_stream().wait();
     } else {
       F *fp = (F *) functorBuffer;
-      sycl_default_stream().memcpy(fp, &f, sizeof(F));
-      sycl_default_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
+      auto copyEvent = sycl_default_stream().memcpy(fp, &f, sizeof(F));
+      auto kernelEvent = sycl_default_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
+					  copyEvent,
                                           [=] (sycl::nd_item<1> item) {
         callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
       });
-      sycl_default_stream().wait();
+      kernelEvent.wait();
     }
 
     check_last_error();

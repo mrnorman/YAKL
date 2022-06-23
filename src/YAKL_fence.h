@@ -11,7 +11,7 @@ namespace yakl {
     #elif defined(YAKL_ARCH_HIP)
       hipDeviceSynchronize();
     #elif defined(YAKL_ARCH_SYCL)
-      sycl_default_stream().wait();
+      sycl_default_stream().wait_and_throw();
     #elif defined(YAKL_ARCH_OPENMP)
       #pragma omp barrier
     #endif
