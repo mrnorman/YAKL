@@ -205,7 +205,7 @@ int main() {
       int ny = 32;
       int nx = 32;
       int ncrms = 10;
-      typedef float real;
+      typedef double real;
       typedef yakl::Array<real,1,yakl::memHost  ,yakl::styleC> realHost1d;
       typedef yakl::Array<real,3,yakl::memDevice,yakl::styleC> real3d;
       typedef yakl::Array<real,4,yakl::memDevice,yakl::styleC> real4d;
@@ -227,6 +227,35 @@ int main() {
           fft_x.inverse_real( data , 2 );
         }
         yakl::timer_stop("crm_3d");
+      }
+
+    }
+
+
+
+    {
+      int nz = 50;
+      int ny = 1;
+      int nx = 128;
+      int ncrms = 10;
+      typedef double real;
+      typedef yakl::Array<real,1,yakl::memHost  ,yakl::styleC> realHost1d;
+      typedef yakl::Array<real,3,yakl::memDevice,yakl::styleC> real3d;
+      typedef yakl::Array<real,4,yakl::memDevice,yakl::styleC> real4d;
+      yakl::RealFFT1D<real> fft_x;
+      fft_x.init(nx);
+      real4d data("data",nz,ny,nx+2,ncrms);
+      yakl::c::parallel_for( yakl::c::Bounds<4>(nz,ny,nx,ncrms) , YAKL_LAMBDA (int k, int j, int i, int icrm) {
+        data(k,j,i,icrm) = k*ny*nx*ncrms + j*nx*ncrms + i*ncrms + icrm;
+      });
+
+      {
+        yakl::timer_start("crm_2d");
+        for (int i=0; i < 10; i++) {
+          fft_x.forward_real( data , 2 );
+          fft_x.inverse_real( data , 2 );
+        }
+        yakl::timer_stop("crm_2d");
       }
 
     }

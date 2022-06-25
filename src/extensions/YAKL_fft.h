@@ -168,7 +168,6 @@ namespace yakl {
       auto &omega_m       = internals.omega_m      ;
       auto &chirp         = internals.chirp        ;
       auto &chirp_fft     = internals.chirp_fft    ;
-      auto &chirp_tmp     = internals.chirp_tmp    ;
       auto &data_size     = internals.data_size    ;
       auto &fft_size      = internals.fft_size     ;
       auto &log2_fft_size = internals.log2_fft_size;
