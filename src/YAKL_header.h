@@ -42,6 +42,7 @@
 
 #if   defined(YAKL_ARCH_CUDA)
   #include <cub/cub.cuh>
+  #include "cufft.h"
 #elif defined(YAKL_ARCH_HIP)
   #include "hip/hip_runtime.h"
   #include "hipcub/hipcub.hpp"

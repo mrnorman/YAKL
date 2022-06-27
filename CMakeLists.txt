@@ -39,6 +39,7 @@ target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/extension
 
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+  target_link_libraries(yakl cufft)
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "HIP")
