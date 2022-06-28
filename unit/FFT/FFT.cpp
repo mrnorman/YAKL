@@ -100,13 +100,10 @@ int main() {
           for (int k=0; k < n; k++) {
             for (int i=0; i < n; i++) {
               for (int j=0; j < n; j++) {
-                std::cout << data_host(k,j,i) << "  ";
-                // std::cout << std::abs( data_host(k,j,i) - (j+1) ) << "  ";
-                // if ( std::abs( data_host(k,j,i) - (j+1) ) > 1.e-12 ) {
-                //   yakl::yakl_throw("ERROR: wrong inverse FFT value in dim 1 transform");
-                // }
+                if ( std::abs( data_host(k,j,i) - (j+1) ) > 1.e-12 ) {
+                  yakl::yakl_throw("ERROR: wrong inverse FFT value in dim 1 transform");
+                }
               }
-              std::cout << std::endl;
             }
           }
         }

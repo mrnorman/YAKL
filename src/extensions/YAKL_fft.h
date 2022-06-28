@@ -13,13 +13,14 @@ namespace yakl {
     #ifdef YAKL_ARCH_CUDA
       cufftHandle plan_forward;
       cufftHandle plan_inverse;
+      #define CHECK(func) { int myloc = func; if (myloc != CUFFT_SUCCESS) { std::cerr << "ERROR: YAKL CUFFT: " << __FILE__ << ": " <<__LINE__ << std::endl; yakl_throw(""); } }
     #endif
 
     RealFFT1D() { batch_size = -1;  transform_size = -1;  trdim = -1; }
     ~RealFFT1D() {
       #ifdef YAKL_ARCH_CUDA
-        cufftDestroy( plan_forward );
-        cufftDestroy( plan_inverse );
+        CHECK( cufftDestroy( plan_forward ) );
+        CHECK( cufftDestroy( plan_inverse ) );
       #endif
     }
 
@@ -35,11 +36,11 @@ namespace yakl {
       int onembed = 0;
       #ifdef YAKL_ARCH_CUDA
         if        constexpr (std::is_same<T,float >::value) {
-          cufftPlanMany(&plan_forward, rank, &n, &inembed, istride, idist, &onembed, ostride, odist, CUFFT_R2C, batch);
-          cufftPlanMany(&plan_inverse, rank, &n, &onembed, ostride, odist, &inembed, istride, idist, CUFFT_C2R, batch);
+          CHECK( cufftPlanMany(&plan_forward, rank, &n, &inembed, istride, idist, &onembed, ostride, odist, CUFFT_R2C, batch) );
+          CHECK( cufftPlanMany(&plan_inverse, rank, &n, &onembed, ostride, odist, &inembed, istride, idist, CUFFT_C2R, batch) );
         } else if constexpr (std::is_same<T,double>::value) {
-          cufftPlanMany(&plan_forward, rank, &n, &inembed, istride, idist, &onembed, ostride, odist, CUFFT_D2Z, batch);
-          cufftPlanMany(&plan_inverse, rank, &n, &onembed, ostride, odist, &inembed, istride, idist, CUFFT_Z2D, batch);
+          CHECK( cufftPlanMany(&plan_forward, rank, &n, &inembed, istride, idist, &onembed, ostride, odist, CUFFT_D2Z, batch) );
+          CHECK( cufftPlanMany(&plan_inverse, rank, &n, &onembed, ostride, odist, &inembed, istride, idist, CUFFT_Z2D, batch) );
         }
       #endif
 
@@ -53,9 +54,9 @@ namespace yakl {
       if (trdim == arr.get_rank()-1) {
         #ifdef YAKL_ARCH_CUDA
           if        constexpr (std::is_same<T,float >::value) {
-            cufftExecR2C(plan_forward, (cufftReal       *) arr.data(), (cufftComplex       *) arr.data());
+            CHECK( cufftExecR2C(plan_forward, (cufftReal       *) arr.data(), (cufftComplex       *) arr.data()) );
           } else if constexpr (std::is_same<T,double>::value) {
-            cufftExecD2Z(plan_forward, (cufftDoubleReal *) arr.data(), (cufftDoubleComplex *) arr.data());
+            CHECK( cufftExecD2Z(plan_forward, (cufftDoubleReal *) arr.data(), (cufftDoubleComplex *) arr.data()) );
           }
         #endif
       } else {
@@ -76,9 +77,9 @@ namespace yakl {
         // Perform the FFT
         #ifdef YAKL_ARCH_CUDA
           if        constexpr (std::is_same<T,float >::value) {
-            cufftExecR2C(plan_forward, (cufftReal       *) copy.data(), (cufftComplex       *) copy.data());
+            CHECK( cufftExecR2C(plan_forward, (cufftReal       *) copy.data(), (cufftComplex       *) copy.data()) );
           } else if constexpr (std::is_same<T,double>::value) {
-            cufftExecD2Z(plan_forward, (cufftDoubleReal *) copy.data(), (cufftDoubleComplex *) copy.data());
+            CHECK( cufftExecD2Z(plan_forward, (cufftDoubleReal *) copy.data(), (cufftDoubleComplex *) copy.data()) );
           }
         #endif
         // Transpose the data back, overwriting "arr"
@@ -93,14 +94,15 @@ namespace yakl {
       if (trdim == arr.get_rank()-1) {
         #ifdef YAKL_ARCH_CUDA
           if        constexpr (std::is_same<T,float >::value) {
-            cufftExecC2R(plan_inverse, (cufftComplex       *) arr.data(), (cufftReal       *) arr.data());
+            CHECK( cufftExecC2R(plan_inverse, (cufftComplex       *) arr.data(), (cufftReal       *) arr.data()) );
           } else if constexpr (std::is_same<T,double>::value) {
-            cufftExecZ2D(plan_inverse, (cufftDoubleComplex *) arr.data(), (cufftDoubleReal *) arr.data());
+            CHECK( cufftExecZ2D(plan_inverse, (cufftDoubleComplex *) arr.data(), (cufftDoubleReal *) arr.data()) );
           }
           using yakl::componentwise::operator/;
           arr = arr / transform_size;
         #endif
       } else {
+        YAKL_SCOPE( transform_size , this->transform_size );
         auto dims = arr.get_dimensions();
         // Coallesce sizes of fastest varying dimensions of input array inside trdim dimension
         int d2 = 1;
@@ -118,9 +120,9 @@ namespace yakl {
         // Perform the FFT
         #ifdef YAKL_ARCH_CUDA
           if        constexpr (std::is_same<T,float >::value) {
-            cufftExecC2R(plan_inverse, (cufftComplex       *) copy.data(), (cufftReal       *) copy.data());
+            CHECK( cufftExecC2R(plan_inverse, (cufftComplex       *) copy.data(), (cufftReal       *) copy.data()) );
           } else if constexpr (std::is_same<T,double>::value) {
-            cufftExecZ2D(plan_inverse, (cufftDoubleComplex *) copy.data(), (cufftDoubleReal *) copy.data());
+            CHECK( cufftExecZ2D(plan_inverse, (cufftDoubleComplex *) copy.data(), (cufftDoubleReal *) copy.data()) );
           }
         #endif
         // Transpose the data back, overwriting "arr"
