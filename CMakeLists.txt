@@ -43,7 +43,7 @@ if ("${YAKL_ARCH}" STREQUAL "CUDA")
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "HIP")
-  target_link_libraries(yakl roctx64)
+  target_link_libraries(yakl roctx64 rocfft)
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "SYCL")

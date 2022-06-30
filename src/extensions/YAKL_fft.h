@@ -13,17 +13,24 @@ namespace yakl {
     int batch_size;
     int transform_size;
     int trdim;
-    #ifdef YAKL_ARCH_CUDA
+    #if   defined(YAKL_ARCH_CUDA)
       cufftHandle plan_forward;
       cufftHandle plan_inverse;
       #define CHECK(func) { int myloc = func; if (myloc != CUFFT_SUCCESS) { std::cerr << "ERROR: YAKL CUFFT: " << __FILE__ << ": " <<__LINE__ << std::endl; yakl_throw(""); } }
+    #elif defined(YAKL_ARCH_HIP)
+      rocfft_plan plan_forward;
+      rocfft_plan plan_inverse;
+      #define CHECK(func) { int myloc = func; if (myloc != rocfft_status_success) { std::cerr << "ERROR: YAKL ROCFFT: " << __FILE__ << ": " <<__LINE__ << std::endl; yakl_throw(""); } }
     #endif
 
     RealFFT1D() { batch_size = -1;  transform_size = -1;  trdim = -1; }
     ~RealFFT1D() {
-      #ifdef YAKL_ARCH_CUDA
+      #if   defined(YAKL_ARCH_CUDA)
         CHECK( cufftDestroy( plan_forward ) );
         CHECK( cufftDestroy( plan_inverse ) );
+      #elif defined(YAKL_ARCH_HIP)
+        CHECK( rocfft_plan_destroy( plan_forward ) );
+        CHECK( rocfft_plan_destroy( plan_inverse ) );
       #endif
     }
 
@@ -37,13 +44,40 @@ namespace yakl {
       int batch   = arr.totElems() / arr.extent(trdim);
       int inembed = 0;
       int onembed = 0;
-      #ifdef YAKL_ARCH_CUDA
+      #if   defined(YAKL_ARCH_CUDA)
         if        constexpr (std::is_same<T,float >::value) {
           CHECK( cufftPlanMany(&plan_forward, rank, &n, &inembed, istride, idist, &onembed, ostride, odist, CUFFT_R2C, batch) );
           CHECK( cufftPlanMany(&plan_inverse, rank, &n, &onembed, ostride, odist, &inembed, istride, idist, CUFFT_C2R, batch) );
         } else if constexpr (std::is_same<T,double>::value) {
           CHECK( cufftPlanMany(&plan_forward, rank, &n, &inembed, istride, idist, &onembed, ostride, odist, CUFFT_D2Z, batch) );
           CHECK( cufftPlanMany(&plan_inverse, rank, &n, &onembed, ostride, odist, &inembed, istride, idist, CUFFT_Z2D, batch) );
+        }
+      #elif defined(YAKL_ARCH_HIP)
+        size_t len = tr_size;
+        size_t const roc_istride = istride;
+        size_t const roc_ostride = ostride;
+        size_t const roc_idist = idist;
+        size_t const roc_odist = odist;
+        size_t const roc_off = 0;
+        rocfft_plan_description desc;
+        if        constexpr (std::is_same<T,float >::value) {
+          CHECK( rocfft_plan_description_create( &desc ) );
+          CHECK( rocfft_plan_description_set_data_layout( desc, rocfft_array_type_real, rocfft_array_type_hermitian_interleaved, &roc_off, &roc_off, (size_t) 1, &roc_istride, roc_idist, (size_t) 1, &roc_ostride, roc_odist ) );
+          CHECK( rocfft_plan_create(&plan_forward, rocfft_placement_inplace, rocfft_transform_type_real_forward, rocfft_precision_single, (size_t) 1, &len, (size_t) batch, desc) );
+          CHECK( rocfft_plan_description_destroy( desc ) );
+          CHECK( rocfft_plan_description_create( &desc ) );
+          CHECK( rocfft_plan_description_set_data_layout( desc, rocfft_array_type_hermitian_interleaved, rocfft_array_type_real, &roc_off, &roc_off, (size_t) 1, &roc_ostride, roc_odist, (size_t) 1, &roc_istride, roc_idist ) );
+          CHECK( rocfft_plan_create(&plan_inverse, rocfft_placement_inplace, rocfft_transform_type_real_inverse, rocfft_precision_single, (size_t) 1, &len, (size_t) batch, desc) );
+          CHECK( rocfft_plan_description_destroy( desc ) );
+        } else if constexpr (std::is_same<T,double>::value) {
+          CHECK( rocfft_plan_description_create( &desc ) );
+          CHECK( rocfft_plan_description_set_data_layout( desc, rocfft_array_type_real, rocfft_array_type_hermitian_interleaved, &roc_off, &roc_off, (size_t) 1, &roc_istride, roc_idist, (size_t) 1, &roc_ostride, roc_odist ) );
+          CHECK( rocfft_plan_create(&plan_forward, rocfft_placement_inplace, rocfft_transform_type_real_forward, rocfft_precision_double, (size_t) 1, &len, (size_t) batch, desc) );
+          CHECK( rocfft_plan_description_destroy( desc ) );
+          CHECK( rocfft_plan_description_create( &desc ) );
+          CHECK( rocfft_plan_description_set_data_layout( desc, rocfft_array_type_hermitian_interleaved, rocfft_array_type_real, &roc_off, &roc_off, (size_t) 1, &roc_ostride, roc_odist, (size_t) 1, &roc_istride, roc_idist ) );
+          CHECK( rocfft_plan_create(&plan_inverse, rocfft_placement_inplace, rocfft_transform_type_real_inverse, rocfft_precision_double, (size_t) 1, &len, (size_t) batch, desc) );
+          CHECK( rocfft_plan_description_destroy( desc ) );
         }
       #endif
 
@@ -67,12 +101,19 @@ namespace yakl {
         c::parallel_for( c::SimpleBounds<3>(d0,d1,d2) , YAKL_LAMBDA (int i0, int i1, int i2) { copy(i0,i2,i1) = in(i0,i1,i2); });
       }
       // Perform the FFT
-      #ifdef YAKL_ARCH_CUDA
+      #if   defined(YAKL_ARCH_CUDA)
         if        constexpr (std::is_same<T,float >::value) {
           CHECK( cufftExecR2C(plan_forward, (cufftReal       *) copy.data(), (cufftComplex       *) copy.data()) );
         } else if constexpr (std::is_same<T,double>::value) {
           CHECK( cufftExecD2Z(plan_forward, (cufftDoubleReal *) copy.data(), (cufftDoubleComplex *) copy.data()) );
         }
+      #elif defined(YAKL_ARCH_HIP)
+        std::array<double *,1> ibuf( {copy.data()} );
+        std::array<double *,1> obuf( {copy.data()} );
+        rocfft_execution_info info;
+        CHECK( rocfft_execution_info_create( &info ) );
+        CHECK( rocfft_execute(plan_forward, (void **) ibuf.data(), (void **) obuf.data(), info) );
+        CHECK( rocfft_execution_info_destroy( info ) );
       #else
         Array<T              ,3,memHost,styleC> pfft_in ("pfft_in" ,d0,d2, transform_size     );
         Array<std::complex<T>,3,memHost,styleC> pfft_out("pfft_out",d0,d2,(transform_size+2)/2);
@@ -128,12 +169,19 @@ namespace yakl {
         c::parallel_for( c::SimpleBounds<3>(d0,d1,d2) , YAKL_LAMBDA (int i0, int i1, int i2) { copy(i0,i2,i1) = in(i0,i1,i2); });
       }
       // Perform the FFT
-      #ifdef YAKL_ARCH_CUDA
+      #if   defined(YAKL_ARCH_CUDA)
         if        constexpr (std::is_same<T,float >::value) {
           CHECK( cufftExecC2R(plan_inverse, (cufftComplex       *) copy.data(), (cufftReal       *) copy.data()) );
         } else if constexpr (std::is_same<T,double>::value) {
           CHECK( cufftExecZ2D(plan_inverse, (cufftDoubleComplex *) copy.data(), (cufftDoubleReal *) copy.data()) );
         }
+      #elif defined(YAKL_ARCH_HIP)
+        std::array<double *,1> ibuf( {copy.data()} );
+        std::array<double *,1> obuf( {copy.data()} );
+        rocfft_execution_info info;
+        CHECK( rocfft_execution_info_create( &info ) );
+        CHECK( rocfft_execute(plan_inverse, (void **) ibuf.data(), (void **) obuf.data(), info) );
+        CHECK( rocfft_execution_info_destroy( info ) );
       #else
         Array<std::complex<T>,3,memHost,styleC> pfft_in ("pfft_in" ,d0,d2,(transform_size+2)/2);
         Array<T              ,3,memHost,styleC> pfft_out("pfft_out",d0,d2, transform_size     );
