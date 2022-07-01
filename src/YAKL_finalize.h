@@ -11,6 +11,10 @@ namespace yakl {
     if ( isInitialized() ) {
       fence();  // Make sure all device work is done before we start freeing pool memory
 
+      #if defined(YAKL_ARCH_HIP)
+        rocfft_cleanup();
+      #endif
+
       // Free the pools
       pool.finalize();
 

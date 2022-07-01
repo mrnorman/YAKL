@@ -1,80 +1,162 @@
 
 #include <iostream>
 #include "YAKL.h"
-#include "YAKL_fft.h"
-
-using yakl::Array;
-using yakl::styleC;
-using yakl::memHost;
-using yakl::memDevice;
-using yakl::c::parallel_for;
-using yakl::c::Bounds;
-using yakl::c::SimpleBounds;
-using yakl::COLON;
-
-typedef double real;
-
-typedef Array<real,1,memDevice,styleC> real1d;
-typedef Array<real,1,memHost,styleC> realHost1d;
-
-
-void die(std::string msg) {
-  std::cerr << msg << std::endl;
-  exit(-1);
-}
-
 
 int main() {
   yakl::init();
   {
-    int constexpr n = 8;
+    {
+      int n = 7;
+      int ntot = n%2==1 ? n+1 : n+2;
+      typedef double real;
+      typedef yakl::Array<real,1,yakl::memHost  ,yakl::styleC> realHost1d;
+      typedef yakl::Array<real,3,yakl::memDevice,yakl::styleC> real3d;
 
-    real1d data("data",n+2);
-    parallel_for( n , YAKL_LAMBDA (int i) {
-      data(i) = i+1;
-    });
+      realHost1d fft_exact("fft_exact",ntot);
+      fft_exact(0) = 28.                ;
+      fft_exact(1) = 0.                 ;
+      fft_exact(2) = -3.5000000000000018;
+      fft_exact(3) = 7.267824888003178  ;
+      fft_exact(4) = -3.500000000000001 ;
+      fft_exact(5) = 2.7911568610884143 ;
+      fft_exact(6) = -3.5000000000000013;
+      fft_exact(7) = 0.7988521603655251 ;
 
-    realHost1d dataInit("dataInit",n+2);
-    data.deep_copy_to(dataInit);
-    yakl::fence();
+      {
+        int trdim = 2;
+        yakl::RealFFT1D<real> fft;
 
-    yakl::RealFFT1D<n,real> fft;
-    fft.init();
+        real3d data("data",ntot,ntot,ntot);
 
-    parallel_for( 1 , YAKL_LAMBDA (int i) {
-      fft.forward(data,fft.trig);
-    });
+        fft.init(data,trdim,n);
 
-    realHost1d fftExact("fftExact",n+2);
-    fftExact(0) =  3.6000000000000000e+01;
-    fftExact(1) =  0.0000000000000000e+00;
-    fftExact(2) = -4.0000000000000000e+00;
-    fftExact(3) =  9.6568542494923797e+00;
-    fftExact(4) = -4.0000000000000000e+00;
-    fftExact(5) =  4.0000000000000000e+00;
-    fftExact(6) = -4.0000000000000000e+00;
-    fftExact(7) =  1.6568542494923799e+00;
-    fftExact(8) = -4.0000000000000000e+00;
-    fftExact(9) =  0.0000000000000000e+00;
+        yakl::c::parallel_for( yakl::c::Bounds<3>(n,n,n) , YAKL_LAMBDA (int k, int j, int i) {
+          data(k,j,i) = i+1;
+        });
 
-    auto dataHost = data.createHostCopy();
-    for (int i=0; i < n+2; i++) {
-      if ( abs(dataHost(i) - fftExact(i)) > 1.e-13 ) { die("ERROR: forward gives wrong answer"); }
+        fft.forward_real( data );
+
+        {
+          auto data_host = data.createHostCopy();
+          for (int k=0; k < n; k++) {
+            for (int j=0; j < n; j++) {
+              for (int i=0; i < ntot; i++) {
+                if (std::abs( data_host(k,j,i) - fft_exact(i) ) > 1.e-12) {
+                  yakl::yakl_throw("ERROR: wrong forward FFT value in dim 2 transform");
+                }
+              }
+            }
+          }
+        }
+
+        fft.inverse_real( data );
+
+        {
+          auto data_host = data.createHostCopy();
+          for (int k=0; k < n; k++) {
+            for (int j=0; j < n; j++) {
+              for (int i=0; i < n; i++) {
+                if (std::abs( data_host(k,j,i) - (i+1) ) > 1.e-12) {
+                  yakl::yakl_throw("ERROR: wrong inverse FFT value in dim 2 transform");
+                }
+              }
+            }
+          }
+        }
+      }
+
+
+      {
+        int trdim = 1;
+        yakl::RealFFT1D<real> fft;
+
+        real3d data("data",ntot,ntot,ntot);
+
+        fft.init(data,trdim,n);
+
+        yakl::c::parallel_for( yakl::c::Bounds<3>(n,n,n) , YAKL_LAMBDA (int k, int j, int i) {
+          data(k,j,i) = j+1;
+        });
+
+        fft.forward_real( data );
+
+        {
+          auto data_host = data.createHostCopy();
+          for (int k=0; k < n; k++) {
+            for (int i=0; i < n; i++) {
+              for (int j=0; j < ntot; j++) {
+                if ( std::abs( data_host(k,j,i) - fft_exact(j) ) > 1.e-12) {
+                  yakl::yakl_throw("ERROR: wrong forward FFT value in dim 1 transform");
+                }
+              }
+            }
+          }
+        }
+
+        fft.inverse_real( data );
+
+        {
+          auto data_host = data.createHostCopy();
+          for (int k=0; k < n; k++) {
+            for (int i=0; i < n; i++) {
+              for (int j=0; j < n; j++) {
+                if ( std::abs( data_host(k,j,i) - (j+1) ) > 1.e-12 ) {
+                  yakl::yakl_throw("ERROR: wrong inverse FFT value in dim 1 transform");
+                }
+              }
+            }
+          }
+        }
+      }
+
+
+      {
+        int trdim = 0;
+        yakl::RealFFT1D<real> fft;
+
+        real3d data("data",ntot,ntot,ntot);
+
+        fft.init(data,trdim,n);
+
+        yakl::c::parallel_for( yakl::c::Bounds<3>(n,n,n) , YAKL_LAMBDA (int k, int j, int i) {
+          data(k,j,i) = k+1;
+        });
+
+        fft.forward_real( data );
+
+        {
+          auto data_host = data.createHostCopy();
+          for (int j=0; j < n; j++) {
+            for (int i=0; i < n; i++) {
+              for (int k=0; k < ntot; k++) {
+                if ( std::abs( data_host(k,j,i) - fft_exact(k) )  > 1.e-12 ) {
+                  yakl::yakl_throw("ERROR: wrong forward FFT value in dim 0 transform");
+                }
+              }
+            }
+          }
+        }
+
+        fft.inverse_real( data );
+
+        {
+          auto data_host = data.createHostCopy();
+          for (int j=0; j < n; j++) {
+            for (int i=0; i < n; i++) {
+              for (int k=0; k < n; k++) {
+                if ( std::abs( data_host(k,j,i) - (k+1) ) > 1.e-12 ) {
+                  yakl::yakl_throw("ERROR: wrong inverse FFT value in dim 0 transform");
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
-    parallel_for( 1 , YAKL_LAMBDA (int i) {
-      fft.inverse(data,fft.trig);
-    });
-
-    data.deep_copy_to(dataHost);
-    yakl::fence();
-    for (int i=0; i < n; i++) {
-      if ( abs(dataHost(i) - dataInit(i)) > 1.e-13 ) { die("ERROR: backward gives wrong answer"); }
-    }
 
   }
   yakl::finalize();
-  
-  return 0;
 }
+
 

@@ -2,304 +2,225 @@
 #pragma once
 
 #include "YAKL.h"
-
-/*************************************************************************************************************
-**************************************************************************************************************
-YAKL RealFFT1D class
-Matt Norman, Oak Ridge National Laboratory, normanmr@ornl.gov
-
-Based off the Cooley-Tukey iterative algorithm here:
-https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
-
-Using real-to-complex optimizations described here:
-http://www.robinscheibler.org/2013/02/13/real-fft.html
-https://dsp.stackexchange.com/questions/30185/fft-of-a-n-length-real-sequence-via-fft-of-a-n-2-length-complex-sequence
-
-Inverse FFTs performed using method 4 of:
-https://www.dsprelated.com/showarticle/800.php
-
-This class provides a simple solution to performance portable real-to-complex 1-D FFTs. This is meant for
-small FFTs, and in CUDA, if you use > 2^14 data, you will run out of stack memory in the kernels.
-The data is assumed to be on the stack (the YAKL SArray class), but it can be on the heap as well (i.e., 
-the YAKL Array class). The data size must be a power of 2.
-
-The specific use case for this is when you have to do many 1-D FFTs (say, in a 3-D model). The call to
-RealFFT1D.forward(...) and RealFFT1D.inverse(...) is intended to be inside a parallel_for loop.
-
-The trig arrays are read-only and shared, so they are allocated when the class object is constructed and
-deallocated when the class object is destroyed.
-
-The class is templated on the size of the data because tmp data must be placed on the stack inside
-the parallel_for in order to make it thread-private, and CUDA and other GPUs do not allow flexible sized
-declarations of stack data during runtime.
-
-The data array passed to RealFFT1D.forward(...) and RealFFT1D.inverse(...) must be of size n+2, where n
-is the dimension of the data to be transformed. This is because we need to store n/2+1 Fourier modes.
-Even though the imaginary components of the first and last modes are zero, they are still stored.
-
-The FFTs are performed in place, overwriting the data.
-
-There are two different types of data scaling: FFT_SCALE_STANDARD, which is like numpy.fft.rfft
-                                               FFT_SCALE_ECMWF, taken from the ECMWF fft code
-
-You'll notice some headache with passing around the RealFFT Trig struct. This is required on GPUs because
-you cannot access internal class data on the GPU because the "this' pointer isn't valid in GPU memory.
-
-Example usage:
-
-  int constexpr nx = 128;
-  int constexpr ny = 64;
-  int constexpr nz = 72;
-
-  Array<double,3,memDevice,styleC> pressure("pressure",nz,ny+2,nx+2);
-
-  parallel_for( Bounds<3>(nz,ny,nx) , YAKL_LAMBDA (int k, int j, int i) {
-    pressure(k,j,i) = ...;
-  });
-
-  yakl::RealFFT1D<n,double> fft_x;
-  fft_x.init();
-
-  yakl::RealFFT1D<n,double> fft_y;
-  fft_y.init();
-
-  // x-direction forward FFTs
-  parallel_for( Bounds<2>(nz,ny) , YAKL_LAMBDA (int k, int j) {
-    SArray<real,1,nx+2> data;
-    for (int i=0; i < nx; i++) {
-      data(i) = pressure(k,j,i);
-    }
-    fft_x.forward(data,fft_x.trig,yakl::FFT_SCALE_ECMWF);
-    for (int i=0; i < nx+2; i++) {
-      pressure(k,j,i) = data(i);
-    }
-  });
-
-  // y-direction forward FFTs
-  parallel_for( Bounds<2>(nz,nx+2) , YAKL_LAMBDA (int k, int i) {
-    SArray<real,1,ny+2> data;
-    for (int j=0; j < ny; j++) {
-      data(j) = pressure(k,j,i);
-    }
-    fft_y.forward(data,fft_y.trig,yakl::FFT_SCALE_ECMWF);
-    for (int j=0; j < ny+2; j++) {
-      pressure(k,j,i) = data(j);
-    }
-  });
-
-  // Do stuff in Fourier space
-
-  // y-direction inverse FFTs
-  parallel_for( Bounds<2>(nz,nx+2) , YAKL_LAMBDA (int k, int i) {
-    SArray<real,1,ny+2> data;
-    for (int j=0; j < ny+2; j++) {
-      data(j) = pressure(k,j,i);
-    }
-    fft_y.inverse(data,fft_y.trig,yakl::FFT_SCALE_ECMWF);
-    for (int j=0; j < ny; j++) {
-      pressure(k,j,i) = data(j);
-    }
-  });
-
-  // x-direction inverse FFTs
-  parallel_for( Bounds<2>(nz,ny) , YAKL_LAMBDA (int k, int j) {
-    SArray<real,1,nx+2> data;
-    for (int i=0; i < nx+2; i++) {
-      data(i) = pressure(k,j,i);
-    }
-    fft_x.inverse(data,fft_x.trig,yakl::FFT_SCALE_ECMWF);
-    for (int i=0; i < nx; i++) {
-      pressure(k,j,i) = data(i);
-    }
-  });
-**************************************************************************************************************
-*************************************************************************************************************/
+#define POCKETFFT_CACHE_SIZE 2
+#define POCKETFFT_NO_MULTITHREADING
+#include "pocketfft_hdronly.h"
 
 namespace yakl {
 
-  int constexpr FFT_SCALE_STANDARD = 1;
-  int constexpr FFT_SCALE_ECMWF    = 2;
-
-  template <unsigned int x> struct mylog2 { enum { value = 1 + mylog2<x/2>::value }; };
-  template <> struct mylog2<1> { enum { value = 0 }; };
-
-  template <unsigned int x> struct mypow2 { enum { value = 2*mypow2<x-1>::value }; };
-  template <> struct mypow2<0> { enum { value = 1 }; };
-
-  template <unsigned int SIZE, class real = double>
-  class RealFFT1D {
-    typedef Array<real,1,memDevice,styleC> real1d;
-
-    public:
-
-    int static constexpr OFF_COS1 = 0;
-    int static constexpr OFF_SIN1 = mylog2<SIZE/2>::value;
-    int static constexpr OFF_COS2 = 2*mylog2<SIZE/2>::value;
-    int static constexpr OFF_SIN2 = 2*mylog2<SIZE/2>::value + SIZE/2;
-
-    real1d trig;
-
-    YAKL_INLINE RealFFT1D() {
-      #if YAKL_CURRENTLY_ON_HOST()
-        trig = real1d("trig",2*mylog2<SIZE/2>::value + SIZE);
-      #endif
-    }
-
-
-    YAKL_INLINE ~RealFFT1D() {
-      #if YAKL_CURRENTLY_ON_HOST()
-        trig = real1d();
-      #endif
-    }
-
-
-    #ifdef YAKL_ARCH_CUDA
-      __attribute__((noinline))
+  template <class T> class RealFFT1D {
+  public:
+    int batch_size;
+    int transform_size;
+    int trdim;
+    #if   defined(YAKL_ARCH_CUDA)
+      cufftHandle plan_forward;
+      cufftHandle plan_inverse;
+      #define CHECK(func) { int myloc = func; if (myloc != CUFFT_SUCCESS) { std::cerr << "ERROR: YAKL CUFFT: " << __FILE__ << ": " <<__LINE__ << std::endl; yakl_throw(""); } }
+    #elif defined(YAKL_ARCH_HIP)
+      rocfft_plan plan_forward;
+      rocfft_plan plan_inverse;
+      #define CHECK(func) { int myloc = func; if (myloc != rocfft_status_success) { std::cerr << "ERROR: YAKL ROCFFT: " << __FILE__ << ": " <<__LINE__ << std::endl; yakl_throw(""); } }
     #endif
-    void init() {
-      YAKL_SCOPE( trig , this->trig );
-      int constexpr log2_no2 = mylog2<SIZE/2>::value;
-      c::parallel_for( "YAKL_internal_fft_1" , log2_no2 , YAKL_LAMBDA (int i) {
-        unsigned int m = 1;
-        for (int j=1; j <= i+1; j++) { m *= 2; }
-        trig(OFF_COS1+i) = cos(2*M_PI/static_cast<real>(m));
-        trig(OFF_SIN1+i) = sin(2*M_PI/static_cast<real>(m));
-      });
-      c::parallel_for( "YAKL_internal_fft_2" , SIZE/2 , YAKL_LAMBDA (int i) {
-        trig(OFF_COS2+i) = cos(2*M_PI*i/static_cast<real>(SIZE));
-        trig(OFF_SIN2+i) = sin(2*M_PI*i/static_cast<real>(SIZE));
-      });
+
+    RealFFT1D() { batch_size = -1;  transform_size = -1;  trdim = -1; }
+    ~RealFFT1D() {
+      #if   defined(YAKL_ARCH_CUDA)
+        CHECK( cufftDestroy( plan_forward ) );
+        CHECK( cufftDestroy( plan_inverse ) );
+      #elif defined(YAKL_ARCH_HIP)
+        CHECK( rocfft_plan_destroy( plan_forward ) );
+        CHECK( rocfft_plan_destroy( plan_inverse ) );
+      #endif
     }
 
-
-    template <class ARR>
-    YAKL_INLINE static void forward(ARR const &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) {
-      SArray<real,1,SIZE> tmp;
-      int constexpr n = SIZE;
-      bit_reverse_copy_real_forward(data,tmp);
-      fft_post_bit_reverse(tmp,trig);
-
-      // Post-process
-      data(0) = tmp(0) + tmp(1);
-      data(1) = 0;
-      for (int k=1; k < n/2; k++) {
-        real a = tmp(2*(    k)  );
-        real b = tmp(2*(    k)+1);
-        real c = tmp(2*(n/2-k)  );
-        real d = tmp(2*(n/2-k)+1);
-        real cterm = trig(OFF_COS2+k);
-        real sterm = trig(OFF_SIN2+k);
-        data(2*k  ) = 0.5*( (b+d)*cterm + (c-a)*sterm + a + c );
-        data(2*k+1) = 0.5*( (c-a)*cterm - (b+d)*sterm + b - d );
-      }
-      data(2*(n/2)  ) = tmp(0) - tmp(1);
-      data(2*(n/2)+1) = 0;
-      if (scale == FFT_SCALE_ECMWF) {
-        for (int k=0; k < n+2; k++) {
-          data(k) /= n;
+    template <int N> void init( Array<T,N,memDevice,styleC> &arr , int trdim , int tr_size ) {
+      int rank    = 1;
+      int n       = tr_size;
+      int istride = 1;
+      int ostride = 1;
+      int idist   = arr.extent(trdim);
+      int odist   = idist / 2;
+      int batch   = arr.totElems() / arr.extent(trdim);
+      int inembed = 0;
+      int onembed = 0;
+      #if   defined(YAKL_ARCH_CUDA)
+        if        constexpr (std::is_same<T,float >::value) {
+          CHECK( cufftPlanMany(&plan_forward, rank, &n, &inembed, istride, idist, &onembed, ostride, odist, CUFFT_R2C, batch) );
+          CHECK( cufftPlanMany(&plan_inverse, rank, &n, &onembed, ostride, odist, &inembed, istride, idist, CUFFT_C2R, batch) );
+        } else if constexpr (std::is_same<T,double>::value) {
+          CHECK( cufftPlanMany(&plan_forward, rank, &n, &inembed, istride, idist, &onembed, ostride, odist, CUFFT_D2Z, batch) );
+          CHECK( cufftPlanMany(&plan_inverse, rank, &n, &onembed, ostride, odist, &inembed, istride, idist, CUFFT_Z2D, batch) );
         }
-      }
-    }
-
-
-    template <class ARR>
-    YAKL_INLINE static void inverse(ARR const &data, real1d const &trig, int scale = FFT_SCALE_STANDARD) {
-      SArray<real,1,SIZE> tmp;
-      int constexpr  n = SIZE;
-      bit_reverse_copy_real_inverse(data,tmp,trig);
-      fft_post_bit_reverse(tmp,trig);
-
-      // Post-process
-      for (int k=0; k < n/2; k++) {
-        data(2*k  ) =  tmp(2*k  );
-        data(2*k+1) = -tmp(2*k+1);
-      }
-      if (scale == FFT_SCALE_STANDARD) {
-        for (int k=0; k < n; k++) {
-          data(k) /= (n/2);
+      #elif defined(YAKL_ARCH_HIP)
+        size_t len = tr_size;
+        size_t const roc_istride = istride;
+        size_t const roc_ostride = ostride;
+        size_t const roc_idist = idist;
+        size_t const roc_odist = odist;
+        size_t const roc_off = 0;
+        rocfft_plan_description desc;
+        if        constexpr (std::is_same<T,float >::value) {
+          CHECK( rocfft_plan_description_create( &desc ) );
+          CHECK( rocfft_plan_description_set_data_layout( desc, rocfft_array_type_real, rocfft_array_type_hermitian_interleaved, &roc_off, &roc_off, (size_t) 1, &roc_istride, roc_idist, (size_t) 1, &roc_ostride, roc_odist ) );
+          CHECK( rocfft_plan_create(&plan_forward, rocfft_placement_inplace, rocfft_transform_type_real_forward, rocfft_precision_single, (size_t) 1, &len, (size_t) batch, desc) );
+          CHECK( rocfft_plan_description_destroy( desc ) );
+          CHECK( rocfft_plan_description_create( &desc ) );
+          CHECK( rocfft_plan_description_set_data_layout( desc, rocfft_array_type_hermitian_interleaved, rocfft_array_type_real, &roc_off, &roc_off, (size_t) 1, &roc_ostride, roc_odist, (size_t) 1, &roc_istride, roc_idist ) );
+          CHECK( rocfft_plan_create(&plan_inverse, rocfft_placement_inplace, rocfft_transform_type_real_inverse, rocfft_precision_single, (size_t) 1, &len, (size_t) batch, desc) );
+          CHECK( rocfft_plan_description_destroy( desc ) );
+        } else if constexpr (std::is_same<T,double>::value) {
+          CHECK( rocfft_plan_description_create( &desc ) );
+          CHECK( rocfft_plan_description_set_data_layout( desc, rocfft_array_type_real, rocfft_array_type_hermitian_interleaved, &roc_off, &roc_off, (size_t) 1, &roc_istride, roc_idist, (size_t) 1, &roc_ostride, roc_odist ) );
+          CHECK( rocfft_plan_create(&plan_forward, rocfft_placement_inplace, rocfft_transform_type_real_forward, rocfft_precision_double, (size_t) 1, &len, (size_t) batch, desc) );
+          CHECK( rocfft_plan_description_destroy( desc ) );
+          CHECK( rocfft_plan_description_create( &desc ) );
+          CHECK( rocfft_plan_description_set_data_layout( desc, rocfft_array_type_hermitian_interleaved, rocfft_array_type_real, &roc_off, &roc_off, (size_t) 1, &roc_ostride, roc_odist, (size_t) 1, &roc_istride, roc_idist ) );
+          CHECK( rocfft_plan_create(&plan_inverse, rocfft_placement_inplace, rocfft_transform_type_real_inverse, rocfft_precision_double, (size_t) 1, &len, (size_t) batch, desc) );
+          CHECK( rocfft_plan_description_destroy( desc ) );
         }
-      } else if (scale == FFT_SCALE_ECMWF) {
-        for (int k=0; k < n; k++) {
-          data(k) *= 2;
+      #endif
+
+      this->batch_size     = batch  ;
+      this->transform_size = tr_size;
+      this->trdim          = trdim  ;
+    }
+
+
+    template <int N> void forward_real( Array<T,N,memDevice,styleC> &arr ) {
+      auto dims = arr.get_dimensions();
+      int d2 = 1;   for (int i=N-1; i > trdim; i--) { d2 *= dims(i); } // Fastest varying
+      int d1 = dims(trdim);                                            // Transform dimension
+      int d0 = arr.totElems() / d2 / d1;                               // Slowest varying
+      Array<T,3,memDevice,styleC> copy;
+      if (trdim == N-1) {
+        copy = arr.reshape(d0,d2,d1);
+      } else {
+        auto in = arr.reshape(d0,d1,d2);
+        copy = arr.createDeviceCopy().reshape(d0,d2,d1);
+        c::parallel_for( c::SimpleBounds<3>(d0,d1,d2) , YAKL_LAMBDA (int i0, int i1, int i2) { copy(i0,i2,i1) = in(i0,i1,i2); });
+      }
+      // Perform the FFT
+      #if   defined(YAKL_ARCH_CUDA)
+        if        constexpr (std::is_same<T,float >::value) {
+          CHECK( cufftExecR2C(plan_forward, (cufftReal       *) copy.data(), (cufftComplex       *) copy.data()) );
+        } else if constexpr (std::is_same<T,double>::value) {
+          CHECK( cufftExecD2Z(plan_forward, (cufftDoubleReal *) copy.data(), (cufftDoubleComplex *) copy.data()) );
         }
-      }
-    }
-
-
-    private:
-
-    YAKL_INLINE static unsigned int reverse_bits(unsigned int num) {
-      int constexpr num_bits = mylog2<SIZE/2>::value;
-      unsigned int reverse_num = 0;
-      int i;
-      for (i = 0; i < num_bits; i++) {
-        if ((num & (1 << i)))
-          reverse_num |= 1 << ((num_bits - 1) - i);
-      }
-      return reverse_num;
-    }
-
-
-    template <class ARR_IN, class ARR_OUT>
-    YAKL_INLINE static void bit_reverse_copy_real_forward(ARR_IN const &in, ARR_OUT const &out) {
-      int constexpr n = SIZE/2;
-      for (unsigned int k=0; k < n; k++) {
-        unsigned int br_ind = reverse_bits(k);
-        out(2*br_ind  ) = in(2*k  );
-        out(2*br_ind+1) = in(2*k+1);
-      }
-    }
-
-
-    template <class ARR_IN, class ARR_OUT>
-    YAKL_INLINE static void bit_reverse_copy_real_inverse(ARR_IN const &in, ARR_OUT const &out, real1d const &trig) {
-      int constexpr n = SIZE/2;
-      for (unsigned int k=0; k < n; k++) {
-        real a = in(2*k  );
-        real b = in(2*k+1);
-        real c = in(2*(n-k)  );
-        real d = in(2*(n-k)+1);
-        real cterm = trig(OFF_COS2+k);
-        real sterm = trig(OFF_SIN2+k);
-        real re = 0.5*( -(b+d)*cterm - (a-c)*sterm + a + c );
-        real im = 0.5*(  (a-c)*cterm - (b+d)*sterm + b - d );
-        unsigned int br_ind = reverse_bits(k);
-        out(2*br_ind  ) =  re;
-        out(2*br_ind+1) = -im;
-      }
-    }
-
-
-    template <class ARR>
-    YAKL_INLINE static void fft_post_bit_reverse(ARR const &data, real1d const &trig) {
-      unsigned int m = 1;
-      int constexpr n = SIZE/2;
-      int constexpr log2_n = mylog2<n>::value;
-      for (unsigned int s = 1; s <= log2_n; s++) {
-        m *= 2;
-        real omega_m_re =  trig(OFF_COS1+s-1);
-        real omega_m_im = -trig(OFF_SIN1+s-1);
-        for (unsigned int k = 0; k < n; k+=m) {
-          real omega_re = 1;
-          real omega_im = 0;
-          for (unsigned int j=0; j < m/2; j++) {
-            real a = data(2*(k+j+m/2)  );
-            real b = data(2*(k+j+m/2)+1);
-            real c = data(2*(k+j    )  );
-            real d = data(2*(k+j    )+1);
-            data(2*(k+j    )  ) = -b*omega_im + a*omega_re + c;
-            data(2*(k+j    )+1) =  a*omega_im + b*omega_re + d;
-            data(2*(k+j+m/2)  ) =  b*omega_im - a*omega_re + c;
-            data(2*(k+j+m/2)+1) = -a*omega_im - b*omega_re + d;
-            real omega_new_re = -omega_im*omega_m_im + omega_m_re*omega_re;
-            real omega_new_im =  omega_im*omega_m_re + omega_m_im*omega_re;
-            omega_re = omega_new_re;
-            omega_im = omega_new_im;
+      #elif defined(YAKL_ARCH_HIP)
+        std::array<double *,1> ibuf( {copy.data()} );
+        std::array<double *,1> obuf( {copy.data()} );
+        rocfft_execution_info info;
+        CHECK( rocfft_execution_info_create( &info ) );
+        CHECK( rocfft_execute(plan_forward, (void **) ibuf.data(), (void **) obuf.data(), info) );
+        CHECK( rocfft_execution_info_destroy( info ) );
+      #else
+        Array<T              ,3,memHost,styleC> pfft_in ("pfft_in" ,d0,d2, transform_size     );
+        Array<std::complex<T>,3,memHost,styleC> pfft_out("pfft_out",d0,d2,(transform_size+2)/2);
+        auto copy_host = copy.createHostCopy();
+        for (int i0 = 0; i0 < d0; i0++) {
+          for (int i2 = 0; i2 < d2; i2++) {
+            for (int i1 = 0; i1 < transform_size; i1++) {
+              pfft_in(i0,i2,i1) = copy_host(i0,i2,i1);
+            }
           }
         }
+        using pocketfft::detail::shape_t;
+        using pocketfft::detail::stride_t;
+        shape_t  shape_in  (3);   for (int i=0; i < 3; i++) { shape_in[i] = pfft_in.extent(i); }
+        stride_t stride_in (3);
+        stride_t stride_out(3);
+        stride_in [0] = d2*  transform_size      *sizeof(             T );
+        stride_in [1] =      transform_size      *sizeof(             T );
+        stride_in [2] =                           sizeof(             T );                 
+        stride_out[0] = d2*((transform_size+2)/2)*sizeof(std::complex<T>);
+        stride_out[1] =    ((transform_size+2)/2)*sizeof(std::complex<T>);
+        stride_out[2] =                           sizeof(std::complex<T>);   
+        pocketfft::r2c<T>(shape_in, stride_in, stride_out, (size_t) 2, true, pfft_in.data(), pfft_out.data(), (T) 1);
+        for (int i0 = 0; i0 < d0; i0++) {
+          for (int i2 = 0; i2 < d2; i2++) {
+            for (int i1 = 0; i1 < (transform_size+2)/2; i1++) {
+              copy_host(i0,i2,2*i1  ) = pfft_out(i0,i2,i1).real();
+              copy_host(i0,i2,2*i1+1) = pfft_out(i0,i2,i1).imag();
+            }
+          }
+        }
+        copy_host.deep_copy_to( copy );
+        fence();
+      #endif
+      if (trdim != N-1) {
+        auto out = arr.reshape(d0,d1,d2);
+        c::parallel_for( c::SimpleBounds<3>(d0,d1,d2) , YAKL_LAMBDA (int i0, int i1, int i2) { out(i0,i1,i2) = copy(i0,i2,i1); });
       }
+    }
+
+
+    template <int N> void inverse_real( Array<T,N,memDevice,styleC> &arr ) {
+      auto dims = arr.get_dimensions();
+      int d2 = 1;   for (int i=N-1; i > trdim; i--) { d2 *= dims(i); } // Fastest varying
+      int d1 = dims(trdim);                                            // Transform dimension
+      int d0 = arr.totElems() / d2 / d1;                               // Slowest varying
+      Array<T,3,memDevice,styleC> copy;
+      if (trdim == N-1) {
+        copy = arr.reshape(d0,d2,d1);
+      } else {
+        auto in = arr.reshape(d0,d1,d2);
+        copy = arr.createDeviceCopy().reshape(d0,d2,d1);
+        c::parallel_for( c::SimpleBounds<3>(d0,d1,d2) , YAKL_LAMBDA (int i0, int i1, int i2) { copy(i0,i2,i1) = in(i0,i1,i2); });
+      }
+      // Perform the FFT
+      #if   defined(YAKL_ARCH_CUDA)
+        if        constexpr (std::is_same<T,float >::value) {
+          CHECK( cufftExecC2R(plan_inverse, (cufftComplex       *) copy.data(), (cufftReal       *) copy.data()) );
+        } else if constexpr (std::is_same<T,double>::value) {
+          CHECK( cufftExecZ2D(plan_inverse, (cufftDoubleComplex *) copy.data(), (cufftDoubleReal *) copy.data()) );
+        }
+      #elif defined(YAKL_ARCH_HIP)
+        std::array<double *,1> ibuf( {copy.data()} );
+        std::array<double *,1> obuf( {copy.data()} );
+        rocfft_execution_info info;
+        CHECK( rocfft_execution_info_create( &info ) );
+        CHECK( rocfft_execute(plan_inverse, (void **) ibuf.data(), (void **) obuf.data(), info) );
+        CHECK( rocfft_execution_info_destroy( info ) );
+      #else
+        Array<std::complex<T>,3,memHost,styleC> pfft_in ("pfft_in" ,d0,d2,(transform_size+2)/2);
+        Array<T              ,3,memHost,styleC> pfft_out("pfft_out",d0,d2, transform_size     );
+        auto copy_host = copy.createHostCopy();
+        for (int i0 = 0; i0 < d0; i0++) {
+          for (int i2 = 0; i2 < d2; i2++) {
+            for (int i1 = 0; i1 < (transform_size+2)/2; i1++) {
+              pfft_in(i0,i2,i1) = std::complex<T>( copy_host(i0,i2,2*i1  ) , copy_host(i0,i2,2*i1+1) );
+            }
+          }
+        }
+        using pocketfft::detail::shape_t;
+        using pocketfft::detail::stride_t;
+        shape_t  shape_out (3);   for (int i=0; i < 3; i++) { shape_out [i] = pfft_out.extent(i); }
+        stride_t stride_in (3);
+        stride_t stride_out(3);
+        stride_in [0] = d2*((transform_size+2)/2)*sizeof(std::complex<T>);
+        stride_in [1] =    ((transform_size+2)/2)*sizeof(std::complex<T>);
+        stride_in [2] =                           sizeof(std::complex<T>);   
+        stride_out[0] = d2*  transform_size      *sizeof(             T );
+        stride_out[1] =      transform_size      *sizeof(             T );
+        stride_out[2] =                           sizeof(             T );                 
+        pocketfft::c2r<T>(shape_out, stride_in, stride_out, (size_t) 2, false, pfft_in.data() , pfft_out.data() , (T) 1 );
+        for (int i0 = 0; i0 < d0; i0++) {
+          for (int i2 = 0; i2 < d2; i2++) {
+            for (int i1 = 0; i1 < transform_size; i1++) {
+              copy_host(i0,i2,i1) = pfft_out(i0,i2,i1);
+            }
+          }
+        }
+        copy_host.deep_copy_to( copy );
+        fence();
+      #endif
+      auto out = arr.reshape(d0,d1,d2);
+      YAKL_SCOPE( transform_size , this->transform_size );
+      c::parallel_for( c::SimpleBounds<3>(d0,d1,d2) , YAKL_LAMBDA (int i0, int i1, int i2) { out(i0,i1,i2) = copy(i0,i2,i1) / transform_size; });
     }
 
   };
 
 }
+

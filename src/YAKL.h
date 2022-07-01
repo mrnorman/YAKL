@@ -44,4 +44,5 @@ namespace yakl {
 #include "extensions/YAKL_componentwise.h"
 #include "extensions/YAKL_intrinsics.h"
 #include "YAKL_memset.h"
+#include "extensions/YAKL_fft.h"
 

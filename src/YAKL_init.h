@@ -131,6 +131,7 @@ namespace yakl {
         hipGetDevice(&id);
         hipDeviceProp_t props;
         hipGetDeviceProperties(&props,id);
+        rocfft_setup();
         if (yakl_mainproc()) std::cout << props.name << std::endl;
       #endif
 
