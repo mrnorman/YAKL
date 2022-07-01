@@ -146,7 +146,7 @@ namespace yakl {
           }
         }
         copy_host.deep_copy_to( copy );
-        copy_host.deallocate();
+        fence();
       #endif
       if (trdim != N-1) {
         auto out = arr.reshape(d0,d1,d2);
@@ -213,6 +213,7 @@ namespace yakl {
           }
         }
         copy_host.deep_copy_to( copy );
+        fence();
       #endif
       auto out = arr.reshape(d0,d1,d2);
       YAKL_SCOPE( transform_size , this->transform_size );
