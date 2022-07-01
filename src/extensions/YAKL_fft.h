@@ -24,7 +24,9 @@ namespace yakl {
     #endif
 
     RealFFT1D() { batch_size = -1;  transform_size = -1;  trdim = -1; }
-    ~RealFFT1D() {
+    ~RealFFT1D() { cleanup(); }
+
+    void cleanup() {
       #if   defined(YAKL_ARCH_CUDA)
         CHECK( cufftDestroy( plan_forward ) );
         CHECK( cufftDestroy( plan_inverse ) );
@@ -87,7 +89,22 @@ namespace yakl {
     }
 
 
-    template <int N> void forward_real( Array<T,N,memDevice,styleC> &arr ) {
+    template <int N> void forward_real( Array<T,N,memDevice,styleC> &arr , int trdim_in = -1 , int transform_size_in = -1 ) {
+      // Test if it's been initialized at all
+      if (trdim < 0 || transform_size < 0 || batch_size < 0) {
+        if (trdim_in < 0 || transform_size_in < 0) yakl_throw("ERROR: Using forward_real before calling init without "
+                                                              "specifying both trdim_in and transform_size_in");
+        init( arr , trdim_in , transform_size_in );
+      }
+      // Test if the apparent size of the transform has changed or the batch size has changed
+      if ( ( (transform_size%2==1 ? transform_size+1 : transform_size+2) != arr.extent(trdim) ) ||
+           ( transform_size_in > 0 && transform_size_in != transform_size ) ||
+           ( arr.totElems() / arr.extent(trdim) != batch_size ) ) {
+        if (trdim_in < 0 || transform_size_in < 0) yakl_throw("ERROR: Changing transform size  or batch sizewithout "
+                                                              "specifying both trdim_in and transform_size_in");
+        cleanup();
+        init( arr , trdim_in , transform_size_in );
+      }
       auto dims = arr.get_dimensions();
       int d2 = 1;   for (int i=N-1; i > trdim; i--) { d2 *= dims(i); } // Fastest varying
       int d1 = dims(trdim);                                            // Transform dimension
@@ -155,7 +172,22 @@ namespace yakl {
     }
 
 
-    template <int N> void inverse_real( Array<T,N,memDevice,styleC> &arr ) {
+    template <int N> void inverse_real( Array<T,N,memDevice,styleC> &arr , int trdim_in = -1 , int transform_size_in = -1 ) {
+      // Test if it's been initialized at all
+      if (trdim < 0 || transform_size < 0 || batch_size < 0) {
+        if (trdim_in < 0 || transform_size_in < 0) yakl_throw("ERROR: Using forward_real before calling init without "
+                                                              "specifying both trdim_in and transform_size_in");
+        init( arr , trdim_in , transform_size_in );
+      }
+      // Test if the apparent size of the transform has changed or the batch size has changed
+      if ( ( (transform_size%2==1 ? transform_size+1 : transform_size+2) != arr.extent(trdim) ) ||
+           ( transform_size_in > 0 && transform_size_in != transform_size ) ||
+           ( arr.totElems() / arr.extent(trdim) != batch_size ) ) {
+        if (trdim_in < 0 || transform_size_in < 0) yakl_throw("ERROR: Changing transform size  or batch sizewithout "
+                                                              "specifying both trdim_in and transform_size_in");
+        cleanup();
+        init( arr , trdim_in , transform_size_in );
+      }
       auto dims = arr.get_dimensions();
       int d2 = 1;   for (int i=N-1; i > trdim; i--) { d2 *= dims(i); } // Fastest varying
       int d1 = dims(trdim);                                            // Transform dimension

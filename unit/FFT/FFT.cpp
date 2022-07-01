@@ -28,13 +28,11 @@ int main() {
 
         real3d data("data",ntot,ntot,ntot);
 
-        fft.init(data,trdim,n);
-
         yakl::c::parallel_for( yakl::c::Bounds<3>(n,n,n) , YAKL_LAMBDA (int k, int j, int i) {
           data(k,j,i) = i+1;
         });
 
-        fft.forward_real( data );
+        fft.forward_real( data , trdim , n );
 
         {
           auto data_host = data.createHostCopy();
@@ -49,7 +47,7 @@ int main() {
           }
         }
 
-        fft.inverse_real( data );
+        fft.inverse_real( data , trdim , n );
 
         {
           auto data_host = data.createHostCopy();
@@ -72,13 +70,11 @@ int main() {
 
         real3d data("data",ntot,ntot,ntot);
 
-        fft.init(data,trdim,n);
-
         yakl::c::parallel_for( yakl::c::Bounds<3>(n,n,n) , YAKL_LAMBDA (int k, int j, int i) {
           data(k,j,i) = j+1;
         });
 
-        fft.forward_real( data );
+        fft.forward_real( data , trdim , n );
 
         {
           auto data_host = data.createHostCopy();
@@ -93,7 +89,7 @@ int main() {
           }
         }
 
-        fft.inverse_real( data );
+        fft.inverse_real( data , trdim , n );
 
         {
           auto data_host = data.createHostCopy();
