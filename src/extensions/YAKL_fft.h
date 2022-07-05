@@ -21,6 +21,8 @@ namespace yakl {
       rocfft_plan plan_forward;
       rocfft_plan plan_inverse;
       #define CHECK(func) { int myloc = func; if (myloc != rocfft_status_success) { std::cerr << "ERROR: YAKL ROCFFT: " << __FILE__ << ": " <<__LINE__ << std::endl; yakl_throw(""); } }
+    #elif defined(YAKL_ARCH_SYCL)
+      void *plan_forward, *plan_inverse;
     #endif
 
     RealFFT1D() { batch_size = -1;  transform_size = -1;  trdim = -1; }
@@ -81,6 +83,45 @@ namespace yakl {
           CHECK( rocfft_plan_create(&plan_inverse, rocfft_placement_inplace, rocfft_transform_type_real_inverse, rocfft_precision_double, (size_t) 1, &len, (size_t) batch, desc) );
           CHECK( rocfft_plan_description_destroy( desc ) );
         }
+      #elif defined(YAKL_ARCH_SYCL)
+	  if constexpr (std::is_same_v<T,float>) {
+	    typedef oneapi::mkl::dft::descriptor<oneapi::mkl::dft::precision::SINGLE, oneapi::mkl::dft::domain::REAL> desc_single_t;
+	    plan_forward = new desc_single_t(n);
+	    plan_inverse = new desc_single_t(n);
+
+	    static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::DIMENSION, rank);
+	    static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::INPUT_STRIDES, istride);
+	    static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::OUTPUT_STRIDES, ostride);
+	    static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch);
+	    static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE, idist + 2);
+	    static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE, odist + 2);
+
+	    static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::DIMENSION, rank);
+	    static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::INPUT_STRIDES, ostride);
+	    static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::OUTPUT_STRIDES, istride);
+	    static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch);
+	    static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE, odist);
+	    static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE, idist);
+	  }
+	  else if constexpr (std::is_same_v<T,double>) {
+	    typedef oneapi::mkl::dft::descriptor<oneapi::mkl::dft::precision::DOUBLE, oneapi::mkl::dft::domain::REAL> desc_double_t;
+	    plan_forward = new desc_double_t(n);
+	    plan_inverse = new desc_double_t(n);
+
+	    static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::DIMENSION, rank);
+	    static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::INPUT_STRIDES, istride);
+	    static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::OUTPUT_STRIDES, ostride);
+	    static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch);
+	    static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE, idist + 2);
+	    static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE, odist + 2);
+
+	    static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::DIMENSION, rank);
+	    static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::INPUT_STRIDES, ostride);
+	    static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::OUTPUT_STRIDES, istride);
+	    static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch);
+	    static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE, odist);
+	    static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE, idist);
+	  }
       #endif
 
       this->batch_size     = batch  ;
@@ -131,6 +172,8 @@ namespace yakl {
         CHECK( rocfft_execution_info_create( &info ) );
         CHECK( rocfft_execute(plan_forward, (void **) ibuf.data(), (void **) obuf.data(), info) );
         CHECK( rocfft_execution_info_destroy( info ) );
+      #elif defined(YAKL_ARCH_SYCL)
+        oneapi::mkl::dft::compute_forward(plan_forward, static_cast<T*>(copy.data()));
       #else
         Array<T              ,3,memHost,styleC> pfft_in ("pfft_in" ,d0,d2, transform_size     );
         Array<std::complex<T>,3,memHost,styleC> pfft_out("pfft_out",d0,d2,(transform_size+2)/2);
@@ -149,10 +192,10 @@ namespace yakl {
         stride_t stride_out(3);
         stride_in [0] = d2*  transform_size      *sizeof(             T );
         stride_in [1] =      transform_size      *sizeof(             T );
-        stride_in [2] =                           sizeof(             T );                 
+        stride_in [2] =                           sizeof(             T );
         stride_out[0] = d2*((transform_size+2)/2)*sizeof(std::complex<T>);
         stride_out[1] =    ((transform_size+2)/2)*sizeof(std::complex<T>);
-        stride_out[2] =                           sizeof(std::complex<T>);   
+        stride_out[2] =                           sizeof(std::complex<T>);
         pocketfft::r2c<T>(shape_in, stride_in, stride_out, (size_t) 2, true, pfft_in.data(), pfft_out.data(), (T) 1);
         for (int i0 = 0; i0 < d0; i0++) {
           for (int i2 = 0; i2 < d2; i2++) {
@@ -214,6 +257,8 @@ namespace yakl {
         CHECK( rocfft_execution_info_create( &info ) );
         CHECK( rocfft_execute(plan_inverse, (void **) ibuf.data(), (void **) obuf.data(), info) );
         CHECK( rocfft_execution_info_destroy( info ) );
+      #elif defined(YAKL_ARCH_SYCL)
+        oneapi::mkl::dft::compute_backward(plan_inverse, static_cast<T*>(copy.data()));
       #else
         Array<std::complex<T>,3,memHost,styleC> pfft_in ("pfft_in" ,d0,d2,(transform_size+2)/2);
         Array<T              ,3,memHost,styleC> pfft_out("pfft_out",d0,d2, transform_size     );
@@ -232,10 +277,10 @@ namespace yakl {
         stride_t stride_out(3);
         stride_in [0] = d2*((transform_size+2)/2)*sizeof(std::complex<T>);
         stride_in [1] =    ((transform_size+2)/2)*sizeof(std::complex<T>);
-        stride_in [2] =                           sizeof(std::complex<T>);   
+        stride_in [2] =                           sizeof(std::complex<T>);
         stride_out[0] = d2*  transform_size      *sizeof(             T );
         stride_out[1] =      transform_size      *sizeof(             T );
-        stride_out[2] =                           sizeof(             T );                 
+        stride_out[2] =                           sizeof(             T );
         pocketfft::c2r<T>(shape_out, stride_in, stride_out, (size_t) 2, false, pfft_in.data() , pfft_out.data() , (T) 1 );
         for (int i0 = 0; i0 < d0; i0++) {
           for (int i2 = 0; i2 < d2; i2++) {
@@ -255,4 +300,3 @@ namespace yakl {
   };
 
 }
-

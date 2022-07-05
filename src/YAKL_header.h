@@ -49,7 +49,8 @@
   #include "roctracer/roctx.h"
   #include "rocfft.h"
 #elif defined(YAKL_ARCH_SYCL)
-  #include <CL/sycl.hpp>
+  #include <sycl/sycl.hpp>
+  #include <oneapi/mkl.hpp>
 #elif defined(YAKL_ARCH_OPENMP)
   #include <omp.h>
 #endif
