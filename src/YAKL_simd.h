@@ -2,11 +2,11 @@
 #pragma once
 // Included by YAKL.h
 
-#if defined(__GNUG__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#if defined(__GNUG__) && !defined(__clang__) && !defined(__INTEL_COMPILER) && !defined(__NVCOMPILER)
 # define GET_SIMD_PRAGMA() _Pragma("GCC ivdep")
-#elif defined(__clang__) && !defined(__INTEL_COMPILER)
+#elif defined(__clang__) && !defined(__INTEL_COMPILER) && !defined(__NVCOMPILER)
 # define GET_SIMD_PRAGMA() _Pragma("clang loop vectorize(enable)")
-#elif defined(__INTEL_COMPILER)
+#elif defined(__INTEL_COMPILER) || defined(__NVCOMPILER)
 # define GET_SIMD_PRAGMA() _Pragma("ivdep")
 #else
 # define GET_SIMD_PRAGMA()
