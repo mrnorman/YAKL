@@ -32,6 +32,7 @@ add_subdirectory(OpenMP_Regions)
 add_subdirectory(Intrinsics)
 add_subdirectory(ParForC)
 add_subdirectory(ParForFortran)
+add_subdirectory(performance)
 
 if (DEFINED NETCDF_LINK_FLAGS)
   add_subdirectory(NetCDF)
