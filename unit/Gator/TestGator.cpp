@@ -34,8 +34,14 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test pool growth
     ///////////////////////////////////////////////////////////
-    real1d large1("large",1024*1024*1024/4);
-    real1d large2("large",1024*1024*1024/4);
+    real1d large1("large1",1024*1024*1024/4);
+    real1d large2("large2",1024*1024*1024/4);
+    real1d large3("large3",1024*1024*1024/4);
+    large3 = real1d();
+    large3 = real1d("large3",1024*1024*1024/4);
+    large3 = real1d();
+    real1d small4("small1",1024*1024);
+    real1d large4("large4",1024*1024*1024/4);
 
 
   }

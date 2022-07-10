@@ -143,11 +143,12 @@ namespace yakl {
     if (use_pool()) {
       yaklAllocDevice = [] (size_t bytes , char const *label) -> void * {
         #ifdef YAKL_MEMORY_DEBUG
-          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes";
+          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes" << std::endl;
         #endif
         void * ptr = pool.allocate( bytes , label );
         #ifdef YAKL_MEMORY_DEBUG
-          if (yakl_mainproc()) std::cout << " and pointer address " << ptr << std::endl;
+          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Successfully allocated label \"" << label
+                                         << " with pointer address " << ptr << std::endl;
         #endif
         return ptr;
       };
@@ -163,11 +164,12 @@ namespace yakl {
       set_device_alloc_free(alloc , dealloc);
       yaklAllocDevice = [=] (size_t bytes , char const *label) -> void * {
         #ifdef YAKL_MEMORY_DEBUG
-          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes";
+          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes" << std::endl;
         #endif
         void * ptr = alloc(bytes);
         #ifdef YAKL_MEMORY_DEBUG
-          if (yakl_mainproc()) std::cout << " and pointer address " << ptr << std::endl;
+          if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Successfully allocated label \"" << label
+                                         << " with pointer address " << ptr << std::endl;
         #endif
         return ptr;
       };
@@ -180,11 +182,12 @@ namespace yakl {
     }
     yaklAllocHost = [] (size_t bytes , char const *label) -> void * {
       #ifdef YAKL_MEMORY_DEBUG
-        if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes";
+        if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes" << std::endl;
       #endif
       void *ptr = malloc(bytes);
       #ifdef YAKL_MEMORY_DEBUG
-        if (yakl_mainproc()) std::cout << " and pointer address " << ptr << std::endl;
+        if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Successfully allocated label \"" << label
+                                       << " with pointer address " << ptr << std::endl;
       #endif
       return ptr;
     };
