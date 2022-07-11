@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include "YAKL.h"
+#include "YAKL_fft.h"
 
 int main() {
   yakl::init();
