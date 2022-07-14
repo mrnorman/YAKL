@@ -20,18 +20,27 @@ namespace yakl {
   // 
   // Pack objects are fairly bare bones in terms of functionality
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   class Pack {
   public:
     typedef unsigned int uint;
-    T mutable myData[N];
+    T myData[N];
 
-    YAKL_INLINE T & operator() (uint i) const {
+    YAKL_INLINE T & operator() (uint i) {
       #ifdef YAKL_DEBUG
         if (i >= N) { yakl_throw("Pack index out of bounds"); }
       #endif
       return myData[i];
     }
+
+    YAKL_INLINE T operator() (uint i) const {
+      #ifdef YAKL_DEBUG
+        if (i >= N) { yakl_throw("Pack index out of bounds"); }
+      #endif
+      return myData[i];
+    }
+
+    YAKL_INLINE static int constexpr get_pack_size() { return N; }
 
     //////////////////////////////////////
     // SELF OPERATORS WITH SCALAR VALUES
@@ -111,19 +120,32 @@ namespace yakl {
   };
 
 
+  template <unsigned int N, bool SIMD=false> struct PackIterConfig {};
+
+
+
+  template <class F, unsigned int N, bool SIMD=false>
+  YAKL_INLINE void iterate_over_pack( F const &f , PackIterConfig<N,SIMD> config ) {
+    if constexpr (SIMD) {
+      GET_SIMD_PRAGMA()
+      for (int i=0 ; i < N ; i++) { f(i); }
+    } else {
+      for (int i=0 ; i < N ; i++) { f(i); }
+    }
+  }
 
 
   //////////////////////////////////////////////////////////////
   // OPERATIONS WITH SCALARS
   //////////////////////////////////////////////////////////////
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, unsigned int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator+ (Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
     for (uint i=0; i < N; i++) { ret(i) = lhs(i) + val; }
     return ret;
   }
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, unsigned int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator+ (TLOC val , Pack<T,N> rhs) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -131,14 +153,14 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, unsigned int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator- (Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
     for (uint i=0; i < N; i++) { ret(i) = lhs(i) - val; }
     return ret;
   }
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, unsigned int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator- (TLOC val , Pack<T,N> rhs) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -146,14 +168,14 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, unsigned int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator* (Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
     for (uint i=0; i < N; i++) { ret(i) = lhs(i) * val; }
     return ret;
   }
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, unsigned int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator* (TLOC val , Pack<T,N> rhs) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -161,14 +183,14 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, unsigned int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator/ (Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
     for (uint i=0; i < N; i++) { ret(i) = lhs(i) / val; }
     return ret;
   }
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, unsigned int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator/ (TLOC val , Pack<T,N> rhs) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -176,7 +198,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, unsigned int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> pow(Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -188,7 +210,7 @@ namespace yakl {
   //////////////////////////////////////////////////////////////
   // UNARY OPERATORS
   //////////////////////////////////////////////////////////////
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> operator- ( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -196,7 +218,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> sqrt( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -204,7 +226,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> abs( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -212,7 +234,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> exp( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -220,7 +242,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> log( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -228,7 +250,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> log10( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -236,7 +258,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> cos( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -244,7 +266,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> sin( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -252,7 +274,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> tan( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -260,7 +282,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> acos( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -268,7 +290,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> asign( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -276,7 +298,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> atan( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -284,7 +306,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> ceil( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -292,7 +314,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> floor( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -300,7 +322,7 @@ namespace yakl {
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> round( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -313,7 +335,7 @@ namespace yakl {
   //////////////////////////////////////////////////////////////
   // BINARY OPERATORS
   //////////////////////////////////////////////////////////////
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> operator+( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -324,7 +346,7 @@ namespace yakl {
   }
 
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> operator-( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -335,7 +357,7 @@ namespace yakl {
   }
 
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> operator*( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -346,7 +368,7 @@ namespace yakl {
   }
 
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> operator/( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
@@ -357,7 +379,7 @@ namespace yakl {
   }
 
 
-  template <class T, int N>
+  template <class T, unsigned int N>
   YAKL_INLINE Pack<T,N> pow( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
