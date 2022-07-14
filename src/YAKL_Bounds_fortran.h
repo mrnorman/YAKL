@@ -100,50 +100,64 @@ public:
   YAKL_INLINE int stride(int i) const { return 1; }
   YAKL_INLINE void unpackIndices( index_t iGlob , int indices[N] ) const {
     if constexpr        (N == 1) {
-      indices[0] = iGlob + 1;
+      indices[0] = iGlob;
     } else if constexpr (N == 2) {
-      indices[1] = fastmod( (iGlob        ) , dims[1] ) + 1;
-      indices[0] =          (iGlob/dims[1])             + 1;
+      indices[0] = iGlob/dims[1]             ;
+      indices[1] = iGlob - dims[1]*indices[0];
     } else if constexpr (N == 3) {
-      index_t fac   ; indices[2] = fastmod( (iGlob    ) , dims[2] ) + 1;
-      fac  = dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] ) + 1;
-      fac *= dims[1]; indices[0] =          (iGlob/fac)             + 1;
+      index_t fac, term;
+                              fac = dims[1]*dims[2]; indices[0] =  iGlob         / fac;
+      term  = indices[0]*fac; fac =         dims[2]; indices[1] = (iGlob - term) / fac;
+      term += indices[1]*fac;                        indices[2] =  iGlob - term       ;
     } else if constexpr (N == 4) {
-      index_t fac   ; indices[3] = fastmod( (iGlob    ) , dims[3] ) + 1;
-      fac  = dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] ) + 1;
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] ) + 1;
-      fac *= dims[1]; indices[0] =          (iGlob/fac)             + 1;
+      index_t fac, term;
+                              fac = dims[1]*dims[2]*dims[3]; indices[0] =  iGlob         / fac;
+      term  = indices[0]*fac; fac =         dims[2]*dims[3]; indices[1] = (iGlob - term) / fac;
+      term += indices[1]*fac; fac =                 dims[3]; indices[2] = (iGlob - term) / fac;
+      term += indices[2]*fac;                                indices[3] =  iGlob - term       ;
     } else if constexpr (N == 5) {
-      index_t fac   ; indices[4] = fastmod( (iGlob    ) , dims[4] ) + 1;
-      fac  = dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] ) + 1;
-      fac *= dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] ) + 1;
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] ) + 1;
-      fac *= dims[1]; indices[0] =          (iGlob/fac)             + 1;
+      index_t fac, term;
+                              fac = dims[1]*dims[2]*dims[3]*dims[4]; indices[0] =  iGlob         / fac;
+      term  = indices[0]*fac; fac =         dims[2]*dims[3]*dims[4]; indices[1] = (iGlob - term) / fac;
+      term += indices[1]*fac; fac =                 dims[3]*dims[4]; indices[2] = (iGlob - term) / fac;
+      term += indices[2]*fac; fac =                         dims[4]; indices[3] = (iGlob - term) / fac;
+      term += indices[3]*fac;                                        indices[4] =  iGlob - term       ;
     } else if constexpr (N == 6) {
-      index_t fac   ; indices[5] = fastmod( (iGlob    ) , dims[5] ) + 1;
-      fac  = dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] ) + 1;
-      fac *= dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] ) + 1;
-      fac *= dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] ) + 1;
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] ) + 1;
-      fac *= dims[1]; indices[0] =          (iGlob/fac)             + 1;
+      index_t term, fac4=dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+                               indices[0] =  iGlob         / fac0;
+      term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
+      term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
+      term += indices[2]*fac2; indices[3] = (iGlob - term) / fac3;
+      term += indices[3]*fac3; indices[4] = (iGlob - term) / fac4;
+      term += indices[4]*fac4; indices[5] =  iGlob - term        ;
     } else if constexpr (N == 7) {
-      index_t fac   ; indices[6] = fastmod( (iGlob    ) , dims[6] ) + 1;
-      fac  = dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] ) + 1;
-      fac *= dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] ) + 1;
-      fac *= dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] ) + 1;
-      fac *= dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] ) + 1;
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] ) + 1;
-      fac *= dims[1]; indices[0] =          (iGlob/fac)             + 1;
+      index_t term, fac5=dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+                               indices[0] =  iGlob         / fac0;
+      term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
+      term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
+      term += indices[2]*fac2; indices[3] = (iGlob - term) / fac3;
+      term += indices[3]*fac3; indices[4] = (iGlob - term) / fac4;
+      term += indices[4]*fac4; indices[5] = (iGlob - term) / fac5;
+      term += indices[5]*fac5; indices[6] =  iGlob - term        ;
     } else if constexpr (N == 8) {
-      index_t fac   ; indices[7] = fastmod( (iGlob    ) , dims[7] ) + 1;
-      fac  = dims[7]; indices[6] = fastmod( (iGlob/fac) , dims[6] ) + 1;
-      fac *= dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] ) + 1;
-      fac *= dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] ) + 1;
-      fac *= dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] ) + 1;
-      fac *= dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] ) + 1;
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] ) + 1;
-      fac *= dims[1]; indices[0] =          (iGlob/fac)             + 1;
+      index_t term, fac6=dims[7], fac5=fac6*dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+                               indices[0] =  iGlob         / fac0;
+      term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
+      term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
+      term += indices[2]*fac2; indices[3] = (iGlob - term) / fac3;
+      term += indices[3]*fac3; indices[4] = (iGlob - term) / fac4;
+      term += indices[4]*fac4; indices[5] = (iGlob - term) / fac5;
+      term += indices[5]*fac5; indices[6] = (iGlob - term) / fac6;
+      term += indices[6]*fac6; indices[7] =  iGlob - term        ;
     }
+    if constexpr (N >= 1) indices[0]++;
+    if constexpr (N >= 2) indices[1]++;
+    if constexpr (N >= 3) indices[2]++;
+    if constexpr (N >= 4) indices[3]++;
+    if constexpr (N >= 5) indices[4]++;
+    if constexpr (N >= 6) indices[5]++;
+    if constexpr (N >= 7) indices[6]++;
+    if constexpr (N >= 8) indices[7]++;
   }
 };
 
@@ -195,47 +209,53 @@ public:
     if constexpr        (N == 1) {
       indices[0] = iGlob;
     } else if constexpr (N == 2) {
-      indices[1] = fastmod( (iGlob        ) , dims[1] );
-      indices[0] =          (iGlob/dims[1])            ;
+      indices[0] = iGlob/dims[1]             ;
+      indices[1] = iGlob - dims[1]*indices[0];
     } else if constexpr (N == 3) {
-      index_t fac   ; indices[2] = fastmod( (iGlob    ) , dims[2] );
-      fac  = dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
-      fac *= dims[1]; indices[0] =          (iGlob/fac)            ;
+      index_t fac, term;
+                              fac = dims[1]*dims[2]; indices[0] =  iGlob         / fac;
+      term  = indices[0]*fac; fac =         dims[2]; indices[1] = (iGlob - term) / fac;
+      term += indices[1]*fac;                        indices[2] =  iGlob - term       ;
     } else if constexpr (N == 4) {
-      index_t fac   ; indices[3] = fastmod( (iGlob    ) , dims[3] );
-      fac  = dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
-      fac *= dims[1]; indices[0] =          (iGlob/fac)            ;
+      index_t fac, term;
+                              fac = dims[1]*dims[2]*dims[3]; indices[0] =  iGlob         / fac;
+      term  = indices[0]*fac; fac =         dims[2]*dims[3]; indices[1] = (iGlob - term) / fac;
+      term += indices[1]*fac; fac =                 dims[3]; indices[2] = (iGlob - term) / fac;
+      term += indices[2]*fac;                                indices[3] =  iGlob - term       ;
     } else if constexpr (N == 5) {
-      index_t fac   ; indices[4] = fastmod( (iGlob    ) , dims[4] );
-      fac  = dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] );
-      fac *= dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
-      fac *= dims[1]; indices[0] =          (iGlob/fac)            ;
+      index_t fac, term;
+                              fac = dims[1]*dims[2]*dims[3]*dims[4]; indices[0] =  iGlob         / fac;
+      term  = indices[0]*fac; fac =         dims[2]*dims[3]*dims[4]; indices[1] = (iGlob - term) / fac;
+      term += indices[1]*fac; fac =                 dims[3]*dims[4]; indices[2] = (iGlob - term) / fac;
+      term += indices[2]*fac; fac =                         dims[4]; indices[3] = (iGlob - term) / fac;
+      term += indices[3]*fac;                                        indices[4] =  iGlob - term       ;
     } else if constexpr (N == 6) {
-      index_t fac   ; indices[5] = fastmod( (iGlob    ) , dims[5] );
-      fac  = dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] );
-      fac *= dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] );
-      fac *= dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
-      fac *= dims[1]; indices[0] =          (iGlob/fac)            ;
+      index_t term, fac4=dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+                               indices[0] =  iGlob         / fac0;
+      term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
+      term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
+      term += indices[2]*fac2; indices[3] = (iGlob - term) / fac3;
+      term += indices[3]*fac3; indices[4] = (iGlob - term) / fac4;
+      term += indices[4]*fac4; indices[5] =  iGlob - term        ;
     } else if constexpr (N == 7) {
-      index_t fac   ; indices[6] = fastmod( (iGlob    ) , dims[6] );
-      fac  = dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] );
-      fac *= dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] );
-      fac *= dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] );
-      fac *= dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
-      fac *= dims[1]; indices[0] =          (iGlob/fac)            ;
+      index_t term, fac5=dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+                               indices[0] =  iGlob         / fac0;
+      term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
+      term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
+      term += indices[2]*fac2; indices[3] = (iGlob - term) / fac3;
+      term += indices[3]*fac3; indices[4] = (iGlob - term) / fac4;
+      term += indices[4]*fac4; indices[5] = (iGlob - term) / fac5;
+      term += indices[5]*fac5; indices[6] =  iGlob - term        ;
     } else if constexpr (N == 8) {
-      index_t fac   ; indices[7] = fastmod( (iGlob    ) , dims[7] );
-      fac  = dims[7]; indices[6] = fastmod( (iGlob/fac) , dims[6] );
-      fac *= dims[6]; indices[5] = fastmod( (iGlob/fac) , dims[5] );
-      fac *= dims[5]; indices[4] = fastmod( (iGlob/fac) , dims[4] );
-      fac *= dims[4]; indices[3] = fastmod( (iGlob/fac) , dims[3] );
-      fac *= dims[3]; indices[2] = fastmod( (iGlob/fac) , dims[2] );
-      fac *= dims[2]; indices[1] = fastmod( (iGlob/fac) , dims[1] );
-      fac *= dims[1]; indices[0] =          (iGlob/fac)            ;
+      index_t term, fac6=dims[7], fac5=fac6*dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+                               indices[0] =  iGlob         / fac0;
+      term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
+      term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
+      term += indices[2]*fac2; indices[3] = (iGlob - term) / fac3;
+      term += indices[3]*fac3; indices[4] = (iGlob - term) / fac4;
+      term += indices[4]*fac4; indices[5] = (iGlob - term) / fac5;
+      term += indices[5]*fac5; indices[6] = (iGlob - term) / fac6;
+      term += indices[6]*fac6; indices[7] =  iGlob - term        ;
     }
 
     // Apply strides and lower bounds
