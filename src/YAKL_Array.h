@@ -2,9 +2,10 @@
 #pragma once
 // Included by YAKL.h
 
+#include "YAKL_CSArray.h"
+#include "YAKL_FSArray.h"
+
 namespace yakl {
-  #include "YAKL_CSArray.h"
-  #include "YAKL_FSArray.h"
 
   // Labels for Array styles. C has zero-based indexing with the last index varying the fastest.
   // Fortran has 1-based indexing with arbitrary lower bounds and the index varying the fastest.
@@ -262,11 +263,12 @@ namespace yakl {
     YAKL_INLINE int size() const { return rank; }
   };
 
-  #include "YAKL_ArrayBase.h"
-  #include "YAKL_CArrayBase.h"
-  #include "YAKL_CArray.h"
-  #include "YAKL_FArrayBase.h"
-  #include "YAKL_FArray.h"
 }
+
+#include "YAKL_ArrayBase.h"
+#include "YAKL_CArrayBase.h"
+#include "YAKL_CArray.h"
+#include "YAKL_FArrayBase.h"
+#include "YAKL_FArray.h"
 
 

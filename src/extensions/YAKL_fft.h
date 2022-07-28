@@ -2,9 +2,15 @@
 #pragma once
 
 #include "YAKL.h"
-#define POCKETFFT_CACHE_SIZE 2
-#define POCKETFFT_NO_MULTITHREADING
-#include "pocketfft_hdronly.h"
+#if   defined(YAKL_ARCH_CUDA)
+  #include "cufft.h"
+#elif defined(YAKL_ARCH_HIP)
+  #include "rocfft.h"
+#else
+  #define POCKETFFT_CACHE_SIZE 2
+  #define POCKETFFT_NO_MULTITHREADING
+  #include "pocketfft_hdronly.h"
+#endif
 
 namespace yakl {
 

@@ -286,9 +286,9 @@ namespace yakl {
   #else
 
 
-    template <class T> inline void atomicMin(T &update, T value) { atomicMin_host(update,value); }
-    template <class T> inline void atomicMax(T &update, T value) { atomicMax_host(update,value); }
-    template <class T> inline void atomicAdd(T &update, T value) { atomicAdd_host(update,value); }
+    template <class T> YAKL_INLINE void atomicMin(T &update, T value) { atomicMin_host(update,value); }
+    template <class T> YAKL_INLINE void atomicMax(T &update, T value) { atomicMax_host(update,value); }
+    template <class T> YAKL_INLINE void atomicAdd(T &update, T value) { atomicAdd_host(update,value); }
 
 
   #endif
