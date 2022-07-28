@@ -17,16 +17,16 @@ namespace yakl {
 
   Toney timer;
 
-  std::function<void ()> timer_init = [] () {
+  std::function<void ()> timer_init_func = [] () {
     yakl_throw("ERROR: attempting to call the yakl::timer_init(); before calling yakl::init()");
   };
-  std::function<void ()> timer_finalize = [] () {
+  std::function<void ()> timer_finalize_func = [] () {
     yakl_throw("ERROR: attempting to call the yakl::timer_finalize(); before calling yakl::init()");
   };
-  std::function<void (char const *)> timer_start = [] (char const *label) {
+  std::function<void (char const *)> timer_start_func = [] (char const *label) {
     yakl_throw("ERROR: attempting to call the yakl::timer_start(); before calling yakl::init()");
   };
-  std::function<void (char const *)> timer_stop = [] (char const * label) {
+  std::function<void (char const *)> timer_stop_func = [] (char const * label) {
     yakl_throw("ERROR: attempting to call the yakl::timer_stop(); before calling yakl::init()");
   };
   std::function<void *( size_t , char const *)> yaklAllocDevice = [] ( size_t bytes , char const *label ) -> void* {

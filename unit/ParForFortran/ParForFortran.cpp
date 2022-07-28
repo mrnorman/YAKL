@@ -71,6 +71,23 @@ int main() {
 
     real exact = (double) n1*n2*n3*3 - (double) n3*3;
     if ( abs(sum(arr3d) - exact) / exact > 1.e-13) die("ERROR: Wrong sum for arr3d");
+
+    #ifdef YAKL_ARCH_OPENMP
+    {
+      int constexpr nz = 8;
+      int constexpr nx = 8;
+      yakl::ScalarLiveOut<int> tot_outer(0);
+      yakl::ScalarLiveOut<int> tot      (0);
+      parallel_outer( nz , YAKL_LAMBDA (int k, InnerHandler handler) {
+        yakl::atomicAdd( tot_outer() , omp_get_thread_num() );
+        parallel_inner( nx , [&] (int i) {
+          yakl::atomicAdd( tot() , omp_get_thread_num() );
+        } , handler );
+      } , LaunchConfig<nz>() );
+      if (tot_outer.hostRead() != 28 ) yakl::yakl_throw("ERROR: Wrong tot_outer");
+      if (tot      .hostRead() != 224) yakl::yakl_throw("ERROR: Wrong tot");
+    }
+    #endif
   }
   yakl::finalize();
   

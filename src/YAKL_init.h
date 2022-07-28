@@ -77,18 +77,18 @@ namespace yakl {
       set_yakl_allocators_to_default();
 
       // Initialize the default timers
-      timer_init = [] () {};
-      timer_finalize = [] () {
+      timer_init_func = [] () {};
+      timer_finalize_func = [] () {
         #if defined(YAKL_PROFILE)
           if (yakl_mainproc()) { timer.print_all_threads(); }
         #endif
       };
-      timer_start = [] (char const *label) {
+      timer_start_func = [] (char const *label) {
         #if defined(YAKL_PROFILE)
           fence();  timer.start( label );
         #endif
       };
-      timer_stop = [] (char const * label) {
+      timer_stop_func = [] (char const * label) {
         #if defined(YAKL_PROFILE)
           fence();  timer.stop( label );
         #endif
@@ -99,10 +99,10 @@ namespace yakl {
       if (config.get_device_allocator  ()) yaklAllocDevice = config.get_device_allocator  ();
       if (config.get_host_deallocator  ()) yaklFreeHost    = config.get_host_deallocator  ();
       if (config.get_device_deallocator()) yaklFreeDevice  = config.get_device_deallocator();
-      if (config.get_timer_init        ()) timer_init      = config.get_timer_init        ();
-      if (config.get_timer_finalize    ()) timer_finalize  = config.get_timer_finalize    ();
-      if (config.get_timer_start       ()) timer_start     = config.get_timer_start       ();
-      if (config.get_timer_stop        ()) timer_stop      = config.get_timer_stop        ();
+      if (config.get_timer_init        ()) timer_init_func      = config.get_timer_init        ();
+      if (config.get_timer_finalize    ()) timer_finalize_func  = config.get_timer_finalize    ();
+      if (config.get_timer_start       ()) timer_start_func     = config.get_timer_start       ();
+      if (config.get_timer_stop        ()) timer_stop_func      = config.get_timer_stop        ();
 
       // Allocate functorBuffer
       #ifdef YAKL_ARCH_CUDA

@@ -276,10 +276,10 @@ template <bool OUTER> struct DoOuter {};
 // For OMP target offload backend, target teams distribute parallel for simd is used.
 // For OMP CPU threading backend, parallel for is used
 template <class F, bool simple, int N, bool OUTER=false>
-inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f , bool omp_par = true , DoOuter<OUTER> dummy = DoOuter<false>() ) {
+inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f , DoOuter<OUTER> dummy = DoOuter<false>() ) {
   if constexpr (N == 1) {
     #ifdef YAKL_ARCH_OPENMP
-      #pragma omp parallel for if (omp_par)
+      #pragma omp parallel for
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
       if constexpr (OUTER) { f(i0,InnerHandler() ); }
@@ -287,7 +287,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     }
   } else if constexpr (N == 2) {
     #ifdef YAKL_ARCH_OPENMP
-      #pragma omp parallel for collapse(2) if (omp_par)
+      #pragma omp parallel for collapse(2)
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -296,7 +296,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     } }
   } else if constexpr (N == 3) {
     #ifdef YAKL_ARCH_OPENMP
-      #pragma omp parallel for collapse(3) if (omp_par)
+      #pragma omp parallel for collapse(3)
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -306,7 +306,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     } } }
   } else if constexpr (N == 4) {
     #ifdef YAKL_ARCH_OPENMP
-      #pragma omp parallel for collapse(4) if (omp_par)
+      #pragma omp parallel for collapse(4)
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -317,7 +317,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     } } } }
   } else if constexpr (N == 5) {
     #ifdef YAKL_ARCH_OPENMP
-      #pragma omp parallel for collapse(5) if (omp_par)
+      #pragma omp parallel for collapse(5)
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -329,7 +329,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     } } } } }
   } else if constexpr (N == 6) {
     #ifdef YAKL_ARCH_OPENMP
-      #pragma omp parallel for collapse(6) if (omp_par)
+      #pragma omp parallel for collapse(6)
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -342,7 +342,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     } } } } } }
   } else if constexpr (N == 7) {
     #ifdef YAKL_ARCH_OPENMP
-      #pragma omp parallel for collapse(7) if (omp_par)
+      #pragma omp parallel for collapse(7)
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -356,7 +356,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     } } } } } } }
   } else if constexpr (N == 8) {
     #ifdef YAKL_ARCH_OPENMP
-      #pragma omp parallel for collapse(8) if (omp_par)
+      #pragma omp parallel for collapse(8)
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
@@ -368,6 +368,72 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     for (int i7 = bounds.lbound(7); i7 < (int) (bounds.lbound(7)+bounds.dim(7)*bounds.stride(7)); i7+=bounds.stride(7)) {
       if constexpr (OUTER) { f(i0,i1,i2,i3,i4,i5,i6,i7,InnerHandler() ); }
       else                 { f(i0,i1,i2,i3,i4,i5,i6,i7); }
+    } } } } } } } }
+  }
+}
+
+
+template <class F, bool simple, int N>
+inline void parallel_inner_cpu_serial( Bounds<N,simple> const &bounds , F const &f ) {
+  if constexpr (N == 1) {
+    for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+      f(i0);
+    }
+  } else if constexpr (N == 2) {
+    for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+    for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+      f(i0,i1);
+    } }
+  } else if constexpr (N == 3) {
+    for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+    for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+    for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+      f(i0,i1,i2);
+    } } }
+  } else if constexpr (N == 4) {
+    for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+    for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+    for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+    for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+      f(i0,i1,i2,i3);
+    } } } }
+  } else if constexpr (N == 5) {
+    for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+    for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+    for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+    for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+    for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+      f(i0,i1,i2,i3,i4);
+    } } } } }
+  } else if constexpr (N == 6) {
+    for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+    for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+    for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+    for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+    for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+    for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
+      f(i0,i1,i2,i3,i4,i5);
+    } } } } } }
+  } else if constexpr (N == 7) {
+    for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+    for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+    for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+    for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+    for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+    for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
+    for (int i6 = bounds.lbound(6); i6 < (int) (bounds.lbound(6)+bounds.dim(6)*bounds.stride(6)); i6+=bounds.stride(6)) {
+      f(i0,i1,i2,i3,i4,i5,i6);
+    } } } } } } }
+  } else if constexpr (N == 8) {
+    for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+    for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+    for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+    for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+    for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+    for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
+    for (int i6 = bounds.lbound(6); i6 < (int) (bounds.lbound(6)+bounds.dim(6)*bounds.stride(6)); i6+=bounds.stride(6)) {
+    for (int i7 = bounds.lbound(7); i7 < (int) (bounds.lbound(7)+bounds.dim(7)*bounds.stride(7)); i7+=bounds.stride(7)) {
+      f(i0,i1,i2,i3,i4,i5,i6,i7);
     } } } } } } } }
   }
 }
@@ -485,7 +551,7 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
     // For instance, if the lambda is YAKL_DEVICE_LAMBDA, compiling this line will give an error because
     // it isn't available on the host.
     #ifdef YAKL_B4B
-      if constexpr (B4B) parallel_for_cpu_serial( bounds , f , true , DoOuter<true>() );
+      if constexpr (B4B) parallel_for_cpu_serial( bounds , f , DoOuter<true>() );
     #endif
   } else {
     #ifdef YAKL_ARCH_CUDA
@@ -495,7 +561,7 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
     #elif defined(YAKL_ARCH_SYCL)
       parallel_outer_sycl( bounds , f , config );
     #else
-      parallel_for_cpu_serial( bounds , f , true , DoOuter<true>() );
+      parallel_for_cpu_serial( bounds , f , DoOuter<true>() );
     #endif
   }
 
@@ -547,7 +613,7 @@ inline void parallel_outer( char const * str , LBnd bnd , F const &f ,
 template <class F, int N, bool simple>
 YAKL_INLINE void parallel_inner( Bounds<N,simple> const &bounds , F const &f , InnerHandler handler ) {
   #if YAKL_CURRENTLY_ON_HOST()
-    parallel_for_cpu_serial( bounds , f , false );
+    parallel_inner_cpu_serial( bounds , f );
   #else
     #ifdef YAKL_ARCH_CUDA
       parallel_inner_cuda( bounds , f );
@@ -556,7 +622,7 @@ YAKL_INLINE void parallel_inner( Bounds<N,simple> const &bounds , F const &f , I
     #elif defined(YAKL_ARCH_SYCL)
       parallel_inner_sycl( bounds , f , handler );
     #else
-      parallel_for_cpu_serial( bounds , f , false );
+      parallel_inner_cpu_serial( bounds , f );
     #endif
   #endif
   #ifdef YAKL_AUTO_FENCE
