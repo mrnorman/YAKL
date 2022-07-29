@@ -5,25 +5,49 @@
 namespace yakl {
 
   // This implements all functionality used by all dynamically allocated arrays
-
+  /** @brief This class implements functionality common to both yakl::styleC and yakl::styleFortran `Array` objects.
+    *        All yakl::Array objects will have the functionality in this class. Click for more information.
+    * @param T      Type of the array. For yakl::memHost array objects, this can generally be any type. For 
+    *               yakl::memDevice array objects, this needs to be a type without a constructor, preferrably
+    *               an arithmetic type.
+    * @param rank   The number of dimensions for this array object.
+    * @param myMem  The memory space for this array object: Either yakl::memHost or yakl::memDevice
+    * @param myStyle The behavior of this array object: Either yakl::styleC or yakl::styleFortran
+    */
   template <class T, int rank, int myMem, int myStyle>
   class ArrayBase {
   public:
 
+    /** @brief This is the type `T` without `const` and `volatile` modifiers */
     typedef typename std::remove_cv<T>::type       type;
+    /** @brief This is the type `T` exactly as it was defined upon array object creation. */
     typedef          T                             value_type;
+    /** @brief This is the type `T` with `const` added to it (if the original type has `volatile`, then so will this type. */
     typedef typename std::add_const<type>::type    const_value_type;
+    /** @brief This is the type `T` with `const` removed from it (if the original type has `volatile`, then so will this type. */
     typedef typename std::remove_const<type>::type non_const_value_type;
 
+    /** @brief [DEPRECATED: USE `data()` method instead]
+        @deprecated Do not use this pointer directly. Use the `data()` method instead */
     T       * myData;         // Pointer to the flattened internal data
+    /** @brief [DEPRECATED: USE `extent()` method instead]
+        @deprecated Do not use this array directly. Use the `extent()` method instead */
     index_t dimension[rank];  // Sizes of the 8 possible dimensions
+    /** @brief [DEPRECATED: USE `use_count()` method instead]
+        @deprecated Do not use this pointer directly. Use the `use_count()` method instead */
     int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
     #ifdef YAKL_DEBUG
+      /** @brief [DEPRECATED: USE `label()` method instead]. Note that myname is only defined if the CPP macro `YAKL_DEBUG` is defined.
+          @deprecated Do not use this string directly. Use the `label()` method instead */
       char const * myname;    // Label for debug printing. Only stored if debugging is turned on
     #endif
 
 
     // Deep copy this array's contents to another array that's on the host
+    /** @brief [ASYNCHRONOUS] Copy this array's contents into another array `lhs` in yakl::memHost space.
+      *        Arrays must have the same type and total number
+      *        of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated. 
+      *        `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> const &lhs) const {
       #ifdef YAKL_DEBUG
@@ -39,6 +63,10 @@ namespace yakl {
 
 
     // Deep copy this array's contents to another array that's on the device
+    /** @brief [ASYNCHRONOUS] Copy this array's contents into another array `lhs` in yakl::memDevice space.
+      *        Arrays must have the same type and total number
+      *        of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated. 
+      *        `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> const &lhs) const {
       #ifdef YAKL_DEBUG
@@ -54,18 +82,27 @@ namespace yakl {
 
 
     /* ACCESSORS */
+    /** @brief Returns the number of dimensions in this array object. */
     YAKL_INLINE int get_rank() const { return rank; }
+    /** @brief Returns the total number of elements in this array object. */
     YAKL_INLINE index_t get_totElems() const {
       index_t tot = this->dimension[0];
       for (int i=1; i<rank; i++) { tot *= this->dimension[i]; }
       return tot;
     }
+    /** @brief Returns the total number of elements in this array object. */
     YAKL_INLINE index_t get_elem_count() const { return get_totElems(); }
+    /** @brief Returns the total number of elements in this array object. */
     YAKL_INLINE index_t totElems() const { return get_totElems(); }
+    /** @brief Returns the raw data pointer of this array object. */
     YAKL_INLINE T *data() const { return this->myData; }
+    /** @brief Returns the raw data pointer of this array object. */
     YAKL_INLINE T *get_data() const { return this->myData; }
+    /** @brief Always true. yakl::Array objects are always contiguous in memory with no padding. */
     YAKL_INLINE bool span_is_contiguous() const { return true; }
+    /** @brief Returns whether this array object has is in an initialized / allocated state. */
     YAKL_INLINE bool initialized() const { return this->myData != nullptr; }
+    /** @brief Returns this array object's string label if the `YAKL_DEBUG` CPP macro is defined. Otherwise, returns an empty string. */
     const char* label() const {
       #ifdef YAKL_DEBUG
         return this->myname;
@@ -73,12 +110,22 @@ namespace yakl {
         return "";
       #endif
     }
+    /** @brief Returns the use count for this array object's data pointer. I.e., this is how many yakl::Array objects currently
+      *        share this data pointer. If this returns a value of `0`, that means that this array object is **not** being reference
+      *        counted, meaning it performed no allocation upon creation, will perform no deallocation upon destruction, and has
+      *        no control over whether the memory pointed to by the data pointer stays allocated or not. */
     inline int use_count() const {
       if (this->refCount != nullptr) { return *(this->refCount); }
       else                           { return 0;                 }
     }
 
 
+    /** @brief [DEPRECATED: DO NOT USE]. Only the constructors should perform allocation. If this array object is owned, then
+      *        if the data is unallocated, allocate the data pointer, allocate the reference counter, and set the reference
+      *        counter to 1. If it is owned, and the data is already allocated, increment the reference counter. If it is not
+      *        owned (not being reference counted), then do nothing.
+      * @deprecated DO NOT USE. Only the constructors should perform allocation.
+      */
     // Allocate the array and the reference counter (if owned)
     template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
     inline void allocate() {
@@ -102,6 +149,11 @@ namespace yakl {
 
     // Decrement the reference counter (if owned), and if it's zero after decrement, then deallocate the data
     // For const types, the pointer must be const casted to a non-const type before deallocation
+    /** @brief This is safe to use. Decrement this array's data pointer reference counter if it is being reference counted.
+      *        If the reference counter reaches zero, meaning no other array objects
+      *        are sharing this data pointer, the deallocate the data.
+      *        This routine has the same effect as assigning this array object to
+      *        an empty array object. This is safe to call even if this array object is not yet allocated. */
     template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
     inline void deallocate() {
       yakl_mtx_lock();
@@ -133,6 +185,11 @@ namespace yakl {
 
 
     // Decrement the reference counter (if owned), and if it's zero after decrement, then deallocate the data
+    /** @brief This is safe to use. Decrement this array's data pointer reference counter if it is being reference counted.
+      *        If the reference counter reaches zero, meaning no other array objects
+      *        are sharing this data pointer, the deallocate the data.
+      *        This routine has the same effect as assigning this array object to
+      *        an empty array object. This is safe to call even if this array object is not yet allocated. */
     template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
     inline void deallocate() {
       yakl_mtx_lock();
@@ -162,6 +219,8 @@ namespace yakl {
 
 
     // Print the array contents
+    /** @brief Allows the user to `std::cout << this_array_object;`. This works even for yakl::memDevice array objects,
+      *        as the data is copied to the host for you before printint out. */
     inline friend std::ostream &operator<<(std::ostream& os, Array<T,rank,myMem,myStyle> const &v) {
       #ifdef YAKL_DEBUG
         os << "For Array labeled: " << v.myname << "\n";
