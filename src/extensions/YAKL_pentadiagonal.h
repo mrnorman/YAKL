@@ -77,6 +77,15 @@ namespace yakl {
 
 
 
+  /**
+   * @brief Performs a non-periodic pentadiagonal solve. Click for more details
+   * 
+   * Solves for a vector u of length n in the pentadiagonal linear system
+   * ```
+   * a_i u_(i-2) + b_i u_(i-1) + c_i u_i + d_i u_(i+1) + e_i u_(i+2) = f_i
+   * ```
+   * input are the a, b, c, d, e, and f and they are not modified
+   */
   template <unsigned int n, class real>
   YAKL_INLINE void pentadiagonal(SArray<real,1,n> const &a,
                                  SArray<real,1,n> const &b,
@@ -85,9 +94,6 @@ namespace yakl {
                                  SArray<real,1,n> const &e,
                                  SArray<real,1,n> const &f,
                                  SArray<real,1,n> &u) {
-    // solves for a vector u of length n in the pentadiagonal linear system
-    //  a_i u_(i-2) + b_i u_(i-1) + c_i u_i + d_i u_(i+1) + e_i u_(i+2) = f_i
-    // input are the a, b, c, d, e, and f and they are not modified
 
     // in its clearest incarnation, this algorithm uses three storage arrays
     // called p, q and r. here, the solution vector u is used for r, cutting
@@ -126,6 +132,15 @@ namespace yakl {
 
 
 
+  /**
+   * @brief Performs a periodic pentadiagonal solve. Click for more details
+   * 
+   * Solves for a vector u of length n in the pentadiagonal linear system
+   * ```
+   * a_i u_(i-2) + b_i u_(i-1) + c_i u_i + d_i u_(i+1) + e_i u_(i+2) = f_i
+   * ```
+   * input are the a, b, c, d, e, and f and they are not modified
+   */
   template <unsigned int n, class real>
   YAKL_INLINE void pentadiagonal_periodic(SArray<real,1,n> const &a,
                                           SArray<real,1,n> const &b,
