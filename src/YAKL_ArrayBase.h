@@ -27,18 +27,14 @@ namespace yakl {
     /** @brief This is the type `T` with `const` removed from it (if the original type has `volatile`, then so will this type. */
     typedef typename std::remove_const<type>::type non_const_value_type;
 
-    /** @brief [DEPRECATED: USE `data()` method instead]
-        @deprecated Do not use this pointer directly. Use the `data()` method instead */
+    /** @private */
     T       * myData;         // Pointer to the flattened internal data
-    /** @brief [DEPRECATED: USE `extent()` method instead]
-        @deprecated Do not use this array directly. Use the `extent()` method instead */
+    /** @private */
     index_t dimension[rank];  // Sizes of the 8 possible dimensions
-    /** @brief [DEPRECATED: USE `use_count()` method instead]
-        @deprecated Do not use this pointer directly. Use the `use_count()` method instead */
+    /** @private */
     int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
     #ifdef YAKL_DEBUG
-      /** @brief [DEPRECATED: USE `label()` method instead]. Note that myname is only defined if the CPP macro `YAKL_DEBUG` is defined.
-          @deprecated Do not use this string directly. Use the `label()` method instead */
+      /** @private */
       char const * myname;    // Label for debug printing. Only stored if debugging is turned on
     #endif
 
@@ -120,12 +116,7 @@ namespace yakl {
     }
 
 
-    /** @brief [DEPRECATED: DO NOT USE]. Only the constructors should perform allocation. If this array object is owned, then
-      *        if the data is unallocated, allocate the data pointer, allocate the reference counter, and set the reference
-      *        counter to 1. If it is owned, and the data is already allocated, increment the reference counter. If it is not
-      *        owned (not being reference counted), then do nothing.
-      * @deprecated DO NOT USE. Only the constructors should perform allocation.
-      */
+    /** @private */
     // Allocate the array and the reference counter (if owned)
     template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
     inline void allocate() {

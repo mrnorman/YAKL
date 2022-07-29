@@ -63,8 +63,7 @@ namespace yakl {
 
 
     // Start off all constructors making sure the pointers are null
-    /** @brief [DEPRECATED: DO NOT USE]
-      * @deprecated DO NOT USE! */
+    /** @private */
     YAKL_INLINE void nullify() {
       this->myData   = nullptr;
       this->refCount = nullptr;
