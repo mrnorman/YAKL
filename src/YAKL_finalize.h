@@ -58,18 +58,18 @@ namespace yakl {
       timer_stop_func = [] (char const * label) {
         yakl_throw("ERROR: attempting to call the yakl::timer_stop(); before calling yakl::init()");
       };
-      yaklAllocDevice = [] ( size_t bytes , char const *label ) -> void* {
+      alloc_device_func = [] ( size_t bytes , char const *label ) -> void* {
         yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
         return nullptr;
       };
-      yaklFreeDevice  = [] ( void *ptr    , char const *label )          {
+      free_device_func  = [] ( void *ptr    , char const *label )          {
         yakl_throw("ERROR: attempting memory free before calling yakl::init()");
       };
-      yaklAllocHost = [] ( size_t bytes , char const *label ) -> void* {
+      alloc_host_func = [] ( size_t bytes , char const *label ) -> void* {
         yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
         return nullptr;
       };
-      yaklFreeHost  = [] ( void *ptr    , char const *label )          {
+      free_host_func  = [] ( void *ptr    , char const *label )          {
         yakl_throw("ERROR: attempting memory free before calling yakl::init()");
       };
 

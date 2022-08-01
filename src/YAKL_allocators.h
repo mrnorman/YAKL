@@ -9,13 +9,13 @@
 
 namespace yakl {
 
-  extern Gator pool;
+  extern Gator pool; /// @private
 
   // YAKL allocator and deallocator on host and device as std::function's
-  extern std::function<void *( size_t , char const *)> yaklAllocHost;
-  extern std::function<void *( size_t , char const *)> yaklAllocDevice;
-  extern std::function<void ( void * , char const *)>  yaklFreeHost;
-  extern std::function<void ( void * , char const *)>  yaklFreeDevice;
+  extern std::function<void *( size_t , char const *)> alloc_host_func;    /// @private
+  extern std::function<void *( size_t , char const *)> alloc_device_func;  /// @private
+  extern std::function<void ( void * , char const *)>  free_host_func;     /// @private
+  extern std::function<void ( void * , char const *)>  free_device_func;   /// @private
 
   /**
    * @brief If true, then the pool allocator is being used for all device allocations
@@ -33,6 +33,7 @@ namespace yakl {
 
 
   // Set the allocation and deallocation functions for YAKL
+  /** @private */
   inline void set_device_alloc_free(std::function<void *( size_t )> &alloc , std::function<void ( void * )> &dealloc) {
     #if   defined(YAKL_ARCH_CUDA)
       #if defined (YAKL_MANAGED_MEMORY)
@@ -147,13 +148,14 @@ namespace yakl {
 
 
   /**
-   * @brief Return all YAKL allocators to their defaults. If the user has not overridden YAKL's default allocators,
-   *        then this has no effect.
+   * @brief Return all YAKL allocators to their defaults.
+   *        
+   * If the user has not overridden YAKL's default allocators, then this has no effect.
    */
   inline void set_yakl_allocators_to_default() {
     fence();
     if (use_pool()) {
-      yaklAllocDevice = [] (size_t bytes , char const *label) -> void * {
+      alloc_device_func = [] (size_t bytes , char const *label) -> void * {
         #ifdef YAKL_MEMORY_DEBUG
           if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes" << std::endl;
         #endif
@@ -164,7 +166,7 @@ namespace yakl {
         #endif
         return ptr;
       };
-      yaklFreeDevice  = [] (void *ptr , char const *label)              {
+      free_device_func  = [] (void *ptr , char const *label)              {
         #ifdef YAKL_MEMORY_DEBUG
           if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Freeing label \"" << label << "\" with pointer address " << ptr << std::endl;
         #endif
@@ -174,7 +176,7 @@ namespace yakl {
       std::function<void *( size_t)> alloc;
       std::function<void ( void *)>  dealloc;
       set_device_alloc_free(alloc , dealloc);
-      yaklAllocDevice = [=] (size_t bytes , char const *label) -> void * {
+      alloc_device_func = [=] (size_t bytes , char const *label) -> void * {
         #ifdef YAKL_MEMORY_DEBUG
           if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes" << std::endl;
         #endif
@@ -185,14 +187,14 @@ namespace yakl {
         #endif
         return ptr;
       };
-      yaklFreeDevice  = [=] (void *ptr , char const *label)              {
+      free_device_func  = [=] (void *ptr , char const *label)              {
         #ifdef YAKL_MEMORY_DEBUG
           if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Freeing label \"" << label << "\" with pointer address " << ptr << std::endl;
         #endif
         dealloc(ptr);
       };
     }
-    yaklAllocHost = [] (size_t bytes , char const *label) -> void * {
+    alloc_host_func = [] (size_t bytes , char const *label) -> void * {
       #ifdef YAKL_MEMORY_DEBUG
         if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes" << std::endl;
       #endif
@@ -203,7 +205,7 @@ namespace yakl {
       #endif
       return ptr;
     };
-    yaklFreeHost  = [] (void *ptr , char const *label) {
+    free_host_func  = [] (void *ptr , char const *label) {
       #ifdef YAKL_MEMORY_DEBUG
         if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Freeing label \"" << label << "\" with pointer address " << ptr << std::endl;
       #endif
@@ -212,84 +214,85 @@ namespace yakl {
   }
 
 
+  /** @brief These functions override YAKL's default host and device allocators.
+    *
+    * After calling one of these functions, that allocator passed as a parameter will be used until the user
+    * overrides it again or calls yakl::set_yakl_allocators_to_default(). There are functions that accept
+    * labels for bookkeeping and debugging, and there are functions that do not use labels.
+    */
+
+  /// @{
+
+
   /**
-   * @brief Override YAKL's host allocator with the passed function (No Label). All future allocations will use the function passed in
-   *        until the user calls yakl::set_yakl_allocators_to_default();
-   *
-   * Follows the same function interface as malloc()
+   * @brief Override YAKL's host allocator with the passed function (No Label).
    */
   inline void set_host_allocator    ( std::function<void *(size_t)> func ) {
-    fence();   yaklAllocHost   = [=] (size_t bytes , char const *label) -> void * { return func(bytes); };
+    fence();   alloc_host_func   = [=] (size_t bytes , char const *label) -> void * { return func(bytes); };
   }
 
 
   /**
-   * @brief Override YAKL's device allocator with the passed function (No Label). All future allocations will use the function passed in
-   *        until the user calls yakl::set_yakl_allocators_to_default();
-   *
-   * Follows the same function interface as malloc()
+   * @brief Override YAKL's device allocator with the passed function (No Label).
    */
   inline void set_device_allocator  ( std::function<void *(size_t)> func ) {
-    fence();   yaklAllocDevice = [=] (size_t bytes , char const *label) -> void * { return func(bytes); };
+    fence();   alloc_device_func = [=] (size_t bytes , char const *label) -> void * { return func(bytes); };
   }
 
 
   /**
-   * @brief Override YAKL's host deallocator with the passed function (No Label). All future allocations will use the function passed in
-   *        until the user calls yakl::set_yakl_allocators_to_default();
-   *
-   * Follows the same function interface as free()
+   * @brief Override YAKL's host deallocator with the passed function (No Label).
    */
   inline void set_host_deallocator  ( std::function<void (void *)>  func ) {
-    fence();   yaklFreeHost    = [=] (void *ptr , char const *label) { func(ptr); };
+    fence();   free_host_func    = [=] (void *ptr , char const *label) { func(ptr); };
   }
 
 
   /**
-   * @brief Override YAKL's device deallocator with the passed function (No Label). All future allocations will use the function passed in
-   *        until the user calls yakl::set_yakl_allocators_to_default();
-   *
-   * Follows the same function interface as free()
+   * @brief Override YAKL's device deallocator with the passed function (No Label).
    */
   inline void set_device_deallocator( std::function<void (void *)>  func ) {
-    fence();   yaklFreeDevice  = [=] (void *ptr , char const *label) { func(ptr); };
+    fence();   free_device_func  = [=] (void *ptr , char const *label) { func(ptr); };
   }
 
 
   /**
-   * @brief Override YAKL's host allocator with the passed function (WITH Label). All future allocations will use the function passed in
-   *        until the user calls yakl::set_yakl_allocators_to_default();
-   *
-   * Similar function interface as malloc but with a string parameter for bookkeeping and reporting.
+   * @brief Override YAKL's host allocator with the passed function (WITH Label).
    */
-  inline void set_host_allocator    ( std::function<void *( size_t , char const *)> func ) { fence();  yaklAllocHost   = func; }
+  inline void set_host_allocator    ( std::function<void *( size_t , char const *)> func ) { fence();  alloc_host_func   = func; }
 
 
   /**
-   * @brief Override YAKL's device allocator with the passed function (WITH Label). All future allocations will use the function passed in
-   *        until the user calls yakl::set_yakl_allocators_to_default();
-   *
-   * Similar function interface as malloc but with a string parameter for bookkeeping and reporting.
+   * @brief Override YAKL's device allocator with the passed function (WITH Label).
    */
-  inline void set_device_allocator  ( std::function<void *( size_t , char const *)> func ) { fence();  yaklAllocDevice = func; }
+  inline void set_device_allocator  ( std::function<void *( size_t , char const *)> func ) { fence();  alloc_device_func = func; }
 
 
   /**
-   * @brief Override YAKL's host deallocator with the passed function (WITH Label). All future allocations will use the function passed in
-   *        until the user calls yakl::set_yakl_allocators_to_default();
-   *
-   * Similar function interface as free but with a string parameter for bookkeeping and reporting.
+   * @brief Override YAKL's host deallocator with the passed function (WITH Label).
    */
-  inline void set_host_deallocator  ( std::function<void ( void * , char const *)>  func ) { fence();  yaklFreeHost    = func; }
+  inline void set_host_deallocator  ( std::function<void ( void * , char const *)>  func ) { fence();  free_host_func    = func; }
 
 
   /**
-   * @brief Override YAKL's device deallocator with the passed function (WITH Label). All future allocations will use the function passed in
-   *        until the user calls yakl::set_yakl_allocators_to_default();
-   *
-   * Similar function interface as free but with a string parameter for bookkeeping and reporting.
+   * @brief Override YAKL's device deallocator with the passed function (WITH Label).
    */
-  inline void set_device_deallocator( std::function<void ( void * , char const *)>  func ) { fence();  yaklFreeDevice  = func; }
+  inline void set_device_deallocator( std::function<void ( void * , char const *)>  func ) { fence();  free_device_func  = func; }
+
+  /// @}
+
+
+  /** @brief Allocate on the host using YAKL's host allocator */
+  inline void * alloc_host  ( size_t bytes, char const *label) { return alloc_host_func  (bytes,label); }
+
+  /** @brief Allocate on the device using YAKL's device allocator */
+  inline void * alloc_device( size_t bytes, char const *label) { return alloc_device_func(bytes,label); }
+
+  /** @brief Free on the host using YAKL's host deallocator */
+  inline void   free_host   ( void * ptr  , char const *label) {        free_host_func   (ptr  ,label); }
+
+  /** @brief Free on the device using YAKL's device deallocator */
+  inline void   free_device ( void * ptr  , char const *label) {        free_device_func (ptr  ,label); }
 
 }
 

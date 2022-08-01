@@ -112,10 +112,10 @@ namespace yakl {
       };
 
       // If the user specified overrides in the InitConfig, apply them here
-      if (config.get_host_allocator    ()) yaklAllocHost   = config.get_host_allocator    ();
-      if (config.get_device_allocator  ()) yaklAllocDevice = config.get_device_allocator  ();
-      if (config.get_host_deallocator  ()) yaklFreeHost    = config.get_host_deallocator  ();
-      if (config.get_device_deallocator()) yaklFreeDevice  = config.get_device_deallocator();
+      if (config.get_host_allocator    ()) alloc_host_func   = config.get_host_allocator    ();
+      if (config.get_device_allocator  ()) alloc_device_func = config.get_device_allocator  ();
+      if (config.get_host_deallocator  ()) free_host_func    = config.get_host_deallocator  ();
+      if (config.get_device_deallocator()) free_device_func  = config.get_device_deallocator();
       if (config.get_timer_init        ()) timer_init_func      = config.get_timer_init        ();
       if (config.get_timer_finalize    ()) timer_finalize_func  = config.get_timer_finalize    ();
       if (config.get_timer_start       ()) timer_start_func     = config.get_timer_start       ();

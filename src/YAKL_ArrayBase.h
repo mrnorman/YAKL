@@ -127,9 +127,9 @@ namespace yakl {
       (*(this->refCount)) = 1;
       if (myMem == memDevice) {
         #ifdef YAKL_DEBUG
-          this->myData = (T *) yaklAllocDevice( this->totElems()*sizeof(T) , this->myname );
+          this->myData = (T *) alloc_device( this->totElems()*sizeof(T) , this->myname );
         #else
-          this->myData = (T *) yaklAllocDevice( this->totElems()*sizeof(T) , "" );
+          this->myData = (T *) alloc_device( this->totElems()*sizeof(T) , "" );
         #endif
       } else {
         this->myData = new T[this->totElems()];
@@ -159,9 +159,9 @@ namespace yakl {
           if (this->totElems() > 0) {
             if (myMem == memDevice) {
               #ifdef YAKL_DEBUG
-                yaklFreeDevice(data,this->myname);
+                free_device(data,this->myname);
               #else
-                yaklFreeDevice(data,"");
+                free_device(data,"");
               #endif
             } else {
               delete[] data;
@@ -193,9 +193,9 @@ namespace yakl {
           if (this->totElems() > 0) {
             if (myMem == memDevice) {
               #ifdef YAKL_DEBUG
-                yaklFreeDevice(this->myData,this->myname);
+                free_device(this->myData,this->myname);
               #else
-                yaklFreeDevice(this->myData,"");
+                free_device(this->myData,"");
               #endif
             } else {
               delete[] this->myData;

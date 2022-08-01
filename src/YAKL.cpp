@@ -29,18 +29,18 @@ namespace yakl {
   std::function<void (char const *)> timer_stop_func = [] (char const * label) {
     yakl_throw("ERROR: attempting to call the yakl::timer_stop(); before calling yakl::init()");
   };
-  std::function<void *( size_t , char const *)> yaklAllocDevice = [] ( size_t bytes , char const *label ) -> void* {
+  std::function<void *( size_t , char const *)> alloc_device_func = [] ( size_t bytes , char const *label ) -> void* {
     yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
     return nullptr;
   };
-  std::function<void *( size_t , char const *)> yaklAllocHost   = [] ( size_t bytes , char const *label ) -> void* {
+  std::function<void *( size_t , char const *)> alloc_host_func   = [] ( size_t bytes , char const *label ) -> void* {
     yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
     return nullptr;
   };
-  std::function<void ( void * , char const *)>  yaklFreeDevice  = [] ( void *ptr    , char const *label )          {
+  std::function<void ( void * , char const *)>  free_device_func  = [] ( void *ptr    , char const *label )          {
     yakl_throw("ERROR: attempting memory free before calling yakl::init()");
   };
-  std::function<void ( void * , char const *)>  yaklFreeHost    = [] ( void *ptr    , char const *label )          {
+  std::function<void ( void * , char const *)>  free_host_func    = [] ( void *ptr    , char const *label )          {
     yakl_throw("ERROR: attempting memory free before calling yakl::init()");
   };
 }
@@ -57,11 +57,11 @@ extern "C" void gatorFinalize() {
 }
 
 extern "C" void* gatorAllocate( size_t bytes ) {
-  return yakl::yaklAllocDevice( bytes , "gatorAllocate");
+  return yakl::alloc_device( bytes , "gatorAllocate");
 }
 
 extern "C" void gatorDeallocate( void *ptr ) {
-  yakl::yaklFreeDevice( ptr , "gatorDeallocate");
+  yakl::free_device( ptr , "gatorDeallocate");
 }
 
 
