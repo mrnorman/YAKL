@@ -142,7 +142,7 @@ namespace yakl {
         sycl::access::address_space::global_space>
     using relaxed_atomic_ref =
           sycl::atomic_ref< T,
-          sycl::memory_order::seq_cst,
+          sycl::memory_order::relaxed,
           sycl::memory_scope::device,
           addressSpace>;
 
