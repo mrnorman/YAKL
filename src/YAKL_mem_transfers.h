@@ -1,3 +1,7 @@
+/**
+ * @file
+ * YAKL memory transfoer routines
+ */
 
 #pragma once
 // Included by YAKL.h
@@ -6,6 +10,9 @@ namespace yakl {
 
   // Your one-stop shop for memory transfers to / from host / device
 
+  /**
+   * @brief [USE AT YOUR OWN RISK]: memcpy the specified number of **elements** on the host
+   */
   template <class T1, class T2,
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
@@ -14,11 +21,17 @@ namespace yakl {
   }
 
 
+  /**
+   * @brief [USE AT YOUR OWN RISK]: memcpy the specified number of **bytes** on the host
+   */
   inline void memcpy_host_to_host_void(void *dst , void *src , size_t bytes) {
     memcpy( dst , src , bytes );
   }
 
 
+  /**
+   * @brief [USE AT YOUR OWN RISK]: memcpy the specified number of **elements** from device to host
+   */
   template <class T1, class T2,
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
@@ -50,7 +63,9 @@ namespace yakl {
   }
 
 
-
+  /**
+   * @brief [USE AT YOUR OWN RISK]: memcpy the specified number of **elements** from host to device
+   */
   template <class T1, class T2,
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
@@ -82,6 +97,9 @@ namespace yakl {
   }
 
 
+  /**
+   * @brief [USE AT YOUR OWN RISK]: memcpy the specified number of **elements** on the device
+   */
   template <class T1, class T2,
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
@@ -113,6 +131,9 @@ namespace yakl {
   }
 
 
+  /**
+   * @brief [USE AT YOUR OWN RISK]: memcpy the specified number of **bytes** on the device
+   */
   inline void memcpy_device_to_device_void(void *dst , void *src , size_t bytes) {
     #ifdef YAKL_AUTO_PROFILE
       timer_start("YAKL_internal_memcpy_device_to_device");

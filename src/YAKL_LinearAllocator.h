@@ -4,27 +4,27 @@
 
 namespace yakl {
 
-  // Describes a single allocation entry
-  struct AllocNode {
-    size_t start;        // Offset of this allocation in "blocks"
-    size_t length;       // Length of this allocation in "blocks"
-    char const * label;  // Label for this allocation
-    AllocNode() {
-      this->start  = 0;
-      this->length = 0;
-      this->label  = "";
-    }
-    AllocNode( size_t start , size_t length , char const * label ) {
-      this->start  = start;
-      this->length = length;
-      this->label  = label;
-    }
-  };
-
 
   // This class encapsulates a single "pool"
   class LinearAllocator {
   public:
+
+    // Describes a single allocation entry
+    struct AllocNode {
+      size_t start;        // Offset of this allocation in "blocks"
+      size_t length;       // Length of this allocation in "blocks"
+      char const * label;  // Label for this allocation
+      AllocNode() {
+        this->start  = 0;
+        this->length = 0;
+        this->label  = "";
+      }
+      AllocNode( size_t start , size_t length , char const * label ) {
+        this->start  = start;
+        this->length = length;
+        this->label  = label;
+      }
+    };
 
     std::string                           pool_name;
     void                                  *pool;     // Raw pool pointer

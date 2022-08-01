@@ -6,42 +6,43 @@ using yakl::SArray;
 namespace yakl {
 
 
-  /*
-  Solves a tridiagonal system with periodic boundary conditions of the form:
-
-  [b(0)   c(0)  0    0      0     a(0)  ] [x(0)  ] = [d(0)  ]
-  [a(1)   b(1) c(1)  0      0      0    ] [x(1)  ] = [d(1)  ]
-  [ 0     a(2) b(2) c(2)    0      0    ] [x(2)  ] = [d(2)  ]
-  [ 0      0   ..  ..  ..   0      0    ] [ .    ] = [ .    ]
-  [ 0      0      ..  ..  ..       0    ] [ .    ] = [ .    ]
-  [ 0      0    0   a(n-2) b(n-2) c(n-2)] [x(n-2)] = [d(n-2)]
-  [c(n-1)  0    0    0     a(n-1) b(n-1)] [x(n-1)] = [d(n-1)]
-
-  This routine stores the result in d(), and as the signature indicates, it overwrites b, c, d
-
-  This uses the Thomas algorithm with the Sherman-Morrison formula.
-  The Sherman-Morrison Formula is as follows:
-
-  Separate the tridiagonal + periodic matrix, A, into (B + u*v^T),
-  where B is strictly tridiagonal, and u*v^T accounts for the non-tridiagonal periodic BCs:
-
-  u = [-b(0) , 0 , ... , 0 , c(n-1)    ]^T
-  v = [1     , 0 , ... , 0 , -a(0)/b(0)]^T
-
-  Now we're solveing the system (B + u*v^T)*x = d, which is identical to A*x=d.
-
-  To get the solution, we solve two systems:
-
-  (1) B*y=d
-  (2) B*q=u
-
-  In this code, q is labeled as "tmp". Then, the answer is given by:
-
-  x = y - ( (v^T*y) / (1 + v^T*q) ) * q
-
-  Unfortunately, periodic boundary conditions roughly double the amount of work in the tridiagonal solve
-
-  */
+  /**
+   * @brief Performs a periodic tridiagional solve. Click for more details.
+   *
+   * Solves a tridiagonal system with periodic boundary conditions of the form:
+   * ```
+   * [b(0)   c(0)  0    0      0     a(0)  ] [x(0)  ] = [d(0)  ]
+   * [a(1)   b(1) c(1)  0      0      0    ] [x(1)  ] = [d(1)  ]
+   * [ 0     a(2) b(2) c(2)    0      0    ] [x(2)  ] = [d(2)  ]
+   * [ 0      0   ..  ..  ..   0      0    ] [ .    ] = [ .    ]
+   * [ 0      0      ..  ..  ..       0    ] [ .    ] = [ .    ]
+   * [ 0      0    0   a(n-2) b(n-2) c(n-2)] [x(n-2)] = [d(n-2)]
+   * [c(n-1)  0    0    0     a(n-1) b(n-1)] [x(n-1)] = [d(n-1)]
+   * ```
+   * This routine stores the result in `d()`, and as the signature indicates, it overwrites `b`, `c`, `d`
+   * 
+   * This uses the Thomas algorithm with the Sherman-Morrison formula.
+   * The Sherman-Morrison Formula is as follows:
+   *
+   * Separate the tridiagonal + periodic matrix, `A`, into `(B + u*v^T)`,
+   * where `B` is strictly tridiagonal, and `u*v^T` accounts for the non-tridiagonal periodic BCs:
+   * ```
+   * u = [-b(0) , 0 , ... , 0 , c(n-1)    ]^T
+   * v = [1     , 0 , ... , 0 , -a(0)/b(0)]^T
+   * ```
+   * Now we're solveing the system `(B + u*v^T)*x = d`, which is identical to `A*x=d`.
+   * 
+   * To get the solution, we solve two systems:
+   * ```
+   * (1) B*y=d
+   * (2) B*q=u
+   * ```
+   * In this code, q is labeled as "tmp". Then, the answer is given by:
+   * ```
+   * x = y - ( (v^T*y) / (1 + v^T*q) ) * q
+   * ```
+   * Unfortunately, periodic boundary conditions roughly double the amount of work in the tridiagonal solve
+   */
   template <class real, unsigned int n>
   void tridiagonal_periodic(SArray<real,1,n> const &a, SArray<real,1,n> &b, SArray<real,1,n> &c, SArray<real,1,n> &d) {
     SArray<real,1,n> tmp;
@@ -91,20 +92,22 @@ namespace yakl {
 
 
 
-  /*
-  Solves a tridiagonal system with no boundary conditions of the form:
-
-  [b(0)   c(0)  0    0      0      0    ] [x(0)  ] = [d(0)  ]
-  [a(1)   b(1) c(1)  0      0      0    ] [x(1)  ] = [d(1)  ]
-  [ 0     a(2) b(2) c(2)    0      0    ] [x(2)  ] = [d(2)  ]
-  [ 0      0   ..  ..  ..   0      0    ] [ .    ] = [ .    ]
-  [ 0      0      ..  ..  ..       0    ] [ .    ] = [ .    ]
-  [ 0      0    0   a(n-2) b(n-2) c(n-2)] [x(n-2)] = [d(n-2)]
-  [ 0      0    0    0     a(n-1) b(n-1)] [x(n-1)] = [d(n-1)]
-
-  This routine stores the result in d(), and as the signature indicates, it overwrites b, c, d.
-
-  This uses the Thomas algorithm.
+  /**
+   * @brief Solves a non-periodic tridiagional system
+   * 
+   * Solves a tridiagonal system with no boundary conditions of the form:
+   * ```
+   * [b(0)   c(0)  0    0      0      0    ] [x(0)  ] = [d(0)  ]
+   * [a(1)   b(1) c(1)  0      0      0    ] [x(1)  ] = [d(1)  ]
+   * [ 0     a(2) b(2) c(2)    0      0    ] [x(2)  ] = [d(2)  ]
+   * [ 0      0   ..  ..  ..   0      0    ] [ .    ] = [ .    ]
+   * [ 0      0      ..  ..  ..       0    ] [ .    ] = [ .    ]
+   * [ 0      0    0   a(n-2) b(n-2) c(n-2)] [x(n-2)] = [d(n-2)]
+   * [ 0      0    0    0     a(n-1) b(n-1)] [x(n-1)] = [d(n-1)]
+   * ```
+   * This routine stores the result in `d()`, and as the signature indicates, it overwrites `b`, `c`, `d`.
+   * 
+   * This uses the Thomas algorithm.
   */
   template <class real, unsigned int n>
   void tridiagonal(SArray<real,1,n> const &a, SArray<real,1,n> const &b, SArray<real,1,n> &c, SArray<real,1,n> &d) {

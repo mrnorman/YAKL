@@ -1,3 +1,7 @@
+/**
+ * @file
+ * YAKL Pack routines to encourage SIMD vectorization
+ */
 
 #pragma once
 // Included by YAKL.h
@@ -120,10 +124,23 @@ namespace yakl {
   };
 
 
+  /**
+   * @brief This object must be passed to yakl::iterate_over_pack to inform that routine what the simd vector length is
+   *        as well as whether to apply a SIMD pragma to the loop or not.
+   */
   template <unsigned int N, bool SIMD=false> struct PackIterConfig {};
 
 
 
+  /**
+   * @brief Perform a loop over the vector length size specified by the config parameter. If the config parameter also
+   *        specifies that the SIMD template parameter is true, then apply SIMD pragmas.
+   *        IMPORTANT: For the functor passed to this routine, please use [&] syntax, *not* YAKL_LAMBDA
+   * @param f      The functor object to execute inside the loop.
+   * @param config yakl::PackIterConfig object with two template parameters: (1) the vector length (number of elements
+   *               to loop over; and (2) a bool SIMD parameter to tell this routine whether or not it should apply a
+   *               SIMD pragma.
+   */
   template <class F, unsigned int N, bool SIMD=false>
   YAKL_INLINE void iterate_over_pack( F const &f , PackIterConfig<N,SIMD> config ) {
     if constexpr (SIMD) {

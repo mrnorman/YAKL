@@ -1,10 +1,17 @@
+/**
+ * @file
+ * Routines dealing with YAKL error handling
+ */
 
 #pragma once
 // Included by YAKL.h
 
 namespace yakl {
 
-  // Allows the user to throw an exception from the host or the device
+  /**
+   * @brief Throw an error message. On the host, this throws an exception. On the device, it prints
+   *        and then forces the program to halt.
+   */
   YAKL_INLINE void yakl_throw(const char * msg) {
     // If we're on the host, then let's throw a real exception
     #if YAKL_CURRENTLY_ON_HOST()
@@ -28,7 +35,9 @@ namespace yakl {
   }
 
 
-  // Check if any errors have been thrown by the runtimes
+  /**
+   * @brief Checks to see if an error has occurred on the device
+   */
   inline void check_last_error() {
     #ifdef YAKL_DEBUG
       fence();
@@ -44,8 +53,9 @@ namespace yakl {
   }
 
 
-  // Determine if this is the main process in the case of multiple MPI tasks
-  // This is nearly always used just to avoid printing to stdout or stderr from all MPI tasks
+  /**
+   * @brief If true, this is the main MPI process (task number == 0)
+   */
   inline bool yakl_mainproc() {
     // Only actually check if the user says MPI is available. Otherwise, always return true
     #ifdef HAVE_MPI

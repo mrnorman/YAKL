@@ -1,3 +1,7 @@
+/**
+ * @file
+ * YAKL initialization routine
+ */
 
 #pragma once
 // Included by YAKL.h
@@ -6,9 +10,22 @@ namespace yakl {
 
   extern bool yakl_is_initialized;
 
+  /**
+   * @brief Determine if the YAKL runtime has been initialized. I.e., yakl::init() has been called without a
+   *        corresponding call to yakl::finalize().
+   */
   inline bool isInitialized() { return yakl_is_initialized; }
 
-  // Initialize the YAKL framework
+
+  /**
+   * @brief Initialize the YAKL runtime. (1) Determin if the pool allocator is to be used & pool allocator parameters.
+   *        (2) Initialize the pool if used. (3) Set the YAKL allocators and deallocators to default. 
+   *        (4) Initialize YAKL's timer calls to defaults. (5) Inspect the optional yakl::InitConfig parameter
+   *        to override default allocator, deallocator, and timer calls if requested. (6) Allocate YAKL's functor
+   *        buffer for appropriate backends. (6) Inform the user with device information. THREAD SAFE!
+   * @param config This yakl::InitConfig object allows the user to override YAKL's default allocator, deallocator
+   *               and timer calls from the start of the runtime.
+   */
   // Set global std::functions for alloc and free, allocate functorBuffer
   inline void init( InitConfig config = InitConfig() ) {
     yakl_mtx.lock();

@@ -1,10 +1,17 @@
+/**
+ * @file
+ * YAKL fence routines to block code are varying levels until all threads / streams
+ * have completed on the device.
+ */
 
 #pragma once
 // Included by YAKL.h
 
 namespace yakl {
 
-  // Block the CPU code until the device code and data transfers are all completed
+  /**
+   * @brief Block the host code until all device code has completed.
+   */
   inline void fence() {
     #if   defined(YAKL_ARCH_CUDA)
       cudaDeviceSynchronize();
@@ -17,7 +24,12 @@ namespace yakl {
     #endif
   }
 
-  // Block further work on the inner parallelism level until previous work is completed
+  /**
+   * @brief To be called inside yakl::parallel_outer *only*. Block the inner-level parallelism
+   *        until all inner threads have reached this point. In CUDA and HIP, this is __syncthreads(). 
+   *        Click for more info.
+   * @param handler The yakl::InnerHandler object create by yakl::parallel_outer
+   */
   YAKL_INLINE void fence_inner(InnerHandler &handler) {
     #if YAKL_CURRENTLY_ON_DEVICE()
       #if   defined(YAKL_ARCH_CUDA)

@@ -1,9 +1,18 @@
+/**
+ * @file
+ * YAKL finalization routine
+ */
 
 #pragma once
 // Included by YAKL.h
 
 namespace yakl {
-  // Free the functorBuffer, free the memory pools, reset global std::functions for alloc and free
+
+  /**
+   * @brief Finalize the YAKL runtime. Best practice is to call yakl::isInitialized() to ensure the YAKL runtime
+   *        is initialized before calling this routine. That said, this routine *does* check to ensure the runtime
+   *        is initialized for you. THREAD SAFE!
+   */
   inline void finalize() {
     yakl_mtx.lock();
 
