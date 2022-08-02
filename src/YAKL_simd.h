@@ -18,6 +18,9 @@
 
 namespace yakl {
 
+/** @brief Holds YAKL's Pack class and operators to encourage SIMD vectorization */
+namespace simd {
+
 
   /** @brief The Pack class performs encourages vectorization by performing operations Packs of known size.
     *
@@ -422,6 +425,8 @@ namespace yakl {
     }
     return ret;
   }
+
+}
 
 }
 

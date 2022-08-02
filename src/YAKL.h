@@ -72,6 +72,7 @@ namespace yakl {
  *   - <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1componentwise.html">components</a>
  *   - <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1fortran.html">fortran</a>
  *   - <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1intrinsics.html">intrinsics</a>
+ *   - <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1simd.html">simd</a>
  *
  * ## Classes
  * <a href="https://mrnorman.github.io/yakl_api/html/annotated.html">Classes</a> (A list of all classes in YAKL)
