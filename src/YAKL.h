@@ -52,3 +52,29 @@ namespace yakl {
 #include "extensions/YAKL_intrinsics.h"
 #include "YAKL_memset.h"
 
+
+/** @mainpage Yet Another Kernel Launcher (YAKL) API Documentation
+ *
+ * Welcome to the full API documentation for YAKL. Here you will find detailed documentation for all user-facing
+ * functions and classes in YAKL. For a more tutorial style introduction, please visit: https://github.com/mrnorman/YAKL/wiki
+ *
+ * Not sure where to begin? Try looking at the following links:
+ *
+ * ## Namespaces
+ * <a href="https://mrnorman.github.io/yakl_api/html/namespaces.html">Namespaces</a> (A list of all functions and classes in each YAKL namespace)
+ *
+ * In each namespace, you'll see a list of classes, types, functions, and variables.
+ * Each of these has a brief description, and clicking on the name will typically give more information
+ * about that class, type, function, or variable.
+ *
+ * * <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl.html">yakl</a>
+ *   - <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1c.html">c</a>
+ *   - <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1componentwise.html">components</a>
+ *   - <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1fortran.html">fortran</a>
+ *   - <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1intrinsics.html">intrinsics</a>
+ *
+ * ## Classes
+ * <a href="https://mrnorman.github.io/yakl_api/html/annotated.html">Classes</a> (A list of all classes in YAKL)
+ */
+
+
