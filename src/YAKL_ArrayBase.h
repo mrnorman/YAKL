@@ -45,7 +45,7 @@ namespace yakl {
 
 
     // Deep copy this array's contents to another array that's on the host
-    /** @brief [ASYNCHRONOUS] Copy this array's contents to a yakl::memHost array.
+    /** @brief [ASYNCHRONOUS] [DEEP_COPY] Copy this array's contents to a yakl::memHost array.
       * 
       * Arrays must have the same type and total number
       * of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated. 
@@ -65,7 +65,7 @@ namespace yakl {
 
 
     // Deep copy this array's contents to another array that's on the device
-    /** @brief [ASYNCHRONOUS] Copy this array's contents to a yakl::memDevice array.
+    /** @brief [ASYNCHRONOUS] [DEEP_COPY] Copy this array's contents to a yakl::memDevice array.
       * 
       * Arrays must have the same type and total number
       * of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated. 

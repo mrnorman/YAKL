@@ -873,7 +873,7 @@ namespace yakl {
 
     // Create a host copy of this array. Even if the array exists on the host, a deep copy to a separate
     // object is still performed to avoid any potential bugs when the user expects this behavior
-    /** @brief Create a copy of this array in yakl::memHost space
+    /** @brief [DEEP_COPY] Create a copy of this array in yakl::memHost space
       * 
       * Create and allocate a yakl::memHost array object of the same type, rank, dimensions, and style. Then deep copy
       * the data from this array object to the array object returned by this function. This is a slow routine.
@@ -924,7 +924,7 @@ namespace yakl {
 
     // Create a device copy of this array. Even if the array exists on the host, a deep copy to a separate
     // object is still performed to avoid any potential bugs when the user expects this behavior
-    /** @brief Create a copy of this array in yakl::memDevice space
+    /** @brief [DEEP_COPY] Create a copy of this array in yakl::memDevice space
       *
       * Create and allocate a yakl::memDevice array object of the same type, rank, dimensions, and style. Then deep copy
       * the data from this array object to the array object returned by this function. This is a slow routine.

@@ -295,17 +295,39 @@ namespace yakl {
 
 
     /**
-     * @brief Atomically perform update = min(update,value)
+     * @brief `yakl::atomicMin(update,value)` atomically performs `update = min(update,value)`
+     * 
+     * Atomic instructions exist when multiple parallel threads are attempting to read-write to the same memory
+     * location at the same time. Min, max, and add will read a memory location perform a local operation, and then
+     * write a new value to that location. Atomic instructions ensure that the memory location has not changed between
+     * reading the memory location and writing a new value to that location.
+     *
+     * Atomic min, max, and add are typically needed when you are writing to an array with fewer entries or dimensions than
+     * the number of threads in the parallel_for() kernel launch. E.g.:
+     * ```
+     * parallel_for( Bounds<3>(nz,ny,nx) , YAKL_LAMBDA (int k, int j, int i) {
+     *   yakl::atomicAdd( average_column(k) , data(k,j,i) / (ny*nx) );
+     * });
+     * ```
+     * 
+     * **IMPORTANT**: yakl::atomicAdd() is not bitwise deterministic for floating point (FP) numbers, meaning there
+     * is no guarantee what order threads will perform FP addition. Since FP addition is not commutative, you cannot
+     * guarantee bitwise reproducible results from one run to the next. To alleviate this, please use pass
+     * yakl::DefaultLaunchConfigB4b to the parallel_for() launcher, and when you want to force bitwise reproducibility
+     * define the CPP macro `YAKL_B4B`. yakl::atomicMin() and yakl::atomicMax() are both bitwise reproducible, so
+     * do not worry about those. This is only for yakl::atomicAdd().
      */
     template <class T> YAKL_INLINE void atomicMin(T &update, T value) { atomicMin_host(update,value); }
 
     /**
-     * @brief Atomically perform update = max(update,value)
+     * @brief `yakl::atomicMax(update,value)` atomically performs `update = max(update,value)`
+     * \copydetails atomicMin
      */
     template <class T> YAKL_INLINE void atomicMax(T &update, T value) { atomicMax_host(update,value); }
 
     /**
-     * @brief Atomically perform update += value
+     * @brief `[NON_B4B] yakl::atomicAdd(update,value)` atomically performs `update += value)`
+     * \copydetails atomicMin
      */
     template <class T> YAKL_INLINE void atomicAdd(T &update, T value) { atomicAdd_host(update,value); }
 

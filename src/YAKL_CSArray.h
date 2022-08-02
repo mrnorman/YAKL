@@ -52,13 +52,13 @@ namespace yakl {
 
     /** @brief No constructor arguments allowed */
     YAKL_INLINE CSArray() { }
-    /** @brief Copy and move constructors deep copy all data. */
+    /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
     YAKL_INLINE CSArray           (CSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
-    /** @brief Copy and move constructors deep copy all data. */
+    /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
     YAKL_INLINE CSArray           (CSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
-    /** @brief Copy and move constructors deep copy all data. */
+    /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
     YAKL_INLINE CSArray &operator=(CSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
-    /** @brief Copy and move constructors deep copy all data. */
+    /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
     YAKL_INLINE CSArray &operator=(CSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
     YAKL_INLINE ~CSArray() { }
 

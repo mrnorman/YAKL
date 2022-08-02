@@ -71,9 +71,13 @@ namespace yakl {
  * **Tips:**
  * * Every function decorated with `YAKL_INLINE` can be called from inside a `parallel_for()` kernel. If the function
  *   is not decorated with that, then it cannot be called from inside a `parallel_for()` kernel.
- * * If you see `[ASYNCHRONOUS]` in a function's documentation, it means that function launches a `parallel_for()` kernel
+ * * If you see the `[ASYNCHRONOUS]` tag in a function's documentation, it means that function launches a `parallel_for()` kernel
  *   on the device asynchronously with respect to host code. Therefore, if you want that work to complete before
  *   performing additional host work, you must call `yakl::fence();` after the function call.
+ * * If you see the `[DEEP_COPY]` tag in a function's documentation, this means a copy of all of the array object's data is being performed.
+ *   If you do not see this tag, assume it is cheap to perform unless state otherwise.
+ * * If you see the `[NON_B4B]` tag in a function's documentation, this means it can lead to non-bitwise reproducible results
+ *   between successive runs, and you'll need to take extra steps to achieve bitwise reproducibility when you want it.
  *
  * In each namespace, you'll see a list of classes, types, functions, and variables.
  * Each of these has a brief description, and clicking on the name will typically give more information
