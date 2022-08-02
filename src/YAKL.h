@@ -4,6 +4,12 @@
 #include "YAKL_header.h"
 #include "YAKL_defines.h"
 
+/** @namespace yakl::c
+  * @brief Contains `Bounds` class, and `parallel_for()` routines using C-style indexing and ordering */
+
+/** @namespace yakl::fortran
+  * @brief Contains `Bounds` class, and `parallel_for()` routines using Fortran-style indexing and ordering */
+
 namespace yakl {
   using std::cos;
   using std::sin;
@@ -13,6 +19,7 @@ namespace yakl {
   using std::abs;
 
   // functorBuffer holds large functors in CUDA and all functors in SYCL
+  /** @private */
   int constexpr functorBufSize = 1024*128;
   extern void *functorBuffer;
 

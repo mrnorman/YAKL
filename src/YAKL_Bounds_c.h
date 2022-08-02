@@ -1,3 +1,8 @@
+/**
+ * @file
+ *
+ * Defines C-style loop bounds and functor calling functionality (index computations).
+ */
 
 #pragma once
 // Included by YAKL_parallel_for_c.h
@@ -5,48 +10,58 @@
 namespace yakl {
 namespace c {
 
-  ///////////////////////////////////////////////////////////
-  // LBnd: Loop Bound -- Describes the bounds of one loop
-  // C defaults to lower bound of 0
-  ///////////////////////////////////////////////////////////
+  /** @brief Describes a single C-style loop bound (lower bound default of `0`) */
   class LBnd {
   public:
     int static constexpr default_lbound = 0;
-    int l, u, s;
+    /** @brief lower bound */
+    int l;
+    /** @brief upper bound */
+    int u;
+    /** @brief stride */
+    int s;
+    /** @brief defines an invalid / uninitialized loop bound */
     YAKL_INLINE LBnd() {
       this->l = -1;
       this->u = -1;
       this->s = -1;
     }
-    // Lower bound of zero, stride of one
+    /** @brief Lower bound of zero, stride of one */
     YAKL_INLINE LBnd(index_t u) {
       this->l = 0;
       this->u = u-1;
       this->s = 1;
     }
-    // Lower bound of zero, stride of one
+    /** @brief Lower bound of zero, stride of one */
     YAKL_INLINE LBnd(int u) {
       this->l = 0;
       this->u = u-1;
       this->s = 1;
     }
-    // Lower and upper bounds specified, stride of one
+    /** @brief Lower and upper bounds specified, stride of one */
     YAKL_INLINE LBnd(int l, int u) {
       this->l = l;
       this->u = u;
       this->s = 1;
-      if (u < l) yakl_throw("ERROR: cannot specify an upper bound < lower bound");
+      #ifdef YAKL_DEBUG
+        if (u < l) yakl_throw("ERROR: cannot specify an upper bound < lower bound");
+      #endif
     }
-    // Lower bound, upper bound, and stride all specified
+    /** @brief Lower bound, upper bound, and stride all specified */
     YAKL_INLINE LBnd(int l, int u, int s) {
       this->l = l;
       this->u = u;
       this->s = s;
-      if (s < 1) yakl_throw("ERROR: negative strides not yet supported.");
+      #ifdef YAKL_DEBUG
+        if (u < l) yakl_throw("ERROR: cannot specify an upper bound < lower bound");
+        if (s < 1) yakl_throw("ERROR: negative strides not yet supported.");
+      #endif
     }
+    /** @private */
     YAKL_INLINE index_t to_scalar() const {
       return (index_t) u+1;
     }
+    /** @brief Returns whether this loop bound is valid / initialized */
     YAKL_INLINE bool valid() const { return this->s > 0; }
   };
 
@@ -57,16 +72,37 @@ namespace c {
   // unpackIndices transforms a global index ID into a set of multi-loop indices
   /////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // N == number of loops
-  // simple == all lower bounds are 0, and all strides are 1
+  /** @brief Describes a set of C-style tightly-nested loops
+    * 
+    * Also contains functions to unpack indices from a single global index given the loop bounds
+    * and strides.
+    * 
+    * @param N     The nuber of tightly nested loops being described
+    * @param simple Whether the loop bounds all have lower bounds of `0` and strides of `1`
+    */
   template <int N, bool simple = false> class Bounds;
 
 
 
+  /** @brief Describes a set of C-style tightly-nested loops where all loops have lower bounds of `0`
+    *        strides of `1`.
+    * 
+    * Also contains functions to unpack indices from a single global index given the loop bounds
+    * and strides.
+    * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
+    * 
+    * @param N     The nuber of tightly nested loops being described
+    */
   template<int N> class Bounds<N,true> {
   public:
+    /** @private */
     index_t nIter;
+    /** @private */
     index_t dims[N];
+    /** @brief Declares the total number of iterations for each loop for a set of `1` to `8` tightly-nested loops.
+      * 
+      * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
+      * Number of loops passed to the constructor **must** match the number of loops, `N`.*/
     YAKL_INLINE Bounds( index_t b0 , index_t b1=0 , index_t b2=0 , index_t b3=0 , index_t b4=0 , index_t b5=0 ,
                                      index_t b6=0 , index_t b7=0 ) {
       if constexpr (N >= 1) dims[0] = b0;
@@ -98,9 +134,13 @@ namespace c {
       nIter = 1;
       for (int i=0; i<N; i++) { nIter *= dims[i]; }
     }
+    /** @brief Get the lower loop bound for this loop index. */
     YAKL_INLINE int lbound(int i) const { return 0; }
+    /** @brief Get the total number of iterations for this loop index. */
     YAKL_INLINE int dim   (int i) const { return dims[i]; }
+    /** @brief Get the stride for this loop index. */
     YAKL_INLINE int stride(int i) const { return 1; }
+    /** @brief Unpack a global index into `N` loop indices given bounds and strides. */
     YAKL_INLINE void unpackIndices( index_t iGlob , int indices[N] ) const {
       if constexpr        (N == 1) {
         indices[0] = iGlob;
@@ -158,12 +198,38 @@ namespace c {
 
 
 
+  /** @brief Describes a set of C-style tightly-nested loops where at least one loop has a lower bound
+    *        other than `0` or a stride other than `1`.
+    * 
+    * Also contains functions to unpack indices from a single global index given the loop bounds
+    * and strides.
+    * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
+    * 
+    * @param N     The nuber of tightly nested loops being described
+    */
   template<int N> class Bounds<N,false> {
   public:
+    /** @private */
     index_t nIter;
+    /** @private */
     int     lbounds[N];
+    /** @private */
     index_t dims[N];
+    /** @private */
     index_t strides[N];
+    /** @brief Declares the bounds for each loop for a set of `1` to `8` tightly-nested loops.
+      * 
+      * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
+      * Number of loop bounds passed to the constructor **must** match the number of loops, `N`.
+      * Recall only positive strides are allowed because **requiring** a negative stride implies the loop
+      * order matters, which means your kernel is not trivially parallel, and `yakl::c::parallel_for` should
+      * not be used.
+      * 
+      * Each parameter accepts either:
+      *   * A single integer, for which lower bound defaults to `0`, and stride defaults to `1`
+      *   * An initializer list with two entries: `{lower_bound,upper_bound}` (**inclusive**), and stride defaults to `1`
+      *   * An initializer list with three entries: `{lower,upper,stride}`, where stride is positive
+      */
     YAKL_INLINE Bounds( LBnd const &b0 , LBnd const &b1 = LBnd() , LBnd const &b2 = LBnd() , LBnd const &b3 = LBnd() ,
                                          LBnd const &b4 = LBnd() , LBnd const &b5 = LBnd() , LBnd const &b6 = LBnd() ,
                                          LBnd const &b7 = LBnd() ) {
@@ -196,9 +262,13 @@ namespace c {
       nIter = 1;
       for (int i=0; i<N; i++) { nIter *= dims[i]; }
     }
+    /** @brief Get the lower loop bound for this loop index. */
     YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+    /** @brief Get the total number of iterations for this loop index. */
     YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+    /** @brief Get the stride for this loop index. */
     YAKL_INLINE int stride(int i) const { return strides[i]; }
+    /** @brief Unpack a global index into `N` loop indices given bounds and strides. */
     YAKL_INLINE void unpackIndices( index_t iGlob , int indices[N] ) const {
       // Compute base indices
       if constexpr        (N == 1) {
@@ -265,9 +335,7 @@ namespace c {
     }
   };
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////
-  // Make it easy for the user to specify that all lower bounds are zero and all strides are one
-  ////////////////////////////////////////////////////////////////////////////////////////////////
+  /** @brief Make it easy for the user to specify that all lower bounds are zero and all strides are one */
   template <int N> using SimpleBounds = Bounds<N,true>;
 }
 }

@@ -14,10 +14,48 @@
 
 namespace yakl {
 
+  /** @brief Compute batched real-to-complex forward and inverse FFTs on yakl::Array objects using vendor libraries.
+    * 
+    * This class uses metadata from the yakl::Array object to provide a simplified interface for computing
+    * 1-D real-to-complex FFTs batched over the non-transformed dimensions of the Array object.
+    * If the user calls `init()`, then calls to forward_real() and reverse_real() do not need the optional transform
+    * dimension and transform size parameters. The user can avoid calling `init()`, though, and then provide
+    * these parameters to `forward_real()` and `reverse_real()`.
+    * 
+    * Complex results of a forward transform are stored in interleaved real,imag,real,imag format in-place in the array.
+    * 
+    * Since it's real-to-complex, for even-element transforms, you'll need `n+2` elements available in the transform dimension(s).
+    * For odd-element transforms, you'll need `n+1`.
+    * 
+    * Example Usage:
+    * ```
+    * int nz = 100, ny = 50, nx = 40;
+    * // Allocate space for forward transforms (even numbers add 2, odd numbers add 1)
+    * Array<float,3,memDevice,styleC> data("data",nz,ny+2,nx+2);
+    * // Initialize data
+    * RealFFT<float> fft_y;
+    * RealFFT<float> fft_x;
+    * fft_x.init(data , 2 , nx );
+    * fft_y.init(data , 1 , ny );
+    * // Forward transform
+    * fft_x.forward_real( data );  // Batched over y and z dimensions
+    * fft_y.forward_real( data );  // Batched over x and z dimensions
+    * // Do stuff in Fourier space
+    * fft_y.inverse_real( data );  // Batched over x and z dimensions
+    * fft_x.inverse_real( data );  // Batched over y and z dimensions
+    * // Do stuff in physical space
+    * ```
+    *
+    * Twiddle and chirp factors are not re-computed unless `init()` is called or forward_real() is called
+    * with a different dimension to transform or a different transform size (or the batch size changes).
+    */
   template <class T> class RealFFT1D {
   public:
+    /** @private */
     int batch_size;
+    /** @private */
     int transform_size;
+    /** @private */
     int trdim;
     #if   defined(YAKL_ARCH_CUDA)
       cufftHandle plan_forward;
@@ -32,6 +70,7 @@ namespace yakl {
     RealFFT1D() { batch_size = -1;  transform_size = -1;  trdim = -1; }
     ~RealFFT1D() { cleanup(); }
 
+    /** @private */
     void cleanup() {
       #if   defined(YAKL_ARCH_CUDA)
         CHECK( cufftDestroy( plan_forward ) );
@@ -42,6 +81,8 @@ namespace yakl {
       #endif
     }
 
+    /** @brief Setup FFT plans, allocate, compute needed data.
+      * @details This is not a necessary call. You can pass the `trdim` and `tr_size` parameters to forward_real() and inverse_real() if you want. */
     template <int N> void init( Array<T,N,memDevice,styleC> &arr , int trdim , int tr_size ) {
       int rank    = 1;
       int n       = tr_size;
@@ -95,6 +136,9 @@ namespace yakl {
     }
 
 
+    /** @brief Perform a forward transform (real-to-complex)
+      * @details `trdim_in` and `transform_size_in` are only needed if you did not call `init()` or you're changing
+      * the parameters of the transform (batch size, transform dim, transform size). */
     template <int N> void forward_real( Array<T,N,memDevice,styleC> &arr , int trdim_in = -1 , int transform_size_in = -1 ) {
       // Test if it's been initialized at all
       if (trdim < 0 || transform_size < 0 || batch_size < 0) {
@@ -178,6 +222,9 @@ namespace yakl {
     }
 
 
+    /** @brief Perform an inverse transform (complex-to-real)
+      * @details `trdim_in` and `transform_size_in` are only needed if you did not call `init()` or you're changing
+      * the parameters of the transform (batch size, transform dim, transform size). */
     template <int N> void inverse_real( Array<T,N,memDevice,styleC> &arr , int trdim_in = -1 , int transform_size_in = -1 ) {
       // Test if it's been initialized at all
       if (trdim < 0 || transform_size < 0 || batch_size < 0) {

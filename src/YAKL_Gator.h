@@ -1,3 +1,7 @@
+/**
+ * @file
+ * The YAKL pool allocator class
+ */
 
 #pragma once
 // Included by YAKL.h
@@ -6,20 +10,43 @@
 
 namespace yakl {
 
+  /** @brief YAKL Pool allocator class.
+    * 
+    * Growable pool allocator for efficient frequent allocations and deallocations.
+    * User determines allocation, free, initial pool size, additional pool size, and other pool allocator
+    * characteristics upon initiailization.
+    * 
+    * Once existing pools run out of memory, additional pools are create. Each pool is based on a simple
+    * linear search for free slots that is as efficient in memory usage as possible. While search time is
+    * linear rather than log in complexity, allocations and frees are typically overlapped with kernel execution.
+    * 
+    * Gator objects **are thread safe** for allocate() and free() calls.
+    */
   class Gator {
   protected:
+    /** @private */
     std::string                           pool_name;
+    /** @private */
     std::list<LinearAllocator>            pools;    // The pools managed by this class
+    /** @private */
     std::function<void *( size_t )>       mymalloc; // allocation function
+    /** @private */
     std::function<void( void * )>         myfree;   // free function
+    /** @private */
     std::function<void( void *, size_t )> myzero;   // zero function
+    /** @private */
     size_t growSize;   // Amount by which the pool grows in bytes
+    /** @private */
     size_t blockSize;  // Minimum allocation size
+    /** @private */
     std::string error_message_cannot_grow;
+    /** @private */
     std::string error_message_out_of_memory;
 
+    /** @private */
     std::mutex mtx;    // Internal mutex used to protect alloc and free in threaded regions
 
+    /** @private */
     void die(std::string str="") {
       std::cerr << str << std::endl;
       throw str;
@@ -28,21 +55,41 @@ namespace yakl {
 
   public:
 
+    /** @brief Please use the init() function to specify parameters, not the constructor. */
     Gator() {
     }
 
 
     // No moves allowed
+    /** @brief A Gator object may be moved but not copied */
     Gator            (      Gator && );
+    /** @brief A Gator object may be moved but not copied */
     Gator &operator= (      Gator && );
+    /** @brief A Gator object may be moved but not copied */
     Gator            (const Gator &  ) = delete;
+    /** @brief A Gator object may be moved but not copied */
     Gator &operator= (const Gator &  ) = delete;
 
 
+    /** @brief All pools are automatically finalized when a Gator object is destroyed. */
     ~Gator() { finalize(); }
 
 
-    // Initialize the pool allocator using environment variables and the passed malloc, free, and zero functions
+    /** @brief Initialize the pool.
+      * 
+      * @param myalloc The allocator to use when creating the initial and additional pools
+      * @param myfree  The deallocator to use when destroying all pools upon the Gator object destruction.
+      * @param myzero  [NOT CURRENTLY USED] The function to use to memset the memory to a value
+      *                (presumably zero) after initial allocationa and an entry free
+      * @param initialSize Size of the initial pool in bytes
+      * @param growSize    Size of additional pools once the previous pools run out of memory
+      * @param blockSize   Size of an individual block (the smallest possible entry size. The entry
+      *                    size must increment by this size as well.
+      * @param pool_name   The label for this pool used in debugging
+      * @param error_message_out_of_memory The string printed when a pool allocation fails
+      * @param error_message_cannot_grow   The string printed when an allocation is requested that overflows
+      *                                    initial memory and exceeds the size of additional pools
+      */
     void init(std::function<void *( size_t )>       mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); },
               std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); }                        ,
               std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {}                        ,
@@ -67,9 +114,14 @@ namespace yakl {
     }
 
 
+    /** @brief Finalize the pool allocator, deallocate all individual pools.
+      */
     void finalize() { pools = std::list<LinearAllocator>(); }
 
 
+    /** @brief **[USEFUL FOR DEBUGGING]** Print all allocations left in this pool object.
+      * @details If you call this regularly in a loop, you can determine if an object fails to be deallocated
+      *          properly by looking for repeated entries that grow in number each iteration. */
     void printAllocsLeft() {
       // Used for debugging mainly. Prints all existing allocations
       for (auto it = pools.begin() ; it != pools.end() ; it++) {
@@ -78,7 +130,12 @@ namespace yakl {
     }
 
 
-    // Allocate memory with the specified number of bytes and the specified label
+    /** @brief Allocate the requested number of bytes using the requested label, and return the pointer to allocated space. 
+      * @details The pool allocator will search from beginning to end for a slot large enough to fit
+      * this allocation request. This minimizes segmentation at the cost of a linear search time.
+      * If the current pool(s) do not contain enough room, a new pool is created.
+      * 
+      * Attempting to allocate zero bytes will return `nullptr`. This is a thread safe call.*/
     void * allocate(size_t bytes, char const * label="") {
       if (bytes == 0) return nullptr;
       // Loop through the pools and see if there's room. If so, allocate in one of them
@@ -141,7 +198,8 @@ namespace yakl {
     };
 
 
-    // Free the specified pointer with the specified label
+    /** @brief Free the passed pointer, and return the pointer to allocated space. 
+      * @details Attempting to free a pointer not found in the list of pools will result in a thrown exception */
     void free(void *ptr , char const * label = "") {
       bool pointer_valid = false;
       // Protect against multiple threads trying to free at the same time
@@ -165,7 +223,7 @@ namespace yakl {
     };
 
 
-    // Get the total size of all of the pools put together
+    /** @brief  Get the total size of all of the pools put together */
     size_t poolSize( ) const {
       size_t sz = 0;
       for (auto it = pools.begin() ; it != pools.end() ; it++) { sz += it->poolSize(); }
@@ -173,7 +231,7 @@ namespace yakl {
     }
 
 
-    // Get the total number of allocations in all of the pools put together
+    /** @brief Get the total number of allocations in all of the pools put together */
     size_t numAllocs( ) const {
       size_t allocs = 0;
       for (auto it = pools.begin() ; it != pools.end() ; it++) { allocs += it->numAllocs(); }

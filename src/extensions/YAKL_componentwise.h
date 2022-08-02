@@ -9,6 +9,7 @@ namespace yakl {
 
   // You're going to see some strange things in here when using parallel_for. It's all because of CUDA. Thanks CUDA.
 
+  /** @brief This namespace contains routines that perform element-wise / component-wise operations on `Array`, `SArray`, and `FSArray` objects. */
   namespace componentwise {
 
     ///////////////////////////////////////////////////////////////////////

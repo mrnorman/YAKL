@@ -8,13 +8,16 @@ namespace yakl {
   // known bounds placed on the stack of whatever context it is declared just like "int var[20];"
   // except with multiple dimensions, index checking, and printing
 
-  /** @brief This creates a C-style "Stack Array" (CSArray) class, which is typedefined to yakl::SArray. It should
-    *        be thought of as very similar to a C-style multi-dimensional array, `float arr[n1][n2][n3];`. That array
-    *        as an `SArray` object would be created as `yakl::SArray<float,3,n1,n2,n3> arr;`, and it would be indexed
-    *        as `arr(i1,i2,i3);`. For bounds checking, define the CPP macro `YAKL_DEBUG`. Dimensions sizes must be
-    *        known at compile time, and data is placed on the stack of whatever context it is declared. When declared
-    *        in a device `parallel_for` kernel, it is a thread-private array, meaning every thread has a separate copy
-    *        of the array. 
+  /** @brief C-style array on the stack similar in nature to, e.g., `float arr[ny][nx];`
+    *
+    * This creates a C-style "Stack Array" (CSArray) class, which is typedefined to yakl::SArray. It should
+    * be thought of as very similar to a C-style multi-dimensional array, `float arr[n1][n2][n3];`. That array
+    * as an `SArray` object would be created as `yakl::SArray<float,3,n1,n2,n3> arr;`, and it would be indexed
+    * as `arr(i1,i2,i3);`. For bounds checking, define the CPP macro `YAKL_DEBUG`. Dimensions sizes must be
+    * known at compile time, and data is placed on the stack of whatever context it is declared. When declared
+    * in a device `parallel_for` kernel, it is a thread-private array, meaning every thread has a separate copy
+    * of the array. 
+    * 
     * @param T      Type of the yakl::SArray object
     * @param rank   Number of dimensions
     * @param D[0-3] Dimensions sizes. D1, D2, and D3 are optional template parameters
@@ -30,9 +33,9 @@ namespace yakl {
     typedef typename std::remove_cv<T>::type       type;
     /** @brief This is the type `T` exactly as it was defined upon array object creation. */
     typedef          T                             value_type;
-    /** @brief This is the type `T` with `const` added to it (if the original type has `volatile`, then so will this type. */
+    /** @brief This is the type `T` with `const` added to it (if the original type has `volatile`, then so will this type). */
     typedef typename std::add_const<type>::type    const_value_type;
-    /** @brief This is the type `T` with `const` removed from it (if the original type has `volatile`, then so will this type. */
+    /** @brief This is the type `T` with `const` removed from it (if the original type has `volatile`, then so will this type). */
     typedef typename std::remove_const<type>::type non_const_value_type;
 
     /** @private */
@@ -47,20 +50,21 @@ namespace yakl {
     /** @private */
     T mutable myData[D0*D1*D2*D3];
 
-    // All copies are deep, so be wary of copies. Use references where possible
-    /** @brief All copy and move constructors do a deep copy of all of the data, so they should be considered as possibly expensive */
-    /// @{
+    /** @brief No constructor arguments allowed */
     YAKL_INLINE CSArray() { }
+    /** @brief Copy and move constructors deep copy all data. */
     YAKL_INLINE CSArray           (CSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
+    /** @brief Copy and move constructors deep copy all data. */
     YAKL_INLINE CSArray           (CSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
+    /** @brief Copy and move constructors deep copy all data. */
     YAKL_INLINE CSArray &operator=(CSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
+    /** @brief Copy and move constructors deep copy all data. */
     YAKL_INLINE CSArray &operator=(CSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
     YAKL_INLINE ~CSArray() { }
-    /// @}
 
-    /** @brief Index the yakl::SArray object. Number of indices must match the rank of the array object. For bounds checking, 
-      *        define the CPP macro `YAKL_DEBUG`. */
-    /// @{
+    /** @brief Returns a reference to the indexed element (1-D).
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
     YAKL_INLINE T &operator()(uint const i0) const {
       static_assert(rank==1,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
@@ -72,6 +76,9 @@ namespace yakl {
       #endif
       return myData[i0];
     }
+    /** @brief Returns a reference to the indexed element (2-D).
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
     YAKL_INLINE T &operator()(uint const i0, uint const i1) const {
       static_assert(rank==2,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
@@ -85,6 +92,9 @@ namespace yakl {
       #endif
       return myData[i0*OFF0 + i1];
     }
+    /** @brief Returns a reference to the indexed element (3-D).
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
     YAKL_INLINE T &operator()(uint const i0, uint const i1, uint const i2) const {
       static_assert(rank==3,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
@@ -100,6 +110,9 @@ namespace yakl {
       #endif
       return myData[i0*OFF0 + i1*OFF1 + i2];
     }
+    /** @brief Returns a reference to the indexed element (4-D).
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
     YAKL_INLINE T &operator()(uint const i0, uint const i1, uint const i2, uint const i3) const {
       static_assert(rank==4,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
@@ -117,7 +130,6 @@ namespace yakl {
       #endif
       return myData[i0*OFF0 + i1*OFF1 + i2*OFF2 + i3];
     }
-    /// @}
 
 
     /** @brief Assign a single arithmetic value to the entire array. */
@@ -152,7 +164,8 @@ namespace yakl {
 
     
     /** @brief Returns the dimensions of this array as a yakl::SArray object.
-      *        You should use zero-based indexing on the returned SArray object. */
+      * 
+      * You should use zero-based indexing on the returned SArray object. */
     YAKL_INLINE CSArray<uint,1,rank> get_dimensions() const {
       CSArray<uint,1,rank> ret;
       if constexpr (rank >= 1) ret(0) = D0;
@@ -161,8 +174,9 @@ namespace yakl {
       if constexpr (rank >= 4) ret(3) = D3;
       return ret;
     }
-    /** @brief Returns the lower bound of each dimension of this array (which are always all zero) as a yakl::SArray object.
-      *        You should use zero-based indexing on the returned yakl::SArray object. */
+    /** @brief Returns the lower bound of each dimension of this array as a yakl::SArray object.
+      * 
+      * You should use zero-based indexing on the returned yakl::SArray object. */
     YAKL_INLINE CSArray<uint,1,rank> get_lbounds() const {
       CSArray<uint,1,rank> ret;
       if constexpr (rank >= 1) ret(0) = 0;
@@ -172,7 +186,8 @@ namespace yakl {
       return ret;
     }
     /** @brief Returns the upper bound of each dimension of this array as a yakl::SArray object.
-      *        You should use zero-based indexing on the returned yakl::SArray object. */
+      *
+      * You should use zero-based indexing on the returned yakl::SArray object. */
     YAKL_INLINE CSArray<uint,1,rank> get_ubounds() const {
       CSArray<uint,1,rank> ret;
       if constexpr (rank >= 1) ret(0) = D0-1;

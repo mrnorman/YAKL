@@ -7,6 +7,7 @@ namespace yakl {
 
 
 
+  /** @private */
   template <unsigned int n, class real>
   YAKL_INLINE real penta_sum(SArray<real,1,n> const &v, SArray<real,1,n> const &z) {
     real sum = 0;
@@ -18,6 +19,7 @@ namespace yakl {
 
 
 
+  /** @private */
   template <unsigned int n, class real>
   YAKL_INLINE void matrix_inverse_small(SArray<real,2,n,n> &a) {
     SArray<real,2,n,n> inv;

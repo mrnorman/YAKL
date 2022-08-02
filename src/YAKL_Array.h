@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * Declare the yakl::Array object template and defaults. Declares yakl::Dim, yakl::Dims, yakl::Bnd, and yakl::Bnds
+ * classes.
+ */
 
 #pragma once
 // Included by YAKL.h
@@ -35,11 +41,16 @@ namespace yakl {
 
   // This class is used to describe a set of dimensions used for Array slicing. One can call a constructor
   // with std::initialize_list (i.e., {1,2,3...} syntax)
-  /** @brief This class holds C-style dimensions for using in yakl::Array objects. You can pass an initializer list `{...}`
-             or std::vector as a parameter to this type, and it can be converted to a yakl::Dims object. */
+  /** @brief This class holds C-style dimensions for using in yakl::Array objects.
+    * 
+    * You can pass an initializer list `{...}`  or std::vector as a parameter to this type,
+    * and it can be converted to a yakl::Dims object.
+    */
   class Dims {
   public:
+    /** @private */
     int data[8];
+    /** @private */
     int rank;
 
     YAKL_INLINE Dims() {rank = 0;}
@@ -157,12 +168,17 @@ namespace yakl {
 
 
   // Describes a single array bound. Used for Fortran array bounds
-  /** @brief Describes a single bound for creating Fortran-style yakl::Array objects. You can create and object of
-    *        this class with a single integer, in which case the lower bound default to one, or you can use a pair
-    *        of values, e.g., `{lower,upper}`, which will assign these as lower and upper bounds. */
+  /** @brief Describes a single bound for creating Fortran-style yakl::Array objects.
+    * 
+    * You can create and object of this class with a single integer, in which case the lower bound default to one,
+    * or you can use a pair of values, e.g., `{lower,upper}`, which will assign these as lower and upper bounds.
+    */
   struct Bnd {
   public:
-    int l, u;
+    /** @private */
+    int l;
+    /** @private */
+    int u;
     YAKL_INLINE Bnd(                  ) { l = 1   ; u = 1   ; }
     YAKL_INLINE Bnd(          int u_in) { l = 1   ; u = u_in; }
     YAKL_INLINE Bnd(int l_in, int u_in) { l = l_in; u = u_in; }
@@ -171,14 +187,19 @@ namespace yakl {
 
 
   // Describes a set of array bounds. use for Fortran array bounds
-  /** @brief This class holds Fortran-style dimensions for using in creating yakl::Array objects. You can pass an initializer list `{...}`
-    *        or std::vector as a parameter to this type, and it can be converted to a yakl::Bnds object. Each `Bnd` element
-    *        you pass can be an integer upper bound value (lower bound defaults to one) or a pair (`{lower,upper}`), since
-    *        Fortran-style allows arbitrary lower bounds. */
+  /** @brief This class holds Fortran-style dimensions for using in creating yakl::Array objects.
+    * 
+    * You can pass an initializer list `{...}` or std::vector as a parameter to this type, and it can be converted
+    * to a yakl::Bnds object. Each `Bnd` element you pass can be an integer upper bound value (lower bound defaults
+    * to one) or a pair (`{lower,upper}`), since Fortran-style allows arbitrary lower bounds. 
+    */
   class Bnds {
   public:
+    /** @private */
     int l[8];
+    /** @private */
     int u[8];
+    /** @private */
     int rank;
 
     YAKL_INLINE Bnds() {rank = 0;}

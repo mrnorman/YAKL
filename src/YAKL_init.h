@@ -18,11 +18,16 @@ namespace yakl {
 
 
   /**
-   * @brief Initialize the YAKL runtime. (1) Determin if the pool allocator is to be used & pool allocator parameters.
-   *        (2) Initialize the pool if used. (3) Set the YAKL allocators and deallocators to default. 
-   *        (4) Initialize YAKL's timer calls to defaults. (5) Inspect the optional yakl::InitConfig parameter
-   *        to override default allocator, deallocator, and timer calls if requested. (6) Allocate YAKL's functor
-   *        buffer for appropriate backends. (6) Inform the user with device information. THREAD SAFE!
+   * @brief Initialize the YAKL runtime.
+   * 
+   * 1. Determin if the pool allocator is to be used & pool allocator parameters.
+   * 2. Initialize the pool if used.
+   * 3. Set the YAKL allocators and deallocators to default. 
+   * 4. Initialize YAKL's timer calls to defaults.
+   * 5. Inspect the optional yakl::InitConfig parameter to override default allocator, deallocator,
+   *    and timer calls if requested.
+   * 6. Allocate YAKL's functor buffer for appropriate backends.
+   * 7. Inform the user with device information. THREAD SAFE!
    * @param config This yakl::InitConfig object allows the user to override YAKL's default allocator, deallocator
    *               and timer calls from the start of the runtime.
    */
@@ -112,10 +117,10 @@ namespace yakl {
       };
 
       // If the user specified overrides in the InitConfig, apply them here
-      if (config.get_host_allocator    ()) yaklAllocHost   = config.get_host_allocator    ();
-      if (config.get_device_allocator  ()) yaklAllocDevice = config.get_device_allocator  ();
-      if (config.get_host_deallocator  ()) yaklFreeHost    = config.get_host_deallocator  ();
-      if (config.get_device_deallocator()) yaklFreeDevice  = config.get_device_deallocator();
+      if (config.get_host_allocator    ()) alloc_host_func   = config.get_host_allocator    ();
+      if (config.get_device_allocator  ()) alloc_device_func = config.get_device_allocator  ();
+      if (config.get_host_deallocator  ()) free_host_func    = config.get_host_deallocator  ();
+      if (config.get_device_deallocator()) free_device_func  = config.get_device_deallocator();
       if (config.get_timer_init        ()) timer_init_func      = config.get_timer_init        ();
       if (config.get_timer_finalize    ()) timer_finalize_func  = config.get_timer_finalize    ();
       if (config.get_timer_start       ()) timer_start_func     = config.get_timer_start       ();

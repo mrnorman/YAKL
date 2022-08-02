@@ -7,9 +7,14 @@
 namespace yakl {
   namespace fortran {
 
+    // The functions are declared below so that I can document them in doxygen inside the appropriate namespace.
+
     /**
-     * @brief [ASYNCHRONOUS] Launch the passed functor in parallel. If passing a lambda, it must be decorated with YAKL_LAMBDA.
+     * @brief [ASYNCHRONOUS] Launch the passed functor in parallel.
+     * 
+     * If passing a lambda, it must be decorated with YAKL_LAMBDA.
      *        If passing a functor, the operator() must be decorated with YAKL_INLINE. Click for more information.
+     * 
      * @param str    String label for this `parallel_for`. This form of `parallel_for` is highly recommended so that
      *               debugging and profiling features can be used when turned on via CPP macros.
      * @param bounds The yakl::fortran::Bounds or yakl::fortran::SimpleBounds object describing the tightly nested looping.
@@ -33,23 +38,27 @@ namespace yakl {
                               LaunchConfig<VecLen,B4B> config = LaunchConfig<>() );
 
     /**
-     * @brief [ASYNCHRONOUS] Same as the other form of yakl::fortran::parallel_for but without the string label.
+     * @brief [ASYNCHRONOUS] Launch the passed functor in parallel.
+     * 
+     * Same as the other form of yakl::fortran::parallel_for but without the string label.
      */
     template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN , bool B4B = false>
     inline void parallel_for( Bounds<N,simple> const &bounds , F const &f ,
                               LaunchConfig<VecLen,B4B> config = LaunchConfig<>() );
 
     /**
-     * @brief [ASYNCHRONOUS] For hierarchical (two-level) parallelism only.
-     *        Launch the passed functor in parallel in the coarsest-level parallelism on the device. For CUDA and HIP,
-     *        for instance, this is "grid"-level parallelism spread over multiprocessors. yakl::fortran::parallel_inner, 
-     *        on the other hand, is "block"-level parallelism spread over threads within a multiprocessor.
-     *        If passing a lambda, it must be decorated with YAKL_LAMBDA.
-     *        If passing a functor, the operator() must be decorated with YAKL_INLINE. Click for more information.
-     *        IMPORTANT: While the yakl::LaunchConfig parameter is optional, you will very likely want to use it!
-     *        Otherwise, you're at the mercy of the YAKL_DEFAULT_VECTOR_LEN for a given hardware backend.
-     *        The yakl::LaunchConfig parameter's template vector length parameter **must be larger than** the `inner_size`
-     *        declared by yakl::LaunchConfig::set_inner_size(). Click for more information.
+     * @brief [ASYNCHRONOUS] Launch the passed functor in parallel in the coarsest-level parallelism on the device
+     * 
+     * For hierarchical (two-level) parallelism only.
+     * For CUDA and HIP,
+     * for instance, this is "grid"-level parallelism spread over multiprocessors. yakl::fortran::parallel_inner, 
+     * on the other hand, is "block"-level parallelism spread over threads within a multiprocessor.
+     * If passing a lambda, it must be decorated with YAKL_LAMBDA.
+     * If passing a functor, the operator() must be decorated with YAKL_INLINE. Click for more information.
+     * IMPORTANT: While the yakl::LaunchConfig parameter is optional, you will very likely want to use it!
+     * Otherwise, you're at the mercy of the YAKL_DEFAULT_VECTOR_LEN for a given hardware backend.
+     * The yakl::LaunchConfig parameter's template vector length parameter **must be larger than** the `inner_size`
+     * declared by yakl::LaunchConfig::set_inner_size(). Click for more information.
      * 
      * Example usage:
      * ```
@@ -64,6 +73,7 @@ namespace yakl {
      *            So code not inside yakl::fortran::parallel_inner will still execute for **all** inner threads but without any
      *            knowledge of inner parallelism indices. If you want to execute only for one inner thread, please use
      *            the yakl::fortran::single_inner routine.
+     * 
      * @param str    String label for this `parallel_outer`. This form of `parallel_outer` is highly recommended so that
      *               debugging and profiling features can be used when turned on via CPP macros.
      * @param bounds The yakl::fortran::Bounds or yakl::fortran::SimpleBounds object describing the tightly nested looping.
@@ -90,18 +100,23 @@ namespace yakl {
                                 LaunchConfig<VecLen,B4B> config = LaunchConfig<>() );
 
     /**
-     * @brief [ASYNCHRONOUS] Same os the other form of yakl::fortran::parallel_outer but without the string label.
+     * @brief [ASYNCHRONOUS] Launch the passed functor in parallel in the coarsest-level parallelism on the device
+     * 
+     * Same as the other form of yakl::fortran::parallel_outer but without the string label.
      */
     template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN, bool B4B = false>
     inline void parallel_outer( Bounds<N,simple> const &bounds , F const &f ,
                                 LaunchConfig<VecLen,B4B> config = LaunchConfig<>() );
 
     /**
-     * @brief [ASYNCHRONOUS] For hierarchical (two-level) parallelism only. **Must be called from within a yakl::fortran::parallel_outer call.**
-     *        Launch the passed functor in parallel in the finenst-level parallelism on the device. For CUDA and HIP,
-     *        for instance, this is "block"-level parallelism spread over threads within a multiprocessor. 
-     *        **IMPORTANT: If passing a lambda, it must be decorated with `[&]` and not `YAKL_LAMBDA`.**
-     *        If passing a functor, the operator() must **not** be decorated with YAKL_INLINE. Click for more information.
+     * @brief Launch the passed functor in parallel in the finenst-level parallelism on the device.
+     * 
+     * For hierarchical (two-level) parallelism only. **Must be called from within a yakl::fortran::parallel_outer call.**
+     * For CUDA and HIP,
+     * for instance, this is "block"-level parallelism spread over threads within a multiprocessor. 
+     * **IMPORTANT: If passing a lambda, it must be decorated with `[&]` and not `YAKL_LAMBDA`.**
+     * If passing a functor, the operator() must **not** be decorated with YAKL_INLINE. Click for more information.
+     * 
      * @param bounds The yakl::fortran::Bounds or yakl::fortran::SimpleBounds object describing the tightly nested looping.
      *                You can also pass asingle integer, `{lower,upper}` pair, or `{lower,upper,stride}` triplet
      *                ensuring strides are positive. Why a positive stride? To protect you. If you **need** a negative
@@ -120,9 +135,11 @@ namespace yakl {
     YAKL_INLINE void parallel_inner( Bounds<N,simple> const &bounds , F const &f , InnerHandler handler );
 
     /**
-     * @brief [ASYNCHRONOUS] For hierarchical (two-level) parallelism only. **Must be called from within a yakl::fortran::parallel_outer call.**
-     *        Launch the passed functor in to only use one of the inner threads (still parallel over outer threads).
-     *        Most of the time, you will use yakl::fence_inner() before and after yakl::single_inner.
+     * @brief Launch the passed functor to only use one of the inner threads (still parallel over outer threads).
+     * 
+     * For hierarchical (two-level) parallelism only. **Must be called from within a yakl::fortran::parallel_outer call.**
+     * Most of the time, you will use yakl::fence_inner() before and after yakl::fortran::single_inner.
+     * 
      * @param f       The functor to be launched in parallel. Lambdas must be decorated with YAKL_LAMBDA. Functors
      *                must have operator() decorated with `[&]` and **not** YAKL_INLINE.
      * @param handler yakl::InnerHandler object created by yakl::fortran::parallel_outer.
