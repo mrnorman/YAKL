@@ -887,6 +887,7 @@ namespace yakl {
     template <class TLOC=T>
     inline Array<TLOC,rank,memHost,styleC> createHostCopy() const {
       auto ret = createHostObject();
+      this->copy_inform(ret);
       if (myMem == memHost) { memcpy_host_to_host  ( ret.myData , this->myData , this->totElems() ); }
       else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() ); }
       fence();
@@ -938,6 +939,7 @@ namespace yakl {
     template <class TLOC=T>
     inline Array<TLOC,rank,memDevice,styleC> createDeviceCopy() const {
       auto ret = createDeviceObject();
+      this->copy_inform(ret);
       if (myMem == memHost) { memcpy_host_to_device  ( ret.myData , this->myData , this->totElems() ); }
       else                  { memcpy_device_to_device( ret.myData , this->myData , this->totElems() ); }
       fence();

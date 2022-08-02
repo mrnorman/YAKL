@@ -44,6 +44,63 @@ namespace yakl {
     #endif
 
 
+    /** @private */
+    void create_inform() {
+      #ifdef YAKL_VERBOSE
+        std::string msg = "Allocating ";
+        if constexpr (myMem == memHost) {
+          msg += std::string("host, ");
+        } else {
+          msg += std::string("device, ");
+        }
+        if constexpr (myStyle == styleC) {
+          msg += std::string("C-style, ");
+        } else {
+          msg += std::string("Fortran-style, ");
+        }
+        msg += std::string("rank ") + std::to_string(rank) + std::string(" Array");
+        verbose_inform(msg,this->label());
+      #endif
+    }
+
+
+    /** @private */
+    void destroy_inform() {
+      #ifdef YAKL_VERBOSE
+        std::string msg = "Deallocating ";
+        if constexpr (myMem == memHost) {
+          msg += std::string("host, ");
+        } else {
+          msg += std::string("device, ");
+        }
+        if constexpr (myStyle == styleC) {
+          msg += std::string("C-style, ");
+        } else {
+          msg += std::string("Fortran-style, ");
+        }
+        msg += std::string("rank ") + std::to_string(rank) + std::string(" Array");
+        verbose_inform(msg,this->label());
+      #endif
+    }
+
+
+    /** @private */
+    template <class ARR>
+    void copy_inform(ARR const &dest) const {
+      #ifdef YAKL_VERBOSE
+        std::string msg = "Initiating ";
+        if (myMem == memHost  ) msg += std::string("host to ");
+        if (myMem == memDevice) msg += std::string("device to ");
+        if (dest.get_memory_space() == memHost  ) msg += std::string("host memcpy of ");
+        if (dest.get_memory_space() == memDevice) msg += std::string("device memcpy of ");
+        msg += std::to_string(totElems()*sizeof(T)) + std::string(" bytes");
+        if (label() != "") msg += " from Array labeled \"" + std::string(label()) + std::string("\"");
+        if (dest.label() != "") msg += " to Array labeled \"" + std::string(dest.label()) + std::string("\"");
+        verbose_inform(msg);
+      #endif
+    }
+
+
     // Deep copy this array's contents to another array that's on the host
     /** @brief [ASYNCHRONOUS] [DEEP_COPY] Copy this array's contents to a yakl::memHost array.
       * 
@@ -52,6 +109,7 @@ namespace yakl {
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> const &lhs) const {
+      copy_inform(lhs);
       #ifdef YAKL_DEBUG
         if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
         if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
@@ -72,6 +130,7 @@ namespace yakl {
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> const &lhs) const {
+      copy_inform(lhs);
       #ifdef YAKL_DEBUG
         if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
         if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
@@ -106,6 +165,7 @@ namespace yakl {
     /** @brief Returns whether this array object has is in an initialized / allocated state. */
     YAKL_INLINE bool initialized() const { return this->myData != nullptr; }
     /** @brief Returns this array object's string label if the `YAKL_DEBUG` CPP macro is defined. Otherwise, returns an empty string. */
+    YAKL_INLINE int get_memory_space() const { return myMem == memHost ? memHost : memDevice; }
     const char* label() const {
       #ifdef YAKL_DEBUG
         return this->myname;
@@ -143,6 +203,7 @@ namespace yakl {
       } else {
         this->myData = new T[this->totElems()];
       }
+      this->create_inform();
       yakl_mtx_unlock();
     }
 
@@ -165,6 +226,7 @@ namespace yakl {
         (*(this->refCount))--;
 
         if (*this->refCount == 0) {
+          destroy_inform();
           delete this->refCount;
           this->refCount = nullptr;
           if (this->totElems() > 0) {
@@ -195,6 +257,7 @@ namespace yakl {
         (*(this->refCount))--;
 
         if (*this->refCount == 0) {
+          destroy_inform();
           delete this->refCount;
           this->refCount = nullptr;
           if (this->totElems() > 0) {
