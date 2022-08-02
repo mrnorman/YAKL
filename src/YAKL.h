@@ -62,6 +62,14 @@ namespace yakl {
  *
  * ## Namespaces
  * <a href="https://mrnorman.github.io/yakl_api/html/namespaces.html">Namespaces</a> (A list of all functions and classes in each YAKL namespace)
+ * 
+ * The <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl.html">yakl</a>, 
+ * <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1c.html">c</a>, and 
+ * <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1fortran.html">fortran</a> have most of the
+ * functionality you will use. 
+ * 
+ * Every function decorated with `YAKL_INLINE` can be called from inside a `parallel_for()` kernel. If the function
+ * is not decorated with that, then it cannot be called from inside a `parallel_for()` kernel.
  *
  * In each namespace, you'll see a list of classes, types, functions, and variables.
  * Each of these has a brief description, and clicking on the name will typically give more information

@@ -80,7 +80,9 @@ namespace yakl {
 
 
   /**
-   * @brief Performs a non-periodic pentadiagonal solve. Click for more details
+   * @brief Performs a **small** non-periodic pentadiagonal solve. Click for more details
+   *
+   * This is to be performed on a `SArray` / `CSArray` object allocated on the stack
    * 
    * Solves for a vector u of length n in the pentadiagonal linear system
    * ```
@@ -135,7 +137,9 @@ namespace yakl {
 
 
   /**
-   * @brief Performs a periodic pentadiagonal solve. Click for more details
+   * @brief Performs a **small** periodic pentadiagonal solve. Click for more details
+   *
+   * This is to be performed on a `SArray` / `CSArray` object allocated on the stack
    * 
    * Solves for a vector u of length n in the pentadiagonal linear system
    * ```

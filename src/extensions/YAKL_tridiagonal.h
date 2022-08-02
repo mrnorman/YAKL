@@ -7,7 +7,9 @@ namespace yakl {
 
 
   /**
-   * @brief Performs a periodic tridiagional solve. Click for more details.
+   * @brief Performs a **small** periodic tridiagional solve. Click for more details.
+   *
+   * This is to be performed on a `SArray` / `CSArray` object allocated on the stack
    *
    * Solves a tridiagonal system with periodic boundary conditions of the form:
    * ```
@@ -44,7 +46,7 @@ namespace yakl {
    * Unfortunately, periodic boundary conditions roughly double the amount of work in the tridiagonal solve
    */
   template <class real, unsigned int n>
-  void tridiagonal_periodic(SArray<real,1,n> const &a, SArray<real,1,n> &b, SArray<real,1,n> &c, SArray<real,1,n> &d) {
+  YAKL_INLINE void tridiagonal_periodic(SArray<real,1,n> const &a, SArray<real,1,n> &b, SArray<real,1,n> &c, SArray<real,1,n> &d) {
     SArray<real,1,n> tmp;
     // Save the original "b0" because it's needed later on to compute ( (v^T*y) / (1 + v^T*q) )
     real b0 = b(0);
@@ -93,7 +95,9 @@ namespace yakl {
 
 
   /**
-   * @brief Solves a non-periodic tridiagional system
+   * @brief Solves a **small** non-periodic tridiagional system
+   *
+   * This is to be performed on a `SArray` / `CSArray` object allocated on the stack
    * 
    * Solves a tridiagonal system with no boundary conditions of the form:
    * ```
@@ -110,7 +114,7 @@ namespace yakl {
    * This uses the Thomas algorithm.
   */
   template <class real, unsigned int n>
-  void tridiagonal(SArray<real,1,n> const &a, SArray<real,1,n> const &b, SArray<real,1,n> &c, SArray<real,1,n> &d) {
+  YAKL_INLINE void tridiagonal(SArray<real,1,n> const &a, SArray<real,1,n> const &b, SArray<real,1,n> &c, SArray<real,1,n> &d) {
     real tmp = static_cast<real>(1) / b(0);
     c(0) *= tmp;
     d(0) *= tmp;
