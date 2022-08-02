@@ -443,9 +443,9 @@ inline void parallel_inner_cpu_serial( Bounds<N,simple> const &bounds , F const 
 // parallel_for
 ////////////////////////////////////////////////////////////////////////////////////
 // Default parameter to config, VecLen, and B4B already specified in YAKL_parallel_for_c.h and YAKL_parallel_for_fortran.h
-template <class F, int N, bool simple, int VecLen , bool B4B>
+template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN , bool B4B=false>
 inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f ,
-                          LaunchConfig<VecLen,B4B> config ) {
+                          LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
   // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
   #ifdef YAKL_AUTO_PROFILE
     timer_start(str);
@@ -498,9 +498,9 @@ inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F 
 }
 
 // Default parameter to config, VecLen, and B4B already specified in YAKL_parallel_for_c.h and YAKL_parallel_for_fortran.h
-template <class F, int N, bool simple, int VecLen, bool B4B>
+template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN, bool B4B=false>
 inline void parallel_for( Bounds<N,simple> const &bounds , F const &f ,
-                          LaunchConfig<VecLen,B4B> config ) {
+                          LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
   parallel_for( "Unlabeled" , bounds , f , config );
 }
 
@@ -529,9 +529,9 @@ inline void parallel_for( char const * str , LBnd bnd , F const &f ,
 // parallel_outer
 ////////////////////////////////////////////////////////////////////////////////////
 // Default parameter to config, VecLen, and B4B already specified in YAKL_parallel_for_c.h and YAKL_parallel_for_fortran.h
-template <class F, int N, bool simple, int VecLen, bool B4B>
+template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN, bool B4B=false>
 inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , F const &f ,
-                            LaunchConfig<VecLen,B4B> config ) {
+                            LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
   // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
   #ifdef YAKL_AUTO_PROFILE
     timer_start(str);
@@ -584,9 +584,9 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
 }
 
 // Default parameter to config, VecLen, and B4B already specified in YAKL_parallel_for_c.h and YAKL_parallel_for_fortran.h
-template <class F, int N, bool simple, int VecLen, bool B4B>
+template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN, bool B4B=false>
 inline void parallel_outer( Bounds<N,simple> const &bounds , F const &f ,
-                            LaunchConfig<VecLen,B4B> config ) {
+                            LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
   parallel_outer( "Unlabeled" , bounds , f , config );
 }
 
