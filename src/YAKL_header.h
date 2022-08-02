@@ -42,10 +42,12 @@
 
 #if   defined(YAKL_ARCH_CUDA)
   #include <cub/cub.cuh>
+  #include "cufft.h"
 #elif defined(YAKL_ARCH_HIP)
   #include "hip/hip_runtime.h"
   #include "hipcub/hipcub.hpp"
   #include "roctracer/roctx.h"
+  #include "rocfft.h"
 #elif defined(YAKL_ARCH_SYCL)
   #include <CL/sycl.hpp>
 #elif defined(YAKL_ARCH_OPENMP)

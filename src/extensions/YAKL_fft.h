@@ -2,11 +2,7 @@
 #pragma once
 
 #include "YAKL.h"
-#if   defined(YAKL_ARCH_CUDA)
-  #include "cufft.h"
-#elif defined(YAKL_ARCH_HIP)
-  #include "rocfft.h"
-#else
+#if !defined(YAKL_ARCH_CUDA) && !defined(YAKL_ARCH_HIP)
   #define POCKETFFT_CACHE_SIZE 2
   #define POCKETFFT_NO_MULTITHREADING
   #include "pocketfft_hdronly.h"
