@@ -9,24 +9,26 @@ namespace yakl {
       std::string output = prefix;
       if (label != "") output += std::string(" (label: \"") + label + std::string("\")");
       if (suffix != "") output += std::string(";  ") + suffix;
-      output += std::endl + std::endl;
+
+      // Get MPI rank
+      int rank = 0;
+      #ifdef HAVE_MPI
+        int is_initialized;
+        MPI_Initialized(&is_initialized);
+        if (is_initialized) { MPI_Comm_rank(MPI_COMM_WORLD, &rank); }
+      #endif
+
+      // Write to file
       #ifdef YAKL_VERBOSE_FILE
-        // Get the MPI rank
-        int rank;
-        #ifdef HAVE_MPI
-          MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        #else
-          rank = 0;
-        #endif
-        // Write to file
-        ofstream myfile;
+        std::ofstream myfile;
         std::string fname = std::string("yakl_verbose_output_task_") + std::to_string(rank) + std::string(".log");
-        myfile.open(fname);
-        myfile << output;
+        myfile.open(fname , std::ofstream::out | std::ofstream::app);
+        myfile << output << std::endl << std::endl;
         myfile.close();
       #endif
+
       // Write to stdout for task 0
-      if (yakl_mainproc()) std::cout << output;
+      if (rank == 0) std::cout << output << std::endl << std::endl;
     #endif
   }
 

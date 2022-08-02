@@ -42,11 +42,11 @@ namespace yakl {
 
     /** @brief Default constructor allocates room on the device for one scalar of type `T` */
     YAKL_INLINE ScalarLiveOut() {
-      data = Array<T,1,memDevice,styleC>("data",1);  // Create array
+      data = Array<T,1,memDevice,styleC>("ScalarLiveOut_data",1);  // Create array
     }
     /** @brief [ASYNCHRONOUS] This constructor allocates room on the device for one scalar of type `T` and initializes it on device with the provided value. */
     explicit ScalarLiveOut(T val) {
-      data = Array<T,1,memDevice,styleC>("data",1);  // Create array
+      data = Array<T,1,memDevice,styleC>("ScalarLiveOut_data",1);  // Create array
       hostWrite(val);                                // Copy to device
     }
     /** @brief Deallocates the scalar value on the device. */
