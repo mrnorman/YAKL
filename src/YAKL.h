@@ -68,8 +68,12 @@ namespace yakl {
  * <a href="https://mrnorman.github.io/yakl_api/html/namespaceyakl_1_1fortran.html">fortran</a> have most of the
  * functionality you will use. 
  * 
- * Every function decorated with `YAKL_INLINE` can be called from inside a `parallel_for()` kernel. If the function
- * is not decorated with that, then it cannot be called from inside a `parallel_for()` kernel.
+ * **Tips:**
+ * * Every function decorated with `YAKL_INLINE` can be called from inside a `parallel_for()` kernel. If the function
+ *   is not decorated with that, then it cannot be called from inside a `parallel_for()` kernel.
+ * * If you see `[ASYNCHRONOUS]` in a function's documentation, it means that function launches a `parallel_for()` kernel
+ *   on the device asynchronously with respect to host code. Therefore, if you want that work to complete before
+ *   performing additional host work, you must call `yakl::fence();` after the function call.
  *
  * In each namespace, you'll see a list of classes, types, functions, and variables.
  * Each of these has a brief description, and clicking on the name will typically give more information
