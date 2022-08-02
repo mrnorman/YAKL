@@ -1,3 +1,8 @@
+/**
+ * @file
+ *
+ * Defines atomic operations for each hardware backend.
+ */
 
 #pragma once
 // Included by YAKL.h
@@ -8,12 +13,15 @@ namespace yakl {
   // Where possible, hardware atomics are used. Where that's not possible, CompareAndSwap (CAS)
   // implementations are used. 
 
+  /** @private */
   template <class T> inline void atomicAdd_host(T &update, T value) {
     update += value;
   }
+  /** @private */
   template <class T> inline void atomicMin_host(T &update, T value) {
     update = update < value ? update : value;
   }
+  /** @private */
   template <class T> inline void atomicMax_host(T &update, T value) {
     update = update > value ? update : value;
   }

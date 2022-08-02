@@ -1,5 +1,6 @@
 /**
  * @file
+ *
  * Routines dealing with YAKL error handling
  */
 
@@ -9,8 +10,8 @@
 namespace yakl {
 
   /**
-   * @brief Throw an error message. On the host, this throws an exception. On the device, it prints
-   *        and then forces the program to halt.
+   * @brief Throw an error message. Works from the host or device.
+   * @details On the host, this throws an exception. On the device, it prints and then forces the program to halt.
    */
   YAKL_INLINE void yakl_throw(const char * msg) {
     // If we're on the host, then let's throw a real exception
@@ -37,6 +38,7 @@ namespace yakl {
 
   /**
    * @brief Checks to see if an error has occurred on the device
+   * @details This is a no-op unless the `YAKL_DEBUG` CPP macro is defined
    */
   inline void check_last_error() {
     #ifdef YAKL_DEBUG
@@ -55,6 +57,7 @@ namespace yakl {
 
   /**
    * @brief If true, this is the main MPI process (task number == 0)
+   * @details If the CPP macro `HAVE_MPI` is defined, this tests the MPI rank ID. Otherwise, it always returns `true`.
    */
   inline bool yakl_mainproc() {
     // Only actually check if the user says MPI is available. Otherwise, always return true

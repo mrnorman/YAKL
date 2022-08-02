@@ -9,9 +9,10 @@
 namespace yakl {
 
   /**
-   * @brief Finalize the YAKL runtime. Best practice is to call yakl::isInitialized() to ensure the YAKL runtime
-   *        is initialized before calling this routine. That said, this routine *does* check to ensure the runtime
-   *        is initialized for you. THREAD SAFE!
+   * @brief Finalize the YAKL runtime.
+   * @details Best practice is to call yakl::isInitialized() to ensure the YAKL runtime
+   * is initialized before calling this routine. That said, this routine *does* check to ensure the runtime
+   * is initialized for you. THREAD SAFE!
    */
   inline void finalize() {
     yakl_mtx.lock();

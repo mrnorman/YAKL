@@ -9,6 +9,7 @@
 
 namespace yakl {
   //Error reporting routine for the PNetCDF I/O
+  /** @private */
   inline void ncwrap( int ierr , int line ) {
     if (ierr != NC_NOERR) {
       printf("NetCDF Error at line: %d\n", line);
@@ -17,19 +18,25 @@ namespace yakl {
     }
   }
 
+  /** @brief Tells NetCDF the opened file should be opened for reading only. */
   int constexpr NETCDF_MODE_READ    = NC_NOWRITE;
+  /** @brief Tells NetCDF the opened file should be opened for reading and writing. */
   int constexpr NETCDF_MODE_WRITE   = NC_WRITE;
+  /** @brief Tells NetCDF the created file should overwite a file of the same name. */
   int constexpr NETCDF_MODE_REPLACE = NC_CLOBBER;
+  /** @brief Tells NetCDF the created file should not overwite a file of the same name. */
   int constexpr NETCDF_MODE_NEW     = NC_NOCLOBBER;
 
   // Evidently there were ton of issues when using the C++ interface for NetCDF
   // People can't seem to install it correctly.
   // Therefore, I'm replicating the basic functionality so that I can use the code
   // I previously wrote for handling netCDF files for YAKL Array objects
+  /** @brief Simple way to write yakl::Array objects to NetCDF files */
   class SimpleNetCDF {
   public:
 
 
+    /** @private */
     class NcDim {
     public:
       std::string name;
@@ -85,6 +92,7 @@ namespace yakl {
     };
 
 
+    /** @private */
     class NcVar {
     public:
       int                ncid;
@@ -208,6 +216,7 @@ namespace yakl {
     };
 
 
+    /** @private */
     class NcFile {
     public:
       int ncid;
@@ -317,40 +326,51 @@ namespace yakl {
     };
 
 
+    /** @private */
     NcFile file;
 
 
     SimpleNetCDF() { }
 
 
+    /** @brief Files are automatically closed when SimpleNetCDF objects are destroyed */
     ~SimpleNetCDF() { close(); }
 
 
+    /** @brief Open a netcdf file
+      * @param mode Can be NETCDF_MODE_READ or NETCDF_MODE_WRITE */
     void open(std::string fname , int mode = NETCDF_MODE_READ) { file.open(fname,mode); }
 
 
+    /** @brief Create a netcdf file
+      * @param mode Can be NETCDF_MODE_CLOBBER or NETCDF_MODE_NOCLOBBER */
     void create(std::string fname , int mode = NC_CLOBBER) { file.create(fname,mode); }
 
 
+    /** @brief Close the netcdf file */
     void close() { file.close(); }
 
 
+    /** @brief Determine if a variable name exists */
     bool varExists( std::string varName ) const { return ! file.getVar(varName).isNull(); }
 
 
+    /** @brief Determine if a dimension name exists */
     bool dimExists( std::string dimName ) const { return ! file.getDim(dimName).isNull(); }
 
 
+    /** @brief Determine the size of a dimension name */
     size_t getDimSize( std::string dimName ) const { return file.getDim(dimName).getSize(); }
 
 
+    /** @brief Create a dimension of the given length */
     void createDim( std::string dimName , size_t len ) { file.addDim( dimName , len ); }
+
+    /** @brief Create an unlimited dimension */
     void createDim( std::string dimName ) { file.addDim( dimName ); }
 
 
-    /***************************************************************************************************
-    Write an entire Array at once
-    ***************************************************************************************************/
+    /** @brief Write an entire Array at once */
     template <class T, int rank, int myMem, int myStyle>
     void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
       if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
@@ -403,9 +423,7 @@ namespace yakl {
     }
 
 
-    /***************************************************************************************************
-    Write one entry of a scalar into the unlimited index
-    ***************************************************************************************************/
+    /** @brief Write one entry of a scalar into the unlimited index */
     template <class T, typename std::enable_if<std::is_arithmetic<T>::value,int>::type = 0 >
     void write1(T val , std::string varName , int ind , std::string ulDimName="unlim" ) {
       // Get the unlimited dimension or create it if it doesn't exist
@@ -428,9 +446,7 @@ namespace yakl {
     }
 
 
-    /***************************************************************************************************
-    Write one entry of an Array into the unlimited index
-    ***************************************************************************************************/
+    /** @brief Write one entry of an Array into the unlimited index */
     template <class T, int rank, int myMem, int myStyle>
     void write1(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames ,
                 int ind , std::string ulDimName="unlim" ) {
@@ -499,9 +515,7 @@ namespace yakl {
     }
 
 
-    /***************************************************************************************************
-    Read an entire Array
-    ***************************************************************************************************/
+    /** @brief Read an entire Array */
     template <class T, int rank, int myMem, int myStyle>
     void read(Array<T,rank,myMem,myStyle> &arr , std::string varName) {
       // Make sure the variable is there and is the right dimension
@@ -552,9 +566,7 @@ namespace yakl {
     }
 
 
-    /***************************************************************************************************
-    Read a single scalar value
-    ***************************************************************************************************/
+    /** @brief Read a single scalar value */
     template <class T>
     void read(T &arr , std::string varName) {
       auto var = file.getVar(varName);
@@ -563,9 +575,7 @@ namespace yakl {
     }
 
 
-    /***************************************************************************************************
-    Write a single scalar value
-    ***************************************************************************************************/
+    /** @brief Write a single scalar value */
     template <class T>
     void write(T arr , std::string varName) {
       auto var = file.getVar(varName);
@@ -576,9 +586,7 @@ namespace yakl {
     }
 
 
-    /***************************************************************************************************
-    Determine the type of a template T
-    ***************************************************************************************************/
+    /** @private */
     template <class T> int getType() const {
            if ( std::is_same<typename std::remove_cv<T>::type,signed        char>::value ) { return NC_BYTE;   }
       else if ( std::is_same<typename std::remove_cv<T>::type,unsigned      char>::value ) { return NC_UBYTE;  }

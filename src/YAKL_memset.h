@@ -9,10 +9,7 @@
 
 namespace yakl {
 
-  /**
-   * @brief [Deprecated for user use]: Please use operator= instead. Set a yakl::Array object to the given value.
-   *        Valid for host or device arrays.
-   */
+  /** @private */
   template <class T, int rank, int myMem, int myStyle, class I>
   void memset( Array<T,rank,myMem,myStyle> &arr , I val ) {
     #ifdef YAKL_DEBUG
@@ -54,10 +51,7 @@ namespace yakl {
   }
 
 
-  /**
-   * @brief [Deprecated for user use]: Please use operator= instead. Set a yakl::FSArray object to the given value.
-   *        Valid in a host or device context.
-   */
+  /** @private */
   template <class T, int rank, class B0, class B1, class B2, class B3, class I>
   YAKL_INLINE void memset( FSArray<T,rank,B0,B1,B2,B3> &arr , I val ) {
     for (index_t i = 0; i < arr.totElems(); i++) {
@@ -66,10 +60,7 @@ namespace yakl {
   }
 
 
-  /**
-   * @brief [Deprecated for user use]: Please use operator= instead. Set a yakl::SArray object to the given value.
-   *        Valid in a host or device context.
-   */
+  /** @private */
   template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3, class I>
   YAKL_INLINE void memset( SArray<T,rank,D0,D1,D2,D3> &arr , I val ) {
     for (index_t i = 0; i < arr.totElems(); i++) {

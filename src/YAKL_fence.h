@@ -25,9 +25,9 @@ namespace yakl {
   }
 
   /**
-   * @brief To be called inside yakl::parallel_outer *only*. Block the inner-level parallelism
-   *        until all inner threads have reached this point. In CUDA and HIP, this is __syncthreads(). 
-   *        Click for more info.
+   * @brief Block inner threads until all inner threads have completed.
+   * @details To be called inside yakl::parallel_outer *only*. Block the inner-level parallelism
+   * until all inner threads have reached this point. In CUDA and HIP, this is __syncthreads(). 
    * @param handler The yakl::InnerHandler object create by yakl::parallel_outer
    */
   YAKL_INLINE void fence_inner(InnerHandler &handler) {

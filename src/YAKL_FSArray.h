@@ -7,10 +7,12 @@ namespace yakl {
   // [S]tatic (compile-time) Array [B]ounds (templated)
   // It's only used for Fortran, so it takes on Fortran defaults
   // with lower bound default to 1
-  /** @brief This specifyies a set of bounds for a dimension when declaring a yakl::FSArray. It takes either one or two
-    *        template parameter. Specifying one template parameter gives an upper bound and assumes a lower bound of `1`. 
-    *        E.g., `yakl::SB<nx>` means a lower bound of `1` and an upper bound of `nx`. Specifying two template parameters
-    *       gives a lower and an upper bound. E.g., `yakl::SB<0,nx+1>` means a lower bound of `0` and an upper bound of `nx+1`.
+  /** @brief This specifies a set of bounds for a dimension when declaring a yakl::FSArray.
+    * 
+    * It takes either one or two
+    * template parameter. Specifying one template parameter gives an upper bound and assumes a lower bound of `1`. 
+    * E.g., `yakl::SB<nx>` means a lower bound of `1` and an upper bound of `nx`. Specifying two template parameters
+    * gives a lower and an upper bound. E.g., `yakl::SB<0,nx+1>` means a lower bound of `0` and an upper bound of `nx+1`.
     */
   template <int L, int U=-999> class SB {
   public:
@@ -24,17 +26,19 @@ namespace yakl {
     without pointer dereferencing. It supports indexing and cout only up to 4-D.
   */
 
-  /** @brief This creates a Fortran-style "Stack Array" (FSArray) class. It should
-    *        be thought of as similar in nature to a C-style multi-dimensional array, `float arr[n1][n2][n3];`,
-    *        except that it uses column-majore index ordering (left-most index varies the fastest), and it has lower
-    *        bounds that default to `1` but can also be arbitrary.
-    *        An example of declaring a yakl:FSArray object is `yakl::FSArray<float,3,SB<n1>,SB<0,n2+1>,SB<n3>> arr;`
-    *        The syntax is a bit ugly, but it's necessary to allow lower bounds other than `1`. The array declared just
-    *        now will have lower bounds of 1, 0, and 1, respectively, and upper bounds of n1, n2+1, n3, respectively.
-    *        For bounds checking, define the CPP macro `YAKL_DEBUG`. Dimensions sizes must be
-    *        known at compile time, and data is placed on the stack of whatever context it is declared. When declared
-    *        in a device `parallel_for` kernel, it is a thread-private array, meaning every thread has a separate copy
-    *        of the array. 
+  /** @brief Fortran-style array on the stack similar in nature to, e.g., `float arr[ny][nx];`
+    *
+    * This creates a Fortran-style "Stack Array" (FSArray) class. It should
+    * be thought of as similar in nature to a C-style multi-dimensional array, `float arr[n1][n2][n3];`,
+    * except that it uses column-majore index ordering (left-most index varies the fastest), and it has lower
+    * bounds that default to `1` but can also be arbitrary.
+    * An example of declaring a yakl:FSArray object is `yakl::FSArray<float,3,SB<n1>,SB<0,n2+1>,SB<n3>> arr;`
+    * The syntax is a bit ugly, but it's necessary to allow lower bounds other than `1`. The array declared just
+    * now will have lower bounds of 1, 0, and 1, respectively, and upper bounds of n1, n2+1, n3, respectively.
+    * For bounds checking, define the CPP macro `YAKL_DEBUG`. Dimensions sizes must be
+    * known at compile time, and data is placed on the stack of whatever context it is declared. When declared
+    * in a device `parallel_for` kernel, it is a thread-private array, meaning every thread has a separate copy
+    * of the array. 
     * @param T      Type of the yakl::FSArray object
     * @param rank   Number of dimensions
     * @param B[0-3] Bounds for each dimensions specified using a yakl::SB class. B1, B2, and B3 are optional template parameters.
@@ -86,28 +90,30 @@ namespace yakl {
     typedef typename std::remove_cv<T>::type       type;
     /** @brief This is the type `T` exactly as it was defined upon array object creation. */
     typedef          T                             value_type;
-    /** @brief This is the type `T` with `const` added to it (if the original type has `volatile`, then so will this type. */
+    /** @brief This is the type `T` with `const` added to it (if the original type has `volatile`, then so will this type). */
     typedef typename std::add_const<type>::type    const_value_type;
-    /** @brief This is the type `T` with `const` removed from it (if the original type has `volatile`, then so will this type. */
+    /** @brief This is the type `T` with `const` removed from it (if the original type has `volatile`, then so will this type). */
     typedef typename std::remove_const<type>::type non_const_value_type;
 
     /** @private */
     T mutable myData[D0*D1*D2*D3];
 
     // All copies are deep, so be wary of copies. Use references where possible
-    /** @brief All copy and move constructors do a deep copy of all of the data, so they should be considered as possibly expensive */
-    /// @{
+    /** @brief No constructor arguments allowed */
     YAKL_INLINE FSArray() {}
+    /** @brief Copy and move constructors deep copy all data. */
     YAKL_INLINE FSArray           (FSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
+    /** @brief Copy and move constructors deep copy all data. */
     YAKL_INLINE FSArray           (FSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
+    /** @brief Copy and move constructors deep copy all data. */
     YAKL_INLINE FSArray &operator=(FSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
+    /** @brief Copy and move constructors deep copy all data. */
     YAKL_INLINE FSArray &operator=(FSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
     YAKL_INLINE ~FSArray() { }
-    /// @}
 
-    /** @brief Index the yakl::FSArray object. Number of indices must match the rank of the array object. For bounds checking, 
-      *        define the CPP macro `YAKL_DEBUG`. */
-    /// @{
+    /** @brief Returns a reference to the indexed element (1-D).
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * Always use one-based indexing (unless the dimension has non-default bounds) with column-major ordering (left-most index varying the fastest). */
     YAKL_INLINE T &operator()(int const i0) const {
       static_assert(rank==1,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
@@ -119,6 +125,9 @@ namespace yakl {
       #endif
       return myData[i0-L0];
     }
+    /** @brief Returns a reference to the indexed element (2-D).
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * Always use one-based indexing (unless the dimension has non-default bounds) with column-major ordering (left-most index varying the fastest). */
     YAKL_INLINE T &operator()(int const i0, int const i1) const {
       static_assert(rank==2,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
@@ -132,6 +141,9 @@ namespace yakl {
       #endif
       return myData[(i1-L1)*OFF1 + i0-L0];
     }
+    /** @brief Returns a reference to the indexed element (3-D).
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * Always use one-based indexing (unless the dimension has non-default bounds) with column-major ordering (left-most index varying the fastest). */
     YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
       static_assert(rank==3,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
@@ -147,6 +159,9 @@ namespace yakl {
       #endif
       return myData[(i2-L2)*OFF2 + (i1-L1)*OFF1 + i0-L0];
     }
+    /** @brief Returns a reference to the indexed element (4-D).
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * Always use one-based indexing (unless the dimension has non-default bounds) with column-major ordering (left-most index varying the fastest). */
     YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3) const {
       static_assert(rank==4,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
@@ -164,7 +179,6 @@ namespace yakl {
       #endif
       return myData[(i3-L3)*OFF3 + (i2-L2)*OFF2 + (i1-L1)*OFF1 + i0-L0];
     }
-    /// @}
 
 
     /** @brief Assign a single arithmetic value to the entire array. */
@@ -199,7 +213,8 @@ namespace yakl {
 
     
     /** @brief Returns the dimensions of this array as a yakl::FSArray object.
-      *        You should use one-based indexing on the returned yakl::FSArray object. */
+      * 
+      * You should use one-based indexing on the returned yakl::FSArray object. */
     YAKL_INLINE FSArray<int,1,SB<rank>> get_dimensions() const {
       FSArray<int,1,SB<rank>> ret;
       if constexpr (rank >= 1) ret(1) = D0;
@@ -209,7 +224,8 @@ namespace yakl {
       return ret;
     }
     /** @brief Returns the lower bound of each dimension of this array as a yakl::FSArray object.
-      *        You should use one-based indexing on the returned yakl::FSArray object. */
+      * 
+      * You should use one-based indexing on the returned yakl::FSArray object. */
     YAKL_INLINE FSArray<int,1,SB<rank>> get_lbounds() const {
       FSArray<int,1,SB<rank>> ret;
       if constexpr (rank >= 1) ret(1) = L0;
@@ -219,7 +235,8 @@ namespace yakl {
       return ret;
     }
     /** @brief Returns the upper bound of each dimension of this array as a yakl::FSArray object.
-      *        You should use one-based indexing on the returned yakl::FSArray object. */
+      * 
+      * You should use one-based indexing on the returned yakl::FSArray object. */
     YAKL_INLINE FSArray<int,1,SB<rank>> get_ubounds() const {
       FSArray<int,1,SB<rank>> ret;
       if constexpr (rank >= 1) ret(1) = U0;

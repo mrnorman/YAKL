@@ -2,6 +2,9 @@
 #pragma once
 // Included by YAKL.h
 
+/** @namespace yakl::intrinsics
+  * @brief The intrinsics namespace contains a limited Fortran-like intrinsics library */
+
 #include "intrinsics/YAKL_intrinsics_allocated.h"
 #include "intrinsics/YAKL_intrinsics_associated.h"
 #include "intrinsics/YAKL_intrinsics_shape.h"

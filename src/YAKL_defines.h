@@ -1,3 +1,8 @@
+/**
+ * @file
+ *
+ * CPP defines and macros for YAKL
+ */
 
 #pragma once
 // Included by YAKL.h
@@ -79,13 +84,38 @@
 
 #else
 
+  /** @brief Used to create C++ lambda expressions passed to `parallel_for` and `parallel_outer`
+    * @details This particular definition is for CPU targets only. It differs for other hardware backends. */
   #define YAKL_LAMBDA [=]
+
+  /** @brief [NOT COMMONTLY USED] Used to create C++ lambda expressions only valid on the device
+    * @details This particular definition is for CPU targets only. It differs for other hardware backends. */
   #define YAKL_DEVICE_LAMBDA [=]
+
+  /** @brief Used to create C++ lambda expression that also pass `*this` by value in classes.
+    * @details This particular definition is for CPU targets only. It differs for other hardware backends. */
   #define YAKL_CLASS_LAMBDA [=, *this]
+
+  /** @brief Used to decorate functions called from kernels (`parallel_for` and `parallel_outer`) or from CPU functions.
+    * @details This particular definition is for CPU targets only. It differs for other hardware backends. */
   #define YAKL_INLINE inline
+
+  /** @brief [NOT COMMONLY USED] Used to decorate functions called **only** from kernels, not from CPU functions.
+    * @details This particular definition is for CPU targets only. It differs for other hardware backends. */
   #define YAKL_DEVICE_INLINE inline
+
+  /** @brief Used to bring non-local data into local scope (e.g., `this->data` or `namespace::data`).
+    * Usage is, e.g., `YAKL_SCOPE(varname,this->varname);` or `YAKL_SCOPE(varname,::varname);`*/
   #define YAKL_SCOPE(a,b) auto &a = b
+
+  /** @brief [NOT COMMONLY USED] Macro function used to determine if the current code is compiling for the host.
+    * @details This particular definition is for CPU targets only. It differs for other hardware backends. 
+    * This is used to hide device-only code from the host compiler. */
   #define YAKL_CURRENTLY_ON_HOST() 1
+
+  /** @brief [NOT COMMONLY USED] Macro function used to determine if the current code is compiling for the device.
+    * @details This particular definition is for CPU targets only. It differs for other hardware backends. 
+    * This is used to hide host-only code from the device compiler. */
   #define YAKL_CURRENTLY_ON_DEVICE() 1
 
 #endif
