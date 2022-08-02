@@ -3,6 +3,8 @@
 
 ## Documentation: https://github.com/mrnorman/YAKL/wiki
 
+## API Documentation: https://mrnorman.github.io/yakl_api/html/index.html
+
 Author: Matt Norman (Oak Ridge National Laboratory) - mrnorman.github.io
 
 Contributors:
