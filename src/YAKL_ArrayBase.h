@@ -59,6 +59,7 @@ namespace yakl {
           msg += std::string("Fortran-style, ");
         }
         msg += std::string("rank ") + std::to_string(rank) + std::string(" Array");
+        msg += std::string(" of size ") + std::to_string(totElems()*sizeof(T)) + std::string(" bytes");
         verbose_inform(msg,this->label());
       #endif
     }
@@ -109,7 +110,9 @@ namespace yakl {
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> const &lhs) const {
-      copy_inform(lhs);
+      #ifdef YAKL_VERBOSE
+        copy_inform(lhs);
+      #endif
       #ifdef YAKL_DEBUG
         if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
         if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
@@ -130,7 +133,9 @@ namespace yakl {
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> const &lhs) const {
-      copy_inform(lhs);
+      #ifdef YAKL_VERBOSE
+        copy_inform(lhs);
+      #endif
       #ifdef YAKL_DEBUG
         if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
         if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
@@ -203,7 +208,9 @@ namespace yakl {
       } else {
         this->myData = new T[this->totElems()];
       }
-      this->create_inform();
+      #ifdef YAKL_VERBOSE
+        this->create_inform();
+      #endif
       yakl_mtx_unlock();
     }
 
@@ -226,7 +233,9 @@ namespace yakl {
         (*(this->refCount))--;
 
         if (*this->refCount == 0) {
-          destroy_inform();
+          #ifdef YAKL_VERBOSE
+            destroy_inform();
+          #endif
           delete this->refCount;
           this->refCount = nullptr;
           if (this->totElems() > 0) {
@@ -257,7 +266,9 @@ namespace yakl {
         (*(this->refCount))--;
 
         if (*this->refCount == 0) {
-          destroy_inform();
+          #ifdef YAKL_VERBOSE
+            destroy_inform();
+          #endif
           delete this->refCount;
           this->refCount = nullptr;
           if (this->totElems() > 0) {

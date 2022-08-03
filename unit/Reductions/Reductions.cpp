@@ -29,7 +29,7 @@ int main() {
   {
     int constexpr n = 1024*1024 + 1;
     real1d data("data",n);
-    parallel_for( n , YAKL_LAMBDA (int i) {
+    parallel_for( "Initialize data" , n , YAKL_LAMBDA (int i) {
       data(i) = i - (n-1)/2.;
     });
     yakl::ParallelSum<real,memDevice> psum(data.totElems());

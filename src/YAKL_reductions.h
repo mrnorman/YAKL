@@ -35,6 +35,9 @@ namespace yakl {
     void setup(int nItems) { this->nItems = nItems; }
     T operator() (T *data) {
       T rslt = data[0];
+      #ifdef YAKL_VERBOSE
+        verbose_inform("Launching host reduction");
+      #endif
       if constexpr        (RED == YAKL_REDUCTION_MIN) {
         for (int i=1; i<nItems; i++) { rslt = data[i] < rslt ? data[i] : rslt; }
       } else if constexpr (RED == YAKL_REDUCTION_MAX) {
@@ -66,7 +69,9 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_setup");
         #endif
         finalize();
-        verbose_inform("Allocating device reduction scalar");
+        #ifdef YAKL_VERBOSE
+          verbose_inform(std::string("Allocating device reduction scalar of size ")+std::to_string(sizeof(T))+std::string(" bytes"));
+        #endif
         rsltP = (T *) alloc_device(sizeof(T),"Parallel Reduction Result"); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
@@ -78,7 +83,9 @@ namespace yakl {
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
           hipcub::DeviceReduce::Reduce(tmp, nTmp, rsltP, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1 );
         }
-        verbose_inform("Allocating device reduction temporary storage");
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Allocating device reduction temporary storage of size "+std::to_string(nTmp)+std::string(" bytes"));
+        #endif
         tmp = alloc_device(nTmp,"Parallel Reduction Temporary");       // Allocate temporary storage
         this->nItems = nItems;
         #ifdef YAKL_AUTO_PROFILE
@@ -87,9 +94,13 @@ namespace yakl {
       }
       void finalize() {
         if (tmp != NULL) {
-          verbose_inform("Deallocating device reduction scalar");
+          #ifdef YAKL_VERBOSE
+            verbose_inform("Deallocating device reduction scalar");
+          #endif
           free_device(rsltP,"Parallel Reduction Result");
-          verbose_inform("Deallocating device reduction temporary storage");
+          #ifdef YAKL_VERBOSE
+            verbose_inform("Deallocating device reduction temporary storage");
+          #endif
           free_device(tmp,"Parallel Reduction Temporary");
         }
         tmp = NULL;
@@ -99,6 +110,9 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_apply");
         #endif
         T rslt;
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Launching device reduction");
+        #endif
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
           hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_MAX) {
@@ -108,7 +122,9 @@ namespace yakl {
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
           hipcub::DeviceReduce::Reduce(tmp, nTmp, data, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, 0 );
         }
-        verbose_inform("Initiating device to host memcpy of reduction scalar value");
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Initiating device to host memcpy of reduction scalar value of size "+std::to_string(sizeof(T))+std::string(" bytes"));
+        #endif
         memcpy_device_to_host(&rslt , rsltP , 1 );
         check_last_error();
         fence();
@@ -137,7 +153,9 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_setup");
         #endif
         finalize();
-        verbose_inform("Allocating device reduction scalar");
+        #ifdef YAKL_VERBOSE
+          verbose_inform(std::string("Allocating device reduction scalar of size ")+std::to_string(sizeof(T))+std::string(" bytes"));
+        #endif
         rsltP = (T *) alloc_device(sizeof(T),"Parallel Reduction Result"); // Allocate device pointer for result
         // Get the amount of temporary storage needed (call with NULL storage pointer)
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
@@ -149,7 +167,9 @@ namespace yakl {
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
           cub::DeviceReduce::Reduce(tmp, nTmp, rsltP, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1 );
         }
-        verbose_inform("Allocating device reduction temporary storage");
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Allocating device reduction temporary storage of size "+std::to_string(nTmp)+std::string(" bytes"));
+        #endif
         tmp = alloc_device(nTmp,"Parallel Reduction Temporary");       // Allocate temporary storage
         this->nItems = nItems;
         #ifdef YAKL_AUTO_PROFILE
@@ -158,9 +178,13 @@ namespace yakl {
       }
       void finalize() {
         if (tmp != NULL) {
-          verbose_inform("Deallocating device reduction scalar");
+          #ifdef YAKL_VERBOSE
+            verbose_inform("Deallocating device reduction scalar");
+          #endif
           free_device(rsltP,"Parallel Reduction Result");
-          verbose_inform("Deallocating device reduction temporary storage");
+          #ifdef YAKL_VERBOSE
+            verbose_inform("Deallocating device reduction temporary storage");
+          #endif
           free_device(tmp,"Parallel Reduction Temporary");
         }
         tmp = NULL;
@@ -170,6 +194,9 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_apply");
         #endif
         T rslt;
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Launching device reduction");
+        #endif
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
           cub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_MAX) {
@@ -179,7 +206,9 @@ namespace yakl {
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
           cub::DeviceReduce::Reduce(tmp, nTmp, data ,rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, 0 );
         }
-        verbose_inform("Initiating device to host memcpy of reduction scalar value");
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Initiating device to host memcpy of reduction scalar value of size "+std::to_string(sizeof(T))+std::string(" bytes"));
+        #endif
         memcpy_device_to_host(&rslt , rsltP , 1 );
         check_last_error();
         fence();
@@ -205,7 +234,9 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_setup");
         #endif
         finalize();
-        verbose_inform("Allocating device reduction scalar");
+        #ifdef YAKL_VERBOSE
+          verbose_inform(std::string("Allocating device reduction scalar of size ")+std::to_string(sizeof(T))+std::string(" bytes"));
+        #endif
         rsltP = (T *) alloc_device(sizeof(T),"Parallel Reduction Result"); // Allocate device pointer for result
         this->nItems = nItems;
         #ifdef YAKL_AUTO_PROFILE
@@ -215,7 +246,9 @@ namespace yakl {
 
       void finalize() {
         if(rsltP != nullptr) {
-          verbose_inform("Deallocating device reduction scalar");
+          #ifdef YAKL_VERBOSE
+            verbose_inform("Deallocating device reduction scalar");
+          #endif
           free_device(rsltP,"Parallel Reduction Result");
         }
         rsltP = nullptr;
@@ -225,6 +258,9 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_apply");
         #endif
         T rslt=0;
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Launching device reduction");
+        #endif
         sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
           if constexpr        (RED == YAKL_REDUCTION_MIN) {
             cgh.parallel_for(sycl::range<1>(nItems),
@@ -248,7 +284,9 @@ namespace yakl {
                              [=] (sycl::id<1> idx, auto& prod) { prod.combine(data[idx]); });
           }
         });
-        verbose_inform("Initiating device to host memcpy of reduction scalar value");
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Initiating device to host memcpy of reduction scalar value of size "+std::to_string(sizeof(T))+std::string(" bytes"));
+        #endif
         memcpy_device_to_host(&rslt , rsltP , 1 );
         fence();
         #ifdef YAKL_AUTO_PROFILE
@@ -275,6 +313,9 @@ namespace yakl {
           timer_start("YAKL_internal_reduction_apply");
         #endif
         T rslt = data[0];
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Launching device reduction");
+        #endif
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
           #pragma omp parallel for reduction(min:rslt)
           for (int i=1; i<nItems; i++) { rslt = data[i] < rslt ? data[i] : rslt; }
@@ -308,6 +349,9 @@ namespace yakl {
       void setup(int nItems) { this->nItems = nItems; }
       T operator() (T *data) {
         T rslt = data[0];
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Launching device reduction");
+        #endif
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
           for (int i=1; i<nItems; i++) { rslt = data[i] < rslt ? data[i] : rslt; }
         } else if constexpr (RED == YAKL_REDUCTION_MAX) {

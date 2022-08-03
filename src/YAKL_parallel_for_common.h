@@ -446,7 +446,9 @@ inline void parallel_inner_cpu_serial( Bounds<N,simple> const &bounds , F const 
 template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN , bool B4B=false>
 inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f ,
                           LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
-  verbose_inform("Launching parallel_for",str);
+  #ifdef YAKL_VERBOSE
+    verbose_inform(std::string("Launching parallel_for with ")+std::to_string(bounds.nIter)+" threads",str);
+  #endif
   // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
   #ifdef YAKL_AUTO_PROFILE
     timer_start(str);
@@ -533,7 +535,11 @@ inline void parallel_for( char const * str , LBnd bnd , F const &f ,
 template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN, bool B4B=false>
 inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , F const &f ,
                             LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
-  verbose_inform("Launching parallel_outer",str);
+  #ifdef YAKL_VERBOSE
+    verbose_inform(std::string("Launching parallel_outer with ")+std::to_string(bounds.nIter)+
+                   std::string(" outer threads and ")+
+                   std::to_string(config.inner_size)+std::string(" inner threads"),str);
+  #endif
   // Automatically time (if requested) and add nvtx ranges for easier nvprof / nsight profiling
   #ifdef YAKL_AUTO_PROFILE
     timer_start(str);

@@ -6,7 +6,7 @@ namespace yakl {
   inline void verbose_inform(std::string prefix, std::string label = "", std::string suffix = "") {
     #ifdef YAKL_VERBOSE
       // Form the output
-      std::string output = prefix;
+      std::string output = std::string("*** [YAKL_VERBOSE] ") + prefix;
       if (label != "") output += std::string(" (label: \"") + label + std::string("\")");
       if (suffix != "") output += std::string(";  ") + suffix;
 
@@ -23,12 +23,12 @@ namespace yakl {
         std::ofstream myfile;
         std::string fname = std::string("yakl_verbose_output_task_") + std::to_string(rank) + std::string(".log");
         myfile.open(fname , std::ofstream::out | std::ofstream::app);
-        myfile << output << std::endl << std::endl;
+        myfile << output << std::endl;
         myfile.close();
       #endif
 
       // Write to stdout for task 0
-      if (rank == 0) std::cout << output << std::endl << std::endl;
+      if (rank == 0) std::cout << output << std::endl;
     #endif
   }
 

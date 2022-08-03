@@ -13,7 +13,7 @@ export FC=gfortran
 unset CXXFLAGS
 unset FFLAGS
 
-cmake -DYAKL_CXX_FLAGS="-O0 -g -DYAKL_DEBUG -I`nc-config --includedir`" \
+cmake -DYAKL_CXX_FLAGS="-O0 -g -DYAKL_DEBUG -DYAKL_VERBOSE_FILE -I`nc-config --includedir`" \
       -DYAKL_F90_FLAGS="-O3"                 \
       -DNETCDF_LINK_FLAGS="`nc-config --libs`"        \
       ../../..

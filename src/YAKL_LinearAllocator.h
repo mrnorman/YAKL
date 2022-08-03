@@ -49,10 +49,7 @@ namespace yakl {
                      std::string                           error_message_out_of_memory = "" ) {
       nullify();
 
-      #if defined(YAKL_DEBUG) || defined(YAKL_MEMORY_DEBUG)
-        if (yakl::yakl_mainproc()) std::cout << "Create Pool labeled: \"" << pool_name << "\"\n";
-      #endif
-      verbose_inform("Creating pool" , pool_name);
+      verbose_inform(std::string("Creating pool of ")+std::to_string(bytes/1024/1024/1024)+" GB" , pool_name);
       if (blockSize%sizeof(size_t) != 0) {
         std::cerr << "ERROR: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
         die("Error: LinearAllocator blockSize must be a multiple of sizeof(size_t)");
@@ -123,9 +120,6 @@ namespace yakl {
 
     ~LinearAllocator() {
       if (pool != nullptr) {
-        #if defined(YAKL_DEBUG) || defined(YAKL_MEMORY_DEBUG)
-          if (yakl::yakl_mainproc()) std::cout << "Destory Pool labeled: \"" << pool_name << "\"\n";
-        #endif
         verbose_inform("Destroying pool" , pool_name);
       }
       finalize();

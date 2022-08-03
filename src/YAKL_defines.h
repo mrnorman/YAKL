@@ -23,6 +23,12 @@
   #endif
 #endif
 
+#ifdef YAKL_VERBOSE_FILE
+  #ifndef YAKL_VERBOSE
+    #define YAKL_VERBOSE
+  #endif
+#endif
+
 
 #ifdef YAKL_ARCH_CUDA
 

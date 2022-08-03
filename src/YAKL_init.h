@@ -161,6 +161,18 @@ namespace yakl {
         if (yakl_mainproc()) std::cout << "INFORM: Automatically inserting fence() after every parallel_for"
                                        << std::endl;
       #endif
+      #ifdef YAKL_VERBOSE_FILE
+        int rank = 0;
+        #ifdef HAVE_MPI
+          int is_initialized;
+          MPI_Initialized(&is_initialized);
+          if (is_initialized) { MPI_Comm_rank(MPI_COMM_WORLD, &rank); }
+        #endif
+        std::ofstream myfile;
+        std::string fname = std::string("yakl_verbose_output_task_") + std::to_string(rank) + std::string(".log");
+        myfile.open(fname , std::ofstream::out);
+        myfile.close();
+      #endif
     } else {
       std::cerr << "WARNING: Calling yakl::initialize() when YAKL is already initialized. ";
     }
