@@ -17,7 +17,13 @@ namespace yakl {
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
   inline void memcpy_host_to_host(T1 *dst , T2 *src , index_t elems) {
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start("YAKL_internal_memcpy_host_to_host");
+    #endif
     for (index_t i=0; i<elems; i++) { dst[i] = src[i]; }
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop("YAKL_internal_memcpy_host_to_host");
+    #endif
   }
 
 
@@ -25,7 +31,13 @@ namespace yakl {
    * @brief [USE AT YOUR OWN RISK]: memcpy the specified number of **bytes** on the host
    */
   inline void memcpy_host_to_host_void(void *dst , void *src , size_t bytes) {
+    #ifdef YAKL_AUTO_PROFILE
+      timer_start("YAKL_internal_memcpy_host_to_host");
+    #endif
     memcpy( dst , src , bytes );
+    #ifdef YAKL_AUTO_PROFILE
+      timer_stop("YAKL_internal_memcpy_host_to_host");
+    #endif
   }
 
 
