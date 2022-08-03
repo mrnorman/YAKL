@@ -18,11 +18,6 @@ namespace yakl {
   using std::max;
   using std::abs;
 
-  // functorBuffer holds large functors in CUDA and all functors in SYCL
-  /** @private */
-  int constexpr functorBufSize = 1024*128;
-  extern void *functorBuffer;
-
   // Type for indexing. Rarely if ever is size_t going to be needed
   typedef unsigned int index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();

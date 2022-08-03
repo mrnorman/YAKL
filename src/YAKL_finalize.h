@@ -28,18 +28,6 @@ namespace yakl {
       // Free the pools
       pool.finalize();
 
-      // Free functorBuffer
-      #ifdef YAKL_ARCH_CUDA
-        cudaFree(functorBuffer);
-        check_last_error();
-      #endif
-      #if defined(YAKL_ARCH_SYCL)
-        sycl::free(functorBuffer, sycl_default_stream());
-        check_last_error();
-      #endif
-
-      functorBuffer = nullptr;
-
       yakl_is_initialized = false;
 
       // Finalize the timers

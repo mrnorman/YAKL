@@ -26,12 +26,11 @@ namespace yakl {
    * 4. Initialize YAKL's timer calls to defaults.
    * 5. Inspect the optional yakl::InitConfig parameter to override default allocator, deallocator,
    *    and timer calls if requested.
-   * 6. Allocate YAKL's functor buffer for appropriate backends.
-   * 7. Inform the user with device information. THREAD SAFE!
+   * 6. Inform the user with device information. THREAD SAFE!
    * @param config This yakl::InitConfig object allows the user to override YAKL's default allocator, deallocator
    *               and timer calls from the start of the runtime.
    */
-  // Set global std::functions for alloc and free, allocate functorBuffer
+  // Set global std::functions for alloc and free
   inline void init( InitConfig config = InitConfig() ) {
     yakl_mtx.lock();
 
@@ -126,16 +125,10 @@ namespace yakl {
       if (config.get_timer_start       ()) timer_start_func     = config.get_timer_start       ();
       if (config.get_timer_stop        ()) timer_stop_func      = config.get_timer_stop        ();
 
-      // Allocate functorBuffer
-      #ifdef YAKL_ARCH_CUDA
-        cudaMalloc(&functorBuffer,functorBufSize);
-        fence();
-      #endif
       #ifdef YAKL_ARCH_SYCL
         if (yakl_mainproc()) std::cout << "Running on "
                                        << sycl_default_stream().get_device().get_info<sycl::info::device::name>()
                                        << "\n";
-        functorBuffer = sycl::malloc_device(functorBufSize, sycl_default_stream());
         fence();
       #endif
 

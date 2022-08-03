@@ -74,10 +74,12 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , f , config );
       check_last_error();
     } else {
-      F *fp = (F *) functorBuffer;
+      F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
       cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
       check_last_error();
       cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , *fp , config );
+      check_last_error();
+      free_device( fp , "functor_buffer" );
       check_last_error();
     }
   }
@@ -102,10 +104,12 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , f , config , InnerHandler() );
       check_last_error();
     } else {
-      F *fp = (F *) functorBuffer;
+      F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
       cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
       check_last_error();
       cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , *fp , config , InnerHandler() );
+      check_last_error();
+      free_device( fp , "functor_buffer" );
       check_last_error();
     }
   }
@@ -212,12 +216,13 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       });
       sycl_default_stream().wait();
     } else {
-      F *fp = (F *) functorBuffer;
+      F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
       auto copyEvent = sycl_default_stream().memcpy(fp, &f, sizeof(F));
       auto kernelEvent = sycl_default_stream().parallel_for( sycl::range<1>(bounds.nIter) , copyEvent, [=] (sycl::id<1> i) {
         callFunctor( *fp , bounds , i );
       });
       kernelEvent.wait();
+      free_device( fp , "functor_buffer" );
     }
 
     check_last_error();
@@ -234,7 +239,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       });
       sycl_default_stream().wait();
     } else {
-      F *fp = (F *) functorBuffer;
+      F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
       auto copyEvent = sycl_default_stream().memcpy(fp, &f, sizeof(F));
       auto kernelEvent = sycl_default_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
 					  copyEvent,
@@ -242,6 +247,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
         callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
       });
       kernelEvent.wait();
+      free_device( fp , "functor_buffer" );
     }
 
     check_last_error();

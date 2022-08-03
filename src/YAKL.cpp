@@ -14,9 +14,6 @@ namespace yakl {
   Gator pool;  // Pool allocator (manages multiple pools). Constructor does not allocate or depend on init order
 
   /** @private */
-  void * functorBuffer = nullptr;  // To hold functors in device memory for CUDA (only large functors) and SYCL backends
-
-  /** @private */
   bool yakl_is_initialized = false;  // Determine if YAKL has been initialized
 
   /** @private */
