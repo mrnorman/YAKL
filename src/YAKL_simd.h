@@ -239,7 +239,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> pow(Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (uint i=0; i < N; i++) { ret(i) = pow( lhs(i) , val ); }
+    for (uint i=0; i < N; i++) { ret(i) = std::pow( lhs(i) , val ); }
     return ret;
   }
 
@@ -259,7 +259,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> sqrt( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = sqrt( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::sqrt( a(i) ); }
     return ret;
   }
 
@@ -267,7 +267,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> abs( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = abs( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::abs( a(i) ); }
     return ret;
   }
 
@@ -275,7 +275,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> exp( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = exp( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::exp( a(i) ); }
     return ret;
   }
 
@@ -283,7 +283,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> log( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = log( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::log( a(i) ); }
     return ret;
   }
 
@@ -291,7 +291,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> log10( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = log10( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::log10( a(i) ); }
     return ret;
   }
 
@@ -299,7 +299,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> cos( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = cos( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::cos( a(i) ); }
     return ret;
   }
 
@@ -307,7 +307,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> sin( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = sin( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::sin( a(i) ); }
     return ret;
   }
 
@@ -315,7 +315,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> tan( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = tan( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::tan( a(i) ); }
     return ret;
   }
 
@@ -323,15 +323,15 @@ namespace simd {
   YAKL_INLINE Pack<T,N> acos( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = acos( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::acos( a(i) ); }
     return ret;
   }
 
   template <class T, unsigned int N>
-  YAKL_INLINE Pack<T,N> asign( Pack<T,N> a ) {
+  YAKL_INLINE Pack<T,N> asin( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = asign( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::asin( a(i) ); }
     return ret;
   }
 
@@ -339,7 +339,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> atan( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = atan( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::atan( a(i) ); }
     return ret;
   }
 
@@ -347,7 +347,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> ceil( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = ceil( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::ceil( a(i) ); }
     return ret;
   }
 
@@ -355,7 +355,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> floor( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = floor( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::floor( a(i) ); }
     return ret;
   }
 
@@ -363,7 +363,7 @@ namespace simd {
   YAKL_INLINE Pack<T,N> round( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = round( a(i) ); }
+    for (int i=0; i < N; i++) { ret(i) = std::round( a(i) ); }
     return ret;
   }
 
@@ -421,7 +421,7 @@ namespace simd {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
     for (int i=0; i < N; i++) {
-      ret(i) = pow( a(i) , b(i) );
+      ret(i) = std::pow( a(i) , b(i) );
     }
     return ret;
   }
