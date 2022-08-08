@@ -62,6 +62,8 @@ namespace yakl {
         yakl_throw("ERROR: attempting memory free before calling yakl::init()");
       };
 
+      device_allocators_are_default = false;
+
     } else {
 
       std::cerr << "WARNING: Calling yakl::finalize() when YAKL is not initialized. ";

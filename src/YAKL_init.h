@@ -115,15 +115,17 @@ namespace yakl {
         #endif
       };
 
+      device_allocators_are_default = true;
+
       // If the user specified overrides in the InitConfig, apply them here
-      if (config.get_host_allocator    ()) alloc_host_func   = config.get_host_allocator    ();
-      if (config.get_device_allocator  ()) alloc_device_func = config.get_device_allocator  ();
-      if (config.get_host_deallocator  ()) free_host_func    = config.get_host_deallocator  ();
-      if (config.get_device_deallocator()) free_device_func  = config.get_device_deallocator();
-      if (config.get_timer_init        ()) timer_init_func      = config.get_timer_init        ();
-      if (config.get_timer_finalize    ()) timer_finalize_func  = config.get_timer_finalize    ();
-      if (config.get_timer_start       ()) timer_start_func     = config.get_timer_start       ();
-      if (config.get_timer_stop        ()) timer_stop_func      = config.get_timer_stop        ();
+      if (config.get_host_allocator    ()) { alloc_host_func   = config.get_host_allocator    (); }
+      if (config.get_device_allocator  ()) { alloc_device_func = config.get_device_allocator  (); device_allocators_are_default = false; }
+      if (config.get_host_deallocator  ()) { free_host_func    = config.get_host_deallocator  (); }
+      if (config.get_device_deallocator()) { free_device_func  = config.get_device_deallocator(); device_allocators_are_default = false; }
+      if (config.get_timer_init        ()) timer_init_func      = config.get_timer_init    ();
+      if (config.get_timer_finalize    ()) timer_finalize_func  = config.get_timer_finalize();
+      if (config.get_timer_start       ()) timer_start_func     = config.get_timer_start   ();
+      if (config.get_timer_stop        ()) timer_stop_func      = config.get_timer_stop    ();
 
       #ifdef YAKL_ARCH_SYCL
         if (yakl_mainproc()) std::cout << "Running on "

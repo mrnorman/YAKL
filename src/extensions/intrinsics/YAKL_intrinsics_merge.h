@@ -35,7 +35,7 @@ namespace yakl {
     inline Array<decltype(T1()+T2()),rank,memDevice,myStyle>
     merge( Array<T1  ,rank,memDevice,myStyle> const & arr_true  ,
            Array<T2  ,rank,memDevice,myStyle> const & arr_false ,
-           Array<bool,rank,memDevice,myStyle> const & mask      ) {
+           Array<bool,rank,memDevice,myStyle> const & mask      , Stream stream = Stream() ) {
       #ifdef YAKL_DEBUG
         using yakl::componentwise::operator==;
         using yakl::componentwise::operator&&;
@@ -49,7 +49,8 @@ namespace yakl {
       Array<decltype(T1()+T2()),rank,memDevice,myStyle> ret = arr_true.createDeviceObject();
       c::parallel_for( "YAKL_internal_merge" , arr_true.totElems() , YAKL_LAMBDA (int i) {
         ret.data()[i] = mask.data()[i] ? arr_true.data()[i] : arr_false.data()[i];
-      });
+      }, DefaultLaunchConfig().set_stream(stream) );
+      ret.add_stream_dependency(stream);
       return ret;
     }
 

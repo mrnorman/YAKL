@@ -53,6 +53,16 @@ namespace yakl {
     }
 
 
+    struct WaitEntry {
+      std::string label;
+      void *ptr;
+      std::vector<Event> events;
+    };
+
+    std::vector<WaitEntry> waiting_entries;
+    std::vector<Event>     waiting_events;
+
+
   public:
 
     /** @brief Please use the init() function to specify parameters, not the constructor. */
@@ -116,7 +126,11 @@ namespace yakl {
 
     /** @brief Finalize the pool allocator, deallocate all individual pools.
       */
-    void finalize() { pools = std::list<LinearAllocator>(); }
+    void finalize() {
+      fence();
+      if (! waiting_events.empty()) free_completed_waiting_entries();
+      pools = std::list<LinearAllocator>();
+    }
 
 
     /** @brief **[USEFUL FOR DEBUGGING]** Print all allocations left in this pool object.
@@ -138,6 +152,7 @@ namespace yakl {
       * Attempting to allocate zero bytes will return `nullptr`. This is a thread safe call.*/
     void * allocate(size_t bytes, char const * label="") {
       if (bytes == 0) return nullptr;
+      if (! waiting_events.empty()) free_completed_waiting_entries();
       // Loop through the pools and see if there's room. If so, allocate in one of them
       bool room_found = false;  // Whether room exists for the allocation
       bool linear_bug = false;  // Whether there's an apparent bug in the LinearAllocator allocate() function
@@ -200,10 +215,10 @@ namespace yakl {
 
     /** @brief Free the passed pointer, and return the pointer to allocated space. 
       * @details Attempting to free a pointer not found in the list of pools will result in a thrown exception */
-    void free(void *ptr , char const * label = "") {
+    void free(void *ptr , char const * label = "" , bool use_mutex = true ) {
       bool pointer_valid = false;
       // Protect against multiple threads trying to free at the same time
-      mtx.lock();
+      if (use_mutex) mtx.lock();
       {
         // Go through each pool. If the pointer lives in that pool, then free it.
         for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
@@ -214,13 +229,59 @@ namespace yakl {
           }
         }
       }
-      mtx.unlock();
+      if (use_mutex) mtx.unlock();
       if (!pointer_valid) {
         std::cerr << "ERROR: For the pool allocator labeled \"" << pool_name << "\":" << std::endl;
         std::cerr << "ERROR: Trying to free an invalid pointer\n";
         die("This means you have either already freed the pointer, or its address has been corrupted somehow.");
       }
     };
+
+
+    /** @brief Free the passed pointer, and return the pointer to allocated space. 
+      * @details Attempting to free a pointer not found in the list of pools will result in a thrown exception */
+    void free_with_event_dependencies(void *ptr , std::vector<Event> events_in , char const * label = "") {
+      mtx.lock();
+      waiting_entries.push_back( { std::string(label) , ptr , events_in } );
+      for (int ind_event_in=0; ind_event_in < events_in.size(); ind_event_in++) {
+        bool add_new_event = true;
+        for (int ind_event_list=0; ind_event_list < waiting_events.size(); ind_event_list++) {
+          if (events_in[ind_event_in] == waiting_events[ind_event_list]) add_new_event = false;
+        }
+        if (add_new_event) waiting_events.push_back( events_in[ind_event_in] );
+      }
+      mtx.unlock();
+    };
+
+
+    void free_completed_waiting_entries() {
+      mtx.lock();
+      // Loop through waiting events. Check if it's completed
+      for (int ievent=0; ievent < waiting_events.size(); ievent++) {
+        auto waiting_event = waiting_events[ievent];
+        // If this event has completed, erase all instances of this event from all waiting entry event lists
+        if (waiting_event.completed()) {
+          auto &completed_event = waiting_event;
+          // Loop through waiting entries and erase completed event from each entry's waiting event list
+          for (int ientry=0; ientry < waiting_entries.size(); ientry++) {
+            auto waiting_entry = waiting_entries[ientry];
+            // Search through this waiting entry's waiting event list, and erase any occurrences of this completed event
+            for (int i=0; i < waiting_entry.events.size(); i++) {
+              if (waiting_entry.events[i] == completed_event) waiting_entry.events.erase(waiting_entry.events.begin()+i);
+              break;
+            }
+            // if this waiting entry's waiting event list is empty, free its pointer & erase it from waiting entry list
+            if (waiting_entry.events.empty()) {
+              this->free( waiting_entry.ptr , waiting_entry.label.c_str() , false );
+              waiting_entries.erase( waiting_entries.begin()+ientry );
+            }
+          }
+          // Finally, erase this completed event from the waiting events list
+          waiting_events.erase(waiting_events.begin()+ievent);
+        }
+      }
+      mtx.unlock();
+    }
 
 
     /** @brief  Get the total size of all of the pools put together */

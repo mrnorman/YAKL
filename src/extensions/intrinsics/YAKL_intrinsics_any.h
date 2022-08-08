@@ -16,13 +16,14 @@ namespace yakl {
     }
 
     template <class T, int rank, int myStyle>
-    inline bool any( Array<T,rank,memDevice,myStyle> arr ) {
+    inline bool any( Array<T,rank,memDevice,myStyle> arr , Stream stream = Stream() ) {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
       #endif
-      ScalarLiveOut<bool> any_true(false);
-      c::parallel_for( "YAKL_internal_any" , arr.totElems() , YAKL_LAMBDA (int i) { if (arr.data()[i]) any_true = true; });
-      return any_true.hostRead();
+      ScalarLiveOut<bool> any_true(false,stream);
+      c::parallel_for( "YAKL_internal_any" , arr.totElems() , YAKL_LAMBDA (int i) { if (arr.data()[i]) any_true = true; },
+                       DefaultLaunchConfig().set_stream(stream) );
+      return any_true.hostRead(stream);
     }
 
     template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>

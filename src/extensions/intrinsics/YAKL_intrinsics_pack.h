@@ -50,6 +50,9 @@ namespace yakl {
       #ifdef YAKL_DEBUG
         if (! allocated(arr)) yakl_throw("ERROR: Calling pack with unallocated array");
       #endif
+      #ifdef YAKL_ENABLE_STREAMS
+        fence();
+      #endif
       if (allocated(mask)) {
         #ifdef YAKL_DEBUG
           using yakl::componentwise::operator==;

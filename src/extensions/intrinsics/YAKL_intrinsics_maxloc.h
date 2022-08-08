@@ -21,34 +21,36 @@ namespace yakl {
     }
 
     template <class T>
-    inline int maxloc( Array<T,1,memDevice,styleC> const &arr ) {
+    inline int maxloc( Array<T,1,memDevice,styleC> const &arr , Stream stream = Stream()  ) {
       #ifdef YAKL_DEBUG
         if (! allocated(arr)) yakl_throw("ERROR: calling maxloc on an unallocated array");
       #endif
-      T mv = maxval(arr);
+      T mv = maxval(arr,stream);
       #ifdef YAKL_B4B
         for (int i=0; i < arr.totElems(); i++) { if (arr(i) == mv) return i; }
       #else
-        ScalarLiveOut<int> ind(0);
-        c::parallel_for( "YAKL_internal_maxloc" , arr.totElems() , YAKL_LAMBDA (int i) { if (arr(i) == mv) ind = i; });
-        return ind.hostRead();
+        ScalarLiveOut<int> ind(0,stream);
+        c::parallel_for( "YAKL_internal_maxloc" , arr.totElems() , YAKL_LAMBDA (int i) { if (arr(i) == mv) ind = i; }, 
+                         DefaultLaunchConfig().set_stream(stream) );
+        return ind.hostRead(stream);
       #endif
       // Never reaches here, but nvcc isn't smart enough to figure it out.
       return 0;
     }
 
     template <class T>
-    inline int maxloc( Array<T,1,memDevice,styleFortran> const &arr ) {
+    inline int maxloc( Array<T,1,memDevice,styleFortran> const &arr , Stream stream = Stream()  ) {
       #ifdef YAKL_DEBUG
         if (! allocated(arr)) yakl_throw("ERROR: calling maxloc on an unallocated array");
       #endif
-      T mv = maxval(arr);
+      T mv = maxval(arr,stream);
       #ifdef YAKL_B4B
         for (int i=lbound(arr,1); i <= ubound(arr,1); i++) { if (arr(i) == mv) return i; }
       #else
-        ScalarLiveOut<int> ind(lbound(arr,1));
-        fortran::parallel_for( "YAKL_internal_maxloc" , {lbound(arr,1),ubound(arr,1)} , YAKL_LAMBDA (int i) { if (arr(i) == mv) ind = i; });
-        return ind.hostRead();
+        ScalarLiveOut<int> ind(lbound(arr,1),stream);
+        fortran::parallel_for( "YAKL_internal_maxloc" , {lbound(arr,1),ubound(arr,1)} , YAKL_LAMBDA (int i) { if (arr(i) == mv) ind = i; }, 
+                               DefaultLaunchConfig().set_stream(stream) );
+        return ind.hostRead(stream);
       #endif
       // Never reaches here, but nvcc isn't smart enough to figure it out.
       return 0;
@@ -66,6 +68,7 @@ namespace yakl {
       }
       return loc;
     }
+
     template <class T, unsigned D0>
     YAKL_INLINE int maxloc( SArray<T,1,D0> const &arr ) {
       T m = arr.data()[0];

@@ -22,11 +22,12 @@ namespace yakl {
       for( int i=0; i < a.totElems(); i++) {
         ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
       }
+      return ret;
     }
 
     template <class T1, class T2, int rank, int myStyle>
     inline Array<T1,rank,memDevice,myStyle> sign( Array<T1,rank,memDevice,myStyle> const & a ,
-                                                  Array<T2,rank,memDevice,myStyle> const & b ) {
+                                                  Array<T2,rank,memDevice,myStyle> const & b , Stream stream = Stream() ) {
       #ifdef YAKL_DEBUG
         using yakl::componentwise::operator==;
         using yakl::componentwise::operator!;
@@ -37,7 +38,9 @@ namespace yakl {
       auto ret = a.createDeviceObject();
       parallel_for( "YAKL_internal_sign" , a.totElems() , YAKL_LAMBDA (int i) {
         ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
-      });
+      }, DefaultLaunchConfig().set_stream(stream) );
+      ret.set_stream_dependency(stream);
+      return ret;
     }
 
     template <class T1, class T2, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -47,6 +50,7 @@ namespace yakl {
       for( int i=0; i < a.totElems(); i++) {
         ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
       }
+      return ret;
     }
 
     template <class T1, class T2, int rank, class B0, class B1, class B2, class B3>
@@ -56,6 +60,7 @@ namespace yakl {
       for( int i=0; i < a.totElems(); i++) {
         ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
       }
+      return ret;
     }
 
   }

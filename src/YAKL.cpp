@@ -53,6 +53,8 @@ namespace yakl {
   std::function<void ( void * , char const *)>  free_host_func    = [] ( void *ptr    , char const *label )          {
     yakl_throw("ERROR: attempting memory free before calling yakl::init()");
   };
+
+  bool device_allocators_are_default  = false;
 }
 
 

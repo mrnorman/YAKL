@@ -47,15 +47,15 @@ namespace yakl {
   template <class T1, class T2,
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
-  inline void memcpy_device_to_host(T1 *dst , T2 *src , index_t elems) {
+  inline void memcpy_device_to_host(T1 *dst , T2 *src , index_t elems , Stream stream = Stream() ) {
     #ifdef YAKL_AUTO_PROFILE
       timer_start("YAKL_internal_memcpy_device_to_host");
     #endif
     #ifdef YAKL_ARCH_CUDA
-      cudaMemcpyAsync(dst,src,elems*sizeof(T1),cudaMemcpyDeviceToHost,0);
+      cudaMemcpyAsync(dst,src,elems*sizeof(T1),cudaMemcpyDeviceToHost,stream.get_real_stream());
       check_last_error();
     #elif defined(YAKL_ARCH_HIP)
-      hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyDeviceToHost,0);
+      hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyDeviceToHost,stream.get_real_stream());
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
       sycl_default_stream().memcpy(dst, src, elems*sizeof(T1));
@@ -81,15 +81,15 @@ namespace yakl {
   template <class T1, class T2,
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
-  inline void memcpy_host_to_device(T1 *dst , T2 *src , index_t elems) {
+  inline void memcpy_host_to_device(T1 *dst , T2 *src , index_t elems , Stream stream = Stream() ) {
     #ifdef YAKL_AUTO_PROFILE
       timer_start("YAKL_internal_memcpy_host_to_device");
     #endif
     #ifdef YAKL_ARCH_CUDA
-      cudaMemcpyAsync(dst,src,elems*sizeof(T1),cudaMemcpyHostToDevice,0);
+      cudaMemcpyAsync(dst,src,elems*sizeof(T1),cudaMemcpyHostToDevice,stream.get_real_stream());
       check_last_error();
     #elif defined(YAKL_ARCH_HIP)
-      hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyHostToDevice,0);
+      hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyHostToDevice,stream.get_real_stream());
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
       sycl_default_stream().memcpy(dst, src, elems*sizeof(T1));
@@ -115,15 +115,15 @@ namespace yakl {
   template <class T1, class T2,
             typename std::enable_if< std::is_same< typename std::remove_cv<T1>::type ,
                                                    typename std::remove_cv<T2>::type >::value , int >::type = 0>
-  inline void memcpy_device_to_device(T1 *dst , T2 *src , index_t elems) {
+  inline void memcpy_device_to_device(T1 *dst , T2 *src , index_t elems , Stream stream = Stream() ) {
     #ifdef YAKL_AUTO_PROFILE
       timer_start("YAKL_internal_memcpy_device_to_device");
     #endif
     #ifdef YAKL_ARCH_CUDA
-      cudaMemcpyAsync(dst,src,elems*sizeof(T1),cudaMemcpyDeviceToDevice,0);
+      cudaMemcpyAsync(dst,src,elems*sizeof(T1),cudaMemcpyDeviceToDevice,stream.get_real_stream());
       check_last_error();
     #elif defined(YAKL_ARCH_HIP)
-      hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyDeviceToDevice,0);
+      hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyDeviceToDevice,stream.get_real_stream());
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
       sycl_default_stream().memcpy(dst, src, elems*sizeof(T1));
@@ -146,15 +146,15 @@ namespace yakl {
   /**
    * @brief [USE AT YOUR OWN RISK]: memcpy the specified number of **bytes** on the device
    */
-  inline void memcpy_device_to_device_void(void *dst , void *src , size_t bytes) {
+  inline void memcpy_device_to_device_void(void *dst , void *src , size_t bytes , Stream stream = Stream() ) {
     #ifdef YAKL_AUTO_PROFILE
       timer_start("YAKL_internal_memcpy_device_to_device");
     #endif
     #ifdef YAKL_ARCH_CUDA
-      cudaMemcpyAsync(dst,src,bytes,cudaMemcpyDeviceToDevice,0);
+      cudaMemcpyAsync(dst,src,bytes,cudaMemcpyDeviceToDevice,stream.get_real_stream());
       check_last_error();
     #elif defined(YAKL_ARCH_HIP)
-      hipMemcpyAsync(dst,src,bytes,hipMemcpyDeviceToDevice,0);
+      hipMemcpyAsync(dst,src,bytes,hipMemcpyDeviceToDevice,stream.get_real_stream());
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
       sycl_default_stream().memcpy(dst, src, bytes);

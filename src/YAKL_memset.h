@@ -11,7 +11,7 @@ namespace yakl {
 
   /** @private */
   template <class T, int rank, int myMem, int myStyle, class I>
-  void memset( Array<T,rank,myMem,myStyle> &arr , I val ) {
+  void memset( Array<T,rank,myMem,myStyle> &arr , I val , Stream stream = Stream() ) {
     #ifdef YAKL_DEBUG
       if (! arr.initialized()) {
         yakl_throw("ERROR: calling memset on an array that is not allocated");
@@ -21,15 +21,15 @@ namespace yakl {
     // Use memset for zero values when possible
     if (myMem == memDevice && val == 0) {
       #if   defined(YAKL_ARCH_CUDA)
-        cudaMemsetAsync( arr.data() , 0 , sizeof(T)*arr.totElems() );
+        cudaMemsetAsync( arr.data() , 0 , sizeof(T)*arr.totElems() , stream.get_real_stream() );
       #elif defined(YAKL_ARCH_HIP)
-        hipMemsetAsync ( arr.data() , 0 , sizeof(T)*arr.totElems() , 0 );  // Last argument is the default stream "0"
+        hipMemsetAsync ( arr.data() , 0 , sizeof(T)*arr.totElems() , stream.get_real_stream() );
       #elif defined(YAKL_ARCH_SYCL)
         sycl_default_stream().memset( arr.data() , 0 , sizeof(T)*arr.totElems() );
       #else
         c::parallel_for( "YAKL_internal_memset" , arr.totElems() , YAKL_LAMBDA (int i) {
           arr.data()[i] = 0;
-        });
+        } , DefaultLaunchConfig().set_stream(stream) );
       #endif
     } else {
       // SYCL has a fill routine, but CUDA and HIP do not
@@ -39,7 +39,7 @@ namespace yakl {
         #else
           c::parallel_for( "YAKL_internal_memset" , arr.totElems() , YAKL_LAMBDA (int i) {
             arr.data()[i] = val;
-          });
+          } , DefaultLaunchConfig().set_stream(stream) );
         #endif
       } else if (myMem == memHost) {
         std::fill( arr.data(), arr.data()+arr.totElems(), val );

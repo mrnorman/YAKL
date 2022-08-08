@@ -70,16 +70,25 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   // If the functor is small enough, then launch it like normal
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    if constexpr (sizeof(F) <= 4000) {
-      cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , f , config );
+    auto stream = config.get_stream();
+    if constexpr (sizeof(F) <= 0) {
+      cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , stream.get_real_stream() >>> ( bounds , f , config );
       check_last_error();
     } else {
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
+      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice,stream.get_real_stream());
       check_last_error();
-      cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , *fp , config );
+      cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , stream.get_real_stream() >>> ( bounds , *fp , config );
       check_last_error();
-      free_device( fp , "functor_buffer" );
+      #ifdef YAKL_ENABLE_STREAMS
+        if (use_pool() && device_allocators_are_default) {
+          pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
+        } else          {
+          free_device( fp , "functor_buffer" );
+        }
+      #else
+        free_device( fp , "functor_buffer" );
+      #endif
       check_last_error();
     }
   }
@@ -100,16 +109,25 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    if constexpr (sizeof(F) <= 4000) {
-      cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , f , config , InnerHandler() );
+    auto stream = config.get_stream();
+    if constexpr (sizeof(F) <= 0) {
+      cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size , 0 , stream.get_real_stream() >>> ( bounds , f , config , InnerHandler() );
       check_last_error();
     } else {
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
+      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice,stream.get_real_stream());
       check_last_error();
-      cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , *fp , config , InnerHandler() );
+      cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size , 0 , stream.get_real_stream() >>> ( bounds , *fp , config , InnerHandler() );
       check_last_error();
-      free_device( fp , "functor_buffer" );
+      #ifdef YAKL_ENABLE_STREAMS
+        if (use_pool() && device_allocators_are_default) {
+          pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
+        } else {
+          free_device( fp , "functor_buffer" );
+        }
+      #else
+        free_device( fp , "functor_buffer" );
+      #endif
       check_last_error();
     }
   }
@@ -157,8 +175,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_for_hip( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    hipLaunchKernelGGL( hipKernel , dim3((bounds.nIter-1)/VecLen+1) , dim3(VecLen) ,
-                        (std::uint32_t) 0 , (hipStream_t) 0 , bounds , f , config );
+    hipKernel <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , config.get_stream().get_real_stream() >>> ( bounds , f , config );
     check_last_error();
   }
 
@@ -171,8 +188,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_outer_hip( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    hipLaunchKernelGGL( hipOuterKernel , dim3(bounds.nIter) , dim3(config.inner_size) ,
-                        (std::uint32_t) 0 , (hipStream_t) 0 , bounds , f , config , InnerHandler() );
+    hipOuterKernel <<< (unsigned int) bounds.nIter , config.inner_size , 0 , config.get_stream().get_real_stream() >>> ( bounds , *fp , config , InnerHandler() );
     check_last_error();
   }
 

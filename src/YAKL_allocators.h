@@ -17,6 +17,8 @@ namespace yakl {
   extern std::function<void ( void * , char const *)>  free_host_func;
   extern std::function<void ( void * , char const *)>  free_device_func; 
 
+  extern bool device_allocators_are_default;
+
   /**
    * @brief If true, then the pool allocator is being used for all device allocations
    */
@@ -211,6 +213,8 @@ namespace yakl {
       #endif
       free(ptr);
     };
+
+    device_allocators_are_default = true;
   }
 
 
@@ -232,6 +236,7 @@ namespace yakl {
    */
   inline void set_device_allocator  ( std::function<void *(size_t)> func ) {
     fence();   alloc_device_func = [=] (size_t bytes , char const *label) -> void * { return func(bytes); };
+    device_allocators_are_default = false;
   }
 
 
@@ -250,6 +255,7 @@ namespace yakl {
    */
   inline void set_device_deallocator( std::function<void (void *)>  func ) {
     fence();   free_device_func  = [=] (void *ptr , char const *label) { func(ptr); };
+    device_allocators_are_default = false;
   }
 
 

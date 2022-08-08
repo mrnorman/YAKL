@@ -6,7 +6,7 @@ namespace yakl {
   namespace intrinsics {
 
     template <class T, int myMem, int myStyle>
-    inline Array<T,2,myMem,myStyle> transpose(Array<T,2,myMem,myStyle> const &in) {
+    inline Array<T,2,myMem,myStyle> transpose(Array<T,2,myMem,myStyle> const &in, Stream stream = Stream() ) {
       #ifdef YAKL_DEBUG
         if (!allocated(in)) yakl_throw("ERROR: Calling transpose on unallocated array");
       #endif
@@ -22,10 +22,11 @@ namespace yakl {
           }
           return out;
         } else {
-          auto out = in.createDeviceCopy().template reshape<2>( { d1 , d0 } );
+          auto out = in.createDeviceCopy(stream).template reshape<2>( { d1 , d0 } );
           c::parallel_for( "YAKL_internal_transpose" , c::Bounds<2>(d0,d1) , YAKL_LAMBDA (int i, int j) {
             out(j,i) = in(i,j);
-          });
+          } , DefaultLaunchConfig().set_stream(stream) );
+          out.add_stream_dependency(stream);
           return out;
         }
       } else {
@@ -42,10 +43,11 @@ namespace yakl {
           }
           return out;
         } else {
-          auto out = in.createDeviceCopy().template reshape<2>( { {l2,u2} , {l1,u1} } );
+          auto out = in.createDeviceCopy(stream).template reshape<2>( { {l2,u2} , {l1,u1} } );
           fortran::parallel_for( "YAKL_internal_transpose" , fortran::Bounds<2>({l1,u1},{l2,u2}) , YAKL_LAMBDA (int i, int j) {
             out(j,i) = in(i,j);
-          });
+          } , DefaultLaunchConfig().set_stream(stream) );
+          out.add_stream_dependency(stream);
           return out;
         }
       }

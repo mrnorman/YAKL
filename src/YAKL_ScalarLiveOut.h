@@ -45,9 +45,9 @@ namespace yakl {
       data = Array<T,1,memDevice,styleC>("ScalarLiveOut_data",1);  // Create array
     }
     /** @brief [ASYNCHRONOUS] This constructor allocates room on the device for one scalar of type `T` and initializes it on device with the provided value. */
-    explicit ScalarLiveOut(T val) {
+    explicit ScalarLiveOut(T val, Stream stream = Stream() ) {
       data = Array<T,1,memDevice,styleC>("ScalarLiveOut_data",1);  // Create array
-      hostWrite(val);                                // Copy to device
+      hostWrite(val,stream);                                // Copy to device
     }
     /** @brief Deallocates the scalar value on the device. */
     YAKL_INLINE ~ScalarLiveOut() {
@@ -78,17 +78,17 @@ namespace yakl {
     }
 
     /** @brief Returns a host copy of the data. This is blocking. */
-    inline T hostRead() const {
-      return data.createHostCopy()(0);
+    inline T hostRead(Stream stream = Stream()) const {
+      return data.createHostCopy(stream)(0);
     }
 
     /** @brief [ASYNCHRONOUS] Writes a value to the device-resident underlying data */
-    inline void hostWrite(T val) {
+    inline void hostWrite(T val, Stream stream = Stream()) {
       // Copy data to device
       auto &myData = this->data;
       c::parallel_for( c::Bounds<1>(1) , YAKL_LAMBDA (int dummy) {
         myData(0) = val;
-      });
+      } , DefaultLaunchConfig().set_stream(stream) );
     }
 
   };

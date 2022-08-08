@@ -18,12 +18,12 @@ namespace yakl {
     }
 
     template <class T, int rank, int myStyle>
-    inline T minval( Array<T,rank,memDevice,myStyle> const &arr ) {
+    inline T minval( Array<T,rank,memDevice,myStyle> const &arr , Stream stream = Stream() ) {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling minval on an array that has not been initialized"); }
       #endif
       typedef typename std::remove_cv<T>::type TNC; // T Non-Const
-      ParallelMin<TNC,memDevice> pmin(arr.totElems());
+      ParallelMin<TNC,memDevice> pmin(arr.totElems(),stream);
       return pmin( const_cast<TNC *>(arr.data()) );
     }
 
