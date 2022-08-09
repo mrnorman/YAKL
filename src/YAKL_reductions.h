@@ -129,7 +129,8 @@ namespace yakl {
         #endif
         memcpy_device_to_host(&rslt , rsltP , 1 , stream);
         check_last_error();
-        stream.fence();
+        if (stream.is_default_stream()) { fence(); }
+        else                            { stream.fence(); }
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_apply");
         #endif
@@ -215,7 +216,8 @@ namespace yakl {
         #endif
         memcpy_device_to_host(&rslt , rsltP , 1 , stream);
         check_last_error();
-        stream.fence();
+        if (stream.is_default_stream()) { fence(); }
+        else                            { stream.fence(); }
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_apply");
         #endif

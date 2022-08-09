@@ -886,7 +886,9 @@ namespace yakl {
       auto ret = createHostObject();
       this->copy_inform(ret);
       if (myMem == memHost) { memcpy_host_to_host  ( ret.myData , this->myData , this->totElems()          ); }
-      else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() , stream ); stream.fence(); }
+      else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() , stream ); }
+      if (stream.is_default_stream()) { fence(); }
+      else                            { stream.fence(); }
       return Array<TLOC,rank,memHost,styleC>(ret);
     }
 
@@ -938,7 +940,8 @@ namespace yakl {
       this->copy_inform(ret);
       if (myMem == memHost) { memcpy_host_to_device  ( ret.myData , this->myData , this->totElems() , stream ); }
       else                  { memcpy_device_to_device( ret.myData , this->myData , this->totElems() , stream ); }
-      stream.fence();
+      if (stream.is_default_stream()) { fence(); }
+      else                            { stream.fence(); }
       return Array<TLOC,rank,memDevice,styleC>(ret);
     }
 

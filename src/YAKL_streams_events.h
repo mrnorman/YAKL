@@ -307,29 +307,153 @@ namespace yakl {
 
   #elif defined(YAKL_ARCH_SYCL)
 
-    struct Stream;
-    struct Event;
+    class Stream;
+    class Event;
 
-    struct Stream {
-      void create() { }
-      void destroy() { }
-      bool operator==(Stream stream) const { return true; }
+    class Stream {
+      protected:
+      sycl::queue my_stream;
+      int *       refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
+
+      void nullify() { my_stream = sycl_default_stream(); refCount = nullptr; }
+
+      public:
+
+      Stream() { nullify(); }
+      Stream(sycl::queue sycl_queue) { nullify(); my_stream = sycl_queue; }
+      ~Stream() { destroy(); }
+
+      Stream(Stream const  &rhs) {
+        my_stream = rhs.my_stream;
+        refCount  = rhs.refCount;
+        if (refCount != nullptr) (*refCount)++;
+      }
+      Stream(Stream &&rhs) {
+        my_stream = rhs.my_stream;
+        refCount  = rhs.refCount;
+        rhs.nullify();
+      }
+      Stream & operator=(Stream const  &rhs) {
+        if (this != &rhs) {
+          destroy();
+          my_stream = rhs.my_stream;
+          refCount  = rhs.refCount;
+          if (refCount != nullptr) (*refCount)++;
+        }
+        return *this;
+      }
+      Stream & operator=(Stream &&rhs) {
+        if (this != &rhs) {
+          destroy();
+          my_stream = rhs.my_stream;
+          refCount  = rhs.refCount;
+          rhs.nullify();
+        }
+        return *this;
+      }
+
+      void create() {
+        if (refCount == nullptr) {
+          refCount = new int;
+          (*refCount) = 1;
+          if constexpr (streams_enabled) {
+            sycl::device dev(sycl::gpu_selector{});
+            my_stream = sycl::queue( dev , asyncHandler , sycl::property_list{sycl::property::queue::in_order{}} );
+          }
+        }
+      }
+
+      void destroy() {
+        if (refCount != nullptr) {
+          (*refCount)--;
+          if ( (*refCount) == 0 ) {
+            if constexpr (streams_enabled) my_stream = sycl::queue();
+            delete refCount;
+            nullify();
+          }
+        }
+      }
+
+      sycl::queue get_real_stream() { return my_stream; }
+      bool operator==(Stream stream) const { return my_stream == stream.get_real_stream(); }
       inline void wait_on_event(Event event);
-      bool is_default_stream() { return true; }
-      void fence() { }
+      bool is_default_stream() { return my_stream == sycl_default_stream(); }
+      void fence() { my_stream.wait(); }
     };
 
-    struct Event {
-      void create() { }
-      void destroy() { }
+
+    class Event {
+      protected:
+      sycl::event my_event;
+      int *       refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
+
+      void nullify() { refCount = nullptr; }
+
+      public:
+
+      Event() { nullify(); }
+      ~Event() { destroy(); }
+
+      Event(Event const  &rhs) {
+        my_event = rhs.my_event;
+        refCount = rhs.refCount;
+        if (refCount != nullptr) (*refCount)++;
+      }
+      Event(Event &&rhs) {
+        my_event = rhs.my_event;
+        refCount = rhs.refCount;
+        rhs.nullify();
+      }
+      Event & operator=(Event const  &rhs) {
+        if (this != &rhs) {
+          destroy();
+          my_event = rhs.my_event;
+          refCount = rhs.refCount;
+          if (refCount != nullptr) (*refCount)++;
+        }
+        return *this;
+      }
+      Event & operator=(Event &&rhs) {
+        if (this != &rhs) {
+          destroy();
+          my_event = rhs.my_event;
+          refCount = rhs.refCount;
+          rhs.nullify();
+        }
+        return *this;
+      }
+
+      void create() {
+        if (refCount == nullptr) {
+          refCount = new int;
+          (*refCount) = 1;
+        }
+      }
+
+      void destroy() {
+        if (refCount != nullptr) {
+          (*refCount)--;
+          if ( (*refCount) == 0 ) { delete refCount; nullify(); }
+        }
+      }
+
       inline void record(Stream stream);
-      bool operator==(Event event) const { return true; }
-      bool completed() { return true; }
-      void fence() { }
+      sycl::event get_real_event() { return my_event; }
+      bool operator==(Event event) const { return my_event == event.get_real_event(); }
+      bool completed() { return my_event.get_info<sycl::info::event::command_execution_status>() == sycl::info::event_command_status::complete; }
+      void fence() { my_event.wait(); }
     };
 
-    inline void Event::record(Stream stream) { }
-    inline void Stream::wait_on_event(Event event) {  }
+
+    inline void Event::record(Stream stream) {
+      create();
+      my_event = stream.get_real_stream().single_task( [=] () {} );
+    }
+
+
+    inline void Stream::wait_on_event(Event event) {
+      my_stream.single_task( event.get_real_event() , [=] () {} );
+    }
 
   #else
 

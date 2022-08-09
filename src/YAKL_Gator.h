@@ -127,7 +127,10 @@ namespace yakl {
     /** @brief Finalize the pool allocator, deallocate all individual pools.
       */
     void finalize() {
-      fence();
+      // SYCL has a bug here, and I haven't figured out why yet
+      #ifndef YAKL_ARCH_SYCL
+        fence();
+      #endif
       if (! waiting_events.empty()) free_completed_waiting_entries();
       pools = std::list<LinearAllocator>();
     }

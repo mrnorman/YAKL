@@ -47,7 +47,7 @@ if ("${YAKL_ARCH}" STREQUAL "HIP")
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "SYCL")
-  target_link_libraries(yakl "${YAKL_SYCL_FLAGS}")
+  target_link_libraries(yakl "${YAKL_COMPILER_FLAGS}")
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "OPENMP45")
