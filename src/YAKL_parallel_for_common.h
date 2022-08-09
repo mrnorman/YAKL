@@ -188,7 +188,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_outer_hip( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    hipOuterKernel <<< (unsigned int) bounds.nIter , config.inner_size , 0 , config.get_stream().get_real_stream() >>> ( bounds , *fp , config , InnerHandler() );
+    hipOuterKernel <<< (unsigned int) bounds.nIter , config.inner_size , 0 , config.get_stream().get_real_stream() >>> ( bounds , f , config , InnerHandler() );
     check_last_error();
   }
 

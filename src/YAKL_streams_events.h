@@ -172,6 +172,7 @@ namespace yakl {
       public:
 
       Stream() { nullify(); }
+      Stream(hipStream_t hip_stream) { nullify(); my_stream = hip_stream; }
       ~Stream() { destroy(); }
 
       Stream(Stream const  &rhs) {
@@ -207,14 +208,18 @@ namespace yakl {
         if (refCount == nullptr) {
           refCount = new int;
           (*refCount) = 1;
-          hipStreamCreate( &my_stream );
+          if constexpr (streams_enabled) hipStreamCreate( &my_stream );
         }
       }
 
       void destroy() {
         if (refCount != nullptr) {
           (*refCount)--;
-          if ( (*refCount) == 0 ) { hipStreamDestroy( my_stream ); delete refCount; nullify(); }
+          if ( (*refCount) == 0 ) {
+            if constexpr (streams_enabled) hipStreamDestroy( my_stream );
+            delete refCount;
+            nullify();
+          }
         }
       }
 
@@ -297,7 +302,7 @@ namespace yakl {
 
 
     inline void Stream::wait_on_event(Event event) {
-      hipStreamWaitEvent( my_stream , event.get_real_event() );
+      hipStreamWaitEvent( my_stream , event.get_real_event() , 0 );
     }
 
   #elif defined(YAKL_ARCH_SYCL)
