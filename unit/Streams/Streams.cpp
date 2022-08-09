@@ -14,6 +14,10 @@ using yakl::yakl_throw;
 using yakl::intrinsics::sum;
 using yakl::fence;
 
+// If you define the CPP macro YAKL_ENABLE_STREAMS, then streams will be created and used.
+// If you do not define this macro variable, then yakl::create_stream() will return the default stream,
+// and everything will run there with no potential for kernel overlap.
+
 int main() {
   yakl::init();
   {
@@ -53,6 +57,7 @@ int main() {
     } , yakl::DefaultLaunchConfig().set_stream(stream3) );
     
     // Launch a sum intrinsic in stream2 to ensure the wait_on_event call succeeded
+    // All YAKL routines that launch kernels or memory copies will take an optional stream parameter
     auto val1 = static_cast<double>(sum(a,stream2)) / static_cast<double>(n1*n2);
     std::cout << val1 << "\n";
     if ( abs(val1 - 3) >= 1.e-13 ) yakl_throw("ERROR: val1 is wrong");

@@ -24,6 +24,7 @@ namespace yakl {
       public:
 
       Stream() { nullify(); }
+      Stream(cudaStream_t cuda_stream) { nullify(); my_stream = cuda_stream; }
       ~Stream() { destroy(); }
 
       Stream(Stream const  &rhs) {
@@ -59,14 +60,18 @@ namespace yakl {
         if (refCount == nullptr) {
           refCount = new int;
           (*refCount) = 1;
-          cudaStreamCreate( &my_stream );
+          if constexpr (streams_enabled) cudaStreamCreate( &my_stream );
         }
       }
 
       void destroy() {
         if (refCount != nullptr) {
           (*refCount)--;
-          if ( (*refCount) == 0 ) { cudaStreamDestroy( my_stream ); delete refCount; nullify(); }
+          if ( (*refCount) == 0 ) {
+            if constexpr (streams_enabled) cudaStreamDestroy( my_stream );
+            delete refCount;
+            nullify();
+          }
         }
       }
 
