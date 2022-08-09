@@ -136,9 +136,7 @@ namespace yakl {
       * @details `trdim_in` and `transform_size_in` are only needed if you did not call `init()` or you're changing
       * the parameters of the transform (batch size, transform dim, transform size). */
     template <int N> void forward_real( Array<T,N,memDevice,styleC> &arr , int trdim_in = -1 , int transform_size_in = -1 ) {
-        #ifdef YAKL_ENABLE_STREAMS
-          fence();
-        #endif
+      if constexpr (streams_enabled) fence();
       // Test if it's been initialized at all
       if (trdim < 0 || transform_size < 0 || batch_size < 0) {
         if (trdim_in < 0 || transform_size_in < 0) yakl_throw("ERROR: Using forward_real before calling init without "
@@ -218,9 +216,7 @@ namespace yakl {
         auto out = arr.reshape(d0,d1,d2);
         c::parallel_for( c::SimpleBounds<3>(d0,d1,d2) , YAKL_LAMBDA (int i0, int i1, int i2) { out(i0,i1,i2) = copy(i0,i2,i1); });
       }
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
     }
 
 
@@ -228,9 +224,7 @@ namespace yakl {
       * @details `trdim_in` and `transform_size_in` are only needed if you did not call `init()` or you're changing
       * the parameters of the transform (batch size, transform dim, transform size). */
     template <int N> void inverse_real( Array<T,N,memDevice,styleC> &arr , int trdim_in = -1 , int transform_size_in = -1 ) {
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       // Test if it's been initialized at all
       if (trdim < 0 || transform_size < 0 || batch_size < 0) {
         if (trdim_in < 0 || transform_size_in < 0) yakl_throw("ERROR: Using forward_real before calling init without "
@@ -308,9 +302,7 @@ namespace yakl {
       auto out = arr.reshape(d0,d1,d2);
       YAKL_SCOPE( transform_size , this->transform_size );
       c::parallel_for( c::SimpleBounds<3>(d0,d1,d2) , YAKL_LAMBDA (int i0, int i1, int i2) { out(i0,i1,i2) = copy(i0,i2,i1) / transform_size; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
     }
 
   };

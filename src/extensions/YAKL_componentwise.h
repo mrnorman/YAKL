@@ -29,13 +29,9 @@ namespace yakl {
     inline Array<decltype(T1()+T2()),N,memDevice,STYLE>
     add_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()+T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator+" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] + right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -74,13 +70,9 @@ namespace yakl {
     inline Array<decltype(T1()-T2()),N,memDevice,STYLE>
     sub_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()-T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator-" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] - right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -119,13 +111,9 @@ namespace yakl {
     inline Array<decltype(T1()*T2()),N,memDevice,STYLE>
     mult_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()*T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator*" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] * right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -164,13 +152,9 @@ namespace yakl {
     inline Array<decltype(T1()/T2()),N,memDevice,STYLE>
     div_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()/T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator/" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] / right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -209,13 +193,9 @@ namespace yakl {
     inline Array<decltype(T1()>T2()),N,memDevice,STYLE>
     gt_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()>T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator>" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] > right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -254,13 +234,9 @@ namespace yakl {
     inline Array<decltype(T1()<T2()),N,memDevice,STYLE>
     lt_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()<T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator<" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] < right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -299,13 +275,9 @@ namespace yakl {
     inline Array<decltype(T1()>=T2()),N,memDevice,STYLE>
     ge_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()>=T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator>=" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] >= right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -344,13 +316,9 @@ namespace yakl {
     inline Array<decltype(T1()<=T2()),N,memDevice,STYLE>
     le_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()<=T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator<=" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] <= right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -389,13 +357,9 @@ namespace yakl {
     inline Array<decltype(T1()==T2()),N,memDevice,STYLE>
     eq_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()==T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator==" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] == right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -434,13 +398,9 @@ namespace yakl {
     inline Array<decltype(T1()!=T2()),N,memDevice,STYLE>
     ne_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()!=T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator!=" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] != right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -479,13 +439,9 @@ namespace yakl {
     inline Array<decltype(T1()&&T2()),N,memDevice,STYLE>
     and_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()&&T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator&&" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] && right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -524,13 +480,9 @@ namespace yakl {
     inline Array<decltype(T1()||T2()),N,memDevice,STYLE>
     or_array_scalar( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()||T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator||" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] || right; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -574,13 +526,9 @@ namespace yakl {
     inline Array<decltype(T1()+T2()),N,memDevice,STYLE>
     add_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()+T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator+" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left + right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -619,13 +567,9 @@ namespace yakl {
     inline Array<decltype(T1()-T2()),N,memDevice,STYLE>
     sub_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()-T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator-" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left - right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -664,13 +608,9 @@ namespace yakl {
     inline Array<decltype(T1()*T2()),N,memDevice,STYLE>
     mult_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()*T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator*" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left * right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -709,13 +649,9 @@ namespace yakl {
     inline Array<decltype(T1()/T2()),N,memDevice,STYLE>
     div_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()/T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator/" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left / right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -754,13 +690,9 @@ namespace yakl {
     inline Array<decltype(T1()>T2()),N,memDevice,STYLE>
     gt_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()>T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator>" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left > right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -799,13 +731,9 @@ namespace yakl {
     inline Array<decltype(T1()<T2()),N,memDevice,STYLE>
     lt_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()<T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator<" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left < right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -844,13 +772,9 @@ namespace yakl {
     inline Array<decltype(T1()>=T2()),N,memDevice,STYLE>
     ge_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()>=T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator>=" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left >= right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -889,13 +813,9 @@ namespace yakl {
     inline Array<decltype(T1()<=T2()),N,memDevice,STYLE>
     le_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()<=T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator<=" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left <= right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -934,13 +854,9 @@ namespace yakl {
     inline Array<decltype(T1()==T2()),N,memDevice,STYLE>
     eq_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()==T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator==" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left == right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -979,13 +895,9 @@ namespace yakl {
     inline Array<decltype(T1()!=T2()),N,memDevice,STYLE>
     ne_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()!=T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator!=" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left != right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -1024,13 +936,9 @@ namespace yakl {
     inline Array<decltype(T1()&&T2()),N,memDevice,STYLE>
     and_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()&&T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator&&" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left && right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -1069,13 +977,9 @@ namespace yakl {
     inline Array<decltype(T1()||T2()),N,memDevice,STYLE>
     or_scalar_array( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = right.template createDeviceObject<decltype(T1()||T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator||" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left || right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE,
@@ -1118,13 +1022,9 @@ namespace yakl {
     inline Array<decltype(T1()+T2()),N,memDevice,STYLE>
     operator+( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()+T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator+" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] + right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1154,13 +1054,9 @@ namespace yakl {
     inline Array<decltype(T1()-T2()),N,memDevice,STYLE>
     operator-( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()-T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator-" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] - right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1190,13 +1086,9 @@ namespace yakl {
     inline Array<decltype(T1()*T2()),N,memDevice,STYLE>
     operator*( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()*T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator*" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] * right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1226,13 +1118,9 @@ namespace yakl {
     inline Array<decltype(T1()/T2()),N,memDevice,STYLE>
     operator/( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()/T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator/" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] / right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1262,13 +1150,9 @@ namespace yakl {
     inline Array<decltype(T1()>T2()),N,memDevice,STYLE>
     operator>( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()>T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator>" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] > right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1298,13 +1182,9 @@ namespace yakl {
     inline Array<bool,N,memDevice,STYLE>
     lt_array_array( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<bool>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator<" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] < right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, int STYLE>
@@ -1339,13 +1219,9 @@ namespace yakl {
     inline Array<decltype(T1()>=T2()),N,memDevice,STYLE>
     operator>=( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()>=T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator>=" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] >= right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1375,13 +1251,9 @@ namespace yakl {
     inline Array<decltype(T1()<=T2()),N,memDevice,STYLE>
     operator<=( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()<=T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator<=" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] <= right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1411,13 +1283,9 @@ namespace yakl {
     inline Array<decltype(T1()==T2()),N,memDevice,STYLE>
     operator==( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()==T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator==" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] == right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1447,13 +1315,9 @@ namespace yakl {
     inline Array<decltype(T1()!=T2()),N,memDevice,STYLE>
     operator!=( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()!=T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator!=" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] != right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1483,13 +1347,9 @@ namespace yakl {
     inline Array<decltype(T1()&&T2()),N,memDevice,STYLE>
     operator&&( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()&&T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator&&" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] && right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1519,13 +1379,9 @@ namespace yakl {
     inline Array<decltype(T1()||T2()),N,memDevice,STYLE>
     operator||( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       auto ret = left.template createDeviceObject<decltype(T1()||T2())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator||" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i] || right.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1559,13 +1415,9 @@ namespace yakl {
     inline Array<decltype(!T1()),N,memDevice,STYLE>
     operator!( Array<T1,N,memDevice,STYLE> const &left ) {
       auto ret = left.template createDeviceObject<decltype(!T1())>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator!" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = ! left.data()[i]; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1595,13 +1447,9 @@ namespace yakl {
     inline Array<decltype(T1()+1),N,memDevice,STYLE>
     operator++( Array<T1,N,memDevice,STYLE> const &left ) {
       auto ret = left.template createDeviceObject<decltype(T1()+1)>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator++" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i]+1; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1631,13 +1479,9 @@ namespace yakl {
     inline Array<decltype(T1()+1),N,memDevice,STYLE>
     operator++( Array<T1,N,memDevice,STYLE> const &left , int dummy) {
       auto ret = left.template createDeviceObject<decltype(T1()+1)>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator++" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i]+1; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1667,13 +1511,9 @@ namespace yakl {
     inline Array<decltype(T1()-1),N,memDevice,STYLE>
     operator--( Array<T1,N,memDevice,STYLE> const &left ) {
       auto ret = left.template createDeviceObject<decltype(T1()-1)>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator--" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i]-1; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
@@ -1703,13 +1543,9 @@ namespace yakl {
     inline Array<decltype(T1()-1),N,memDevice,STYLE>
     operator--( Array<T1,N,memDevice,STYLE> const &left , int dummy ) {
       auto ret = left.template createDeviceObject<decltype(T1()-1)>();
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       c::parallel_for( "YAKL_internal_array_operator--" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = left.data()[i]-1; });
-      #ifdef YAKL_ENABLE_STREAMS
-        fence();
-      #endif
+      if constexpr (streams_enabled) fence();
       return ret;
     }
     template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>

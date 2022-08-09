@@ -44,29 +44,31 @@ namespace yakl {
     #endif
     #ifdef YAKL_ENABLE_STREAMS
       StreamList stream_dependencies;
-      static bool constexpr streams_enabled = true;
     #else
+      // This only exists to void extra data in the Array classes
       struct StreamListDummy {
         static bool constexpr empty() { return true; }
+        void push_back( Stream stream ) { }
+        int  size() { return 0; }
+        Stream operator[] (int i) { return Stream(); }
       };
       StreamListDummy stream_dependencies;
-      static bool constexpr streams_enabled = false;
     #endif
 
 
     void add_stream_dependency(Stream stream) {
-      #ifdef YAKL_ENABLE_STREAMS
+      if constexpr (streams_enabled) {
         if (use_pool()) stream_dependencies.push_back(stream);
-      #endif
+      }
     }
 
 
     void add_stream_dependencies(std::vector<Stream> streams) {
-      #ifdef YAKL_ENABLE_STREAMS
+      if constexpr (streams_enabled) {
         if (use_pool()) {
           for (int i=0; i < streams.size(); i++) { stream_dependencies.push_back(streams[i]); }
         }
-      #endif
+      }
     }
 
 
@@ -263,13 +265,11 @@ namespace yakl {
           if (this->totElems() > 0) {
             if (myMem == memDevice) {
               if (streams_enabled && use_pool() && device_allocators_are_default && (! stream_dependencies.empty()) ) {
-                #ifdef YAKL_ENABLE_STREAMS
-                  std::vector<Event> event_dependencies;
-                  for (int i=0; i < stream_dependencies.size(); i++) {
-                    event_dependencies.push_back( record_event(stream_dependencies[i]) );
-                  }
-                  pool.free_with_event_dependencies( data , event_dependencies , this->label() );
-                #endif
+                std::vector<Event> event_dependencies;
+                for (int i=0; i < stream_dependencies.size(); i++) {
+                  event_dependencies.push_back( record_event(stream_dependencies[i]) );
+                }
+                pool.free_with_event_dependencies( data , event_dependencies , this->label() );
               } else {
                 free_device(data,this->label());
               }
@@ -302,13 +302,11 @@ namespace yakl {
           if (this->totElems() > 0) {
             if (myMem == memDevice) {
               if (streams_enabled && use_pool() && device_allocators_are_default && (! stream_dependencies.empty()) ) {
-                #ifdef YAKL_ENABLE_STREAMS
-                  std::vector<Event> event_dependencies;
-                  for (int i=0; i < stream_dependencies.size(); i++) {
-                    event_dependencies.push_back( record_event(stream_dependencies[i]) );
-                  }
-                  pool.free_with_event_dependencies( this->myData , event_dependencies , this->label() );
-                #endif
+                std::vector<Event> event_dependencies;
+                for (int i=0; i < stream_dependencies.size(); i++) {
+                  event_dependencies.push_back( record_event(stream_dependencies[i]) );
+                }
+                pool.free_with_event_dependencies( this->myData , event_dependencies , this->label() );
               } else {
                 free_device(this->myData,this->label());
               }

@@ -71,7 +71,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
     auto stream = config.get_stream();
-    if constexpr (sizeof(F) <= 0) {
+    if constexpr (sizeof(F) <= 4000) {
       cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , stream.get_real_stream() >>> ( bounds , f , config );
       check_last_error();
     } else {
@@ -110,7 +110,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
     auto stream = config.get_stream();
-    if constexpr (sizeof(F) <= 0) {
+    if constexpr (sizeof(F) <= 4000) {
       cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size , 0 , stream.get_real_stream() >>> ( bounds , f , config , InnerHandler() );
       check_last_error();
     } else {

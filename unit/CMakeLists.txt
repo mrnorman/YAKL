@@ -33,6 +33,7 @@ add_subdirectory(Intrinsics)
 add_subdirectory(ParForC)
 add_subdirectory(ParForFortran)
 add_subdirectory(performance)
+add_subdirectory(Streams)
 
 if (DEFINED NETCDF_LINK_FLAGS)
   add_subdirectory(NetCDF)

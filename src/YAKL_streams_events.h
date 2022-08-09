@@ -3,6 +3,12 @@
 
 namespace yakl {
 
+  #ifdef YAKL_ENABLE_STREAMS
+    bool constexpr streams_enabled = true;
+  #else
+    bool constexpr streams_enabled = false;
+  #endif
+
   #if   defined(YAKL_ARCH_CUDA)
 
     class Stream;

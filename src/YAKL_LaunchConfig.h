@@ -50,13 +50,14 @@ namespace yakl {
     LaunchConfig() { inner_size = VL; }
     ~LaunchConfig() { inner_size = VL; }
     /** @brief LaunchConfig objects may be copied or moved. */
-    LaunchConfig            (LaunchConfig const &rhs) { this->inner_size = rhs.inner_size; }
+    LaunchConfig            (LaunchConfig const &rhs) { copyfrom(rhs); }
     /** @brief LaunchConfig objects may be copied or moved. */
-    LaunchConfig            (LaunchConfig      &&rhs) { this->inner_size = rhs.inner_size; }
+    LaunchConfig            (LaunchConfig      &&rhs) { copyfrom(rhs); }
     /** @brief LaunchConfig objects may be copied or moved. */
-    LaunchConfig & operator=(LaunchConfig const &rhs) { this->inner_size = rhs.inner_size; return *this; }
+    LaunchConfig & operator=(LaunchConfig const &rhs) { copyfrom(rhs); return *this; }
     /** @brief LaunchConfig objects may be copied or moved. */
-    LaunchConfig & operator=(LaunchConfig      &&rhs) { this->inner_size = rhs.inner_size; return *this; }
+    LaunchConfig & operator=(LaunchConfig      &&rhs) { copyfrom(rhs); return *this; }
+    void copyfrom(LaunchConfig const &rhs) { this->inner_size = rhs.inner_size; this->stream = rhs.stream; }
     /** @brief This sets the **actual** inner looping size whereas the template parameter `VL` sets the maximum
      *         inner looping size. */
     LaunchConfig set_inner_size(int num) { this->inner_size = num; return *this; }
