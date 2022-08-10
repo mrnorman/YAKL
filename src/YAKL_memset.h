@@ -25,7 +25,7 @@ namespace yakl {
       #elif defined(YAKL_ARCH_HIP)
         hipMemsetAsync ( arr.data() , 0 , sizeof(T)*arr.totElems() , stream.get_real_stream() );
       #elif defined(YAKL_ARCH_SYCL)
-        sycl_default_stream().memset( arr.data() , 0 , sizeof(T)*arr.totElems() );
+        stream.get_real_stream().memset( arr.data() , 0 , sizeof(T)*arr.totElems() );
       #else
         c::parallel_for( "YAKL_internal_memset" , arr.totElems() , YAKL_LAMBDA (int i) {
           arr.data()[i] = 0;
@@ -35,7 +35,7 @@ namespace yakl {
       // SYCL has a fill routine, but CUDA and HIP do not
       if (myMem == memDevice) {
         #if   defined(YAKL_ARCH_SYCL)
-          sycl_default_stream().fill<T>( arr.data() , val , arr.totElems() );
+          stream.get_real_stream().fill<T>( arr.data() , val , arr.totElems() );
         #else
           c::parallel_for( "YAKL_internal_memset" , arr.totElems() , YAKL_LAMBDA (int i) {
             arr.data()[i] = val;

@@ -58,7 +58,7 @@ namespace yakl {
       hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyDeviceToHost,stream.get_real_stream());
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
-      sycl_default_stream().memcpy(dst, src, elems*sizeof(T1));
+      stream.get_real_stream().memcpy(dst, src, elems*sizeof(T1));
       check_last_error();
     #elif defined(YAKL_ARCH_OPENMP)
       #pragma omp parallel for
@@ -92,7 +92,7 @@ namespace yakl {
       hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyHostToDevice,stream.get_real_stream());
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
-      sycl_default_stream().memcpy(dst, src, elems*sizeof(T1));
+      stream.get_real_stream().memcpy(dst, src, elems*sizeof(T1));
       check_last_error();
     #elif defined(YAKL_ARCH_OPENMP)
       #pragma omp parallel for
@@ -126,7 +126,7 @@ namespace yakl {
       hipMemcpyAsync(dst,src,elems*sizeof(T1),hipMemcpyDeviceToDevice,stream.get_real_stream());
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
-      sycl_default_stream().memcpy(dst, src, elems*sizeof(T1));
+      stream.get_real_stream().memcpy(dst, src, elems*sizeof(T1));
       check_last_error();
     #elif defined(YAKL_ARCH_OPENMP)
       #pragma omp parallel for
@@ -157,7 +157,7 @@ namespace yakl {
       hipMemcpyAsync(dst,src,bytes,hipMemcpyDeviceToDevice,stream.get_real_stream());
       check_last_error();
     #elif defined (YAKL_ARCH_SYCL)
-      sycl_default_stream().memcpy(dst, src, bytes);
+      stream.get_real_stream().memcpy(dst, src, bytes);
       check_last_error();
     #else
       memcpy( dst , src , bytes );
