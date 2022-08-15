@@ -54,7 +54,11 @@ namespace yakl {
     yakl_throw("ERROR: attempting memory free before calling yakl::init()");
   };
 
+  /** @private */
   bool device_allocators_are_default  = false;
+
+  /** @private */
+  bool pool_enabled                   = false;
 }
 
 

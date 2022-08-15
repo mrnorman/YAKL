@@ -46,7 +46,19 @@ int main() {
 
   }
   yakl::finalize();
-  
-  return 0;
+
+  yakl::init( yakl::InitConfig().set_pool_enabled(false) );
+  {
+    std::cout << "Pool not enabled here" << std::endl;
+  }
+  yakl::finalize();
+
+  yakl::init( yakl::InitConfig().set_pool_enabled(true).set_pool_initial_mb(17).set_pool_grow_mb(10) );
+  {
+    real1d large1("large1",17*1024*1024/4);
+    real1d small1("large1",1*1024/4);
+    // real1d large2("large2",11*1024*1024/4); // This will cause an error
+  }
+  yakl::finalize();
 }
 

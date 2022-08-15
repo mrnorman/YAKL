@@ -63,6 +63,7 @@ namespace yakl {
       };
 
       device_allocators_are_default = false;
+      pool_enabled = false;
 
     } else {
 

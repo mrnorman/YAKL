@@ -185,10 +185,10 @@ namespace yakl {
                       << "to pass in a negative value for the size, or the size got corrupted somehow. \nNOTE: If you compiled "
                       << "for the wrong GPU artchitecture, it sometimes shows up here as well. \nIf the size of the variable "
                       << "is realistic, then you should increase the initial pool size and probably the grow size as "
-                      << "well. \nWhen individual variables consume sizable percentages of a pool, memory gets segmented, and "
+                      << "well. \nWhen individual variables consume sizable percentages of a pool, memory gets fragmented, and "
                       << "the pool space isn't used efficiently. \nLarger pools will improve that. "
                       << "\nIn the extreme, you could create "
-                      << "an initial pool that consumes most of the avialable memory. \nIf that still doesn't work, then "
+                      << "an initial pool that consumes most of the avialable device memory. \nIf that still doesn't work, then "
                       << "it sounds like you're choosing a problem size that's too large for the number of compute "
                       << "nodes you're using.\n";
             std::cerr << error_message_cannot_grow << std::endl;

@@ -49,7 +49,17 @@ namespace yakl {
                      std::string                           error_message_out_of_memory = "" ) {
       nullify();
 
-      verbose_inform(std::string("Creating pool of ")+std::to_string(bytes/1024/1024/1024)+" GB" , pool_name);
+      #ifdef YAKL_VERBOSE
+        if (bytes >= 1024*1024*1024) {
+          verbose_inform(std::string("Creating pool of ")+std::to_string(bytes/1024./1024./1024.)+" GB" , pool_name);
+        } else if (bytes >= 1024*1024) {
+          verbose_inform(std::string("Creating pool of ")+std::to_string(bytes/1024./1024.      )+" MB" , pool_name);
+        } else if (bytes >= 1024) {
+          verbose_inform(std::string("Creating pool of ")+std::to_string(bytes/1024.            )+" KB" , pool_name);
+        } else {
+          verbose_inform(std::string("Creating pool of ")+std::to_string(bytes                  )+" B"  , pool_name);
+        }
+      #endif
       if (blockSize%sizeof(size_t) != 0) {
         std::cerr << "ERROR: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
         die("Error: LinearAllocator blockSize must be a multiple of sizeof(size_t)");

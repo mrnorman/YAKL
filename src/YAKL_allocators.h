@@ -18,20 +18,12 @@ namespace yakl {
   extern std::function<void ( void * , char const *)>  free_device_func; 
 
   extern bool device_allocators_are_default;
+  extern bool pool_enabled;
 
   /**
    * @brief If true, then the pool allocator is being used for all device allocations
    */
-  inline bool use_pool() {
-    char * env = std::getenv("GATOR_DISABLE");
-    if ( env != nullptr ) {
-      std::string resp(env);
-      if (resp == "yes" || resp == "YES" || resp == "1" || resp == "true" || resp == "TRUE" || resp == "T") {
-        return false;
-      }
-    }
-    return true;
-  }
+  inline bool use_pool() { return pool_enabled; }
 
 
   // Set the allocation and deallocation functions for YAKL
