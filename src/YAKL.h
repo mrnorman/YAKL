@@ -30,7 +30,6 @@ namespace yakl {
 #include "YAKL_LaunchConfig.h"
 #include "YAKL_fence.h"
 #include "YAKL_error.h"
-#include "YAKL_simd.h"
 #include "YAKL_Gator.h"
 #include "YAKL_allocators.h"
 #include "YAKL_timers.h"
@@ -45,9 +44,12 @@ namespace yakl {
 #include "YAKL_random.h"
 #include "YAKL_Array.h"
 #include "YAKL_ScalarLiveOut.h"
+#include "YAKL_memset.h"
+#include "extensions/YAKL_simd.h"
 #include "extensions/YAKL_componentwise.h"
 #include "extensions/YAKL_intrinsics.h"
-#include "YAKL_memset.h"
+#include "extensions/YAKL_tridiagonal.h"
+#include "extensions/YAKL_pentadiagonal.h"
 
 
 /** @mainpage Yet Another Kernel Launcher (YAKL) API Documentation
