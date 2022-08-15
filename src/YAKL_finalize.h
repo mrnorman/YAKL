@@ -28,18 +28,6 @@ namespace yakl {
       // Free the pools
       pool.finalize();
 
-      // Free functorBuffer
-      #ifdef YAKL_ARCH_CUDA
-        cudaFree(functorBuffer);
-        check_last_error();
-      #endif
-      #if defined(YAKL_ARCH_SYCL)
-        sycl::free(functorBuffer, sycl_default_stream());
-        check_last_error();
-      #endif
-
-      functorBuffer = nullptr;
-
       yakl_is_initialized = false;
 
       // Finalize the timers
@@ -73,6 +61,8 @@ namespace yakl {
       free_host_func  = [] ( void *ptr    , char const *label )          {
         yakl_throw("ERROR: attempting memory free before calling yakl::init()");
       };
+
+      device_allocators_are_default = false;
 
     } else {
 

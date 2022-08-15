@@ -5,7 +5,6 @@
 namespace yakl {
   namespace intrinsics {
 
-
     template <class T, int rank, int myStyle>
     inline T product( Array<T,rank,memHost,myStyle> const &arr ) {
       #ifdef YAKL_DEBUG
@@ -17,12 +16,12 @@ namespace yakl {
     }
 
     template <class T, int rank, int myStyle>
-    inline T product( Array<T,rank,memDevice,myStyle> const &arr ) {
+    inline T product( Array<T,rank,memDevice,myStyle> const &arr , Stream stream = Stream() ) {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling product on an array that has not been initialized"); }
       #endif
       typedef typename std::remove_cv<T>::type TNC;  // T Non-Const
-      ParallelProd<TNC,memDevice> pprod(arr.totElems());
+      ParallelProd<TNC,memDevice> pprod(arr.totElems(),stream);
       return pprod( const_cast<TNC *>(arr.data()) );
     }
 

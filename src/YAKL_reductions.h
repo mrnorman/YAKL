@@ -60,11 +60,12 @@ namespace yakl {
       size_t nTmp;   // Size of temporary storage
       int    nItems; // Number of items in the array that will be reduced
       T      *rsltP; // Device pointer for reduction result
+      Stream stream;
       public:
       ParallelReduction() { tmp = NULL; }
-      ParallelReduction(int const nItems) { tmp = NULL; setup(nItems); }
+      ParallelReduction(int const nItems, Stream stream = Stream()) { tmp = NULL; setup(nItems,stream); }
       ~ParallelReduction() { finalize(); }
-      void setup(int const nItems) {
+      void setup(int const nItems, Stream stream = Stream()) {
         #ifdef YAKL_AUTO_PROFILE
           timer_start("YAKL_internal_reduction_setup");
         #endif
@@ -91,6 +92,7 @@ namespace yakl {
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_setup");
         #endif
+        this->stream = stream;
       }
       void finalize() {
         if (tmp != NULL) {
@@ -114,20 +116,21 @@ namespace yakl {
           verbose_inform("Launching device reduction");
         #endif
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
-          hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+          hipcub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , stream.get_real_stream() ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_MAX) {
-          hipcub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+          hipcub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , stream.get_real_stream() ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_SUM) {
-          hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+          hipcub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , stream.get_real_stream() ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
-          hipcub::DeviceReduce::Reduce(tmp, nTmp, data, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, 0 );
+          hipcub::DeviceReduce::Reduce(tmp, nTmp, data, rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, stream.get_real_stream() );
         }
         #ifdef YAKL_VERBOSE
           verbose_inform("Initiating device to host memcpy of reduction scalar value of size "+std::to_string(sizeof(T))+std::string(" bytes"));
         #endif
-        memcpy_device_to_host(&rslt , rsltP , 1 );
+        memcpy_device_to_host(&rslt , rsltP , 1 , stream);
         check_last_error();
-        fence();
+        if (stream.is_default_stream()) { fence(); }
+        else                            { stream.fence(); }
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_apply");
         #endif
@@ -144,11 +147,12 @@ namespace yakl {
       size_t nTmp;   // Size of temporary storage
       int    nItems; // Number of items in the array that will be reduced
       T      *rsltP; // Device pointer for reduction result
+      Stream stream;
       public:
       ParallelReduction() { tmp = NULL; }
-      ParallelReduction(int const nItems) { tmp = NULL; setup(nItems); }
+      ParallelReduction(int const nItems, Stream stream = Stream()) { tmp = NULL; setup(nItems,stream); }
       ~ParallelReduction() { finalize(); }
-      void setup(int const nItems) {
+      void setup(int const nItems, Stream stream = Stream()) {
         #ifdef YAKL_AUTO_PROFILE
           timer_start("YAKL_internal_reduction_setup");
         #endif
@@ -175,6 +179,7 @@ namespace yakl {
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_setup");
         #endif
+        this->stream = stream;
       }
       void finalize() {
         if (tmp != NULL) {
@@ -198,20 +203,21 @@ namespace yakl {
           verbose_inform("Launching device reduction");
         #endif
         if constexpr        (RED == YAKL_REDUCTION_MIN) {
-          cub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+          cub::DeviceReduce::Min(tmp, nTmp, data , rsltP , nItems , stream.get_real_stream() ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_MAX) {
-          cub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+          cub::DeviceReduce::Max(tmp, nTmp, data , rsltP , nItems , stream.get_real_stream() ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_SUM) {
-          cub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , 0 ); // Compute the reduction
+          cub::DeviceReduce::Sum(tmp, nTmp, data , rsltP , nItems , stream.get_real_stream() ); // Compute the reduction
         } else if constexpr (RED == YAKL_REDUCTION_PROD) {
-          cub::DeviceReduce::Reduce(tmp, nTmp, data ,rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, 0 );
+          cub::DeviceReduce::Reduce(tmp, nTmp, data ,rsltP, nItems, YAKL_LAMBDA (T a,T b)->T {return a*b;} , (T) 1, stream.get_real_stream() );
         }
         #ifdef YAKL_VERBOSE
           verbose_inform("Initiating device to host memcpy of reduction scalar value of size "+std::to_string(sizeof(T))+std::string(" bytes"));
         #endif
-        memcpy_device_to_host(&rslt , rsltP , 1 );
+        memcpy_device_to_host(&rslt , rsltP , 1 , stream);
         check_last_error();
-        fence();
+        if (stream.is_default_stream()) { fence(); }
+        else                            { stream.fence(); }
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_apply");
         #endif
@@ -227,9 +233,9 @@ namespace yakl {
       T      *rsltP; // Device pointer for reduction result
       public:
       ParallelReduction() { rsltP = nullptr; }
-      ParallelReduction(int const nItems) { rsltP = nullptr; setup(nItems); }
+      ParallelReduction(int const nItems, Stream stream = Stream()) { rsltP = nullptr; setup(nItems); }
       ~ParallelReduction() { finalize(); }
-      void setup(int const nItems) {
+      void setup(int const nItems, Stream stream = Stream()) {
         #ifdef YAKL_AUTO_PROFILE
           timer_start("YAKL_internal_reduction_setup");
         #endif
@@ -305,9 +311,9 @@ namespace yakl {
       int  nItems; // Number of items in the array that will be reduced
       public:
       ParallelReduction() {}
-      ParallelReduction(int const nItems) { this->nItems = nItems; }
+      ParallelReduction(int const nItems, Stream stream = Stream()) { this->nItems = nItems; }
       ~ParallelReduction() {}
-      void setup(int nItems) { this->nItems = nItems; }
+      void setup(int nItems, Stream stream = Stream()) { this->nItems = nItems; }
       T operator() (T *data) {
         #ifdef YAKL_AUTO_PROFILE
           timer_start("YAKL_internal_reduction_apply");
@@ -344,9 +350,9 @@ namespace yakl {
       int  nItems; // Number of items in the array that will be reduced
       public:
       ParallelReduction() {}
-      ParallelReduction(int const nItems) { this->nItems = nItems; }
+      ParallelReduction(int const nItems, Stream stream = Stream()) { this->nItems = nItems; }
       ~ParallelReduction() {}
-      void setup(int nItems) { this->nItems = nItems; }
+      void setup(int nItems, Stream stream = Stream()) { this->nItems = nItems; }
       T operator() (T *data) {
         T rslt = data[0];
         #ifdef YAKL_VERBOSE

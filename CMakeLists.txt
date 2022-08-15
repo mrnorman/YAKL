@@ -36,6 +36,7 @@ set_property(TARGET yakl PROPERTY CXX_STANDARD 17)
 
 target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/extensions)
+target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/external)
 
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
@@ -47,7 +48,7 @@ if ("${YAKL_ARCH}" STREQUAL "HIP")
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "SYCL")
-  target_link_libraries(yakl "${YAKL_SYCL_FLAGS}")
+  target_link_libraries(yakl "${YAKL_COMPILER_FLAGS}")
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "OPENMP45")

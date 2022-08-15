@@ -14,9 +14,6 @@ namespace yakl {
   Gator pool;  // Pool allocator (manages multiple pools). Constructor does not allocate or depend on init order
 
   /** @private */
-  void * functorBuffer = nullptr;  // To hold functors in device memory for CUDA (only large functors) and SYCL backends
-
-  /** @private */
   bool yakl_is_initialized = false;  // Determine if YAKL has been initialized
 
   /** @private */
@@ -56,6 +53,8 @@ namespace yakl {
   std::function<void ( void * , char const *)>  free_host_func    = [] ( void *ptr    , char const *label )          {
     yakl_throw("ERROR: attempting memory free before calling yakl::init()");
   };
+
+  bool device_allocators_are_default  = false;
 }
 
 

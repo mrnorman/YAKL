@@ -569,8 +569,8 @@ int main() {
 
       auto h_f_t = transpose( h_f );
       auto h_c_t = transpose( h_c );
-      auto d_f_t = transpose( h_f ).createHostCopy();
-      auto d_c_t = transpose( h_c ).createHostCopy();
+      auto d_f_t = transpose( d_f ).createHostCopy();
+      auto d_c_t = transpose( d_c ).createHostCopy();
       if ( size(h_c_t,0) != 4 ) die("ERROR: transpose: size(h_c_t,0) != 4");
       if ( size(h_f_t,1) != 4 ) die("ERROR: transpose: size(h_f_t,1) != 4");
       if ( size(d_c_t,0) != 4 ) die("ERROR: transpose: size(d_c_t,0) != 4");

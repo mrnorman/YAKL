@@ -44,22 +44,29 @@ namespace yakl {
   public:
     /** @private */
     int  inner_size;
+    /** @private */
+    Stream stream;
     /** @brief set_inner_size() defaults to YAKL_DEFAULT_VECTOR_LEN */
-    YAKL_INLINE LaunchConfig() { inner_size = VL; }
-    YAKL_INLINE ~LaunchConfig() { inner_size = VL; }
+    LaunchConfig() { inner_size = VL; }
+    ~LaunchConfig() { inner_size = VL; }
     /** @brief LaunchConfig objects may be copied or moved. */
-    YAKL_INLINE LaunchConfig            (LaunchConfig const &rhs) { this->inner_size = rhs.inner_size; }
+    LaunchConfig            (LaunchConfig const &rhs) { copyfrom(rhs); }
     /** @brief LaunchConfig objects may be copied or moved. */
-    YAKL_INLINE LaunchConfig            (LaunchConfig      &&rhs) { this->inner_size = rhs.inner_size; }
+    LaunchConfig            (LaunchConfig      &&rhs) { copyfrom(rhs); }
     /** @brief LaunchConfig objects may be copied or moved. */
-    YAKL_INLINE LaunchConfig & operator=(LaunchConfig const &rhs) { this->inner_size = rhs.inner_size; return *this; }
+    LaunchConfig & operator=(LaunchConfig const &rhs) { copyfrom(rhs); return *this; }
     /** @brief LaunchConfig objects may be copied or moved. */
-    YAKL_INLINE LaunchConfig & operator=(LaunchConfig      &&rhs) { this->inner_size = rhs.inner_size; return *this; }
-    /**
-     * @brief This sets the **actual** inner looping size whereas the template parameter `VL` sets the maximum
-     *        inner looping size.
-     */
+    LaunchConfig & operator=(LaunchConfig      &&rhs) { copyfrom(rhs); return *this; }
+    void copyfrom(LaunchConfig const &rhs) { this->inner_size = rhs.inner_size; this->stream = rhs.stream; }
+    /** @brief This sets the **actual** inner looping size whereas the template parameter `VL` sets the maximum
+     *         inner looping size. */
     LaunchConfig set_inner_size(int num) { this->inner_size = num; return *this; }
+    /** @brief Get the inner loop size for hierarchical parallelism. */
+    int get_inner_size() const { return this->inner_size; }
+    /** @brief Set the stream in which this launch will run. */
+    LaunchConfig set_stream(Stream stream) { this->stream = stream; return *this; }
+    /** @brief Get the stream in which this launch will run. */
+    Stream get_stream() const { return this->stream; }
   };
 
 

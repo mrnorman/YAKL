@@ -70,14 +70,25 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   // If the functor is small enough, then launch it like normal
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
+    auto stream = config.get_stream();
     if constexpr (sizeof(F) <= 4000) {
-      cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , f , config );
+      cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , stream.get_real_stream() >>> ( bounds , f , config );
       check_last_error();
     } else {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
+      F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
+      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice,stream.get_real_stream());
       check_last_error();
-      cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen >>> ( bounds , *fp , config );
+      cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , stream.get_real_stream() >>> ( bounds , *fp , config );
+      check_last_error();
+      #ifdef YAKL_ENABLE_STREAMS
+        if (use_pool() && device_allocators_are_default) {
+          pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
+        } else          {
+          free_device( fp , "functor_buffer" );
+        }
+      #else
+        free_device( fp , "functor_buffer" );
+      #endif
       check_last_error();
     }
   }
@@ -98,14 +109,25 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
+    auto stream = config.get_stream();
     if constexpr (sizeof(F) <= 4000) {
-      cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , f , config , InnerHandler() );
+      cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size , 0 , stream.get_real_stream() >>> ( bounds , f , config , InnerHandler() );
       check_last_error();
     } else {
-      F *fp = (F *) functorBuffer;
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice);
+      F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
+      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice,stream.get_real_stream());
       check_last_error();
-      cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size >>> ( bounds , *fp , config , InnerHandler() );
+      cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size , 0 , stream.get_real_stream() >>> ( bounds , *fp , config , InnerHandler() );
+      check_last_error();
+      #ifdef YAKL_ENABLE_STREAMS
+        if (use_pool() && device_allocators_are_default) {
+          pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
+        } else {
+          free_device( fp , "functor_buffer" );
+        }
+      #else
+        free_device( fp , "functor_buffer" );
+      #endif
       check_last_error();
     }
   }
@@ -153,8 +175,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_for_hip( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    hipLaunchKernelGGL( hipKernel , dim3((bounds.nIter-1)/VecLen+1) , dim3(VecLen) ,
-                        (std::uint32_t) 0 , (hipStream_t) 0 , bounds , f , config );
+    hipKernel <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , config.get_stream().get_real_stream() >>> ( bounds , f , config );
     check_last_error();
   }
 
@@ -167,8 +188,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_outer_hip( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    hipLaunchKernelGGL( hipOuterKernel , dim3(bounds.nIter) , dim3(config.inner_size) ,
-                        (std::uint32_t) 0 , (hipStream_t) 0 , bounds , f , config , InnerHandler() );
+    hipOuterKernel <<< (unsigned int) bounds.nIter , config.inner_size , 0 , config.get_stream().get_real_stream() >>> ( bounds , f , config , InnerHandler() );
     check_last_error();
   }
 
@@ -207,17 +227,18 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
     if constexpr (sycl::is_device_copyable<F>::value) {
-      sycl_default_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
+      config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
         callFunctor( f , bounds , i );
       });
-      sycl_default_stream().wait();
+      config.get_stream().get_real_stream().wait();
     } else {
-      F *fp = (F *) functorBuffer;
-      auto copyEvent = sycl_default_stream().memcpy(fp, &f, sizeof(F));
-      auto kernelEvent = sycl_default_stream().parallel_for( sycl::range<1>(bounds.nIter) , copyEvent, [=] (sycl::id<1> i) {
+      F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
+      auto copyEvent = config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
+      auto kernelEvent = config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter) , copyEvent, [=] (sycl::id<1> i) {
         callFunctor( *fp , bounds , i );
       });
       kernelEvent.wait();
+      free_device( fp , "functor_buffer" );
     }
 
     check_last_error();
@@ -228,20 +249,21 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_outer_sycl( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
     if constexpr (sycl::is_device_copyable<F>::value) {
-      sycl_default_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
+      config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
                                           [=] (sycl::nd_item<1> item) {
         callFunctorOuter( f , bounds , item.get_group(0) , InnerHandler(item) );
       });
-      sycl_default_stream().wait();
+      config.get_stream().get_real_stream().wait();
     } else {
-      F *fp = (F *) functorBuffer;
-      auto copyEvent = sycl_default_stream().memcpy(fp, &f, sizeof(F));
-      auto kernelEvent = sycl_default_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
+      F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
+      auto copyEvent = config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
+      auto kernelEvent = config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
 					  copyEvent,
                                           [=] (sycl::nd_item<1> item) {
         callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
       });
       kernelEvent.wait();
+      free_device( fp , "functor_buffer" );
     }
 
     check_last_error();

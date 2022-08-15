@@ -26,12 +26,11 @@ namespace yakl {
    * 4. Initialize YAKL's timer calls to defaults.
    * 5. Inspect the optional yakl::InitConfig parameter to override default allocator, deallocator,
    *    and timer calls if requested.
-   * 6. Allocate YAKL's functor buffer for appropriate backends.
-   * 7. Inform the user with device information. THREAD SAFE!
+   * 6. Inform the user with device information. THREAD SAFE!
    * @param config This yakl::InitConfig object allows the user to override YAKL's default allocator, deallocator
    *               and timer calls from the start of the runtime.
    */
-  // Set global std::functions for alloc and free, allocate functorBuffer
+  // Set global std::functions for alloc and free
   inline void init( InitConfig config = InitConfig() ) {
     yakl_mtx.lock();
 
@@ -116,26 +115,22 @@ namespace yakl {
         #endif
       };
 
-      // If the user specified overrides in the InitConfig, apply them here
-      if (config.get_host_allocator    ()) alloc_host_func   = config.get_host_allocator    ();
-      if (config.get_device_allocator  ()) alloc_device_func = config.get_device_allocator  ();
-      if (config.get_host_deallocator  ()) free_host_func    = config.get_host_deallocator  ();
-      if (config.get_device_deallocator()) free_device_func  = config.get_device_deallocator();
-      if (config.get_timer_init        ()) timer_init_func      = config.get_timer_init        ();
-      if (config.get_timer_finalize    ()) timer_finalize_func  = config.get_timer_finalize    ();
-      if (config.get_timer_start       ()) timer_start_func     = config.get_timer_start       ();
-      if (config.get_timer_stop        ()) timer_stop_func      = config.get_timer_stop        ();
+      device_allocators_are_default = true;
 
-      // Allocate functorBuffer
-      #ifdef YAKL_ARCH_CUDA
-        cudaMalloc(&functorBuffer,functorBufSize);
-        fence();
-      #endif
+      // If the user specified overrides in the InitConfig, apply them here
+      if (config.get_host_allocator    ()) { alloc_host_func   = config.get_host_allocator    (); }
+      if (config.get_device_allocator  ()) { alloc_device_func = config.get_device_allocator  (); device_allocators_are_default = false; }
+      if (config.get_host_deallocator  ()) { free_host_func    = config.get_host_deallocator  (); }
+      if (config.get_device_deallocator()) { free_device_func  = config.get_device_deallocator(); device_allocators_are_default = false; }
+      if (config.get_timer_init        ()) timer_init_func      = config.get_timer_init    ();
+      if (config.get_timer_finalize    ()) timer_finalize_func  = config.get_timer_finalize();
+      if (config.get_timer_start       ()) timer_start_func     = config.get_timer_start   ();
+      if (config.get_timer_stop        ()) timer_stop_func      = config.get_timer_stop    ();
+
       #ifdef YAKL_ARCH_SYCL
         if (yakl_mainproc()) std::cout << "Running on "
                                        << sycl_default_stream().get_device().get_info<sycl::info::device::name>()
                                        << "\n";
-        functorBuffer = sycl::malloc_device(functorBufSize, sycl_default_stream());
         fence();
       #endif
 

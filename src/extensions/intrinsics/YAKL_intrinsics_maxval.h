@@ -18,12 +18,12 @@ namespace yakl {
     }
 
     template <class T, int rank, int myStyle>
-    inline T maxval( Array<T,rank,memDevice,myStyle> const &arr ) {
+    inline T maxval( Array<T,rank,memDevice,myStyle> const &arr , Stream stream = Stream() ) {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling maxval on an array that has not been initialized"); }
       #endif
       typedef typename std::remove_cv<T>::type TNC; // T Non-Const
-      ParallelMax<TNC,memDevice> pmax(arr.totElems());
+      ParallelMax<TNC,memDevice> pmax(arr.totElems(),stream);
       return pmax( const_cast<TNC *>(arr.data()) );
     }
 

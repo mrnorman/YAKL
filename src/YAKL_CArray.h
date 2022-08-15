@@ -230,29 +230,25 @@ namespace yakl {
       */
 
     /** @brief 1-D non-owned constructor
-      * \copydetails doxhide_CArray_non_owned_constructors
-      */
+      * \copydetails doxhide_CArray_non_owned_constructors */
     YAKL_INLINE Array(char const *label, T *data, index_t const d1) : Array(label,data,Dims(d1)) {
       static_assert( rank == 1 , "ERROR: Calling constructor with 1 bound on non-rank-1 array" );
     }
     /** @brief 2-D non-owned constructor
-      * \copydetails doxhide_CArray_non_owned_constructors
-      */
+      * \copydetails doxhide_CArray_non_owned_constructors */
     YAKL_INLINE Array(char const *label, T *data, index_t const d1,
                                                   index_t const d2) : Array(label,data,Dims(d1,d2)) {
       static_assert( rank == 2 , "ERROR: Calling constructor with 2 bound on non-rank-2 array" );
     }
     /** @brief 3-D non-owned constructor
-      * \copydetails doxhide_CArray_non_owned_constructors
-      */
+      * \copydetails doxhide_CArray_non_owned_constructors */
     YAKL_INLINE Array(char const *label, T *data, index_t const d1,
                                                   index_t const d2,
                                                   index_t const d3) : Array(label,data,Dims(d1,d2,d3)) {
       static_assert( rank == 3 , "ERROR: Calling constructor with 3 bound on non-rank-3 array" );
     }
     /** @brief 4-D non-owned constructor
-      * \copydetails doxhide_CArray_non_owned_constructors
-      */
+      * \copydetails doxhide_CArray_non_owned_constructors */
     YAKL_INLINE Array(char const *label, T *data, index_t const d1,
                                                   index_t const d2,
                                                   index_t const d3,
@@ -260,8 +256,7 @@ namespace yakl {
       static_assert( rank == 4 , "ERROR: Calling constructor with 4 bound on non-rank-4 array" );
     }
     /** @brief 5-D non-owned constructor
-      * \copydetails doxhide_CArray_non_owned_constructors
-      */
+      * \copydetails doxhide_CArray_non_owned_constructors */
     YAKL_INLINE Array(char const *label, T *data, index_t const d1,
                                                   index_t const d2,
                                                   index_t const d3,
@@ -270,8 +265,7 @@ namespace yakl {
       static_assert( rank == 5 , "ERROR: Calling constructor with 5 bound on non-rank-5 array" );
     }
     /** @brief 6-D non-owned constructor
-      * \copydetails doxhide_CArray_non_owned_constructors
-      */
+      * \copydetails doxhide_CArray_non_owned_constructors */
     YAKL_INLINE Array(char const *label, T *data, index_t const d1,
                                                   index_t const d2,
                                                   index_t const d3,
@@ -281,8 +275,7 @@ namespace yakl {
       static_assert( rank == 6 , "ERROR: Calling constructor with 6 bound on non-rank-6 array" );
     }
     /** @brief 7-D non-owned constructor
-      * \copydetails doxhide_CArray_non_owned_constructors
-      */
+      * \copydetails doxhide_CArray_non_owned_constructors */
     YAKL_INLINE Array(char const *label, T *data, index_t const d1,
                                                   index_t const d2,
                                                   index_t const d3,
@@ -293,8 +286,7 @@ namespace yakl {
       static_assert( rank == 7 , "ERROR: Calling constructor with 7 bound on non-rank-7 array" );
     }
     /** @brief 8-D non-owned constructor
-      * \copydetails doxhide_CArray_non_owned_constructors
-      */
+      * \copydetails doxhide_CArray_non_owned_constructors */
     YAKL_INLINE Array(char const *label, T *data, index_t const d1,
                                                   index_t const d2,
                                                   index_t const d3,
@@ -306,8 +298,7 @@ namespace yakl {
       static_assert( rank == 8 , "ERROR: Calling constructor with 8 bound on non-rank-8 array" );
     }
     /** @brief Generic initializer-list or std::vector based owned constructor
-      * \copydetails doxhide_CArray_non_owned_constructors
-      */
+      * \copydetails doxhide_CArray_non_owned_constructors */
     YAKL_INLINE Array(char const *label, T *data, Dims const dims) {
       static_assert( rank >= 1 && rank <= 8 , "ERROR: Creating Array with a rank < 1 or > 8" );
       nullify();
@@ -622,7 +613,13 @@ namespace yakl {
     void memset_loc(TLOC rhs) {
       if (myMem == memDevice) {
         YAKL_SCOPE( arr , *this );
+        #ifdef YAKL_ENABLE_STREAMS
+          fence();
+        #endif
         c::parallel_for( "YAKL_internal_Array=scalar" , this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
+        #ifdef YAKL_ENABLE_STREAMS
+          fence();
+        #endif
       } else {
         for (int i=0; i < this->totElems(); i++) { this->myData[i] = rhs; }
       }
@@ -885,12 +882,13 @@ namespace yakl {
       *          data copied from this array object.
       */
     template <class TLOC=T>
-    inline Array<TLOC,rank,memHost,styleC> createHostCopy() const {
+    inline Array<TLOC,rank,memHost,styleC> createHostCopy(Stream stream = Stream()) const {
       auto ret = createHostObject();
       this->copy_inform(ret);
-      if (myMem == memHost) { memcpy_host_to_host  ( ret.myData , this->myData , this->totElems() ); }
-      else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() ); }
-      fence();
+      if (myMem == memHost) { memcpy_host_to_host  ( ret.myData , this->myData , this->totElems()          ); }
+      else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() , stream ); }
+      if (stream.is_default_stream()) { fence(); }
+      else                            { stream.fence(); }
       return Array<TLOC,rank,memHost,styleC>(ret);
     }
 
@@ -937,12 +935,13 @@ namespace yakl {
       *          data copied from this array object.
       */
     template <class TLOC=T>
-    inline Array<TLOC,rank,memDevice,styleC> createDeviceCopy() const {
+    inline Array<TLOC,rank,memDevice,styleC> createDeviceCopy(Stream stream = Stream()) const {
       auto ret = createDeviceObject();
       this->copy_inform(ret);
-      if (myMem == memHost) { memcpy_host_to_device  ( ret.myData , this->myData , this->totElems() ); }
-      else                  { memcpy_device_to_device( ret.myData , this->myData , this->totElems() ); }
-      fence();
+      if (myMem == memHost) { memcpy_host_to_device  ( ret.myData , this->myData , this->totElems() , stream ); }
+      else                  { memcpy_device_to_device( ret.myData , this->myData , this->totElems() , stream ); }
+      if (stream.is_default_stream()) { fence(); }
+      else                            { stream.fence(); }
       return Array<TLOC,rank,memDevice,styleC>(ret);
     }
 

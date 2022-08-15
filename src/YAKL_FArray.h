@@ -58,9 +58,11 @@ namespace yakl {
     typedef typename std::remove_cv<T>::type       type;
     /** @brief This is the type `T` exactly as it was defined upon array object creation. */
     typedef          T                             value_type;
-    /** @brief This is the type `T` with `const` added to it (if the original type has `volatile`, then so will this type. */
+    /** @brief This is the type `T` with `const` added to it
+      * @details If the original type has `volatile`, then so will this type. */
     typedef typename std::add_const<type>::type    const_value_type;
-    /** @brief This is the type `T` with `const` removed from it (if the original type has `volatile`, then so will this type. */
+    /** @brief This is the type `T` with `const` removed from it 
+      * @details If the original type has `volatile`, then so will this type. */
     typedef typename std::remove_const<type>::type non_const_value_type;
 
     //* @private */
@@ -620,7 +622,13 @@ namespace yakl {
     void memset_loc(TLOC rhs) {
       if (myMem == memDevice) {
         YAKL_SCOPE( arr , *this );
+        #ifdef YAKL_ENABLE_STREAMS
+          fence();
+        #endif
         c::parallel_for( "YAKL_internal_Array=scalar" , this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
+        #ifdef YAKL_ENABLE_STREAMS
+          fence();
+        #endif
       } else {
         for (int i=0; i < this->totElems(); i++) { this->myData[i] = rhs; }
       }
@@ -885,11 +893,13 @@ namespace yakl {
       *          data copied from this array object.
       */
     template <class TLOC=T>
-    inline Array<TLOC,rank,memHost,styleFortran> createHostCopy() const {
+    inline Array<TLOC,rank,memHost,styleFortran> createHostCopy(Stream stream = Stream()) const {
       auto ret = createHostObject();
-      if (myMem == memHost) { memcpy_host_to_host  ( ret.myData , this->myData , this->totElems() ); }
-      else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() ); }
-      fence();
+      this->copy_inform(ret);
+      if (myMem == memHost) { memcpy_host_to_host  ( ret.myData , this->myData , this->totElems()          ); }
+      else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() , stream ); }
+      if (stream.is_default_stream()) { fence(); }
+      else                            { stream.fence(); }
       return Array<TLOC,rank,memHost,styleFortran>(ret);
     }
 
@@ -936,11 +946,13 @@ namespace yakl {
       *          data copied from this array object.
       */
     template <class TLOC=T>
-    inline Array<TLOC,rank,memDevice,styleFortran> createDeviceCopy() const {
+    inline Array<TLOC,rank,memDevice,styleFortran> createDeviceCopy(Stream stream = Stream()) const {
       auto ret = createDeviceObject();
-      if (myMem == memHost) { memcpy_host_to_device  ( ret.myData , this->myData , this->totElems() ); }
-      else                  { memcpy_device_to_device( ret.myData , this->myData , this->totElems() ); }
-      fence();
+      this->copy_inform(ret);
+      if (myMem == memHost) { memcpy_host_to_device  ( ret.myData , this->myData , this->totElems() , stream ); }
+      else                  { memcpy_device_to_device( ret.myData , this->myData , this->totElems() , stream ); }
+      if (stream.is_default_stream()) { fence(); }
+      else                            { stream.fence(); }
       return Array<TLOC,rank,memDevice,styleFortran>(ret);
     }
 

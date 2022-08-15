@@ -18,11 +18,6 @@ namespace yakl {
   using std::max;
   using std::abs;
 
-  // functorBuffer holds large functors in CUDA and all functors in SYCL
-  /** @private */
-  int constexpr functorBufSize = 1024*128;
-  extern void *functorBuffer;
-
   // Type for indexing. Rarely if ever is size_t going to be needed
   typedef unsigned int index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
@@ -31,10 +26,10 @@ namespace yakl {
 #include "YAKL_mutex.h"
 #include "YAKL_sycldevice.h"
 #include "YAKL_verbose.h"
+#include "YAKL_streams_events.h"
 #include "YAKL_LaunchConfig.h"
 #include "YAKL_fence.h"
 #include "YAKL_error.h"
-#include "YAKL_simd.h"
 #include "YAKL_Gator.h"
 #include "YAKL_allocators.h"
 #include "YAKL_timers.h"
@@ -49,9 +44,12 @@ namespace yakl {
 #include "YAKL_random.h"
 #include "YAKL_Array.h"
 #include "YAKL_ScalarLiveOut.h"
+#include "YAKL_memset.h"
+#include "extensions/YAKL_simd.h"
 #include "extensions/YAKL_componentwise.h"
 #include "extensions/YAKL_intrinsics.h"
-#include "YAKL_memset.h"
+#include "extensions/YAKL_tridiagonal.h"
+#include "extensions/YAKL_pentadiagonal.h"
 
 
 /** @mainpage Yet Another Kernel Launcher (YAKL) API Documentation

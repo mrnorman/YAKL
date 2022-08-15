@@ -16,12 +16,14 @@ namespace yakl {
     }
 
     template <class T, int rank, int myStyle>
-    inline Array<T,rank,memDevice,myStyle> abs( Array<T,rank,memDevice,myStyle> const &arr ) {
+    inline Array<T,rank,memDevice,myStyle> abs( Array<T,rank,memDevice,myStyle> const &arr , Stream stream = Stream() ) {
       #ifdef YAKL_DEBUG
         if (!arr.initialized()) { yakl_throw("ERROR: calling abs on an array that has not been initialized"); }
       #endif
       auto ret = arr.createDeviceObject();
-      c::parallel_for( "YAKL_internal_abs" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = std::abs(arr.data()[i]); });
+      c::parallel_for( "YAKL_internal_abs" , ret.totElems() , YAKL_LAMBDA (int i) { ret.data()[i] = std::abs(arr.data()[i]); },
+                       DefaultLaunchConfig().set_stream(stream) );
+      ret.add_stream_dependency(stream);
       return ret;
     }
 

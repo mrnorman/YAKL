@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include "YAKL.h"
 using yakl::SArray;
 
