@@ -35,7 +35,7 @@ namespace yakl {
           if (bytes == 0) return nullptr;
           void *ptr;
           cudaMallocManaged(&ptr,bytes);      // Allocate managed memory
-          check_last_error();
+          if (ptr == nullptr) yakl::yakl_throw("ERROR: cudaMallocManaged returned nullptr. You have likely run out of memory");
           #ifdef _OPENMP45
             // if using OMP target offload, make sure OMP runtime knows to leave this memory alone
             omp_target_associate_ptr(ptr,ptr,bytes,0,0);
@@ -44,6 +44,7 @@ namespace yakl {
             // if using OpenACC, make sure OpenACC runtime knows to leave this memory alone
             acc_map_data(ptr,ptr,bytes);
           #endif
+          check_last_error();
           return ptr;
         };
         dealloc = [] ( void *ptr    ) {
@@ -55,6 +56,7 @@ namespace yakl {
           if (bytes == 0) return nullptr;
           void *ptr;
           cudaMalloc(&ptr,bytes);
+          if (ptr == nullptr) yakl::yakl_throw("ERROR: cudaMalloc returned nullptr. You have likely run out of memory");
           check_last_error();
           return ptr;
         };
@@ -69,6 +71,7 @@ namespace yakl {
           if (bytes == 0) return nullptr;
           void *ptr;
           hipMallocManaged(&ptr,bytes);  // This is the current standin for managed memory for HIP
+          if (ptr == nullptr) yakl::yakl_throw("ERROR: hipMallocManaged returned nullptr. You have likely run out of memory");
           #ifdef _OPENMP45
             // if using OMP target offload, make sure OMP runtime knows to leave this memory alone
             omp_target_associate_ptr(ptr,ptr,bytes,0,0);
@@ -89,6 +92,7 @@ namespace yakl {
           if (bytes == 0) return nullptr;
           void *ptr;
           hipMalloc(&ptr,bytes);
+          if (ptr == nullptr) yakl::yakl_throw("ERROR: hipMalloc returned nullptr. You have likely run out of memory");
           check_last_error();
           return ptr;
         };
@@ -103,6 +107,7 @@ namespace yakl {
           if (bytes == 0) return nullptr;
           // Allocate unified shared memory
           void *ptr = sycl::malloc_shared(bytes,sycl_default_stream());
+          if (ptr == nullptr) yakl::yakl_throw("ERROR: sycl::malloc_shared returned nullptr. You have likely run out of memory");
           sycl_default_stream().memset(ptr, 0, bytes);
           check_last_error();
           sycl_default_stream().prefetch(ptr,bytes);
@@ -123,8 +128,21 @@ namespace yakl {
       #else
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
+          #ifdef YAKL_ENABLE_STREAMS
+            fence();
+          #endif
           void *ptr = sycl::malloc_device(bytes,sycl_default_stream());
+          #ifdef YAKL_ENABLE_STREAMS
+            fence();
+          #endif
+          if (ptr == nullptr) yakl::yakl_throw("ERROR: sycl::malloc_device returned nullptr. You have likely run out of memory");
+          #ifdef YAKL_ENABLE_STREAMS
+            fence();
+          #endif
           sycl_default_stream().memset(ptr, 0, bytes);
+          #ifdef YAKL_ENABLE_STREAMS
+            fence();
+          #endif
           check_last_error();
           return ptr;
         };
@@ -135,8 +153,15 @@ namespace yakl {
         };
       #endif
     #else
-      alloc   = [] ( size_t bytes ) -> void* { if (bytes == 0) return nullptr; return ::malloc(bytes); };
-      dealloc = [] ( void *ptr ) { ::free(ptr); };
+      alloc   = [] ( size_t bytes ) -> void* {
+        if (bytes == 0) return nullptr;
+        void *ptr = ::malloc(bytes);
+        if (ptr == nullptr) yakl::yakl_throw("ERROR: malloc returned nullptr. You have likely run out of memory");
+        return ptr;
+      };
+      dealloc = [] ( void *ptr ) {
+        ::free(ptr);
+      };
     #endif
   }
 

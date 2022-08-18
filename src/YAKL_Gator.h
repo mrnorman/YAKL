@@ -42,9 +42,14 @@ namespace yakl {
     std::string error_message_cannot_grow;
     /** @private */
     std::string error_message_out_of_memory;
+    /** @private */
+    size_t high_water_mark;  // memory high water mark
+    /** @private */
+    size_t bytes_currently_allocated;  // memory high water mark
 
     /** @private */
-    std::mutex mtx;    // Internal mutex used to protect alloc and free in threaded regions
+    std::mutex mtx1;    // Internal mutex used to protect alloc and free in threaded regions
+    std::mutex mtx2;    // Internal mutex used to protect alloc and free in threaded regions
 
     /** @private */
     void die(std::string str="") {
@@ -82,7 +87,9 @@ namespace yakl {
 
 
     /** @brief All pools are automatically finalized when a Gator object is destroyed. */
-    ~Gator() { finalize(); }
+    ~Gator() {
+      finalize();
+    }
 
 
     /** @brief Initialize the pool.
@@ -117,6 +124,8 @@ namespace yakl {
       this->pool_name = pool_name;
       this->error_message_out_of_memory = error_message_out_of_memory;
       this->error_message_cannot_grow   = error_message_cannot_grow  ;
+      this->high_water_mark = 0;
+      this->bytes_currently_allocated = 0;
 
       // Create the initial pool if the pool allocator is to be used
       pools.push_back( LinearAllocator( initialSize , blockSize , mymalloc , myfree , myzero ,
@@ -131,8 +140,14 @@ namespace yakl {
       #ifndef YAKL_ARCH_SYCL
         fence();
       #endif
+      if (pools.size() > 0) {
+        if (yakl_mainproc()) std::cout << "Pool Memory High Water Mark:       " << get_high_water_mark() << std::endl;
+        if (yakl_mainproc()) std::cout << "Pool Memory High Water Efficiency: " << get_pool_high_water_space_efficiency() << std::endl;
+      }
       if (! waiting_events.empty()) free_completed_waiting_entries();
       pools = std::list<LinearAllocator>();
+      high_water_mark = 0;
+      bytes_currently_allocated = 0;
     }
 
 
@@ -161,7 +176,7 @@ namespace yakl {
       bool linear_bug = false;  // Whether there's an apparent bug in the LinearAllocator allocate() function
       void *ptr;                // Allocated pointer
       // Protect against multiple threads trying to allocate at the same time
-      mtx.lock();
+      mtx1.lock();
       {
         // Start at the first pool, see if it has room.
         // If so, allocate in that pool and break. If not, try the next pool.
@@ -199,8 +214,10 @@ namespace yakl {
                                             pool_name , error_message_out_of_memory) );
           ptr = pools.back().allocate(bytes,label);
         }
+        bytes_currently_allocated += ( (bytes-1)/blockSize+1 )*blockSize;
+        high_water_mark = std::max( high_water_mark , bytes_currently_allocated );
       }
-      mtx.unlock();
+      mtx1.unlock();
       if (linear_bug) {
         std::cerr << "ERROR: For the pool allocator labeled \"" << pool_name << "\":" << std::endl;
         die("ERROR: It looks like you've found a bug in LinearAllocator. Please report this at github.com/mrnorman/YAKL");
@@ -218,21 +235,22 @@ namespace yakl {
 
     /** @brief Free the passed pointer, and return the pointer to allocated space. 
       * @details Attempting to free a pointer not found in the list of pools will result in a thrown exception */
-    void free(void *ptr , char const * label = "" , bool use_mutex = true ) {
+    void free(void *ptr , char const * label = "" ) {
       bool pointer_valid = false;
       // Protect against multiple threads trying to free at the same time
-      if (use_mutex) mtx.lock();
+      mtx1.lock();
       {
         // Go through each pool. If the pointer lives in that pool, then free it.
         for (auto it = pools.rbegin() ; it != pools.rend() ; it++) {
           if (it->thisIsMyPointer(ptr)) {
-            it->free(ptr,label);
+            size_t bytes = it->free(ptr,label);
+            bytes_currently_allocated -= bytes;
             pointer_valid = true;
             break;
           }
         }
       }
-      if (use_mutex) mtx.unlock();
+      mtx1.unlock();
       if (!pointer_valid) {
         std::cerr << "ERROR: For the pool allocator labeled \"" << pool_name << "\":" << std::endl;
         std::cerr << "ERROR: Trying to free an invalid pointer\n";
@@ -244,7 +262,7 @@ namespace yakl {
     /** @brief Free the passed pointer, and return the pointer to allocated space. 
       * @details Attempting to free a pointer not found in the list of pools will result in a thrown exception */
     void free_with_event_dependencies(void *ptr , std::vector<Event> events_in , char const * label = "") {
-      mtx.lock();
+      mtx2.lock();
       waiting_entries.push_back( { std::string(label) , ptr , events_in } );
       for (int ind_event_in=0; ind_event_in < events_in.size(); ind_event_in++) {
         bool add_new_event = true;
@@ -253,12 +271,12 @@ namespace yakl {
         }
         if (add_new_event) waiting_events.push_back( events_in[ind_event_in] );
       }
-      mtx.unlock();
+      mtx2.unlock();
     };
 
 
     void free_completed_waiting_entries() {
-      mtx.lock();
+      mtx2.lock();
       // Loop through waiting events. Check if it's completed
       for (int ievent=0; ievent < waiting_events.size(); ievent++) {
         auto waiting_event = waiting_events[ievent];
@@ -275,7 +293,7 @@ namespace yakl {
             }
             // if this waiting entry's waiting event list is empty, free its pointer & erase it from waiting entry list
             if (waiting_entry.events.empty()) {
-              this->free( waiting_entry.ptr , waiting_entry.label.c_str() , false );
+              this->free( waiting_entry.ptr , waiting_entry.label.c_str() );
               waiting_entries.erase( waiting_entries.begin()+ientry );
             }
           }
@@ -283,12 +301,12 @@ namespace yakl {
           waiting_events.erase(waiting_events.begin()+ievent);
         }
       }
-      mtx.unlock();
+      mtx2.unlock();
     }
 
 
-    /** @brief  Get the total size of all of the pools put together */
-    size_t poolSize( ) const {
+    /** @brief  Get the total capacity of all of the pools put together */
+    size_t get_pool_capacity( ) const {
       size_t sz = 0;
       for (auto it = pools.begin() ; it != pools.end() ; it++) { sz += it->poolSize(); }
       return sz;
@@ -296,11 +314,38 @@ namespace yakl {
 
 
     /** @brief Get the total number of allocations in all of the pools put together */
-    size_t numAllocs( ) const {
+    size_t get_num_allocs( ) const {
       size_t allocs = 0;
       for (auto it = pools.begin() ; it != pools.end() ; it++) { allocs += it->numAllocs(); }
       return allocs;
     }
+
+
+    /** @brief Get the current memory high water mark in bytes for all allocations passing through the pool */
+    size_t get_high_water_mark() const { return high_water_mark; }
+
+
+    /** @brief Get the current memory high water mark in bytes for all allocations passing through the pool */
+    int get_num_pools() const { return pools.size(); }
+
+
+    /** @brief Get the current memory high water mark in bytes for all allocations passing through the pool */
+    size_t get_bytes_currently_allocated() const {
+      return bytes_currently_allocated;
+    }
+
+
+    /** @brief Get the current memory high water mark in bytes for all allocations passing through the pool */
+    double get_pool_space_efficiency() const {
+      return static_cast<double>(get_bytes_currently_allocated()) / static_cast<double>(get_pool_capacity());
+    }
+
+
+    /** @brief Get the current memory high water mark in bytes for all allocations passing through the pool */
+    double get_pool_high_water_space_efficiency() const {
+      return static_cast<double>(get_high_water_mark()) / static_cast<double>(get_pool_capacity());
+    }
+   
 
   };
 

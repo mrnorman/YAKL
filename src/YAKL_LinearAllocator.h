@@ -219,16 +219,19 @@ namespace yakl {
 
 
     // Free the requested pointer
-    void free(void *ptr, char const * label = "") {
+    // Returns the number of bytes in the allocation being freed
+    size_t free(void *ptr, char const * label = "") {
       for (int i=allocs.size()-1; i >= 0; i--) {
         if (ptr == getPtr(allocs[i].start)) {
+          size_t bytes = allocs[i].length*blockSize;
           allocs.erase(allocs.begin()+i);
-          return;
+          return bytes;
         }
       }
       std::cerr << "ERROR: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
       std::cerr << "Trying to free an invalid pointer.\n";
       die("This means you have either already freed the pointer, or its address has been corrupted somehow.");
+      return 0;
     };
 
 
