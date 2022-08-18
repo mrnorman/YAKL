@@ -196,6 +196,8 @@ namespace yakl {
     static unsigned constexpr get_totElems  () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
     static unsigned constexpr get_elem_count() { return D3*D2*D1*D0; }
+    /** @brief Get the total number of array elements */
+    static unsigned constexpr size          () { return D3*D2*D1*D0; }
     /** @brief Get the number of dimensions */
     static unsigned constexpr get_rank      () { return rank; }
     /** @brief Always true. All YAKL arrays are contiguous with no padding. */

@@ -189,6 +189,8 @@ namespace yakl {
     YAKL_INLINE index_t get_elem_count() const { return get_totElems(); }
     /** @brief Returns the total number of elements in this array object. */
     YAKL_INLINE index_t totElems() const { return get_totElems(); }
+    /** @brief Returns the total number of elements in this array object. */
+    YAKL_INLINE index_t size() const { return get_totElems(); }
     /** @brief Returns the raw data pointer of this array object. */
     YAKL_INLINE T *data() const { return this->myData; }
     /** @brief Returns the raw data pointer of this array object. */
