@@ -41,7 +41,7 @@ namespace yakl {
 
 
     LinearAllocator( size_t                                bytes ,
-                     unsigned                              blockSize = 2*sizeof(size_t) ,
+                     unsigned                              blockSize = 16*sizeof(size_t) ,
                      std::function<void *( size_t )>       mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); } ,
                      std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); } ,
                      std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ,
