@@ -112,7 +112,7 @@ namespace yakl {
               std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {}                        ,
               size_t initialSize                              = 1024*1024*1024                                         ,
               size_t growSize                                 = 1024*1024*1024                                         ,
-              size_t blockSize                                = sizeof(size_t)                                         ,
+              size_t blockSize                                = 2*sizeof(size_t)                                       ,
               std::string pool_name                           = "Gator"                                                ,
               std::string error_message_out_of_memory         = ""                                                     ,
               std::string error_message_cannot_grow           = "" ) {

@@ -154,6 +154,18 @@ int main() {
 
   }
   yakl::finalize();
+
+  yakl::init();
+  {
+    yakl::Array<double, 1, yakl::memDevice, yakl::styleC> b("b", 1);
+    int nx = 100;
+    yakl::Array<double, 1, yakl::memDevice, yakl::styleC> a("a", nx+2);
+    yakl::RealFFT1D<double> fft;
+    fft.init(a, 0, nx);
+    fft.forward_real(a);
+  }
+  yakl::finalize();
+
 }
 
 

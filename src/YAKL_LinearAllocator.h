@@ -41,7 +41,7 @@ namespace yakl {
 
 
     LinearAllocator( size_t                                bytes ,
-                     unsigned                              blockSize = sizeof(size_t) ,
+                     unsigned                              blockSize = 2*sizeof(size_t) ,
                      std::function<void *( size_t )>       mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); } ,
                      std::function<void( void * )>         myfree    = [] (void *ptr) { ::free(ptr); } ,
                      std::function<void( void *, size_t )> myzero    = [] (void *ptr, size_t bytes) {} ,
@@ -60,12 +60,13 @@ namespace yakl {
           verbose_inform(std::string("Creating pool of ")+std::to_string(bytes                  )+" B"  , pool_name);
         }
       #endif
-      if (blockSize%sizeof(size_t) != 0) {
+      if (blockSize%(2*sizeof(size_t)) != 0) {
         std::cerr << "ERROR: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
-        die("Error: LinearAllocator blockSize must be a multiple of sizeof(size_t)");
+        die("Error: LinearAllocator blockSize must be a multiple of 2*sizeof(size_t)");
       }
       this->blockSize = blockSize;
-      this->blockInc  = blockSize / sizeof(size_t);
+      this->blockInc  = blockSize / sizeof(size_t); // In two routines, I cast void * to size_t * for arithmetic
+                                                    // Therefore, blockInc is the number of size_t in a block
       this->nBlocks   = (bytes-1) / blockSize + 1;
       this->mymalloc  = mymalloc;
       this->myfree    = myfree  ;

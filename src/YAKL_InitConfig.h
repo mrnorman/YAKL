@@ -44,7 +44,7 @@ namespace yakl {
       pool_enabled     = true;
       pool_initial_mb  = 1024;
       pool_grow_mb     = 1024;
-      pool_block_bytes = sizeof(size_t);
+      pool_block_bytes = 2*sizeof(size_t);
 
       char * env = std::getenv("GATOR_DISABLE");
       if ( env != nullptr ) {
@@ -80,11 +80,11 @@ namespace yakl {
       env = std::getenv("GATOR_BLOCK_BYTES");
       if ( env != nullptr ) {
         long int block_bytes = atol(env);
-        if (block_bytes != 0 && block_bytes%sizeof(size_t) == 0) {
+        if (block_bytes != 0 && block_bytes%(2*sizeof(size_t)) == 0) {
           pool_block_bytes = block_bytes;
         } else {
-          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 128*sizeof(size_t)\n";
-          if (yakl::yakl_mainproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of sizeof(size_t)\n";
+          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 2*sizeof(size_t)\n";
+          if (yakl::yakl_mainproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of 2*sizeof(size_t)\n";
         }
       }
     }
