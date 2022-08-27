@@ -29,6 +29,8 @@
   #endif
 #endif
 
+#define YAKL_AUTO_LABEL() (std::filesystem::path(__FILE__).filename().string() + std::string(":") + std::to_string(__LINE__)).c_str()
+
 
 #ifdef YAKL_ARCH_CUDA
 

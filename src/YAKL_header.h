@@ -22,6 +22,7 @@
 #include "stdlib.h"
 #include <list>
 #include <functional>
+#include <filesystem>
 
 #ifdef HAVE_MPI
 #include <mpi.h>
