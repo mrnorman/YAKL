@@ -101,6 +101,7 @@ namespace yakl {
     // All copies are deep, so be wary of copies. Use references where possible
     /** @brief No constructor arguments allowed */
     YAKL_INLINE FSArray() {}
+    YAKL_INLINE FSArray(T init_fill) { for (int i=0; i < size(); i++) { myData[i] = init_fill; } }
     /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
     YAKL_INLINE FSArray           (FSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
     /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */

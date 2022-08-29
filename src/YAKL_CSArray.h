@@ -52,6 +52,7 @@ namespace yakl {
 
     /** @brief No constructor arguments allowed */
     YAKL_INLINE CSArray() { }
+    YAKL_INLINE CSArray(T init_fill) { for (int i=0; i < size(); i++) { myData[i] = init_fill; } }
     /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
     YAKL_INLINE CSArray           (CSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
     /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
