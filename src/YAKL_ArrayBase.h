@@ -46,6 +46,7 @@ namespace yakl {
       StreamList stream_dependencies;
     #else
       // This only exists to void extra data in the Array classes
+      /** @private */
       struct StreamListDummy {
         static bool constexpr empty() { return true; }
         void push_back( Stream stream ) { }
@@ -56,6 +57,12 @@ namespace yakl {
     #endif
 
 
+    /** @brief Declare a dependency on the passed stream.
+      * @details Upon deallocation, an event is placed in each stream this array depends on. The data pointer
+      *          is not released from the pool until all dependent events complete. This avoids potential
+      *          pointer aliasing of Arrays potentially being used simultaneous in different parallel streams.
+      *          The pool allocator is non-blocking, so erroneous aliasing can occur if the user uses multiple
+      *          streams, deallocates and allocates during runtime, and does not use this function. */
     void add_stream_dependency(Stream stream) {
       if constexpr (streams_enabled) {
         if (use_pool()) stream_dependencies.push_back(stream);
@@ -63,6 +70,8 @@ namespace yakl {
     }
 
 
+    /** @brief Declare a dependencies on the multiple streams at one time.
+      * \copydetails add_stream_dependency */
     void add_stream_dependencies(std::vector<Stream> streams) {
       if constexpr (streams_enabled) {
         if (use_pool()) {

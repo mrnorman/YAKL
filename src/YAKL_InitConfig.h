@@ -8,6 +8,8 @@
 namespace yakl {
   
   /** @brief An object of this class can optionally be passed to yakl::init() to configure the initialization.
+    *        **IMPORTANT**: Creating an InitConfig object pings environment
+    *        variables, making it quite expensive to create. Please do not create a lot of these.
     * @details This allows the user to override timer, allocation, and deallocation routines.
     * 
     * All `set_` functions return the InitConfig object they were called on. Therefore, the user can code, e.g.,
@@ -36,6 +38,9 @@ namespace yakl {
     size_t pool_block_bytes;
   
   public:
+    /** @brief Creating an InitConfig() controls the memory pool parameters, timer function overrides, and device
+      *        allocation and deallocation overrides. **IMPORTANT**: Creating an InitConfig object pings environment
+      *        variables, making it quite expensive to create. Please do not create a lot of these. */
     InitConfig() {
       pool_enabled     = true;
       pool_initial_mb  = 1024;
@@ -114,25 +119,25 @@ namespace yakl {
     InitConfig set_pool_grow_mb    ( size_t grow_mb    ) { this->pool_grow_mb     = grow_mb    ; return *this; }
     /** @brief Tell YAKL how big each additional pool should be in MB */
     InitConfig set_pool_block_bytes( size_t block_bytes) { this->pool_block_bytes = block_bytes; return *this; }
-    /** @private */
+    /** @brief Get the device allocator function. Returns an empty std::function if the user has not set one */
     std::function<void *( size_t , char const *)> get_device_allocator  () const { return alloc_device_func; }
-    /** @private */
+    /** @brief Get the device deallocator function. Returns an empty std::function if the user has not set one */
     std::function<void ( void * , char const *)>  get_device_deallocator() const { return free_device_func ; }
-    /** @private */
+    /** @brief Get the timer init function. Returns an empty std::function if the user has not set one */
     std::function<void ()>                        get_timer_init        () const { return timer_init     ; }
-    /** @private */
+    /** @brief Get the timer finalize function. Returns an empty std::function if the user has not set one */
     std::function<void ()>                        get_timer_finalize    () const { return timer_finalize ; }
-    /** @private */
+    /** @brief Get the timer start function. Returns an empty std::function if the user has not set one */
     std::function<void (char const *)>            get_timer_start       () const { return timer_start    ; }
-    /** @private */
+    /** @brief Get the timer stop function. Returns an empty std::function if the user has not set one */
     std::function<void (char const *)>            get_timer_stop        () const { return timer_stop     ; }
-    /** @private */
+    /** @brief Determine whether this config object will enable the device memory pool */
     bool   get_pool_enabled    () const { return pool_enabled    ; }
-    /** @private */
+    /** @brief Determine how many MB this config will request the pool to use for the initial device memory pool */
     size_t get_pool_initial_mb () const { return pool_initial_mb ; }
-    /** @private */
+    /** @brief Determine how many MB this config will request the pool to use for additional pools */
     size_t get_pool_grow_mb    () const { return pool_grow_mb    ; }
-    /** @private */
+    /** @brief Determine how many bytes this config will request the pool to use for block size */
     size_t get_pool_block_bytes() const { return pool_block_bytes; }
   };
 

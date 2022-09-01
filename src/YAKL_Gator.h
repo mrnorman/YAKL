@@ -167,7 +167,9 @@ namespace yakl {
       * this allocation request. This minimizes segmentation at the cost of a linear search time.
       * If the current pool(s) do not contain enough room, a new pool is created.
       * 
-      * Attempting to allocate zero bytes will return `nullptr`. This is a thread safe call.*/
+      * Attempting to allocate zero bytes will return `nullptr`. This is a thread safe call.
+      * 
+      * This always checks to see if entries waiting on stream events are able to be deallocated before allocating. */
     void * allocate(size_t bytes, char const * label="") {
       if (bytes == 0) return nullptr;
       if (! waiting_events.empty()) free_completed_waiting_entries();
@@ -275,6 +277,8 @@ namespace yakl {
     };
 
 
+    /** @brief Check all deallcation entries that are waiting on stream events to see if those events have completed. 
+      *        If the events are completed, then free the entry from the pool. */
     void free_completed_waiting_entries() {
       mtx2.lock();
       // Loop through waiting events. Check if it's completed

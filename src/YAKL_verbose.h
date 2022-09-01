@@ -3,6 +3,7 @@
 
 namespace yakl {
 
+  /** @private */
   inline void verbose_inform(std::string prefix, std::string label = "", std::string suffix = "") {
     #ifdef YAKL_VERBOSE
       // Form the output

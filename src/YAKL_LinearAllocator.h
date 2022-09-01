@@ -6,6 +6,7 @@ namespace yakl {
 
 
   // This class encapsulates a single "pool"
+  /** @private */
   class LinearAllocator {
   public:
 

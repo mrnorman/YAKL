@@ -6,6 +6,7 @@ namespace yakl {
   #ifdef YAKL_ENABLE_STREAMS
     bool constexpr streams_enabled = true;
   #else
+    /** @brief If the CPP Macro YAKL_ENABLE_STREAMS is defined, then this bool is set to `true` */
     bool constexpr streams_enabled = false;
   #endif
 
@@ -460,21 +461,37 @@ namespace yakl {
     struct Stream;
     struct Event;
 
+    /** @brief Implements the functionality of a stream for parallel kernel execution. If the `Stream::create()` method
+      *        is not called on this object, then it is the default stream. */
     struct Stream {
+      /** @brief Create the stream */
       void create() { }
+      /** @brief Destroy the stream */
       void destroy() { }
+      /** @brief Determine if this stream is the same as the passed stream */
       bool operator==(Stream stream) const { return true; }
+      /** @brief Tell the stream to wait until the passed event completes before continuing work in the stream. */
       inline void wait_on_event(Event event);
+      /** @brief Determine whether this stream is the default stream. */
       bool is_default_stream() { return true; }
+      /** @brief Pause all CPU work until all existing work in this stream completes. */
       void fence() { }
     };
 
+    /** @brief Implements the functionality of an event within a stream. The event is not created until the
+      *        `Event::create()` function is called. */
     struct Event {
+      /** @brief Create the event */
       void create() { }
+      /** @brief Destroy the event */
       void destroy() { }
+      /** @brief Record an event in the passed stream */
       inline void record(Stream stream);
+      /** @brief Determine if this event is the same as the passed event */
       bool operator==(Event event) const { return true; }
+      /** @brief Determine if this event has completed */
       bool completed() { return true; }
+      /** @brief Pause all CPU work until this event has completed */
       void fence() { }
     };
 
@@ -493,9 +510,13 @@ namespace yakl {
 
   /** @brief Implements a list of Stream objects. 
     *        Needs to store a pointer to avoid construction on the device since Array objects need to store a
-    *        list of streams on which they depend. */
+    *        list of streams on which they depend.
+    * 
+    * This purposely mimics a std::vector class's methods */
   struct StreamList {
+    /** @private */
     std::vector<Stream> *list;
+    /** @brief Create an empty stream list */
     YAKL_INLINE StreamList() {
       #if YAKL_CURRENTLY_ON_HOST()
         list = new std::vector<Stream>;
@@ -506,14 +527,19 @@ namespace yakl {
         delete list;
       #endif
     }
+    /** @brief Add a stream to the end of the list */
     void push_back(Stream stream) {
       yakl_mtx_lock();
       list->push_back(stream);
       yakl_mtx_unlock();
     }
+    /** @brief Get the number of streams in the list */
     int size() const { return list->size(); }
+    /** @brief Determine whether the list is empty (has no streams) */
     bool empty() const { return list->empty(); }
+    /** @brief Access the stream at the requested index */
     Stream operator[] (int i) { return (*list)[i]; }
+    /** @brief Get a std::vector of the streams in the list */
     std::vector<Stream> get_all_streams() const { return *list; }
   };
 

@@ -179,8 +179,11 @@ namespace yakl {
     int l;
     /** @private */
     int u;
+    /** @brief Create a dimension bound with a lower limit of 1 and an upper limit of 1 */
     YAKL_INLINE Bnd(                  ) { l = 1   ; u = 1   ; }
+    /** @brief Create a dimension bound with a lower limit of 1 and an upper limit of u_in */
     YAKL_INLINE Bnd(          int u_in) { l = 1   ; u = u_in; }
+    /** @brief Create a dimension bound with a lower limit of l_in and an upper limit of u_in */
     YAKL_INLINE Bnd(int l_in, int u_in) { l = l_in; u = u_in; }
   };
 

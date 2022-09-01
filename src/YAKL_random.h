@@ -13,6 +13,9 @@ namespace yakl {
     * The author wrote the following statement on the website (Accessed Aug 1 2022): 
     * > I wrote this PRNG. I place it in the public domain.
     * > Same goes for at least the implementation of all those tests linked to above.
+    * 
+    * **IMPORTANT**: When creating a Random object inside a `parallel_for` kernel, please ensure each
+    *                thread's object has a **different and unique** initial seed.
     */
   class Random {
   protected:
