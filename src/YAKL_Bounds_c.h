@@ -135,11 +135,26 @@ namespace c {
       for (int i=0; i<N; i++) { nIter *= dims[i]; }
     }
     /** @brief Get the lower loop bound for this loop index. */
-    YAKL_INLINE int lbound(int i) const { return 0; }
+    YAKL_INLINE int lbound(int i) const {
+      #ifdef YAKL_DEBUG
+        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling lbound() on an out of bounds integer");
+      #endif
+      return 0;
+    }
     /** @brief Get the total number of iterations for this loop index. */
-    YAKL_INLINE int dim   (int i) const { return dims[i]; }
+    YAKL_INLINE int dim   (int i) const {
+      #ifdef YAKL_DEBUG
+        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling dim() on an out of bounds integer");
+      #endif
+      return dims[i];
+    }
     /** @brief Get the stride for this loop index. */
-    YAKL_INLINE int stride(int i) const { return 1; }
+    YAKL_INLINE int stride(int i) const {
+      #ifdef YAKL_DEBUG
+        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling stride() on an out of bounds integer");
+      #endif
+      return 1;
+    }
     /** @brief Unpack a global index into `N` loop indices given bounds and strides. */
     YAKL_INLINE void unpackIndices( index_t iGlob , int indices[N] ) const {
       if constexpr        (N == 1) {
@@ -263,11 +278,26 @@ namespace c {
       for (int i=0; i<N; i++) { nIter *= dims[i]; }
     }
     /** @brief Get the lower loop bound for this loop index. */
-    YAKL_INLINE int lbound(int i) const { return lbounds[i]; }
+    YAKL_INLINE int lbound(int i) const {
+      #ifdef YAKL_DEBUG
+        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling lbound() on an out of bounds integer");
+      #endif
+      return lbounds[i];
+    }
     /** @brief Get the total number of iterations for this loop index. */
-    YAKL_INLINE int dim   (int i) const { return dims   [i]; }
+    YAKL_INLINE int dim   (int i) const {
+      #ifdef YAKL_DEBUG
+        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling dim() on an out of bounds integer");
+      #endif
+      return dims   [i];
+    }
     /** @brief Get the stride for this loop index. */
-    YAKL_INLINE int stride(int i) const { return strides[i]; }
+    YAKL_INLINE int stride(int i) const {
+      #ifdef YAKL_DEBUG
+        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling stride() on an out of bounds integer");
+      #endif
+      return strides[i];
+    }
     /** @brief Unpack a global index into `N` loop indices given bounds and strides. */
     YAKL_INLINE void unpackIndices( index_t iGlob , int indices[N] ) const {
       // Compute base indices
