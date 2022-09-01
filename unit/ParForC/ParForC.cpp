@@ -55,7 +55,7 @@ int main() {
 
     yakl::memset(arr3d,0.);
 
-    parallel_outer( "blah" , Bounds<1>(n1) , YAKL_LAMBDA (int k, InnerHandler handler ) {
+    parallel_outer( YAKL_AUTO_LABEL() , Bounds<1>(n1) , YAKL_LAMBDA (int k, InnerHandler handler ) {
       parallel_inner( Bounds<2>(n2,n3) , [&] (int j, int i) {
         arr3d(k,j,i) = 2.;
       } , handler );

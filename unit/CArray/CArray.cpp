@@ -81,28 +81,28 @@ int main() {
     yakl::memset(test7d,0.f);
     yakl::memset(test8d,0.f);
 
-    parallel_for( Bounds<1>(d1) , YAKL_LAMBDA (int i1) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<1>(d1) , YAKL_LAMBDA (int i1) {
       test1d(i1) = 1;
     });
-    parallel_for( Bounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
       test2d(i1,i2) = 1;
     });
-    parallel_for( Bounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
       test3d(i1,i2,i3) = 1;
     });
-    parallel_for( Bounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
       test4d(i1,i2,i3,i4) = 1;
     });
-    parallel_for( Bounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
       test5d(i1,i2,i3,i4,i5) = 1;
     });
-    parallel_for( Bounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
       test6d(i1,i2,i3,i4,i5,i6) = 1;
     });
-    parallel_for( Bounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
       test7d(i1,i2,i3,i4,i5,i6,i7) = 1;
     });
-    parallel_for( Bounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
       test8d(i1,i2,i3,i4,i5,i6,i7,i8) = 1;
     });
 
@@ -172,28 +172,28 @@ int main() {
     yakl::memset(test7d_ptr,0.f);
     yakl::memset(test8d_ptr,0.f);
 
-    parallel_for( Bounds<1>(d1) , YAKL_LAMBDA (int i1) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<1>(d1) , YAKL_LAMBDA (int i1) {
       test1d_ptr(i1) = 1;
     });
-    parallel_for( Bounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
       test2d_ptr(i1,i2) = 1;
     });
-    parallel_for( Bounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
       test3d_ptr(i1,i2,i3) = 1;
     });
-    parallel_for( Bounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
       test4d_ptr(i1,i2,i3,i4) = 1;
     });
-    parallel_for( Bounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
       test5d_ptr(i1,i2,i3,i4,i5) = 1;
     });
-    parallel_for( Bounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
       test6d_ptr(i1,i2,i3,i4,i5,i6) = 1;
     });
-    parallel_for( Bounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
       test7d_ptr(i1,i2,i3,i4,i5,i6,i7) = 1;
     });
-    parallel_for( Bounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
       test8d_ptr(i1,i2,i3,i4,i5,i6,i7,i8) = 1;
     });
 
@@ -279,7 +279,7 @@ int main() {
     // Test slice inside a kernel
     ///////////////////////////////////////////////////////////
     yakl::memset(test8d,0.f);
-    parallel_for( 1 , YAKL_LAMBDA (int dummy) {
+    parallel_for( YAKL_AUTO_LABEL() ,  1 , YAKL_LAMBDA (int dummy) {
       auto slice = test8d.slice<3>(1,2,3,4,5,COLON,COLON,COLON);
     });
 
@@ -287,7 +287,7 @@ int main() {
     // Test non-standard loop bounds
     ///////////////////////////////////////////////////////////
     yakl::memset(test3d,0.);
-    parallel_for( Bounds<3>(d1,{-1,d2-3},{0,d3,2}) , YAKL_LAMBDA (int i, int j, int k) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,{-1,d2-3},{0,d3,2}) , YAKL_LAMBDA (int i, int j, int k) {
       test3d(i,j+2,k) = 1;
     });
     if (yakl::intrinsics::sum(test3d) != 8) { die("non-standard loop: wrong sum for test3d");}
@@ -305,28 +305,28 @@ int main() {
     yakl::memset(test7d,0.f);
     yakl::memset(test8d,0.f);
 
-    parallel_for( SimpleBounds<1>(d1) , YAKL_LAMBDA (int i1) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<1>(d1) , YAKL_LAMBDA (int i1) {
       test1d(i1) = 1;
     });
-    parallel_for( SimpleBounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
       test2d(i1,i2) = 1;
     });
-    parallel_for( SimpleBounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
       test3d(i1,i2,i3) = 1;
     });
-    parallel_for( SimpleBounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
       test4d(i1,i2,i3,i4) = 1;
     });
-    parallel_for( SimpleBounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
       test5d(i1,i2,i3,i4,i5) = 1;
     });
-    parallel_for( SimpleBounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
       test6d(i1,i2,i3,i4,i5,i6) = 1;
     });
-    parallel_for( SimpleBounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
       test7d(i1,i2,i3,i4,i5,i6,i7) = 1;
     });
-    parallel_for( SimpleBounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
       test8d(i1,i2,i3,i4,i5,i6,i7,i8) = 1;
     });
 
