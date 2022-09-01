@@ -36,10 +36,11 @@ namespace yakl {
     * @param T The type of the scalar value
     */
   template <class T> class ScalarLiveOut {
-  public:
+  protected:
     /** @private */
     Array<T,1,memDevice,styleC> data;
 
+  public:
     /** @brief Default constructor allocates room on the device for one scalar of type `T` */
     YAKL_INLINE ScalarLiveOut() {
       data = Array<T,1,memDevice,styleC>("ScalarLiveOut_data",1);  // Create array

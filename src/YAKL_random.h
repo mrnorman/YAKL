@@ -15,18 +15,17 @@ namespace yakl {
     * > Same goes for at least the implementation of all those tests linked to above.
     */
   class Random {
-  public:
-    /** @private */
-    #define rot(x,k) (((x)<<(k))|((x)>>(64-(k))))
-
+  protected:
     /** @private */
     typedef unsigned long long u8;
-
+    /** @private */
+    u8 static constexpr rot(u8 x, u8 k) { return (((x)<<(k))|((x)>>(64-(k)))); }
     /** @private */
     struct State { u8 a, b, c, d; };
-
     /** @private */
     State state;
+
+  public:
 
     /** @brief Initializes a prng object with the seed 1368976481. Warm-up of 20 iterations. */
     YAKL_INLINE Random()                            { set_seed(1368976481L); } // I made up this number

@@ -27,7 +27,7 @@ namespace yakl {
     */
   template <class T, int rank, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1>
   class CSArray {
-  private:
+  protected:
     /** @private */
     static unsigned constexpr OFF0 = D3*D2*D1;
     /** @private */

@@ -50,7 +50,7 @@ namespace yakl {
     */
   template <class T, int rank, class B0, class B1=SB<1>, class B2=SB<1>, class B3=SB<1>>
   class FSArray {
-  private:
+  protected:
     /** @private */
     static int constexpr U0 = B0::upper();
     /** @private */
