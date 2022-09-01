@@ -54,13 +54,6 @@ namespace yakl {
       free_device_func  = [] ( void *ptr    , char const *label )          {
         yakl_throw("ERROR: attempting memory free before calling yakl::init()");
       };
-      alloc_host_func = [] ( size_t bytes , char const *label ) -> void* {
-        yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
-        return nullptr;
-      };
-      free_host_func  = [] ( void *ptr    , char const *label )          {
-        yakl_throw("ERROR: attempting memory free before calling yakl::init()");
-      };
 
       device_allocators_are_default = false;
       pool_enabled = false;

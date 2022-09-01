@@ -15,11 +15,7 @@ namespace yakl {
   class InitConfig {
   protected:
     /** @private */
-    std::function<void *( size_t , char const *)> alloc_host_func;
-    /** @private */
     std::function<void *( size_t , char const *)> alloc_device_func;
-    /** @private */
-    std::function<void ( void * , char const *)>  free_host_func;
     /** @private */
     std::function<void ( void * , char const *)>  free_device_func;  
     /** @private */
@@ -88,19 +84,9 @@ namespace yakl {
         }
       }
     }
-    /** @brief Pass the host allocator function you wish to use to override YAKL's default (NO LABEL) */
-    InitConfig set_host_allocator  ( std::function<void *( size_t )> func ) {
-      alloc_host_func   = [=] (size_t bytes , char const *label) -> void * { return func(bytes); };
-      return *this;
-    }
     /** @brief Pass the device allocator function you wish to use to override YAKL's default (NO LABEL) */
     InitConfig set_device_allocator( std::function<void *( size_t )> func ) {
       alloc_device_func = [=] (size_t bytes , char const *label) -> void * { return func(bytes); };
-      return *this;
-    }
-    /** @brief Pass the host deallocator function you wish to use to override YAKL's default (NO LABEL) */
-    InitConfig set_host_deallocator  ( std::function<void ( void * )> func ) {
-      free_host_func    = [=] (void *ptr , char const *label) { func(ptr); };
       return *this;
     }
     /** @brief Pass the device deallocator function you wish to use to override YAKL's default (NO LABEL) */
@@ -108,12 +94,8 @@ namespace yakl {
       free_device_func  = [=] (void *ptr , char const *label) { func(ptr); };
       return *this;
     }
-    /** @brief Pass the host allocator function you wish to use to override YAKL's default (LABEL) */
-    InitConfig set_host_allocator    ( std::function<void *( size_t , char const *)> func ) { alloc_host_func   = func; return *this; }
     /** @brief Pass the device allocator function you wish to use to override YAKL's default (LABEL) */
     InitConfig set_device_allocator  ( std::function<void *( size_t , char const *)> func ) { alloc_device_func = func; return *this; }
-    /** @brief Pass the host deallocator function you wish to use to override YAKL's default (LABEL) */
-    InitConfig set_host_deallocator  ( std::function<void ( void * , char const *)>  func ) { free_host_func    = func; return *this; }
     /** @brief Pass the device deallocator function you wish to use to override YAKL's default (LABEL) */
     InitConfig set_device_deallocator( std::function<void ( void * , char const *)>  func ) { free_device_func  = func; return *this; }
     /** @brief Pass the timer init function you wish to use to override YAKL's default */
@@ -133,11 +115,7 @@ namespace yakl {
     /** @brief Tell YAKL how big each additional pool should be in MB */
     InitConfig set_pool_block_bytes( size_t block_bytes) { this->pool_block_bytes = block_bytes; return *this; }
     /** @private */
-    std::function<void *( size_t , char const *)> get_host_allocator    () const { return alloc_host_func  ; }
-    /** @private */
     std::function<void *( size_t , char const *)> get_device_allocator  () const { return alloc_device_func; }
-    /** @private */
-    std::function<void ( void * , char const *)>  get_host_deallocator  () const { return free_host_func   ; }
     /** @private */
     std::function<void ( void * , char const *)>  get_device_deallocator() const { return free_device_func ; }
     /** @private */
