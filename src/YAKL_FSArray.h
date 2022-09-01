@@ -50,7 +50,7 @@ namespace yakl {
     */
   template <class T, int rank, class B0, class B1=SB<1>, class B2=SB<1>, class B3=SB<1>>
   class FSArray {
-  public :
+  private:
     /** @private */
     static int constexpr U0 = B0::upper();
     /** @private */
@@ -67,7 +67,6 @@ namespace yakl {
     static int constexpr U3 = B3::upper();
     /** @private */
     static int constexpr L3 = B3::lower();
-
     /** @private */
     static unsigned constexpr D0 =             U0 - L0 + 1;
     /** @private */
@@ -76,7 +75,6 @@ namespace yakl {
     static unsigned constexpr D2 = rank >= 1 ? U2 - L2 + 1 : 1;
     /** @private */
     static unsigned constexpr D3 = rank >= 1 ? U3 - L3 + 1 : 1;
-
     /** @private */
     static unsigned constexpr OFF0 = 1;
     /** @private */
@@ -84,6 +82,10 @@ namespace yakl {
     /** @private */
     static unsigned constexpr OFF2 = D0*D1;
     /** @private */
+    /** @private */
+    T mutable myData[D0*D1*D2*D3];
+
+  public :
     static unsigned constexpr OFF3 = D0*D1*D2;
 
     /** @brief This is the type `T` without `const` and `volatile` modifiers */
@@ -94,9 +96,6 @@ namespace yakl {
     typedef typename std::add_const<type>::type    const_value_type;
     /** @brief This is the type `T` with `const` removed from it (if the original type has `volatile`, then so will this type). */
     typedef typename std::remove_const<type>::type non_const_value_type;
-
-    /** @private */
-    T mutable myData[D0*D1*D2*D3];
 
     // All copies are deep, so be wary of copies. Use references where possible
     /** @brief No constructor arguments allowed */

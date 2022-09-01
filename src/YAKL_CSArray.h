@@ -27,6 +27,18 @@ namespace yakl {
     */
   template <class T, int rank, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1>
   class CSArray {
+  private:
+    /** @private */
+    static unsigned constexpr OFF0 = D3*D2*D1;
+    /** @private */
+    static unsigned constexpr OFF1 = D3*D2;
+    /** @private */
+    static unsigned constexpr OFF2 = D3;
+    /** @private */
+    static unsigned constexpr OFF3 = 1;
+    /** @private */
+    T mutable myData[D0*D1*D2*D3];
+
   public :
 
     /** @brief This is the type `T` without `const` and `volatile` modifiers */
@@ -37,18 +49,6 @@ namespace yakl {
     typedef typename std::add_const<type>::type    const_value_type;
     /** @brief This is the type `T` with `const` removed from it (if the original type has `volatile`, then so will this type). */
     typedef typename std::remove_const<type>::type non_const_value_type;
-
-    /** @private */
-    static unsigned constexpr OFF0 = D3*D2*D1;
-    /** @private */
-    static unsigned constexpr OFF1 = D3*D2;
-    /** @private */
-    static unsigned constexpr OFF2 = D3;
-    /** @private */
-    static unsigned constexpr OFF3 = 1;
-
-    /** @private */
-    T mutable myData[D0*D1*D2*D3];
 
     /** @brief No constructor arguments allowed */
     YAKL_INLINE CSArray() { }
