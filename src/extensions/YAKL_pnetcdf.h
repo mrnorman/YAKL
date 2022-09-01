@@ -365,7 +365,7 @@ namespace yakl {
       if (rank != start   .size()) { yakl_throw("start.size() != Array's rank"); }
       std::vector<MPI_Offset> count(rank);
       for (int i=0; i < rank; i++) {
-        count[i] = arr.dimension[i];
+        count[i] = arr.extent(i);
       }
 
       int varid = get_var_id(varName);
@@ -402,7 +402,7 @@ namespace yakl {
       count[0] = 1;
       for (int i=1; i < rank+1; i++) {
         start[i] = 0;
-        count[i] = arr.dimension[i-1];
+        count[i] = arr.extent(i-1);
       }
 
       int varid = get_var_id(varName);
@@ -426,7 +426,7 @@ namespace yakl {
       count[0] = 1;
       for (int i=1; i < rank+1; i++) {
         start[i] = start_in[i-1];
-        count[i] = arr.dimension[i-1];
+        count[i] = arr.extent(i-1);
       }
 
       int varid = get_var_id(varName);
@@ -468,7 +468,7 @@ namespace yakl {
 
     //   std::vector<MPI_Offset> count(rank);
     //   for (int i=0; i < rank; i++) {
-    //     count[i] = arr.dimension[i];
+    //     count[i] = arr.extent(i);
     //   }
 
     //   if (myMem == memDevice) {

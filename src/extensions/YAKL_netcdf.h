@@ -381,9 +381,9 @@ namespace yakl {
         // If dimension doesn't exist, create it; otherwise, make sure it's the right size
         NcDim tmp;
         if ( dimLoc.isNull() ) {
-          tmp = file.addDim( dimNames[i] , arr.dimension[i] );
+          tmp = file.addDim( dimNames[i] , arr.extent(i) );
         } else {
-          if (dimLoc.getSize() != arr.dimension[i]) {
+          if (dimLoc.getSize() != arr.extent(i)) {
             yakl_throw("dimension size differs from the file");
           }
           tmp = dimLoc;
@@ -404,11 +404,11 @@ namespace yakl {
         if (varDims.size() != rank) { yakl_throw("Existing variable's rank != array's rank"); }
         for (int i=0; i < varDims.size(); i++) {
           if (myStyle == styleC) {
-            if (varDims[i].getSize() != arr.dimension[i]) {
+            if (varDims[i].getSize() != arr.extent(i)) {
               yakl_throw("Existing variable's dimension sizes are not the same as the array's");
             }
           } else {
-            if (varDims[rank-1-i].getSize() != arr.dimension[i]) {
+            if (varDims[rank-1-i].getSize() != arr.extent(i)) {
               yakl_throw("Existing variable's dimension sizes are not the same as the array's");
             }
           }
@@ -463,9 +463,9 @@ namespace yakl {
         // If dimension doesn't exist, create it; otherwise, make sure it's the right size
         NcDim tmp;
         if ( dimLoc.isNull() ) {
-          tmp = file.addDim( dimNames[i] , arr.dimension[i] );
+          tmp = file.addDim( dimNames[i] , arr.extent(i) );
         } else {
-          if (dimLoc.getSize() != arr.dimension[i]) {
+          if (dimLoc.getSize() != arr.extent(i)) {
             yakl_throw("dimension size differs from the file");
           }
           tmp = dimLoc;
@@ -488,11 +488,11 @@ namespace yakl {
         }
         for (int i=1; i < varDims.size(); i++) {
           if (myStyle == styleC) {
-            if (varDims[i].getSize() != arr.dimension[i-1]) {
+            if (varDims[i].getSize() != arr.extent(i-1)) {
               yakl_throw("Existing variable's dimension sizes are not the same as the array's");
             }
           } else {
-            if (varDims[1+rank-i].getSize() != arr.dimension[i-1]) {
+            if (varDims[1+rank-i].getSize() != arr.extent(i-1)) {
               yakl_throw("Existing variable's dimension sizes are not the same as the array's");
             }
           }
@@ -532,7 +532,7 @@ namespace yakl {
         bool createArr = ! arr.initialized();
         if (arr.initialized()) {
           for (int i=0; i < dimSizes.size(); i++) {
-            if (dimSizes[i] != arr.dimension[i]) {
+            if (dimSizes[i] != arr.extent(i)) {
               #ifdef YAKL_DEBUG
                 std::cout << "WARNING: Array dims wrong size; deallocating previous array and allocating a new one\n";
               #endif
@@ -548,7 +548,7 @@ namespace yakl {
         if (std::is_same<T,bool>::value) {
           Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
           var.getVar(tmp.data());
-          for (int i=0; i < arr.totElems(); i++) { arrHost.myData[i] = tmp.myData[i] == 1; }
+          for (int i=0; i < arr.totElems(); i++) { arrHost.data()[i] = tmp.data()[i] == 1; }
         } else {
           var.getVar(arrHost.data());
         }
@@ -558,7 +558,7 @@ namespace yakl {
         if (std::is_same<T,bool>::value) {
           Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
           var.getVar(tmp.data());
-          for (int i=0; i < arr.totElems(); i++) { arr.myData[i] = tmp.myData[i] == 1; }
+          for (int i=0; i < arr.totElems(); i++) { arr.data()[i] = tmp.data()[i] == 1; }
         } else {
           var.getVar(arr.data());
         }
