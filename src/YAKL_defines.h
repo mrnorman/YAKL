@@ -30,7 +30,7 @@
 #endif
 
 #if defined(YAKL_AUTO_PROFILE) || defined(YAKL_VERBOSE)
-  #define YAKL_AUTO_LABEL() (std::filesystem::path(__FILE__).filename().string() + std::string(":") + std::to_string(__LINE__)).c_str()
+  #define YAKL_AUTO_LABEL() (std::string(basename(__FILE__)) + std::string(":") + std::to_string(__LINE__)).c_str()
 #else
   /** @brief This CPP Macro function will automatically create a label for you in the for of "filename: lineno".
     * @details Note that unless you have YAKL_AUTO_PROFILE or YAKL_VERBOSE defined, this returns an empty string
