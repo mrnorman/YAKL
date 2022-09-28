@@ -32,6 +32,7 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
   yakl::Array<real,3,yakl::memHost,yakl::styleC> host_tend ("tend" ,NUM_VARS,nz,nx);
   yakl::Array<real,1,yakl::memHost,yakl::styleC> host_hy_dens_cell      ("hy_dens_cell      ",nz+2*hs);
   yakl::Array<real,1,yakl::memHost,yakl::styleC> host_hy_dens_theta_cell("hy_dens_theta_cell",nz+2*hs);
+  srand (17);
   for (int l=0; l < NUM_VARS; l++) {
     for (int k=0; k < nz+2*hs; k++) {
       for (int i=0; i < nx+2*hs; i++) {
@@ -95,7 +96,7 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
 
     yakl::timer_stop(label);
 
-    std::cout << yakl::intrinsics::sum(tend) << std::endl;
+    std::cout << yakl::intrinsics::sum(yakl::intrinsics::abs(tend)) << std::endl;
 
   } else {
 
@@ -153,7 +154,7 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
 
     yakl::timer_stop(label);
 
-    std::cout << yakl::intrinsics::sum(tend) << std::endl;
+    std::cout << yakl::intrinsics::sum(yakl::intrinsics::abs(tend)) << std::endl;
 
   }
 
