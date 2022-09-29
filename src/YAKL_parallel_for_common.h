@@ -71,7 +71,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
     auto stream = config.get_stream();
-    if constexpr (sizeof(F) <= 4000) {
+    if constexpr (sizeof(F) <= 3800) {
       cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , stream.get_real_stream() >>> ( bounds , f , config );
       check_last_error();
     } else {
@@ -110,7 +110,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
     auto stream = config.get_stream();
-    if constexpr (sizeof(F) <= 4000) {
+    if constexpr (sizeof(F) <= 3800) {
       cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size , 0 , stream.get_real_stream() >>> ( bounds , f , config , InnerHandler() );
       check_last_error();
     } else {
@@ -233,8 +233,8 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       config.get_stream().get_real_stream().wait();
     } else {
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
-      auto copyEvent = config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
-      auto kernelEvent = config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter) , copyEvent, [=] (sycl::id<1> i) {
+      config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
+      auto kernelEvent = config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter), [=] (sycl::id<1> i) {
         callFunctor( *fp , bounds , i );
       });
       kernelEvent.wait();
@@ -256,9 +256,8 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       config.get_stream().get_real_stream().wait();
     } else {
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
-      auto copyEvent = config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
+      config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
       auto kernelEvent = config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
-					  copyEvent,
                                           [=] (sycl::nd_item<1> item) {
         callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
       });
