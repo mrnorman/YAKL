@@ -313,148 +313,66 @@ namespace yakl {
 
     class Stream {
       protected:
-      sycl::queue my_stream;
-      int *       refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
+      std::shared_ptr<sycl::queue> my_stream;
 
-      void nullify() { my_stream = sycl_default_stream(); refCount = nullptr; }
+      void nullify() { my_stream = std::make_shared<sycl::queue>(sycl_default_stream()); }
 
       public:
 
       Stream() { nullify(); }
-      Stream(sycl::queue sycl_queue) { nullify(); my_stream = sycl_queue; }
-      ~Stream() { destroy(); }
+      Stream(sycl::queue &sycl_queue) { my_stream = std::make_shared<sycl::queue>(sycl_queue); }
+      ~Stream() { nullify(); }
 
-      Stream(Stream const  &rhs) {
-        my_stream = rhs.my_stream;
-        refCount  = rhs.refCount;
-        if (refCount != nullptr) (*refCount)++;
-      }
-      Stream(Stream &&rhs) {
-        my_stream = rhs.my_stream;
-        refCount  = rhs.refCount;
-        rhs.nullify();
-      }
-      Stream & operator=(Stream const  &rhs) {
-        if (this != &rhs) {
-          destroy();
-          my_stream = rhs.my_stream;
-          refCount  = rhs.refCount;
-          if (refCount != nullptr) (*refCount)++;
-        }
-        return *this;
-      }
-      Stream & operator=(Stream &&rhs) {
-        if (this != &rhs) {
-          destroy();
-          my_stream = rhs.my_stream;
-          refCount  = rhs.refCount;
-          rhs.nullify();
-        }
-        return *this;
-      }
+      Stream(Stream const  &rhs) { my_stream = rhs.my_stream; }
+      Stream(Stream       &&rhs) { my_stream = rhs.my_stream; }
+      Stream & operator=(Stream const  &rhs) { if (this != &rhs) { my_stream = rhs.my_stream; }; return *this; }
+      Stream & operator=(Stream       &&rhs) { if (this != &rhs) { my_stream = rhs.my_stream; }; return *this; }
 
       void create() {
-        if (refCount == nullptr) {
-          refCount = new int;
-          (*refCount) = 1;
-          if constexpr (streams_enabled) {
-            sycl::device dev(sycl::gpu_selector{});
-            my_stream = sycl::queue( dev , asyncHandler , sycl::property_list{sycl::property::queue::in_order{}} );
-          }
+        if constexpr (streams_enabled) {
+          sycl::device dev(sycl::gpu_selector{});
+          auto queue = sycl::queue( dev , asyncHandler , sycl::property_list{sycl::property::queue::in_order{}} );
+          my_stream = std::make_shared<sycl::queue>(queue);
         }
       }
 
-      void destroy() {
-        if (refCount != nullptr) {
-          (*refCount)--;
-          if ( (*refCount) == 0 ) {
-            if constexpr (streams_enabled) my_stream = sycl::queue();
-            delete refCount;
-            nullify();
-          }
-        }
-      }
-
-      sycl::queue get_real_stream() { return my_stream; }
-      bool operator==(Stream stream) const { return my_stream == stream.get_real_stream(); }
+      sycl::queue & get_real_stream() { return *my_stream; }
+      bool operator==(Stream stream) const { return *my_stream == stream.get_real_stream(); }
       inline void wait_on_event(Event event);
-      bool is_default_stream() { return my_stream == sycl_default_stream(); }
-      void fence() { my_stream.wait(); }
+      bool is_default_stream() { return *my_stream == sycl_default_stream(); }
+      void fence() { my_stream->wait(); }
     };
 
 
     class Event {
       protected:
       sycl::event my_event;
-      int *       refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
-
-      void nullify() { refCount = nullptr; }
 
       public:
 
-      Event() { nullify(); }
-      ~Event() { destroy(); }
+      Event() { }
+      ~Event() { }
 
-      Event(Event const  &rhs) {
-        my_event = rhs.my_event;
-        refCount = rhs.refCount;
-        if (refCount != nullptr) (*refCount)++;
-      }
-      Event(Event &&rhs) {
-        my_event = rhs.my_event;
-        refCount = rhs.refCount;
-        rhs.nullify();
-      }
-      Event & operator=(Event const  &rhs) {
-        if (this != &rhs) {
-          destroy();
-          my_event = rhs.my_event;
-          refCount = rhs.refCount;
-          if (refCount != nullptr) (*refCount)++;
-        }
-        return *this;
-      }
-      Event & operator=(Event &&rhs) {
-        if (this != &rhs) {
-          destroy();
-          my_event = rhs.my_event;
-          refCount = rhs.refCount;
-          rhs.nullify();
-        }
-        return *this;
-      }
+      Event(Event const  &rhs) { my_event = rhs.my_event; }
+      Event(Event       &&rhs) { my_event = rhs.my_event; }
+      Event & operator=(Event const  &rhs) { if (this != &rhs) { my_event = rhs.my_event; }; return *this; }
+      Event & operator=(Event       &&rhs) { if (this != &rhs) { my_event = rhs.my_event; }; return *this; }
 
-      void create() {
-        if (refCount == nullptr) {
-          refCount = new int;
-          (*refCount) = 1;
-        }
-      }
-
-      void destroy() {
-        if (refCount != nullptr) {
-          (*refCount)--;
-          if ( (*refCount) == 0 ) { delete refCount; nullify(); }
-        }
-      }
+      void create() { }
+      void destroy() { }
 
       inline void record(Stream stream);
-      sycl::event get_real_event() { return my_event; }
+      sycl::event & get_real_event() { return my_event; }
       bool operator==(Event event) const { return my_event == event.get_real_event(); }
       bool completed() { return my_event.get_info<sycl::info::event::command_execution_status>() == sycl::info::event_command_status::complete; }
       void fence() { my_event.wait(); }
     };
 
 
-    inline void Event::record(Stream stream) {
-      create();
-      my_event = stream.get_real_stream().single_task( [=] () {} );
-    }
+    inline void Event::record(Stream stream) { my_event = stream.get_real_stream().single_task( [=] () {} ); }
 
 
-    inline void Stream::wait_on_event(Event event) {
-      my_stream.single_task( event.get_real_event() , [=] () {} );
-    }
+    inline void Stream::wait_on_event(Event event) { my_stream->single_task( event.get_real_event() , [=] () {} ); }
 
   #else
 

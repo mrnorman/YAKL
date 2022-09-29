@@ -38,11 +38,11 @@ namespace yakl {
 
     private:
       dev_mgr() {
-	sycl::device dev(sycl::gpu_selector{});
-	_devs = std::make_shared<sycl::device>(dev);
-	_queues = std::make_shared<sycl::queue>(dev,
-						asyncHandler,
-						sycl::property_list{sycl::property::queue::in_order{}});
+        sycl::device dev(sycl::gpu_selector{});
+        _devs = std::make_shared<sycl::device>(dev);
+        _queues = std::make_shared<sycl::queue>(dev,
+                                                asyncHandler,
+                                                sycl::property_list{sycl::property::queue::in_order{}});
       }
       std::shared_ptr<sycl::device> _devs;
       std::shared_ptr<sycl::queue> _queues;
