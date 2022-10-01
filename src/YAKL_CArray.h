@@ -602,7 +602,7 @@ namespace yakl {
 
     /** @brief [ASYNCHRONOUS] Assign a scalar arithmetic value to all entries in this array object */
     template <class TLOC, typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false>
-    Array & operator=(TLOC const &rhs) {
+    Array operator=(TLOC const &rhs) const {
       memset_loc(rhs);
       return *this;
     }
@@ -610,7 +610,7 @@ namespace yakl {
 
     /** @private */
     template <class TLOC>
-    void memset_loc(TLOC rhs) {
+    void memset_loc(TLOC rhs) const {
       if (myMem == memDevice) {
         YAKL_SCOPE( arr , *this );
         #ifdef YAKL_ENABLE_STREAMS
