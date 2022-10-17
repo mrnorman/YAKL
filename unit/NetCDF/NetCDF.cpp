@@ -15,8 +15,7 @@ using yakl::COLON;
 
 
 void die(std::string msg) {
-  std::cerr << msg << std::endl;
-  exit(-1);
+  yakl::yakl_throw(msg.c_str());
 }
 
 

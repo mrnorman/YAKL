@@ -32,8 +32,7 @@ typedef Array<real,7,memDevice,styleFortran> real7d;
 typedef Array<real,8,memDevice,styleFortran> real8d;
 
 void die(std::string msg) {
-  std::cerr << msg << std::endl;
-  exit(-1);
+  yakl::yakl_throw(msg.c_str());
 }
 
 

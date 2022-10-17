@@ -30,8 +30,7 @@ typedef Array<real,3,memDevice,styleC> real3d;
 
 
 void die(std::string msg) {
-  std::cerr << msg << std::endl;
-  exit(-1);
+  yakl::yakl_throw(msg.c_str());
 }
 
 

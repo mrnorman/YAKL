@@ -17,8 +17,7 @@ typedef Array<size_t,1,memHost,styleFortran> int1d_f;
 
 
 void die(std::string msg) {
-  std::cerr << msg << std::endl;
-  exit(-1);
+  yakl::yakl_throw(msg.c_str());
 }
 
 

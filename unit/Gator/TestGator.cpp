@@ -17,8 +17,7 @@ typedef Array<real,1,memDevice,styleC> real1d;
 
 
 void die(std::string msg) {
-  std::cerr << msg << std::endl;
-  exit(-1);
+  yakl::yakl_throw(msg.c_str());
 }
 
 

@@ -43,8 +43,7 @@ typedef Array<bool,3,memDevice,styleFortran> bool_f_3d;
 
 
 void die(std::string msg) {
-  std::cerr << msg << std::endl;
-  exit(-1);
+  yakl::yakl_throw(msg.c_str());
 }
 
 
