@@ -226,12 +226,22 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   // call after launch
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    if constexpr (sycl::is_device_copyable<F>::value) {
-      config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
-        callFunctor( f , bounds , i );
-      });
-      config.get_stream().get_real_stream().wait();
-    } else {
+    #ifdef SYCL_DEVICE_COPYABLE
+      if constexpr (sizeof(F) < 1700) {
+        SYCL_Functor_Wrapper sycl_functor_wrapper(f);
+        config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
+          callFunctor( sycl_functor_wrapper.get_functor() , bounds , i );
+        });
+      } else {
+        F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
+        config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
+        auto kernelEvent = config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter), [=] (sycl::id<1> i) {
+          callFunctor( *fp , bounds , i );
+        });
+        kernelEvent.wait();
+        free_device( fp , "functor_buffer" );
+      }
+    #else
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
       config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
       auto kernelEvent = config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter), [=] (sycl::id<1> i) {
@@ -239,7 +249,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       });
       kernelEvent.wait();
       free_device( fp , "functor_buffer" );
-    }
+    #endif
 
     check_last_error();
   }
@@ -248,13 +258,24 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_outer_sycl( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    if constexpr (sycl::is_device_copyable<F>::value) {
-      config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
-                                          [=] (sycl::nd_item<1> item) {
-        callFunctorOuter( f , bounds , item.get_group(0) , InnerHandler(item) );
-      });
-      config.get_stream().get_real_stream().wait();
-    } else {
+    #ifdef SYCL_DEVICE_COPYABLE
+      if constexpr (sizeof(F) < 1700) {
+        SYCL_Functor_Wrapper sycl_functor_wrapper(f);
+        config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
+                                            [=] (sycl::nd_item<1> item) {
+          callFunctorOuter( sycl_functor_wrapper.get_functor() , bounds , item.get_group(0) , InnerHandler(item) );
+        });
+      } else {
+        F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
+        config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
+        auto kernelEvent = config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
+                                            [=] (sycl::nd_item<1> item) {
+          callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
+        });
+        kernelEvent.wait();
+        free_device( fp , "functor_buffer" );
+      }
+    #else
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
       config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
       auto kernelEvent = config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
@@ -263,7 +284,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       });
       kernelEvent.wait();
       free_device( fp , "functor_buffer" );
-    }
+    #endif
 
     check_last_error();
   }

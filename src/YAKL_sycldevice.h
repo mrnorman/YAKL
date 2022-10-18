@@ -51,5 +51,40 @@ namespace yakl {
     static inline sycl::queue &sycl_default_stream() {
       return dev_mgr::instance().default_queue();
     }
+
+    #ifdef SYCL_DEVICE_COPYABLE
+      template <class F>
+      class SYCL_Functor_Wrapper {
+
+        union UnionWrapper {
+          F functor;
+          UnionWrapper(){};
+          UnionWrapper(F const & f) { std::memcpy( &functor , &f , sizeof(F) ); }
+          UnionWrapper           (UnionWrapper const  & rhs) { std::memcpy( &functor , &rhs.functor , sizeof(F) ); }
+          UnionWrapper           (UnionWrapper       && rhs) { std::memcpy( &functor , &rhs.functor , sizeof(F) ); }
+          UnionWrapper &operator=(UnionWrapper const  & rhs) { std::memcpy( &functor , &rhs.functor , sizeof(F) ); return *this; }
+          UnionWrapper &operator=(UnionWrapper       && rhs) { std::memcpy( &functor , &rhs.functor , sizeof(F) ); return *this; }
+          void operator=(F const & f) { std::memcpy(&functor, &f, sizeof(F)); }
+          ~UnionWrapper() { }
+        };
+
+        UnionWrapper union_wrapper;
+
+       public:
+        SYCL_Functor_Wrapper(F const & functor) { union_wrapper = functor; }
+        F const & get_functor() const { return union_wrapper.functor; }
+      };
+    #endif
+
   #endif // YAKL_ARCH_SYCL
 }
+
+
+#if defined(YAKL_ARCH_SYCL) && defined(SYCL_DEVICE_COPYABLE)
+template <typename F>
+struct sycl::is_device_copyable<yakl::SYCL_Functor_Wrapper<F>> : std::true_type {};
+
+template <typename F>
+struct sycl::is_device_copyable<yakl::SYCL_Functor_Wrapper<F> const> : std::true_type {};
+#endif
+
