@@ -229,14 +229,18 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
     #ifdef SYCL_DEVICE_COPYABLE
       if constexpr (sizeof(F) < 1700) {
         SYCL_Functor_Wrapper sycl_functor_wrapper(f);
-        config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter) , [=] (sycl::id<1> i) {
-          callFunctor( sycl_functor_wrapper.get_functor() , bounds , i );
+        config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(((bounds.nIter-1)/VecLen+1)*VecLen,VecLen) , [=] (sycl::nd_item<1> item) {
+          if (item.get_global_id(0) < bounds.nIter) {
+            callFunctor( sycl_functor_wrapper.get_functor() , bounds , item.get_global_id(0) );
+          }
         });
       } else {
         F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
         auto copyEvent = config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
-        config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter), [=] (sycl::id<1> i) {
-          callFunctor( *fp , bounds , i );
+        config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(((bounds.nIter-1)/VecLen+1)*VecLen,VecLen), [=] (sycl::nd_item<1> item) {
+          if (item.get_global_id(0) < bounds.nIter) {
+            callFunctor( *fp , bounds , item.get_global_id(0) );
+          }
         });
         free_device( fp , "functor_buffer" );
         copyEvent.wait();
@@ -244,8 +248,10 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
     #else
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
       auto copyEvent = config.get_stream().get_real_stream().memcpy(fp, &f, sizeof(F));
-      config.get_stream().get_real_stream().parallel_for( sycl::range<1>(bounds.nIter), [=] (sycl::id<1> i) {
-        callFunctor( *fp , bounds , i );
+      config.get_stream().get_real_stream().parallel_for( sycl::nd_range<1>(((bounds.nIter-1)/VecLen+1)*VecLen,VecLen), [=] (sycl::nd_item<1> item) {
+        if (item.get_global_id(0) < bounds.nIter) {
+          callFunctor( *fp , bounds , item.get_global_id(0) );
+        }
       });
       free_device( fp , "functor_buffer" );
       copyEvent.wait();

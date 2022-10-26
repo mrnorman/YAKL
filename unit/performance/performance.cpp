@@ -166,11 +166,12 @@ int main() {
   {
     int nx = 2048;
     int nz = 1024;
+    int niter = 10;
 
-    for (int i=0; i<3; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_pfor",true ); }
-    for (int i=0; i<3; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_pfor" ,true ); }
-    for (int i=0; i<3; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_for" ,false); }
-    for (int i=0; i<3; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_for"  ,false); }
+    for (int i=0; i<niter; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_pfor",true ); }
+    for (int i=0; i<niter; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_pfor" ,true ); }
+    for (int i=0; i<niter; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_for" ,false); }
+    for (int i=0; i<niter; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_for"  ,false); }
 
   }
   yakl::finalize();
