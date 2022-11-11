@@ -85,7 +85,7 @@ namespace yakl {
       nullify();
     }
     /** @brief Create an empty, unallocated object with a label.*/
-    YAKL_INLINE Array(char const * label) {
+    YAKL_INLINE explicit Array(char const * label) {
       nullify();
       #ifdef YAKL_DEBUG
         this->myname = label;
