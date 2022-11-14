@@ -12,6 +12,7 @@ Contributors:
 * Isaac Lyngaas (Oak Ridge National Laboratory)
 * Abhishek Bagusetty (Argonne National Laboratory)
 * Mark Berrill (Oak Ridge National Laboratory)
+* Pierre Kestener (Institut de Recherche sur les lois Fondamentales de l'Univers)
 
 ## Example YAKL Usage
 For a self-contained example of how to use YAKL, please checkout the `cpp/` folder of the miniWeather repo
