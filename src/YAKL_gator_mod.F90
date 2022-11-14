@@ -11,6 +11,8 @@ module gator_mod
   integer(8) :: i8
   real       :: r4
   real(8)    :: r8
+  complex    :: c4
+  complex(8) :: c8
   logical    :: lg
 
   interface gator_init
@@ -68,6 +70,22 @@ module gator_mod
     module procedure :: gator_allocate_real8_6d
     module procedure :: gator_allocate_real8_7d
 
+    module procedure :: gator_allocate_cplx4_1d
+    module procedure :: gator_allocate_cplx4_2d
+    module procedure :: gator_allocate_cplx4_3d
+    module procedure :: gator_allocate_cplx4_4d
+    module procedure :: gator_allocate_cplx4_5d
+    module procedure :: gator_allocate_cplx4_6d
+    module procedure :: gator_allocate_cplx4_7d
+
+    module procedure :: gator_allocate_cplx8_1d
+    module procedure :: gator_allocate_cplx8_2d
+    module procedure :: gator_allocate_cplx8_3d
+    module procedure :: gator_allocate_cplx8_4d
+    module procedure :: gator_allocate_cplx8_5d
+    module procedure :: gator_allocate_cplx8_6d
+    module procedure :: gator_allocate_cplx8_7d
+
     module procedure :: gator_allocate_log_1d
     module procedure :: gator_allocate_log_2d
     module procedure :: gator_allocate_log_3d
@@ -110,6 +128,22 @@ module gator_mod
     module procedure :: gator_deallocate_real8_5d
     module procedure :: gator_deallocate_real8_6d
     module procedure :: gator_deallocate_real8_7d
+
+    module procedure :: gator_deallocate_cplx4_1d
+    module procedure :: gator_deallocate_cplx4_2d
+    module procedure :: gator_deallocate_cplx4_3d
+    module procedure :: gator_deallocate_cplx4_4d
+    module procedure :: gator_deallocate_cplx4_5d
+    module procedure :: gator_deallocate_cplx4_6d
+    module procedure :: gator_deallocate_cplx4_7d
+
+    module procedure :: gator_deallocate_cplx8_1d
+    module procedure :: gator_deallocate_cplx8_2d
+    module procedure :: gator_deallocate_cplx8_3d
+    module procedure :: gator_deallocate_cplx8_4d
+    module procedure :: gator_deallocate_cplx8_5d
+    module procedure :: gator_deallocate_cplx8_6d
+    module procedure :: gator_deallocate_cplx8_7d
 
     module procedure :: gator_deallocate_log_1d
     module procedure :: gator_deallocate_log_2d
@@ -580,6 +614,232 @@ contains
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
   end subroutine gator_allocate_real8_7d
 
+  subroutine gator_allocate_cplx4_1d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 1
+    complex, pointer , intent(  out) :: arr       (:)
+    integer          , intent(in   ) :: dims      (ndims)
+    integer, optional, intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):) => arr
+  end subroutine gator_allocate_cplx4_1d
+  subroutine gator_allocate_cplx4_2d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 2
+    complex, pointer , intent(  out) :: arr       (:,:)
+    integer          , intent(in   ) :: dims      (ndims)
+    integer, optional, intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):) => arr
+  end subroutine gator_allocate_cplx4_2d
+  subroutine gator_allocate_cplx4_3d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 3
+    complex, pointer , intent(  out) :: arr       (:,:,:)
+    integer          , intent(in   ) :: dims      (ndims)
+    integer, optional, intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):) => arr
+  end subroutine gator_allocate_cplx4_3d
+  subroutine gator_allocate_cplx4_4d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 4
+    complex, pointer , intent(  out) :: arr       (:,:,:,:)
+    integer          , intent(in   ) :: dims      (ndims)
+    integer, optional, intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => arr
+  end subroutine gator_allocate_cplx4_4d
+  subroutine gator_allocate_cplx4_5d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 5
+    complex, pointer , intent(  out) :: arr       (:,:,:,:,:)
+    integer          , intent(in   ) :: dims      (ndims)
+    integer, optional, intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):) => arr
+  end subroutine gator_allocate_cplx4_5d
+  subroutine gator_allocate_cplx4_6d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 6
+    complex, pointer , intent(  out) :: arr       (:,:,:,:,:,:)
+    integer          , intent(in   ) :: dims      (ndims)
+    integer, optional, intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):) => arr
+  end subroutine gator_allocate_cplx4_6d
+  subroutine gator_allocate_cplx4_7d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 7
+    complex, pointer , intent(  out) :: arr       (:,:,:,:,:,:,:)
+    integer          , intent(in   ) :: dims      (ndims)
+    integer, optional, intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
+  end subroutine gator_allocate_cplx4_7d
+
+  subroutine gator_allocate_cplx8_1d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 1
+    complex(8), pointer , intent(  out) :: arr       (:)
+    integer             , intent(in   ) :: dims      (ndims)
+    integer, optional   , intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):) => arr
+  end subroutine gator_allocate_cplx8_1d
+  subroutine gator_allocate_cplx8_2d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 2
+    complex(8), pointer , intent(  out) :: arr       (:,:)
+    integer             , intent(in   ) :: dims      (ndims)
+    integer, optional   , intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):) => arr
+  end subroutine gator_allocate_cplx8_2d
+  subroutine gator_allocate_cplx8_3d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 3
+    complex(8), pointer , intent(  out) :: arr       (:,:,:)
+    integer             , intent(in   ) :: dims      (ndims)
+    integer, optional   , intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):) => arr
+  end subroutine gator_allocate_cplx8_3d
+  subroutine gator_allocate_cplx8_4d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 4
+    complex(8), pointer , intent(  out) :: arr       (:,:,:,:)
+    integer             , intent(in   ) :: dims      (ndims)
+    integer, optional   , intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => arr
+  end subroutine gator_allocate_cplx8_4d
+  subroutine gator_allocate_cplx8_5d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 5
+    complex(8), pointer , intent(  out) :: arr       (:,:,:,:,:)
+    integer             , intent(in   ) :: dims      (ndims)
+    integer, optional   , intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):) => arr
+  end subroutine gator_allocate_cplx8_5d
+  subroutine gator_allocate_cplx8_6d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 6
+    complex(8), pointer , intent(  out) :: arr       (:,:,:,:,:,:)
+    integer             , intent(in   ) :: dims      (ndims)
+    integer, optional   , intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):) => arr
+  end subroutine gator_allocate_cplx8_6d
+  subroutine gator_allocate_cplx8_7d( arr , dims , lbounds_in )
+    integer, parameter :: ndims = 7
+    complex(8), pointer , intent(  out) :: arr       (:,:,:,:,:,:,:)
+    integer             , intent(in   ) :: dims      (ndims)
+    integer, optional   , intent(in   ) :: lbounds_in(ndims)
+    integer :: lbounds(ndims)
+    type(c_ptr) :: data_ptr
+    if (present(lbounds_in)) then
+      lbounds = lbounds_in
+    else
+      lbounds = 1
+    endif
+    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    call c_f_pointer( data_ptr , arr , dims )
+    arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
+  end subroutine gator_allocate_cplx8_7d
+
   subroutine gator_allocate_log_1d( arr , dims , lbounds_in )
     integer, parameter :: ndims = 1
     logical, pointer , intent(  out) :: arr       (:)
@@ -842,6 +1102,78 @@ contains
     arr => NULL()
   end subroutine gator_deallocate_real8_7d
 
+  subroutine gator_deallocate_cplx4_1d( arr )
+    complex, pointer, intent(inout) :: arr(:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr=> NULL()
+  end subroutine gator_deallocate_cplx4_1d
+  subroutine gator_deallocate_cplx4_2d( arr )
+    complex, pointer, intent(inout) :: arr(:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx4_2d
+  subroutine gator_deallocate_cplx4_3d( arr )
+    complex, pointer, intent(inout) :: arr(:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx4_3d
+  subroutine gator_deallocate_cplx4_4d( arr )
+    complex, pointer, intent(inout) :: arr(:,:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx4_4d
+  subroutine gator_deallocate_cplx4_5d( arr )
+    complex, pointer, intent(inout) :: arr(:,:,:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx4_5d
+  subroutine gator_deallocate_cplx4_6d( arr )
+    complex, pointer, intent(inout) :: arr(:,:,:,:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx4_6d
+  subroutine gator_deallocate_cplx4_7d( arr )
+    complex, pointer, intent(inout) :: arr(:,:,:,:,:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx4_7d
+
+  subroutine gator_deallocate_cplx8_1d( arr )
+    complex(8), pointer, intent(inout) :: arr(:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr=> NULL()
+  end subroutine gator_deallocate_cplx8_1d
+  subroutine gator_deallocate_cplx8_2d( arr )
+    complex(8), pointer, intent(inout) :: arr(:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx8_2d
+  subroutine gator_deallocate_cplx8_3d( arr )
+    complex(8), pointer, intent(inout) :: arr(:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx8_3d
+  subroutine gator_deallocate_cplx8_4d( arr )
+    complex(8), pointer, intent(inout) :: arr(:,:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx8_4d
+  subroutine gator_deallocate_cplx8_5d( arr )
+    complex(8), pointer, intent(inout) :: arr(:,:,:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx8_5d
+  subroutine gator_deallocate_cplx8_6d( arr )
+    complex(8), pointer, intent(inout) :: arr(:,:,:,:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx8_6d
+  subroutine gator_deallocate_cplx8_7d( arr )
+    complex(8), pointer, intent(inout) :: arr(:,:,:,:,:,:,:)
+    call gator_deallocate_c( c_loc( arr ) )
+    arr => NULL()
+  end subroutine gator_deallocate_cplx8_7d
+
   subroutine gator_deallocate_log_1d( arr )
     logical, pointer, intent(inout) :: arr(:)
     call gator_deallocate_c( c_loc( arr ) )
@@ -880,4 +1212,3 @@ contains
 
 
 end module gator_mod
-
