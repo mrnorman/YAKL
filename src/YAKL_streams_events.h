@@ -155,7 +155,7 @@ namespace yakl {
 
 
     inline void Stream::wait_on_event(Event event) {
-      cudaStreamWaitEvent( my_stream , event.get_real_event() );
+      cudaStreamWaitEvent( my_stream , event.get_real_event() , 0 );
     }
 
   #elif defined(YAKL_ARCH_HIP)

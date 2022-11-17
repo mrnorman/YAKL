@@ -2,7 +2,7 @@
 
 source $MODULESHOME/init/bash
 module purge
-module load DefApps gcc/9.3.0 cuda/11.4.0 cmake
+module load DefApps gcc/9.3.0 cuda/11.5.2 cmake
 
 ../../cmakeclean.sh
 
