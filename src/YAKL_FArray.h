@@ -443,6 +443,43 @@ namespace yakl {
     }
 
 
+    /** @brief Construct this FArray object from an ArrayIR object for easy interoperability with other C++ portability libraries
+      * 
+      * @param  ir            The ArrayIR object
+      * @param  lower_bounds  The lower bounds to use for this FArray object (optional) */
+    Array( ArrayIR::ArrayIR<T,rank> const &ir , std::vector<int> lower_bounds = std::vector<int>() ) {
+      nullify();
+      if (myMem == memDevice && (! ir.data_valid_on_device())) yakl_throw("ERROR: wrapping non-device-valid ArrayIR with memDevice yakl::FArray");
+      if (myMem == memHost   && (! ir.data_valid_on_host  ())) yakl_throw("ERROR: wrapping non-host-valid ArrayIR with memHost yakl::FArray");
+      this->myData = ir.data();
+      #ifdef YAKL_DEBUG
+        this->myname = ir.label();
+      #endif
+      for (int i=0; i < rank; i++) { this->dimension[i] = ir.extent(rank-1-i); }
+      if ( (! lower_bounds.empty()) && ( lower_bounds.size() != rank ) ) yakl_throw("ERROR: Passed lower bounds of the wrong rank");
+      for (int i=0; i < rank; i++) { this->lbounds[i] = lower_bounds[i]; }
+    }
+
+
+    /** @brief Create an ArrayIR object from this FArray object for easy interoperability with other C++ portability libraries.
+      *        Lower bounds are discarded. */
+    template <class TLOC = T>
+    ArrayIR::ArrayIR<TLOC,rank> create_ArrayIR() const {
+      using ArrayIR::ArrayIR;
+      std::array<size_t,rank> dimensions;
+      for (int i=0; i < rank; i++) { dimensions[i] = this->dimension[rank-1-i]; }
+      if (myMem == memHost) {
+        return ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_HOST,this->label());
+      } else {
+        #ifdef YAKL_MANAGED_MEMORY
+          return ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_SHARED,this->label());
+        #else
+          return ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_DEVICE,this->label());
+        #endif
+      }
+    }
+
+
     // Common detailed documentation for all indexers
     /** @class doxhide_FArray_indexers
       * @brief dummy

@@ -347,6 +347,18 @@ int main() {
     if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("LOOPS: wrong sum for test7d"); }
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("LOOPS: wrong sum for test8d"); }
 
+    auto ir_device = test8d.create_ArrayIR();
+    auto ir_host   = test8d.createHostCopy().create_ArrayIR();
+    if (ir_device.get_memory_type() == ArrayIR::MEMORY_HOST  ) die("ir_device has wrong memory type");
+    if (ir_host  .get_memory_type() == ArrayIR::MEMORY_DEVICE) die("ir_host   has wrong memory type");
+    if (ir_host.extent(1) != test8d.extent(6)) die("ir_host extent(1) is wrong");
+    if (!ir_host.valid()) die("ir_host says it's not valid");
+
+    Array<real,8,memHost,styleFortran> wrap(ir_host,{2,2,2,2,2,2,2,2});
+    if (wrap.extent(1) != test8d.extent(1)) die("wrap extent is wrong");
+    if (wrap.data() != ir_host.data()) die("wrap data pointer is wrong");
+    if (wrap.get_lbounds()(1) != 2) die("wrap wrong lbounds");
+
 
     ///////////////////////////////////////////////////////////
     // Test reshape

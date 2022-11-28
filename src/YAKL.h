@@ -23,6 +23,7 @@ namespace yakl {
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 }
 
+#include "ArrayIR.h"
 #include "YAKL_mutex.h"
 #include "YAKL_sycldevice.h"
 #include "YAKL_verbose.h"

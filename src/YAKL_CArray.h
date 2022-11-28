@@ -440,6 +440,37 @@ namespace yakl {
     }
 
 
+    /** @brief Construct this CArray object from an ArrayIR object for easy interoperability with other C++ portability libraries */
+    Array( ArrayIR::ArrayIR<T,rank> const &ir ) {
+      nullify();
+      if (myMem == memDevice && (! ir.data_valid_on_device())) yakl_throw("ERROR: wrapping non-device-valid ArrayIR with memDevice yakl::CArray");
+      if (myMem == memHost   && (! ir.data_valid_on_host  ())) yakl_throw("ERROR: wrapping non-host-valid ArrayIR with memHost yakl::CArray");
+      this->myData = ir.data();
+      #ifdef YAKL_DEBUG
+        this->myname = ir.label();
+      #endif
+      for (int i=0; i < rank; i++) { this->dimension[i] = ir.extent(i); }
+    }
+
+
+    /** @brief Create an ArrayIR object from this CArray object for easy interoperability with other C++ portability libraries */
+    template <class TLOC = T>
+    ArrayIR::ArrayIR<TLOC,rank> create_ArrayIR() const {
+      using ArrayIR::ArrayIR;
+      std::array<size_t,rank> dimensions;
+      for (int i=0; i < rank; i++) { dimensions[i] = this->dimension[i]; }
+      if (myMem == memHost) {
+        return ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_HOST,this->label());
+      } else {
+        #ifdef YAKL_MANAGED_MEMORY
+          return ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_SHARED,this->label());
+        #else
+          return ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_DEVICE,this->label());
+        #endif
+      }
+    }
+
+
     // Common detailed documentation for all indexers
     /** @class doxhide_CArray_indexers
       * @brief dummy
