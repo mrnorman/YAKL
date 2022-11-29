@@ -456,16 +456,15 @@ namespace yakl {
     /** @brief Create an ArrayIR object from this CArray object for easy interoperability with other C++ portability libraries */
     template <class TLOC = T>
     ArrayIR::ArrayIR<TLOC,rank> create_ArrayIR() const {
-      using ArrayIR::ArrayIR;
       std::array<size_t,rank> dimensions;
       for (int i=0; i < rank; i++) { dimensions[i] = this->dimension[i]; }
       if (myMem == memHost) {
-        return ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_HOST,this->label());
+        return ArrayIR::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_HOST,this->label());
       } else {
         #ifdef YAKL_MANAGED_MEMORY
-          return ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_SHARED,this->label());
+          return ArrayIR::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_SHARED,this->label());
         #else
-          return ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_DEVICE,this->label());
+          return ArrayIR::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_DEVICE,this->label());
         #endif
       }
     }
