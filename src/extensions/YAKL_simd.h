@@ -39,8 +39,6 @@ namespace simd {
   class Pack {
   public:
     /** @private */
-    typedef unsigned int uint;
-    /** @private */
     T myData[N];
 
     /** @brief Returns a modifiable reference to the data at the requested index */

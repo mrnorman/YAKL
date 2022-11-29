@@ -11,6 +11,7 @@
   * @brief Contains `Bounds` class, and `parallel_for()` routines using Fortran-style indexing and ordering */
 
 namespace yakl {
+  typedef unsigned int uint;
   using std::cos;
   using std::sin;
   using std::pow;
