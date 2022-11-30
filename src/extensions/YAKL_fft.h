@@ -76,18 +76,23 @@ namespace yakl {
       }
     #endif
 
-    RealFFT1D() { batch_size = -1;  transform_size = -1;  trdim = -1; }
+    void nullify() {batch_size = -1;  transform_size = -1;  trdim = -1;}
+
+    RealFFT1D() { nullify(); }
     ~RealFFT1D() { cleanup(); }
 
     /** @private */
     void cleanup() {
-      #if   defined(YAKL_ARCH_CUDA)
-        CHECK( cufftDestroy( plan_forward ) );
-        CHECK( cufftDestroy( plan_inverse ) );
-      #elif defined(YAKL_ARCH_HIP)
-        CHECK( rocfft_plan_destroy( plan_forward ) );
-        CHECK( rocfft_plan_destroy( plan_inverse ) );
-      #endif
+      if (transform_size != -1) {
+        #if   defined(YAKL_ARCH_CUDA)
+          CHECK( cufftDestroy( plan_forward ) );
+          CHECK( cufftDestroy( plan_inverse ) );
+        #elif defined(YAKL_ARCH_HIP)
+          CHECK( rocfft_plan_destroy( plan_forward ) );
+          CHECK( rocfft_plan_destroy( plan_inverse ) );
+        #endif
+      }
+      nullify();
     }
 
     /** @brief Setup FFT plans, allocate, compute needed data.
