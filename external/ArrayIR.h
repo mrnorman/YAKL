@@ -105,6 +105,8 @@ namespace ArrayIR {
       if (i < 0 || i > N-1) error_message("extent() index out of bounds");
       return my_dimensions[i];
     }
+    /** @brief Get the shape of the array as a std::array<size_t,N> */
+    std::array<size_t,N> shape() const { return my_dimensions; }
     /** @brief Get the extent of the dimension of the provided index */
     size_t dimension(int i) const { return extent(i); }
     /** @brief Get the label for this array */
