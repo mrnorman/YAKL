@@ -5,6 +5,8 @@
 
 ## API Documentation: https://mrnorman.github.io/yakl_api/html/index.html
 
+## Cite YAKL: https://link.springer.com/article/10.1007/s10766-022-00739-0
+
 Author: Matt Norman (Oak Ridge National Laboratory) - mrnorman.github.io
 
 Contributors:
