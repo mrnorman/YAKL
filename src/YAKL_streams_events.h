@@ -315,13 +315,13 @@ namespace yakl {
 
     class Stream {
       protected:
-      std::shared_ptr<sycl::queue> my_stream;
+      std::shared_ptr<sycl::queue> my_stream{nullptr};
 
       public:
 
       Stream() { }
       Stream(sycl::queue &sycl_queue) { my_stream = std::make_shared<sycl::queue>(sycl_queue); }
-      ~Stream() { my_stream.reset(); }
+      ~Stream() { }
 
       Stream(Stream const  &rhs) { my_stream = rhs.my_stream; }
       Stream(Stream       &&rhs) { my_stream = rhs.my_stream; }
@@ -329,14 +329,17 @@ namespace yakl {
       Stream & operator=(Stream       &&rhs) { if (this != &rhs) { my_stream = rhs.my_stream; }; return *this; }
 
       void create() {
+        // Ensure these multi-streams use the same device & context as default-stream
         if constexpr (streams_enabled) {
-          sycl::device dev(sycl::gpu_selector{});
-          my_stream = std::make_shared<sycl::queue>( sycl::queue( dev , asyncHandler , sycl::property_list{sycl::property::queue::in_order{}} ) );
+          my_stream = std::make_shared<sycl::queue>( sycl_default_stream().get_context() ,
+                                                     sycl_default_stream().get_device() ,
+                                                     asyncHandler ,
+                                                     sycl::property_list{sycl::property::queue::in_order{}} );
         }
       }
 
       void destroy() { my_stream.reset(); }
-      sycl::queue & get_real_stream() const { return my_stream ? *my_stream : sycl_default_stream(); }
+      sycl::queue & get_real_stream() const { return (my_stream != nullptr) ? *my_stream : sycl_default_stream(); }
       bool operator==(Stream stream) const { return get_real_stream() == stream.get_real_stream(); }
       inline void wait_on_event(Event event);
       bool is_default_stream() const { return get_real_stream() == sycl_default_stream(); }
@@ -370,7 +373,7 @@ namespace yakl {
     };
 
 
-    inline void Event::record(Stream stream) { my_event = stream.get_real_stream().single_task( [=] () {} ); }
+    inline void Event::record(Stream stream) { my_event = stream.get_real_stream().ext_oneapi_submit_barrier(); }
 
     inline void Stream::wait_on_event(Event event) { my_stream->ext_oneapi_submit_barrier({event.get_real_event()}); }
 
@@ -419,7 +422,7 @@ namespace yakl {
     inline void Stream::wait_on_event(Event event) {  }
 
   #endif
-    
+
 
   /** @brief Create and return a Stream object. It is guaranteed to not be the default stream */
   inline Stream create_stream() { Stream stream; stream.create(); return stream; }
@@ -428,10 +431,10 @@ namespace yakl {
   inline Event record_event(Stream stream = Stream()) { Event event; event.create(); event.record(stream); return event; }
 
 
-  /** @brief Implements a list of Stream objects. 
+  /** @brief Implements a list of Stream objects.
     *        Needs to store a pointer to avoid construction on the device since Array objects need to store a
     *        list of streams on which they depend.
-    * 
+    *
     * This purposely mimics a std::vector class's methods */
   struct StreamList {
     /** @private */
@@ -464,5 +467,3 @@ namespace yakl {
   };
 
 }
-
-
