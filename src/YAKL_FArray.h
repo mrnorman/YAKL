@@ -447,7 +447,7 @@ namespace yakl {
       *
       * @param  ir            The ArrayIR object
       * @param  lower_bounds  The lower bounds to use for this FArray object (optional) */
-    Array( ArrayIR::ArrayIR<T,rank> const &ir , std::vector<int> lower_bounds = std::vector<int>() ) {
+    Array( array_ir::ArrayIR<T,rank> const &ir , std::vector<int> lower_bounds = std::vector<int>() ) {
       nullify();
       if (myMem == memDevice && (! ir.data_valid_on_device())) yakl_throw("ERROR: wrapping non-device-valid ArrayIR with memDevice yakl::FArray");
       if (myMem == memHost   && (! ir.data_valid_on_host  ())) yakl_throw("ERROR: wrapping non-host-valid ArrayIR with memHost yakl::FArray");
@@ -464,16 +464,16 @@ namespace yakl {
     /** @brief Create an ArrayIR object from this FArray object for easy interoperability with other C++ portability libraries.
       *        Lower bounds are discarded. */
     template <class TLOC = T>
-    ArrayIR::ArrayIR<TLOC,rank> create_ArrayIR() const {
+    array_ir::ArrayIR<TLOC,rank> create_ArrayIR() const {
       std::array<size_t,rank> dimensions;
       for (int i=0; i < rank; i++) { dimensions[i] = this->dimension[rank-1-i]; }
       if (myMem == memHost) {
-        return ArrayIR::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_HOST,this->label());
+        return array_ir::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,array_ir::MEMORY_HOST,this->label());
       } else {
         #ifdef YAKL_MANAGED_MEMORY
-          return ArrayIR::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_SHARED,this->label());
+          return array_ir::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,array_ir::MEMORY_SHARED,this->label());
         #else
-          return ArrayIR::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_DEVICE,this->label());
+          return array_ir::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,array_ir::MEMORY_DEVICE,this->label());
         #endif
       }
     }

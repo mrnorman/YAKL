@@ -4,7 +4,7 @@
 /** @brief The ArrayIR namespace holds the ArrayIR class and memory type constants associated with ArrayIR.
            This class holds library-agnostic Array metadata to make it easy to transfer array objects between
            different C++ libraries. */
-namespace ArrayIR {
+namespace array_ir {
 
   /** @brief Declares that the data pointer is defined only in host memory */
   int constexpr MEMORY_HOST   = 0;
@@ -67,9 +67,9 @@ namespace ArrayIR {
       * 
       * @param  data         The data pointer
       * @param  dimensions   Dimensions with right-most varying the fastest. Initializer lists are allowed
-      * @param  memory_type  ArrayIR::MEMORY_HOST if the data is valid only on the host.
-      *                      ArrayIR::MEMORY_DEVICE if the data is valid only on the device.
-      *                      ArrayIR::MEMORY_SHARED if the data is valid on both host and device.
+      * @param  memory_type  array_ir::MEMORY_HOST if the data is valid only on the host.
+      *                      array_ir::MEMORY_DEVICE if the data is valid only on the device.
+      *                      array_ir::MEMORY_SHARED if the data is valid on both host and device.
       * @param  label        Optional label parameter for debugging and such things. */
     ArrayIR( T * data , std::array<size_t,N> dimensions , int memory_type , char const * label="" ) {
       my_data        = data;
