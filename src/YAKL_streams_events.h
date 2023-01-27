@@ -313,13 +313,13 @@ namespace yakl {
 
     class Stream {
       protected:
-      std::shared_ptr<sycl::queue> my_stream{nullptr};
+      std::shared_ptr<sycl::queue> my_stream;
 
       public:
 
       Stream() { }
       Stream(sycl::queue &sycl_queue) { my_stream = std::make_shared<sycl::queue>(sycl_queue); }
-      ~Stream() { }
+      ~Stream() { my_stream.reset(); }
 
       Stream(Stream const  &rhs) { my_stream = rhs.my_stream; }
       Stream(Stream       &&rhs) { my_stream = rhs.my_stream; }
@@ -328,18 +328,15 @@ namespace yakl {
 
       void create() {
         if constexpr (streams_enabled) {
-          sycl::platform pltf{sycl::gpu_selector_v};
-          sycl::context ctxt = pltf.ext_oneapi_get_default_context();
-          sycl::device dev = pltf.get_devices()[0];
-
-          my_stream = std::make_shared<sycl::queue>( ctxt , dev , asyncHandler , sycl::property_list{sycl::property::queue::in_order{}} );
+          sycl::device dev(sycl::gpu_selector{});
+          my_stream = std::make_shared<sycl::queue>( sycl::queue( dev , asyncHandler , sycl::property_list{sycl::property::queue::in_order{}} ) );
         }
       }
 
       void destroy() { my_stream.reset(); }
-      sycl::queue & get_real_stream() const { return (my_stream != nullptr) ? *my_stream : sycl_default_stream(); }
+      sycl::queue & get_real_stream() const { return my_stream ? *my_stream : sycl_default_stream(); }
       bool operator==(Stream stream) const { return get_real_stream() == stream.get_real_stream(); }
-      inline void wait_on_event(const Event& event);
+      inline void wait_on_event(Event event);
       bool is_default_stream() const { return get_real_stream() == sycl_default_stream(); }
       void fence() { my_stream->wait(); }
     };
@@ -362,18 +359,18 @@ namespace yakl {
       void create() { }
       void destroy() { }
 
-      inline void record(Stream& stream);
-      const sycl::event & get_real_event() const { return my_event; }
+      inline void record(Stream stream);
+      sycl::event & get_real_event() { return my_event; }
       bool operator==(Event event) const { return my_event == event.get_real_event(); }
       bool completed() { return my_event.get_info<sycl::info::event::command_execution_status>() == sycl::info::event_command_status::complete; }
       void fence() { my_event.wait(); }
     };
 
 
-    inline void Event::record(Stream& stream) { stream.get_real_stream().ext_oneapi_submit_barrier(); }
+    inline void Event::record(Stream stream) { my_event = stream.get_real_stream().single_task( [=] () {} ); }
 
-    inline void Stream::wait_on_event(const Event& event) { my_stream->ext_oneapi_submit_barrier({event.get_real_event()}); }
 
+    inline void Stream::wait_on_event(Event event) { my_stream->single_task( event.get_real_event() , [=] () {} ); }
 
   #else
 
@@ -390,7 +387,7 @@ namespace yakl {
       /** @brief Determine if this stream is the same as the passed stream */
       bool operator==(Stream stream) const { return true; }
       /** @brief Tell the stream to wait until the passed event completes before continuing work in the stream. */
-      inline void wait_on_event(Event& event);
+      inline void wait_on_event(Event event);
       /** @brief Determine whether this stream is the default stream. */
       bool is_default_stream() { return true; }
       /** @brief Pause all CPU work until all existing work in this stream completes. */
@@ -418,7 +415,7 @@ namespace yakl {
     inline void Stream::wait_on_event(Event event) {  }
 
   #endif
-
+    
 
   /** @brief Create and return a Stream object. It is guaranteed to not be the default stream */
   inline Stream create_stream() { Stream stream; stream.create(); return stream; }
@@ -427,10 +424,10 @@ namespace yakl {
   inline Event record_event(Stream stream = Stream()) { Event event; event.create(); event.record(stream); return event; }
 
 
-  /** @brief Implements a list of Stream objects.
+  /** @brief Implements a list of Stream objects. 
     *        Needs to store a pointer to avoid construction on the device since Array objects need to store a
     *        list of streams on which they depend.
-    *
+    * 
     * This purposely mimics a std::vector class's methods */
   struct StreamList {
     /** @private */
@@ -463,3 +460,5 @@ namespace yakl {
   };
 
 }
+
+
