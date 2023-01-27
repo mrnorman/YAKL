@@ -24,8 +24,8 @@ namespace yakl {
     * arr2 = 5; // This will change both arr1 and arr2 because they share the same data pointer
     * ```
     * This will share the same data pointer between `arr1` and `arr2`. Further, passing yakl::Array objects by value is fast
-    * because it only copies the metadata over and shares the pointer to the underlying data.
-    *
+    * because it only copies the metadata over and shares the pointer to the underlying data. 
+    * 
     * To copy data to another array object's data pointer, use `deep_copy_to()`, `createHostCopy()`, or `createDeviceCopy()`.
     * ```
     * yakl::Array<float,1,memHost,styleFortra> arr1("arr1",n);
@@ -61,7 +61,7 @@ namespace yakl {
     /** @brief This is the type `T` with `const` added to it
       * @details If the original type has `volatile`, then so will this type. */
     typedef typename std::add_const<type>::type    const_value_type;
-    /** @brief This is the type `T` with `const` removed from it
+    /** @brief This is the type `T` with `const` removed from it 
       * @details If the original type has `volatile`, then so will this type. */
     typedef typename std::remove_const<type>::type non_const_value_type;
 
@@ -103,7 +103,7 @@ namespace yakl {
       * Create and allocate an owned and reference counted array object.
       * For Fortran-style array objects, the left-most index varies the fastest. Constructor must match
       * the rank template argument.
-      *
+      *        
       * @param label  String label for this array.
       * @param b[0-7] Bounds of the respective dimension.
       * @param bnds   yakl::Bnds object containing the dimension bounds. Must match the array rank.
@@ -212,14 +212,14 @@ namespace yakl {
       *
       * This is one of the yakl::FArray non-owned constructors.
       * Create a non-owned and non-reference-counted array object that wraps the
-      * provided data pointer.
+      * provided data pointer. 
       * For Fortran-style array objects, the left-most index varies the fastest. Constructor must match
       * the rank template argument.
       * When creating a non-owned array object using this form of constructor, it is up to the user to ensure
       * that the underlying data pointer remains allocationg while it is used by this array object.
       * Since this performs no allocations, this constructor may be called on the device, and it has very
       * little runtime cost associated with it.
-      *
+      *        
       * @param label  String label for this array.
       * @param data   Pointer to the allocated data being wrapped by this non-owned array object
       * @param b[0-7] Bounds of the respective dimension.
@@ -328,7 +328,7 @@ namespace yakl {
     }
     /** @brief Copy metadata, share data pointer; if owned, increment reference counter. No deep copy. */
     YAKL_INLINE Array(Array<const_value_type,rank,myMem,styleFortran> const &rhs) {
-      static_assert( std::is_const<T>::value ,
+      static_assert( std::is_const<T>::value , 
                      "ERROR: Cannot create non-const Array using const Array" );
       // This is a constructor, so no need to deallocate
       nullify();
@@ -349,7 +349,7 @@ namespace yakl {
     }
     /** @brief Copy metadata, share data pointer; if owned, increment reference counter. No deep copy. */
     YAKL_INLINE Array & operator=(Array<const_value_type,rank,myMem,styleFortran> const &rhs) {
-      static_assert( std::is_const<T>::value ,
+      static_assert( std::is_const<T>::value , 
                      "ERROR: Cannot create non-const Array using const Array" );
       if constexpr (std::is_const<T>::value) {
         if (this == &rhs) { return *this; }
@@ -433,7 +433,7 @@ namespace yakl {
 
     /*
     DESTRUCTOR
-    Decrement the refCounter, and if it's zero, deallocate and nullify.
+    Decrement the refCounter, and if it's zero, deallocate and nullify.  
     */
     /** @brief If owned, decrement reference counter, and deallocate data when it reaches zero. If non-owned, does nothing */
     YAKL_INLINE ~Array() {
@@ -444,10 +444,10 @@ namespace yakl {
 
 
     /** @brief Construct this FArray object from an ArrayIR object for easy interoperability with other C++ portability libraries
-      *
+      * 
       * @param  ir            The ArrayIR object
       * @param  lower_bounds  The lower bounds to use for this FArray object (optional) */
-    Array( ArrayIR::ArrayIR<T,rank> const &ir , std::vector<int> lower_bounds = std::vector<int>() ) {
+    Array( array_ir::ArrayIR<T,rank> const &ir , std::vector<int> lower_bounds = std::vector<int>() ) {
       nullify();
       if (myMem == memDevice && (! ir.data_valid_on_device())) yakl_throw("ERROR: wrapping non-device-valid ArrayIR with memDevice yakl::FArray");
       if (myMem == memHost   && (! ir.data_valid_on_host  ())) yakl_throw("ERROR: wrapping non-host-valid ArrayIR with memHost yakl::FArray");
@@ -464,16 +464,16 @@ namespace yakl {
     /** @brief Create an ArrayIR object from this FArray object for easy interoperability with other C++ portability libraries.
       *        Lower bounds are discarded. */
     template <class TLOC = T>
-    ArrayIR::ArrayIR<TLOC,rank> create_ArrayIR() const {
+    array_ir::ArrayIR<TLOC,rank> create_ArrayIR() const {
       std::array<size_t,rank> dimensions;
       for (int i=0; i < rank; i++) { dimensions[i] = this->dimension[rank-1-i]; }
       if (myMem == memHost) {
-        return ArrayIR::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_HOST,this->label());
+        return array_ir::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,array_ir::MEMORY_HOST,this->label());
       } else {
         #ifdef YAKL_MANAGED_MEMORY
-          return ArrayIR::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_SHARED,this->label());
+          return array_ir::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,array_ir::MEMORY_SHARED,this->label());
         #else
-          return ArrayIR::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,ArrayIR::MEMORY_DEVICE,this->label());
+          return array_ir::ArrayIR<TLOC,rank>(const_cast<TLOC *>(this->myData),dimensions,array_ir::MEMORY_DEVICE,this->label());
         #endif
       }
     }
@@ -482,7 +482,7 @@ namespace yakl {
     // Common detailed documentation for all indexers
     /** @class doxhide_FArray_indexers
       * @brief dummy
-      *
+      * 
       * Return a reference to the element at the requested index. Number of indices must match the number of dimensions
       * in this array, `N`. The array object must already be allocated. For index checking, please define the `YAKL_DEBUG`
       * CPP macro. Use one-based indexing (modifying lower bounds for non-standard lower bound arrays) with the left-most
@@ -600,7 +600,7 @@ namespace yakl {
       return this->myData[ind];
     }
 
-
+    
     /** @private */
     YAKL_INLINE void check(int i0, int i1=1, int i2=1, int i3=1, int i4=1, int i5=1,
                            int i6=1, int i7=1) const {
@@ -661,7 +661,7 @@ namespace yakl {
         #ifdef YAKL_ENABLE_STREAMS
           fence();
         #endif
-        memset(*this, rhs);
+        c::parallel_for( "YAKL_internal_Array=scalar" , this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
         #ifdef YAKL_ENABLE_STREAMS
           fence();
         #endif
@@ -682,7 +682,7 @@ namespace yakl {
       * array object is owned and reference counted, guaranteeing the underling data remains valid while the returned
       * slice is used. If slicing is performed on the device, a non-owned array object is returned, though this
       * rarely if ever presents an issue on the device.
-      *
+      * 
       * Example usage:
       * ```
       * auto myslice = arr.slice<2>({COLON,COLON,k});
@@ -693,7 +693,7 @@ namespace yakl {
       * @param i[0-7]: Index of the array slice.
       */
 
-    /** @brief Array slice using initializer list or std::vector indices
+    /** @brief Array slice using initializer list or std::vector indices 
       * \copydetails doxhide_FArray_slicing */
     template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( Dims const &dims ) const {
       #ifdef YAKL_DEBUG
@@ -741,35 +741,35 @@ namespace yakl {
       #endif
       return ret;
     }
-    /** @brief Array slice of 1-D array
+    /** @brief Array slice of 1-D array 
       * \copydetails doxhide_FArray_slicing */
     template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0 ) const {
       static_assert( rank == 1 , "ERROR: Calling slice() with 1 index on a non-rank-1 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0) );
     }
-    /** @brief Array slice of 2-D array
+    /** @brief Array slice of 2-D array 
       * \copydetails doxhide_FArray_slicing */
     template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1 ) const {
       static_assert( rank == 2 , "ERROR: Calling slice() with 2 index on a non-rank-2 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1) );
     }
-    /** @brief Array slice of 3-D array
+    /** @brief Array slice of 3-D array 
       * \copydetails doxhide_FArray_slicing */
     template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2 ) const {
       static_assert( rank == 3 , "ERROR: Calling slice() with 3 index on a non-rank-3 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2) );
     }
-    /** @brief Array slice of 4-D array
+    /** @brief Array slice of 4-D array 
       * \copydetails doxhide_FArray_slicing */
     template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3 ) const {
       static_assert( rank == 4 , "ERROR: Calling slice() with 4 index on a non-rank-4 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3) );
     }
-    /** @brief Array slice of 5-D array
+    /** @brief Array slice of 5-D array 
       * \copydetails doxhide_FArray_slicing */
     template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3,
                                                                       int i4 ) const {
@@ -777,7 +777,7 @@ namespace yakl {
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3,i4) );
     }
-    /** @brief Array slice of 6-D array
+    /** @brief Array slice of 6-D array 
       * \copydetails doxhide_FArray_slicing */
     template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3,
                                                                       int i4, int i5 ) const {
@@ -785,7 +785,7 @@ namespace yakl {
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3,i4,i5) );
     }
-    /** @brief Array slice of 7-D array
+    /** @brief Array slice of 7-D array 
       * \copydetails doxhide_FArray_slicing */
     template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3,
                                                                       int i4, int i5, int i6 ) const {
@@ -793,7 +793,7 @@ namespace yakl {
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3,i4,i5,i6) );
     }
-    /** @brief Array slice of 8-D array
+    /** @brief Array slice of 8-D array 
       * \copydetails doxhide_FArray_slicing */
     template <int N> YAKL_INLINE Array<T,N,myMem,styleFortran> slice( int i0, int i1, int i2, int i3,
                                                                       int i4, int i5, int i6, int i7 ) const {
@@ -815,7 +815,7 @@ namespace yakl {
       * counter is incremented. This means you're guaranteed the data pointer is valid throughout the use
       * of the returned array object. If this is performed on the device, then the returned array is non-owned.
       * Be careful doing this in the innermost loop, even on the host, though, because it is still copying
-      * array metadata, and you may notice the extra cost.
+      * array metadata, and you may notice the extra cost. 
       *
       * Example usage:
       * ```
@@ -884,13 +884,13 @@ namespace yakl {
     /** @brief Collapse this array into a 1-D array
       *
       * Returns an array object that shares the data pointer of this array object but has only one dimension,
-      * with all of this array object's dimensions collapsed into a single dimension.
+      * with all of this array object's dimensions collapsed into a single dimension. 
       * This is a fast operation. No allocations are performed, and no underlying data is allocated.
       * If this is performed on the host, then the returned array is owned, and the data pointer's reference
       * counter is incremented. This means you're guaranteed the data pointer is valid throughout the use
       * of the returned array object. If this is performed on the device, then the returned array is non-owned.
       * Be careful doing this in the innermost loop, even on the host, though, because it is still copying
-      * array metadata, and you may notice the extra cost.
+      * array metadata, and you may notice the extra cost. 
       * Example usage: `auto new_arr_1d = arr.collapse();`
       */
     YAKL_INLINE Array<T,1,myMem,styleFortran> collapse(int lbnd=1) const {
@@ -918,13 +918,13 @@ namespace yakl {
     // Create a host copy of this array. Even if the array exists on the host, a deep copy to a separate
     // object is still performed to avoid any potential bugs when the user expects this behavior
     /** @brief [DEEP_COPY] Create a copy of this array in yakl::memHost space
-      *
+      * 
       * Create and allocate a yakl::memHost array object of the same type, rank, dimensions, and style. Then deep copy
       * the data from this array object to the array object returned by this function. This is a slow routine.
       * It both allocates and deep copies the underlying data.
-      *
+      * 
       * Even if the current array is yakl::memHost, this will still allocate and copy to a new object.
-      *
+      * 
       * @returns A newly allocated array of the same type, rank, and style as this one in yakl::memHost space with
       *          data copied from this array object.
       */
@@ -942,7 +942,7 @@ namespace yakl {
 
     // Create a separate host Array with the same rank memory space and style
     /** @brief Create and allocate a yakl::memHost array object of the same type, rank, dimensions, and style.
-      *
+      * 
       * This is the same as createHostCopy() but without the data deep copy portion.
       * This may be slow since host objects do not use the YAKL pool allocator.
       * NOTE: This does not deep copy data. It merely creates and allocates a new array object and returns it.
@@ -975,9 +975,9 @@ namespace yakl {
       * Create and allocate a yakl::memDevice array object of the same type, rank, dimensions, and style. Then deep copy
       * the data from this array object to the array object returned by this function. This is a slow routine.
       * It both allocates and deep copies the underlying data.
-      *
+      * 
       * Even if the current array is yakl::memDevice, this will still allocate and copy to a new object.
-      *
+      * 
       * @returns A newly allocated array of the same type, rank, and style as this one in yakl::memDevice space with
       *          data copied from this array object.
       */
@@ -1023,7 +1023,7 @@ namespace yakl {
 
     /* ACCESSORS */
     /** @brief Returns the dimensions of this array as a yakl::FSArray object.
-      *
+      * 
       * You should use one-based indexing on the returned yakl::FSArray object. */
     YAKL_INLINE FSArray<index_t,1,SB<rank>> get_dimensions() const {
       FSArray<index_t,1,SB<rank>> ret;
@@ -1031,7 +1031,7 @@ namespace yakl {
       return ret;
     }
     /** @brief Returns the lower bound of each dimension of this array as a yakl::FSArray object.
-      *
+      * 
       * You should use one-based indexing on the returned yakl::FSArray object. */
     YAKL_INLINE FSArray<int,1,SB<rank>> get_lbounds() const {
       FSArray<int,1,SB<rank>> ret;
@@ -1039,7 +1039,7 @@ namespace yakl {
       return ret;
     }
     /** @brief Returns the upper bound of each dimension of this array as a yakl::FSArray object.
-      *
+      * 
       * You should use one-based indexing on the returned yakl::FSArray object. */
     YAKL_INLINE FSArray<int,1,SB<rank>> get_ubounds() const {
       FSArray<int,1,SB<rank>> ret;
@@ -1059,3 +1059,5 @@ namespace yakl {
   };
 
 }
+
+
