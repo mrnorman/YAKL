@@ -390,7 +390,7 @@ namespace yakl {
       /** @brief Determine if this stream is the same as the passed stream */
       bool operator==(Stream stream) const { return true; }
       /** @brief Tell the stream to wait until the passed event completes before continuing work in the stream. */
-      inline void wait_on_event(Event& event);
+      inline void wait_on_event(Event event);
       /** @brief Determine whether this stream is the default stream. */
       bool is_default_stream() { return true; }
       /** @brief Pause all CPU work until all existing work in this stream completes. */
