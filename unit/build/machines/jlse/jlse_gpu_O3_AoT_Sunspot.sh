@@ -19,7 +19,13 @@ export FC=mpifort
 unset CXXFLAGS
 unset FFLAGS
 
+export ONEAPI_MPICH_GPU=NO_GPU
 export ZE_AFFINITY_MASK=0.0
+export SYCL_CACHE_PERSISTENT=1
+unset SYCL_DEVICE_FILTER
+export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
+export SYCL_PI_LEVEL_ZERO_USE_IMMEDIATE_COMMANDLISTS=1
+mkdir -p cl_cache
 
 cmake -DYAKL_ARCH="SYCL" \
       -DYAKL_SYCL_FLAGS="-O3" \
