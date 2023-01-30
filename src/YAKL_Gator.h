@@ -136,18 +136,18 @@ namespace yakl {
     /** @brief Finalize the pool allocator, deallocate all individual pools.
       */
     void finalize() {
-      // SYCL has a bug here, and I haven't figured out why yet
-      #ifndef YAKL_ARCH_SYCL
-        fence();
-      #endif
       if (pools.size() > 0) {
+        // SYCL has a bug here, and I haven't figured out why yet
+        #ifndef YAKL_ARCH_SYCL
+          fence();
+        #endif
         if (yakl_mainproc()) std::cout << "Pool Memory High Water Mark:       " << get_high_water_mark() << std::endl;
         if (yakl_mainproc()) std::cout << "Pool Memory High Water Efficiency: " << get_pool_high_water_space_efficiency() << std::endl;
+        if (! waiting_events.empty()) free_completed_waiting_entries();
+        pools = std::list<LinearAllocator>();
+        high_water_mark = 0;
+        bytes_currently_allocated = 0;
       }
-      if (! waiting_events.empty()) free_completed_waiting_entries();
-      pools = std::list<LinearAllocator>();
-      high_water_mark = 0;
-      bytes_currently_allocated = 0;
     }
 
 
