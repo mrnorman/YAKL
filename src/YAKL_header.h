@@ -18,6 +18,7 @@
 #include <memory>
 #include <cstring>
 #include <vector>
+#include <array>
 #include <mutex>
 #include "stdlib.h"
 #include <list>

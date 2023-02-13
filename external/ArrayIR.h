@@ -1,6 +1,10 @@
 
 #pragma once
 
+#include <array>
+#include <iostream>
+#include <type_traits>
+
 /** @brief The ArrayIR namespace holds the ArrayIR class and memory type constants associated with ArrayIR.
            This class holds library-agnostic Array metadata to make it easy to transfer array objects between
            different C++ libraries. */
