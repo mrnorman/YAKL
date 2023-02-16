@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 project(YAKL
         LANGUAGES C CXX Fortran
         HOMEPAGE_URL https://github.com/mrnorman/YAKL/
+        VERSION 0.1
         DESCRIPTION "A Simple C++ Framework for Performance Portability and Fortran Code Porting")
 
 # gnu compatibility,
@@ -23,7 +24,6 @@ option(YAKL_AUTO_FENCE "Turn on auto fence (default OFF)." OFF)
 option(YAKL_B4B "Force serial computation (default OFF)." OFF)
 option(YAKL_MANAGED_MEMORY "Turn on managed memory (default OFF)." OFF)
 option(YAKL_MEMORY_DEBUG "Turn on memory allocation debugging (default OFF)." OFF)
-
 
 set(YAKL_CXX_SOURCE src/YAKL_fortran_interfaces.cpp)
 set(YAKL_F90_SOURCE src/YAKL_gator_mod.F90)
@@ -89,8 +89,10 @@ target_include_directories(yakl PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:include>)
+
+target_include_directories(yakl PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/extensions>
-  $<INSTALL_INTERFACE:include>
   $<INSTALL_INTERFACE:include/extensions>)
 
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
@@ -114,4 +116,68 @@ if ("${YAKL_ARCH}" STREQUAL "OPENMP")
   target_link_libraries(yakl "${YAKL_OPENMP_FLAGS}")
 endif()
 
+
+# Generate configs files
+include(CMakePackageConfigHelpers)
+
+# setup some variables
+set(version_config ${PROJECT_BINARY_DIR}/yakl-config-version.cmake)
+set(project_config_src ${PROJECT_SOURCE_DIR}/src/yakl-config.cmake.in)
+set(project_config_dst ${PROJECT_BINARY_DIR}/src/yakl-config.cmake)
+set(targets_export_name yakl-targets)
+
+set(INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR} CACHE STRING
+  "Installation directory for libraries, relative to ${CMAKE_INSTALL_PREFIX}.")
+
+set(INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE STRING
+  "Installation directory for include files, relative to ${CMAKE_INSTALL_PREFIX}.")
+
+set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig CACHE PATH
+  "Installation directory for pkgconfig (.pc) files, relative to ${CMAKE_INSTALL_PREFIX}.")
+
+set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake CACHE STRING
+  "Installation directory for cmake files, relative to ${CMAKE_INSTALL_PREFIX}.")
+
+# Generate the version, config and target files into the build directory.
+write_basic_package_version_file(
+  ${version_config}
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY AnyNewerVersion)
+
+# generate cmake my_package-config.cmake file
+configure_package_config_file(
+  ${project_config_src}
+  ${project_config_dst}
+  INSTALL_DESTINATION ${INSTALL_CMAKE_DIR})
+
+# setup the list of targets to install
+set (INSTALL_TARGETS yakl)
+
+# Use a namespace because CMake provides better diagnostics
+# for namespaced imported targets.
+export(
+  TARGETS ${INSTALL_TARGETS} NAMESPACE yakl::
+  FILE ${PROJECT_BINARY_DIR}/${targets_export_name}.cmake)
+
+# Install cmake config and target files.
+install(
+  FILES ${project_config_dst} ${version_config}
+  DESTINATION ${INSTALL_CMAKE_DIR})
+
+install(
+  EXPORT ${targets_export_name}
+  DESTINATION ${INSTALL_CMAKE_DIR}
+  NAMESPACE yakl::)
+
+# install libyakl
+install(
+  TARGETS yakl
+  EXPORT ${targets_export_name}
+  LIBRARY DESTINATION ${INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(DIRECTORY src/ external/ DESTINATION include FILES_MATCHING PATTERN "*.h")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gator_mod.mod DESTINATION include)
+install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl_variables.cmake \"set(YAKL_COMPILER_FLAGS \\\"${YAKL_COMPILER_FLAGS}\\\")\nset(YAKL_ARCH \\\"${YAKL_ARCH}\\\")\n\")" )
+install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl_variables.make \"YAKL_COMPILER_FLAGS := ${YAKL_COMPILER_FLAGS}\nYAKL_ARCH := ${YAKL_ARCH}\n\")" )
 
