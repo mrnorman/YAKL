@@ -5,6 +5,9 @@ project(YAKL
         HOMEPAGE_URL https://github.com/mrnorman/YAKL/
         DESCRIPTION "A Simple C++ Framework for Performance Portability and Fortran Code Porting")
 
+# gnu compatibility,
+# see https://cmake.org/cmake/help/latest/module/GNUInstallDirs.html
+include(GNUInstallDirs)
 
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   enable_language(CUDA)
