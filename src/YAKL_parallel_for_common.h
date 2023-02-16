@@ -222,8 +222,6 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 #ifdef YAKL_ARCH_SYCL
   // Kernels are launched with the SYCL parallel_for routine. 
   // Currently, SYCL must copy this to the device manually and then run from the device
-  // Also, there is a violation of dependence wherein the stream must synchronized with a wait()
-  // call after launch
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_for_sycl( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
     #ifdef SYCL_DEVICE_COPYABLE
@@ -243,7 +241,6 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
           }
         });
         free_device( fp , "functor_buffer" );
-        copyEvent.wait();
       }
     #else
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
@@ -254,7 +251,6 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
         }
       });
       free_device( fp , "functor_buffer" );
-      copyEvent.wait();
     #endif
 
     check_last_error();
@@ -279,7 +275,6 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
           callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
         });
         free_device( fp , "functor_buffer" );
-        copyEvent.wait();
       }
     #else
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
@@ -289,7 +284,6 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
         callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
       });
       free_device( fp , "functor_buffer" );
-      copyEvent.wait();
     #endif
 
     check_last_error();

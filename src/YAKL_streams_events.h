@@ -80,7 +80,8 @@ namespace yakl {
       bool operator==(Stream stream) const { return my_stream == stream.get_real_stream(); }
       inline void wait_on_event(Event event);
       bool is_default_stream() { return my_stream == 0; }
-      void fence() { cudaStreamSynchronize(my_stream); }
+      bool completed() { return cudaStreamQuery( my_stream ) == cudaSuccess; }
+      void fence() { if(!completed()) cudaStreamSynchronize(my_stream); }
     };
 
 
@@ -129,7 +130,7 @@ namespace yakl {
         if (refCount == nullptr) {
           refCount = new int;
           (*refCount) = 1;
-          cudaEventCreate( &my_event );
+          cudaEventCreateWithFlags( &my_event, cudaEventDisableTiming );
         }
       }
 
@@ -144,7 +145,7 @@ namespace yakl {
       cudaEvent_t get_real_event() { return my_event; }
       bool operator==(Event event) const { return my_event == event.get_real_event(); }
       bool completed() { return cudaEventQuery( my_event ) == cudaSuccess; }
-      void fence() { cudaEventSynchronize(my_event); }
+      void fence() { if(!completed()) cudaEventSynchronize(my_event); }
     };
 
 
@@ -209,7 +210,7 @@ namespace yakl {
         if (refCount == nullptr) {
           refCount = new int;
           (*refCount) = 1;
-          if constexpr (streams_enabled) hipStreamCreate( &my_stream );
+          if constexpr (streams_enabled) hipStreamCreateWithFlags( &my_stream, hipStreamNonBlocking );
         }
       }
 
@@ -228,7 +229,8 @@ namespace yakl {
       bool operator==(Stream stream) const { return my_stream == stream.get_real_stream(); }
       inline void wait_on_event(Event event);
       bool is_default_stream() { return my_stream == 0; }
-      void fence() { hipStreamSynchronize(my_stream); }
+      bool completed() { return hipStreamQuery( my_stream ) == hipSuccess; }
+      void fence() { if(!completed()) hipStreamSynchronize(my_stream); }
     };
 
 
@@ -277,7 +279,7 @@ namespace yakl {
         if (refCount == nullptr) {
           refCount = new int;
           (*refCount) = 1;
-          hipEventCreate( &my_event );
+          hipEventCreateWithFlags( &my_event, hipEventDisableTiming );
         }
       }
 
@@ -292,7 +294,7 @@ namespace yakl {
       hipEvent_t get_real_event() { return my_event; }
       bool operator==(Event event) const { return my_event == event.get_real_event(); }
       bool completed() { return hipEventQuery( my_event ) == hipSuccess; }
-      void fence() { hipEventSynchronize(my_event); }
+      void fence() { if(!completed()) hipEventSynchronize(my_event); }
     };
 
 
@@ -313,13 +315,13 @@ namespace yakl {
 
     class Stream {
       protected:
-      std::shared_ptr<sycl::queue> my_stream;
+      std::shared_ptr<sycl::queue> my_stream{nullptr};
 
       public:
 
       Stream() { }
       Stream(sycl::queue &sycl_queue) { my_stream = std::make_shared<sycl::queue>(sycl_queue); }
-      ~Stream() { my_stream.reset(); }
+      ~Stream() { }
 
       Stream(Stream const  &rhs) { my_stream = rhs.my_stream; }
       Stream(Stream       &&rhs) { my_stream = rhs.my_stream; }
@@ -327,18 +329,22 @@ namespace yakl {
       Stream & operator=(Stream       &&rhs) { if (this != &rhs) { my_stream = rhs.my_stream; }; return *this; }
 
       void create() {
+        // Ensure these multi-streams use the same device & context as default-stream
         if constexpr (streams_enabled) {
-          sycl::device dev(sycl::gpu_selector{});
-          my_stream = std::make_shared<sycl::queue>( sycl::queue( dev , asyncHandler , sycl::property_list{sycl::property::queue::in_order{}} ) );
+          my_stream = std::make_shared<sycl::queue>( sycl_default_stream().get_context() ,
+                                                     sycl_default_stream().get_device() ,
+                                                     asyncHandler ,
+                                                     sycl::property_list{sycl::property::queue::in_order{}} );
         }
       }
 
       void destroy() { my_stream.reset(); }
-      sycl::queue & get_real_stream() const { return my_stream ? *my_stream : sycl_default_stream(); }
+      sycl::queue & get_real_stream() const { return (my_stream != nullptr) ? *my_stream : sycl_default_stream(); }
       bool operator==(Stream stream) const { return get_real_stream() == stream.get_real_stream(); }
       inline void wait_on_event(Event event);
       bool is_default_stream() const { return get_real_stream() == sycl_default_stream(); }
-      void fence() { my_stream->wait(); }
+      bool completed() { return false; /* return my_stream->ext_oneapi_empty(); */ }
+      void fence() { if(!completed()) my_stream->wait(); }
     };
 
 
@@ -363,14 +369,14 @@ namespace yakl {
       sycl::event & get_real_event() { return my_event; }
       bool operator==(Event event) const { return my_event == event.get_real_event(); }
       bool completed() { return my_event.get_info<sycl::info::event::command_execution_status>() == sycl::info::event_command_status::complete; }
-      void fence() { my_event.wait(); }
+      void fence() { if(!completed()) my_event.wait(); }
     };
 
 
-    inline void Event::record(Stream stream) { my_event = stream.get_real_stream().single_task( [=] () {} ); }
+    inline void Event::record(Stream stream) { my_event = stream.get_real_stream().ext_oneapi_submit_barrier(); }
 
+    inline void Stream::wait_on_event(Event event) { my_stream->ext_oneapi_submit_barrier({event.get_real_event()}); }
 
-    inline void Stream::wait_on_event(Event event) { my_stream->single_task( event.get_real_event() , [=] () {} ); }
 
   #else
 
@@ -390,6 +396,8 @@ namespace yakl {
       inline void wait_on_event(Event event);
       /** @brief Determine whether this stream is the default stream. */
       bool is_default_stream() { return true; }
+      /** @brief Determine if the task enqueued to the stream has completed */
+      bool completed() { return true; }
       /** @brief Pause all CPU work until all existing work in this stream completes. */
       void fence() { }
     };

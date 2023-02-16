@@ -646,7 +646,7 @@ namespace yakl {
         #ifdef YAKL_ENABLE_STREAMS
           fence();
         #endif
-        c::parallel_for( "YAKL_internal_Array=scalar" , this->totElems() , YAKL_LAMBDA (int i) { arr.myData[i] = rhs; });
+        memset(*this, rhs);
         #ifdef YAKL_ENABLE_STREAMS
           fence();
         #endif
