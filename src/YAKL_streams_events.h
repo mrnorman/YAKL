@@ -432,6 +432,7 @@ namespace yakl {
   struct StreamList {
     /** @private */
     std::vector<Stream> *list;
+    std::mutex mtx_loc;
     /** @brief Create an empty stream list */
     YAKL_INLINE StreamList() {
       #if YAKL_CURRENTLY_ON_HOST()
@@ -445,9 +446,9 @@ namespace yakl {
     }
     /** @brief Add a stream to the end of the list */
     void push_back(Stream stream) {
-      yakl_mtx_lock();
+      mtx_loc.lock();
       list->push_back(stream);
-      yakl_mtx_unlock();
+      mtx_loc.unlock();
     }
     /** @brief Get the number of streams in the list */
     int size() const { return list->size(); }

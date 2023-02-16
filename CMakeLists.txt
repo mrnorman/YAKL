@@ -4,7 +4,7 @@ if ("${YAKL_ARCH}" STREQUAL "CUDA")
   enable_language(CUDA)
 endif()
 
-set(YAKL_CXX_SOURCE src/YAKL.cpp)
+set(YAKL_CXX_SOURCE src/YAKL_fortran_interfaces.cpp)
 set(YAKL_F90_SOURCE src/YAKL_gator_mod.F90)
 set(YAKL_SOURCE ${YAKL_CXX_SOURCE} ${YAKL_F90_SOURCE})
 

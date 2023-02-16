@@ -81,8 +81,8 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , stream.get_real_stream() >>> ( bounds , *fp , config );
       check_last_error();
       #ifdef YAKL_ENABLE_STREAMS
-        if (use_pool() && device_allocators_are_default) {
-          pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
+        if (use_pool() && get_yakl_instance().device_allocators_are_default) {
+          get_yakl_instance().pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
         } else          {
           free_device( fp , "functor_buffer" );
         }
@@ -120,8 +120,8 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
       cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size , 0 , stream.get_real_stream() >>> ( bounds , *fp , config , InnerHandler() );
       check_last_error();
       #ifdef YAKL_ENABLE_STREAMS
-        if (use_pool() && device_allocators_are_default) {
-          pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
+        if (use_pool() && get_yakl_instance().device_allocators_are_default) {
+          get_yakl_instance().pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
         } else {
           free_device( fp , "functor_buffer" );
         }

@@ -9,19 +9,13 @@
 
 namespace yakl {
 
-  extern Gator pool;
-
-  // YAKL allocator and deallocator device as std::function's
-  extern std::function<void *( size_t , char const *)> alloc_device_func;
-  extern std::function<void ( void * , char const *)>  free_device_func; 
-
-  extern bool device_allocators_are_default;
-  extern bool pool_enabled;
-
   /**
    * @brief If true, then the pool allocator is being used for all device allocations
    */
-  inline bool use_pool() { return pool_enabled; }
+  inline bool use_pool() { return get_yakl_instance().pool_enabled; }
+
+
+  inline Gator & get_pool() { return get_yakl_instance().pool; }
 
 
   // Set the allocation and deallocation functions for YAKL
@@ -172,28 +166,28 @@ namespace yakl {
   inline void set_yakl_allocators_to_default() {
     fence();
     if (use_pool()) {
-      alloc_device_func = [] (size_t bytes , char const *label) -> void * {
+      get_yakl_instance().alloc_device_func = [] (size_t bytes , char const *label) -> void * {
         #ifdef YAKL_MEMORY_DEBUG
           if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes" << std::endl;
         #endif
-        void * ptr = pool.allocate( bytes , label );
+        void * ptr = get_yakl_instance().pool.allocate( bytes , label );
         #ifdef YAKL_MEMORY_DEBUG
           if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Successfully allocated label \"" << label
                                          << " with pointer address " << ptr << std::endl;
         #endif
         return ptr;
       };
-      free_device_func  = [] (void *ptr , char const *label)              {
+      get_yakl_instance().free_device_func  = [] (void *ptr , char const *label)              {
         #ifdef YAKL_MEMORY_DEBUG
           if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Freeing label \"" << label << "\" with pointer address " << ptr << std::endl;
         #endif
-        pool.free( ptr , label );
+        get_yakl_instance().pool.free( ptr , label );
       };
     } else {
       std::function<void *( size_t)> alloc;
       std::function<void ( void *)>  dealloc;
       set_device_alloc_free(alloc , dealloc);
-      alloc_device_func = [=] (size_t bytes , char const *label) -> void * {
+      get_yakl_instance().alloc_device_func = [=] (size_t bytes , char const *label) -> void * {
         #ifdef YAKL_MEMORY_DEBUG
           if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Allocating label \"" << label << "\" of size " << bytes << " bytes" << std::endl;
         #endif
@@ -204,7 +198,7 @@ namespace yakl {
         #endif
         return ptr;
       };
-      free_device_func  = [=] (void *ptr , char const *label)              {
+      get_yakl_instance().free_device_func  = [=] (void *ptr , char const *label)              {
         #ifdef YAKL_MEMORY_DEBUG
           if (yakl_mainproc()) std::cout << "MEMORY_DEBUG: Freeing label \"" << label << "\" with pointer address " << ptr << std::endl;
         #endif
@@ -212,7 +206,7 @@ namespace yakl {
       };
     }
 
-    device_allocators_are_default = true;
+    get_yakl_instance().device_allocators_are_default = true;
   }
 
 
@@ -224,8 +218,8 @@ namespace yakl {
    * labels for bookkeeping and debugging, and there are functions that do not use labels.
    */
   inline void set_device_allocator  ( std::function<void *(size_t)> func ) {
-    fence();   alloc_device_func = [=] (size_t bytes , char const *label) -> void * { return func(bytes); };
-    device_allocators_are_default = false;
+    fence();   get_yakl_instance().alloc_device_func = [=] (size_t bytes , char const *label) -> void * { return func(bytes); };
+    get_yakl_instance().device_allocators_are_default = false;
   }
 
 
@@ -234,8 +228,8 @@ namespace yakl {
    * \copydetails yakl::set_device_allocator
    */
   inline void set_device_deallocator( std::function<void (void *)>  func ) {
-    fence();   free_device_func  = [=] (void *ptr , char const *label) { func(ptr); };
-    device_allocators_are_default = false;
+    fence();   get_yakl_instance().free_device_func  = [=] (void *ptr , char const *label) { func(ptr); };
+    get_yakl_instance().device_allocators_are_default = false;
   }
 
 
@@ -243,20 +237,20 @@ namespace yakl {
    * @brief Override YAKL's device allocator with the passed function (WITH Label).
    * \copydetails yakl::set_device_allocator
    */
-  inline void set_device_allocator  ( std::function<void *( size_t , char const *)> func ) { fence();  alloc_device_func = func; }
+  inline void set_device_allocator  ( std::function<void *( size_t , char const *)> func ) { fence();  get_yakl_instance().alloc_device_func = func; }
 
 
   /**
    * @brief Override YAKL's device deallocator with the passed function (WITH Label).
    * \copydetails yakl::set_device_allocator
    */
-  inline void set_device_deallocator( std::function<void ( void * , char const *)>  func ) { fence();  free_device_func  = func; }
+  inline void set_device_deallocator( std::function<void ( void * , char const *)>  func ) { fence();  get_yakl_instance().free_device_func  = func; }
 
   /** @brief Allocate on the device using YAKL's device allocator */
-  inline void * alloc_device( size_t bytes, char const *label) { return alloc_device_func(bytes,label); }
+  inline void * alloc_device( size_t bytes, char const *label) { return get_yakl_instance().alloc_device_func(bytes,label); }
 
   /** @brief Free on the device using YAKL's device deallocator */
-  inline void   free_device ( void * ptr  , char const *label) {        free_device_func (ptr  ,label); }
+  inline void   free_device ( void * ptr  , char const *label) {        get_yakl_instance().free_device_func (ptr  ,label); }
 
 }
 

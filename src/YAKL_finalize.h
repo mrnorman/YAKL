@@ -15,7 +15,7 @@ namespace yakl {
    * is initialized for you. THREAD SAFE!
    */
   inline void finalize() {
-    yakl_mtx.lock();
+    yakl_mtx_lock();
 
     // Only finalize if YAKL's already initialized
     if ( isInitialized() ) {
@@ -26,37 +26,37 @@ namespace yakl {
       #endif
 
       // Free the pools
-      pool.finalize();
+      get_yakl_instance().pool.finalize();
 
-      yakl_is_initialized = false;
+      get_yakl_instance().yakl_is_initialized = false;
 
       // Finalize the timers
       #if defined(YAKL_PROFILE)
         timer_finalize();
       #endif
 
-      timer_init_func = [] () {
+      get_yakl_instance().timer_init_func = [] () {
         yakl_throw("ERROR: attempting to call the yakl::timer_init(); before calling yakl::init()");
       };
-      timer_finalize_func = [] () {
+      get_yakl_instance().timer_finalize_func = [] () {
         yakl_throw("ERROR: attempting to call the yakl::timer_finalize(); before calling yakl::init()");
       };
-      timer_start_func = [] (char const *label) {
+      get_yakl_instance().timer_start_func = [] (char const *label) {
         yakl_throw("ERROR: attempting to call the yakl::timer_start(); before calling yakl::init()");
       };
-      timer_stop_func = [] (char const * label) {
+      get_yakl_instance().timer_stop_func = [] (char const * label) {
         yakl_throw("ERROR: attempting to call the yakl::timer_stop(); before calling yakl::init()");
       };
-      alloc_device_func = [] ( size_t bytes , char const *label ) -> void* {
+      get_yakl_instance().alloc_device_func = [] ( size_t bytes , char const *label ) -> void* {
         yakl_throw("ERROR: attempting memory alloc before calling yakl::init()");
         return nullptr;
       };
-      free_device_func  = [] ( void *ptr    , char const *label )          {
+      get_yakl_instance().free_device_func  = [] ( void *ptr    , char const *label )          {
         yakl_throw("ERROR: attempting memory free before calling yakl::init()");
       };
 
-      device_allocators_are_default = false;
-      pool_enabled = false;
+      get_yakl_instance().device_allocators_are_default = false;
+      get_yakl_instance().pool_enabled = false;
 
     } else {
 
@@ -65,9 +65,9 @@ namespace yakl {
 
     }
 
-    yakl_is_initialized = false;
+    get_yakl_instance().yakl_is_initialized = false;
 
-    yakl_mtx.unlock();
+    yakl_mtx_unlock();
   }
 }
 
