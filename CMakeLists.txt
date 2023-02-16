@@ -90,10 +90,6 @@ target_include_directories(yakl PUBLIC
   $<INSTALL_INTERFACE:include>
   $<INSTALL_INTERFACE:include/extensions>)
 
-target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/extensions)
-target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/external)
-
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
   target_link_libraries(yakl cufft)
