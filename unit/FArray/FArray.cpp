@@ -383,6 +383,13 @@ int main() {
     constDevArr.deallocate();
     if (constDevArr.initialized()) die("constDevArr: array didn't deallocate properly");
 
+    ///////////////////////////////////////////////////////////
+    // Test subset_slowest_dimension
+    ///////////////////////////////////////////////////////////
+    test7d = 1;
+    test7d.subset_slowest_dimension(2) = 2;
+    if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*5) { die("SimpleBounds: wrong sum for reshaped subset"); }
+
   }
   yakl::finalize();
   
