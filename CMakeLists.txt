@@ -25,6 +25,12 @@ option(YAKL_B4B "Force serial computation (default OFF)." OFF)
 option(YAKL_MANAGED_MEMORY "Turn on managed memory (default OFF)." OFF)
 option(YAKL_MEMORY_DEBUG "Turn on memory allocation debugging (default OFF)." OFF)
 
+set(YAKL_SYCL_BBFFT                OFF    CACHE BOOL    "Use Double-Batched FFT")
+set(YAKL_SYCL_BBFFT_AOT            OFF    CACHE BOOL    "Use ahead of time compilation for BBFFT")
+set(YAKL_SYCL_BBFFT_AOT_LEGACY_UMD OFF    CACHE BOOL    "Use older PVC user mode driver")
+set(YAKL_SYCL_BBFFT_AOT_SIZE       32     CACHE STRING  "FFT size to compile ahead of time")
+set(YAKL_SYCL_BBFFT_AOT_BATCH      11200  CACHE STRING  "FFT batch to compile ahead of time")
+
 set(YAKL_CXX_SOURCE src/YAKL_fortran_interfaces.cpp)
 set(YAKL_F90_SOURCE src/YAKL_gator_mod.F90)
 set(YAKL_SOURCE ${YAKL_CXX_SOURCE} ${YAKL_F90_SOURCE})
@@ -51,6 +57,7 @@ message(STATUS "** YAKL is using the following C++ flags: ${YAKL_COMPILER_FLAGS}
 set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
 
 add_library(yakl STATIC ${YAKL_SOURCE})
+
 
 if (YAKL_DEBUG)
   target_compile_definitions(yakl PUBLIC -DYAKL_DEBUG)
@@ -95,13 +102,14 @@ target_include_directories(yakl PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/extensions>
   $<INSTALL_INTERFACE:include/extensions>)
 
+set(target_list "")
+
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   set_target_properties(yakl PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
   target_link_libraries(yakl cufft)
   if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
     set_property(TARGET yakl PROPERTY CUDA_ARCHITECTURES OFF)
   endif()
-
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "HIP")
@@ -109,29 +117,82 @@ if ("${YAKL_ARCH}" STREQUAL "HIP")
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "SYCL")
-  if(NOT MKL_ROOT)
-    set(MKL_ROOT $ENV{MKLROOT} CACHE PATH "Folder contains MKL")
-  endif(NOT MKL_ROOT)
-  message("-- ** Looking for MKL installation, ${MKL_ROOT}")
+  target_compile_options(yakl PUBLIC "-fsycl")
+  if (YAKL_SYCL_BBFFT)
+    set(target_list bbfft-base bbfft-level-zero bbfft-opencl bbfft-sycl clir)
+    option(BUILD_BENCHMARK "bbfft benchmark option" OFF)
+    option(BUILD_EXAMPLE "bbfft examples option" OFF)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/double-batched-fft-library)
+    set(BBFFT_AUX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/external/bbfft)
+    target_include_directories(yakl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/external/double-batched-fft-library/include)
+    target_include_directories(yakl PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>)
+    target_include_directories(yakl PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/external/double-batched-fft-library/include>)
 
-  add_compile_options(-fsycl-default-sub-group-size=16)
-  add_compile_definitions(MKL_ILP64)
+    if (YAKL_SYCL_BBFFT_AOT)
+      message("Building with BBFFT AOT")
+      find_program(OCLOC ocloc REQUIRED)
+      add_executable(yakl-aot-generate ${BBFFT_AUX_PATH}/generate.cpp ${BBFFT_AUX_PATH}/configurations.cpp)
+      target_compile_features(yakl-aot-generate PRIVATE cxx_std_17)
+      target_link_libraries(yakl-aot-generate PRIVATE bbfft::bbfft-base)
 
-  find_path(MKL_INCLUDE mkl.h HINTS $ENV{MKLROOT} ${MKL_ROOT} PATH_SUFFIXES include)
-  target_include_directories(yakl PUBLIC "${MKL_INCLUDE}")
+      set(SRC_FILE "kernels.cl")
+      set(NAMES_FILE "aot_compiled_kernels.cpp")
+      if (YAKL_SYCL_BBFFT_AOT_LEGACY_UMD)
+        # older UMD - agama-ci-devel <= 543
+        set(BIN_FILE "kernels_XE_HPC_COREpvc.bin")
+        add_compile_definitions(YAKL_SYCL_BBFFT_AOT_LEGACY_UMD)
+      else()
+        # newer UMD - ci-neo-master >= 025611
+        set(BIN_FILE "kernels_pvc.bin")
+      endif()
+      set(OBJ_FILE "kernels.o")
+      add_custom_command(
+        OUTPUT ${OBJ_FILE}
+        BYPRODUCTS ${SRC_FILE} ${NAMES_FILE} ${BIN_FILE}
+        COMMAND yakl-aot-generate ${SRC_FILE} ${NAMES_FILE}
+        COMMAND ${OCLOC} compile -file ${SRC_FILE} -device pvc -internal_options "-cl-ext=+cl_khr_fp64"
+        COMMAND ${CMAKE_LINKER} -r -b binary -o ${OBJ_FILE} ${BIN_FILE}
+        DEPENDS yakl-aot-generate
+        COMMENT "Ahead-of-time compilation of FFT kernels"
+      )
+      add_library(yakl-kernels OBJECT IMPORTED)
+      set_property(TARGET yakl-kernels PROPERTY IMPORTED_OBJECTS "${CMAKE_CURRENT_BINARY_DIR}/${OBJ_FILE}")
+      target_sources(yakl PRIVATE ${BBFFT_AUX_PATH}/aot_cache.cpp ${NAMES_FILE})
+      target_include_directories(yakl PUBLIC ${BBFFT_AUX_PATH})
 
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-  find_library(MKL_SEQU NAMES mkl_sequential PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
-  find_library(MKL_CORE NAMES mkl_core PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
-  find_library(MKL_SYCL NAMES mkl_sycl PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
-  find_library(MKL_IPL64 NAMES mkl_intel_ilp64 PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
-  target_link_libraries(yakl "${YAKL_COMPILER_FLAGS} ${MKL_SYCL} -Wl,-export-dynamic -Wl,--start-group ${MKL_SEQU} ${MKL_IPL64} ${MKL_CORE} -Wl,--end-group -lsycl -lOpenCL -lpthread -lm -ldl")
+      add_compile_definitions(YAKL_SYCL_BBFFT_AOT_SIZE=${YAKL_SYCL_BBFFT_AOT_SIZE})
+      add_compile_definitions(YAKL_SYCL_BBFFT_AOT_BATCH=${YAKL_SYCL_BBFFT_AOT_BATCH})
+    
+      target_link_libraries(yakl bbfft::bbfft-sycl yakl-kernels "${YAKL_COMPILER_FLAGS}")
+    else()
+      message("Building with BBFFT JIT")
+      target_link_libraries(yakl bbfft::bbfft-sycl "${YAKL_COMPILER_FLAGS}")
+    endif()
+  else()
+    message("Building with MKL")
+    if(NOT MKL_ROOT)
+      set(MKL_ROOT $ENV{MKLROOT} CACHE PATH "Folder contains MKL")
+    endif(NOT MKL_ROOT)
+    message("-- ** Looking for MKL installation, ${MKL_ROOT}")
+
+    add_compile_options(-fsycl-default-sub-group-size=16)
+    add_compile_definitions(MKL_ILP64)
+
+    find_path(MKL_INCLUDE mkl.h HINTS $ENV{MKLROOT} ${MKL_ROOT} PATH_SUFFIXES include)
+    target_include_directories(yakl PUBLIC "${MKL_INCLUDE}")
+
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    find_library(MKL_SEQU NAMES mkl_sequential PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+    find_library(MKL_CORE NAMES mkl_core PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+    find_library(MKL_SYCL NAMES mkl_sycl PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+    find_library(MKL_IPL64 NAMES mkl_intel_ilp64 PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+    target_link_libraries(yakl "${YAKL_COMPILER_FLAGS} ${MKL_SYCL} -Wl,-export-dynamic -Wl,--start-group ${MKL_SEQU} ${MKL_IPL64} ${MKL_CORE} -Wl,--end-group -lsycl -lOpenCL -lpthread -lm -ldl")
+  endif()
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "OPENMP")
   target_link_libraries(yakl "${YAKL_OPENMP_FLAGS}")
 endif()
-
 
 # Generate configs files
 include(CMakePackageConfigHelpers)
@@ -167,7 +228,7 @@ configure_package_config_file(
   INSTALL_DESTINATION ${INSTALL_CMAKE_DIR})
 
 # setup the list of targets to install
-set (INSTALL_TARGETS yakl)
+set (INSTALL_TARGETS yakl ${target_list})
 
 # Use a namespace because CMake provides better diagnostics
 # for namespaced imported targets.
@@ -196,4 +257,3 @@ install(DIRECTORY src/ external/ DESTINATION include FILES_MATCHING PATTERN "*.h
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gator_mod.mod DESTINATION include)
 install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl_variables.cmake \"set(YAKL_COMPILER_FLAGS \\\"${YAKL_COMPILER_FLAGS}\\\")\nset(YAKL_ARCH \\\"${YAKL_ARCH}\\\")\n\")" )
 install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl_variables.make \"YAKL_COMPILER_FLAGS := ${YAKL_COMPILER_FLAGS}\nYAKL_ARCH := ${YAKL_ARCH}\n\")" )
-
