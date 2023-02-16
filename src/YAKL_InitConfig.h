@@ -63,7 +63,7 @@ namespace yakl {
           pool_initial_mb = initial_mb;
           pool_grow_mb = pool_initial_mb;
         } else {
-          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
+          if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
         }
       }
       // Check for GATOR_GROW_MB environment variable
@@ -73,7 +73,7 @@ namespace yakl {
         if (grow_mb != 0) {
           pool_grow_mb = grow_mb;
         } else {
-          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
+          if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_GROW_MB. Defaulting to 1GB\n";
         }
       }
 
@@ -84,8 +84,8 @@ namespace yakl {
         if (block_bytes != 0 && block_bytes%(2*sizeof(size_t)) == 0) {
           pool_block_bytes = block_bytes;
         } else {
-          if (yakl::yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 16*sizeof(size_t)\n";
-          if (yakl::yakl_mainproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of 2*sizeof(size_t)\n";
+          if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 16*sizeof(size_t)\n";
+          if (yakl_mainproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of 2*sizeof(size_t)\n";
         }
       }
     }
