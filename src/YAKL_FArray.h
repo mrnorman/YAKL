@@ -671,6 +671,35 @@ namespace yakl {
     }
 
 
+
+    YAKL_INLINE Array<T,rank,myMem,styleFortran> subset_slowest_dimension(int u) const { return subset_slowest_dimension(lbounds[rank-1],u); }
+
+
+    /** @brief Return an array aliasing a contiguous subset of the slowest dimension */
+    YAKL_INLINE Array<T,rank,myMem,styleFortran> subset_slowest_dimension(int l, int u) const {
+      #ifdef YAKL_DEBUG
+        if (! this->initialized()) { yakl_throw("ERROR: Trying to subset_slowest_dimension an Array that hasn't been initialized"); }
+        if (l < lbounds[rank-1]) { yakl_throw("ERROR: subset_slowest_dimension lower bound too low"); }
+        if (u < lbounds[rank-1]) { yakl_throw("ERROR: subset_slowest_dimension upper bound too low"); }
+        if (l > u) { yakl_throw("ERROR: subset_slowest_dimension lower bound > upper bounds"); }
+        if (u >= this->lbounds[rank-1]+this->dimension[rank-1]) { yakl_throw("ERROR: subset_slowest_dimension upper bound too high"); }
+      #endif
+      auto ret = *this;
+      auto &lb = this->lbounds;
+      auto &d  = this->dimension;
+      if constexpr (rank == 1) ret.myData += (l-lb[rank-1]);
+      if constexpr (rank == 2) ret.myData += (l-lb[rank-1])*d[0];
+      if constexpr (rank == 3) ret.myData += (l-lb[rank-1])*d[0]*d[1];
+      if constexpr (rank == 4) ret.myData += (l-lb[rank-1])*d[0]*d[1]*d[2];
+      if constexpr (rank == 5) ret.myData += (l-lb[rank-1])*d[0]*d[1]*d[2]*d[3];
+      if constexpr (rank == 6) ret.myData += (l-lb[rank-1])*d[0]*d[1]*d[2]*d[3]*d[4];
+      if constexpr (rank == 7) ret.myData += (l-lb[rank-1])*d[0]*d[1]*d[2]*d[3]*d[4]*d[5];
+      if constexpr (rank == 8) ret.myData += (l-lb[rank-1])*d[0]*d[1]*d[2]*d[3]*d[4]*d[5]*d[6];
+      ret.dimension[rank-1] = u-l+1;
+      return ret;
+    }
+
+
     /** @class doxhide_FArray_slicing
       * @brief dummy
       *
