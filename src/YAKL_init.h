@@ -8,13 +8,11 @@
 
 namespace yakl {
 
-  extern bool yakl_is_initialized;
-
   /**
    * @brief Determine if the YAKL runtime has been initialized. I.e., yakl::init() has been called without a
    *        corresponding call to yakl::finalize().
    */
-  inline bool isInitialized() { return yakl_is_initialized; }
+  inline bool isInitialized() { return get_yakl_instance().yakl_is_initialized; }
 
 
   /**
@@ -32,7 +30,7 @@ namespace yakl {
    */
   // Set global std::functions for alloc and free
   inline void init( InitConfig config = InitConfig() ) {
-    yakl_mtx.lock();
+    yakl_mtx_lock();
 
     // If YAKL is already initialized, then don't do anything
     if ( ! isInitialized() ) {
@@ -40,9 +38,9 @@ namespace yakl {
         if (yakl_mainproc()) std::cout << "Using YAKL Timers\n";
       #endif
 
-      yakl_is_initialized = true;
+      get_yakl_instance().yakl_is_initialized = true;
 
-      pool_enabled = config.get_pool_enabled();
+      get_yakl_instance().pool_enabled = config.get_pool_enabled();
 
       // Initialize the memory pool and default allocators
       if (use_pool()) {
@@ -59,39 +57,45 @@ namespace yakl {
         std::string pool_name = "Gator: YAKL's primary memory pool";
         std::string error_message_out_of_memory = "Please see https://github.com/mrnorman/YAKL/wiki/Pool-Allocator for more information\n";
         std::string error_message_cannot_grow = error_message_out_of_memory;
-        pool.init(alloc,dealloc,zero,initialSize,growSize,blockSize,pool_name,
-                  error_message_out_of_memory,error_message_cannot_grow);
+        get_yakl_instance().pool.init(alloc,dealloc,zero,initialSize,growSize,blockSize,pool_name,
+                                      error_message_out_of_memory,error_message_cannot_grow);
       }
 
       set_yakl_allocators_to_default();
 
       // Initialize the default timers
-      timer_init_func = [] () {};
-      timer_finalize_func = [] () {
+      get_yakl_instance().timer_init_func = [] () {};
+      get_yakl_instance().timer_finalize_func = [] () {
         #if defined(YAKL_PROFILE)
-          if (yakl_mainproc()) { timer.print_all_threads(); }
+          if (yakl_mainproc()) { get_yakl_instance().timer.print_all_threads(); }
         #endif
       };
-      timer_start_func = [] (char const *label) {
+      get_yakl_instance().timer_start_func = [] (char const *label) {
         #if defined(YAKL_PROFILE)
-          fence();  timer.start( label );
+          fence();  get_yakl_instance().timer.start( label );
         #endif
       };
-      timer_stop_func = [] (char const * label) {
+      get_yakl_instance().timer_stop_func = [] (char const * label) {
         #if defined(YAKL_PROFILE)
-          fence();  timer.stop( label );
+          fence();  get_yakl_instance().timer.stop( label );
         #endif
       };
 
-      device_allocators_are_default = true;
+      get_yakl_instance().device_allocators_are_default = true;
 
       // If the user specified overrides in the InitConfig, apply them here
-      if (config.get_device_allocator  ()) { alloc_device_func = config.get_device_allocator  (); device_allocators_are_default = false; }
-      if (config.get_device_deallocator()) { free_device_func  = config.get_device_deallocator(); device_allocators_are_default = false; }
-      if (config.get_timer_init        ()) timer_init_func      = config.get_timer_init    ();
-      if (config.get_timer_finalize    ()) timer_finalize_func  = config.get_timer_finalize();
-      if (config.get_timer_start       ()) timer_start_func     = config.get_timer_start   ();
-      if (config.get_timer_stop        ()) timer_stop_func      = config.get_timer_stop    ();
+      if (config.get_device_allocator  ()) {
+        get_yakl_instance().alloc_device_func = config.get_device_allocator  ();
+        get_yakl_instance().device_allocators_are_default = false;
+      }
+      if (config.get_device_deallocator()) {
+        get_yakl_instance().free_device_func  = config.get_device_deallocator();
+        get_yakl_instance().device_allocators_are_default = false;
+      }
+      if (config.get_timer_init        ()) get_yakl_instance().timer_init_func      = config.get_timer_init    ();
+      if (config.get_timer_finalize    ()) get_yakl_instance().timer_finalize_func  = config.get_timer_finalize();
+      if (config.get_timer_start       ()) get_yakl_instance().timer_start_func     = config.get_timer_start   ();
+      if (config.get_timer_stop        ()) get_yakl_instance().timer_stop_func      = config.get_timer_stop    ();
 
       #ifdef YAKL_ARCH_SYCL
         if (yakl_mainproc()) std::cout << "Running on "
@@ -138,7 +142,7 @@ namespace yakl {
       std::cerr << "WARNING: Calling yakl::initialize() when YAKL is already initialized. ";
     }
 
-    yakl_mtx.unlock();
+    yakl_mtx_unlock();
   } //
 }
 
