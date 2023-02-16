@@ -109,7 +109,23 @@ if ("${YAKL_ARCH}" STREQUAL "HIP")
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "SYCL")
-  target_link_libraries(yakl "${YAKL_COMPILER_FLAGS}")
+  if(NOT MKL_ROOT)
+    set(MKL_ROOT $ENV{MKLROOT} CACHE PATH "Folder contains MKL")
+  endif(NOT MKL_ROOT)
+  message("-- ** Looking for MKL installation, ${MKL_ROOT}")
+
+  add_compile_options(-fsycl-default-sub-group-size=16)
+  add_compile_definitions(MKL_ILP64)
+
+  find_path(MKL_INCLUDE mkl.h HINTS $ENV{MKLROOT} ${MKL_ROOT} PATH_SUFFIXES include)
+  target_include_directories(yakl PUBLIC "${MKL_INCLUDE}")
+
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+  find_library(MKL_SEQU NAMES mkl_sequential PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+  find_library(MKL_CORE NAMES mkl_core PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+  find_library(MKL_SYCL NAMES mkl_sycl PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+  find_library(MKL_IPL64 NAMES mkl_intel_ilp64 PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+  target_link_libraries(yakl "${YAKL_COMPILER_FLAGS} ${MKL_SYCL} -Wl,-export-dynamic -Wl,--start-group ${MKL_SEQU} ${MKL_IPL64} ${MKL_CORE} -Wl,--end-group -lsycl -lOpenCL -lpthread -lm -ldl")
 endif()
 
 if ("${YAKL_ARCH}" STREQUAL "OPENMP")
