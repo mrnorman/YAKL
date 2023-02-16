@@ -1,0 +1,86 @@
+#!/bin/bash
+
+config="pvc"
+arch="SYCL"
+fft="mkl"
+aot=1
+bbfft_aot=1
+bbfft_size=7
+bbfft_batch=64
+profile_flag=""
+build="Release"
+unit="FFT"
+
+if [[ $1 == '-h' || $1 == '--help' || $1 == '-help' ]]; then
+    echo "Run as follows:"
+    echo "./build.sh [options]"
+    echo
+    echo "    -c <pvc>"
+    echo "        hardware configuration environment variables to source, indicated by {config}-env.sh (default: ${config})"
+    echo
+    echo "    -a <SYCL>"
+    echo "        backend to build for (default: ${arch})"
+    echo
+    echo "    -f <mkl|bbfft>"
+    echo "        if using sycl, fft backend to build for (default: ${fft})"
+    echo
+    echo "    -u"
+    echo "        unit test to build (default: ${unit})"
+    echo
+    echo "    -j"
+    echo "        build with JIT instead of AOT (default: AOT)"
+    echo
+    echo "    -p"
+    echo "        build with YAKL profile (default: off)"
+    echo
+    echo "    -d"
+    echo "        build with Debug (default: ${build})"
+    echo
+    exit 0
+fi
+
+# fetch input arguments, if any
+while getopts "c:a:f:jpdu:" flag
+do
+    case "${flag}" in
+        c) config=${OPTARG};;
+        a) arch=${OPTARG};;
+        f) fft=${OPTARG};;
+        u) unit=${OPTARG};;
+        j) aot=0;;
+        p) profile_flag="-DYAKL_PROFILE";;
+        d) build="Debug";;
+    esac
+done
+
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+source ${SCRIPT_DIR}/${config}-env.sh
+
+${SCRIPT_DIR}/../../cmakeclean.sh
+
+if [[ ${fft} = "bbfft" ]]
+then
+  bbfft=1
+fi
+if [[ ${aot} = 0 ]]
+then
+  bbfft_aot=0
+  aot_flags=""
+fi
+
+cmake -DYAKL_ARCH="${arch}"                                                                                                                \
+      -DYAKL_SYCL_FLAGS="-O3 -fsycl -sycl-std=2020 -fsycl-unnamed-lambda -fsycl-device-code-split=per_kernel ${aot_flags} ${profile_flag}" \
+      -DCMAKE_CXX_FLAGS="-O3"                                                                                                              \
+      -DYAKL_F90_FLAGS="-O3"                                                                                                               \
+      -DYAKL_SYCL_BBFFT=${bbfft}                                                                                                           \
+      -DYAKL_SYCL_BBFFT_AOT=${bbfft_aot}                                                                                                   \
+      -DYAKL_SYCL_BBFFT_AOT_SIZE=${bbfft_size}                                                                                               \
+      -DYAKL_SYCL_BBFFT_AOT_BATCH=${bbfft_batch}                                                                                             \
+      -DCMAKE_BUILD_TYPE=${build}                                                                                                          \
+      ${SCRIPT_DIR}/../../..
+
+make clean
+
+make ${unit} -j32
