@@ -657,7 +657,6 @@ namespace yakl {
     template <class TLOC>
     void memset_loc(TLOC rhs) const {
       if (myMem == memDevice) {
-        YAKL_SCOPE( arr , *this );
         #ifdef YAKL_ENABLE_STREAMS
           fence();
         #endif
