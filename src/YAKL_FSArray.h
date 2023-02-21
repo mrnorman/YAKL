@@ -190,6 +190,10 @@ namespace yakl {
     YAKL_INLINE T *data    () const { return myData; }
     /** @brief Get the underlying raw data pointer */
     YAKL_INLINE T *get_data() const { return myData; }
+    /** @brief Returns pointer to beginning of the data */
+    YAKL_INLINE T *begin() const { return myData; }
+    /** @brief Returns pointer to end of the data */
+    YAKL_INLINE T *end() const { return begin() + size(); }
     /** @brief Get the total number of array elements */
     static unsigned constexpr totElems      () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */

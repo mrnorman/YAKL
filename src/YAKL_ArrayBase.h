@@ -204,6 +204,10 @@ namespace yakl {
     YAKL_INLINE T *data() const { return this->myData; }
     /** @brief Returns the raw data pointer of this array object. */
     YAKL_INLINE T *get_data() const { return this->myData; }
+    /** @brief Returns pointer to beginning of the data */
+    YAKL_INLINE T *begin() const { return this->myData; }
+    /** @brief Returns pointer to end of the data */
+    YAKL_INLINE T *end() const { return begin() + size(); }
     /** @brief Always true. yakl::Array objects are always contiguous in memory with no padding. */
     YAKL_INLINE bool span_is_contiguous() const { return true; }
     /** @brief Returns whether this array object has is in an initialized / allocated state. */

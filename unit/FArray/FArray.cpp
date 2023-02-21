@@ -1,6 +1,8 @@
 
 #include <iostream>
 #include "YAKL.h"
+#include <random>
+#include <algorithm>
 
 using yakl::Array;
 using yakl::styleFortran;
@@ -389,6 +391,24 @@ int main() {
     test7d = 1;
     test7d.subset_slowest_dimension(2) = 2;
     if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*5) { die("SimpleBounds: wrong sum for reshaped subset"); }
+
+    {
+      yakl::Array<int,1,memHost,styleFortran> indices("indices",100);
+      for (int i=1; i <= 100; i++) { indices(i) = i; }
+      std::shuffle( indices.begin() , indices.end() , std::default_random_engine(13) );
+      int tot = 0;
+      for (int i=1; i <= 99; i++) { tot += std::abs( indices(i+1) - indices(i) ); }
+      if (tot == 99) die("ERROR: Shuffle did not work for FArray");
+    }
+
+    {
+      yakl::FSArray<int,1,yakl::SB<100>> indices;
+      for (int i=1; i <= 100; i++) { indices(i) = i; }
+      std::shuffle( indices.begin() , indices.end() , std::default_random_engine(13) );
+      int tot = 0;
+      for (int i=1; i <= 99; i++) { tot += std::abs( indices(i+1) - indices(i) ); }
+      if (tot == 99) die("ERROR: Shuffle did not work for FArray");
+    }
 
   }
   yakl::finalize();
