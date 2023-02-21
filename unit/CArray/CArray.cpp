@@ -1,6 +1,8 @@
 
 #include <iostream>
 #include "YAKL.h"
+#include <random>
+#include <algorithm>
 
 using yakl::Array;
 using yakl::styleC;
@@ -378,6 +380,24 @@ int main() {
     test8d = 1;
     test8d.subset_slowest_dimension(0) = 2;
     if (yakl::intrinsics::sum(test8d) != d2*d3*d4*d5*d6*d7*d8*3) { die("SimpleBounds: wrong sum for reshaped subset"); }
+
+    {
+      yakl::Array<int,1,memHost,styleC> indices("indices",100);
+      for (int i=0; i < 100; i++) { indices(i) = i; }
+      std::shuffle( indices.begin() , indices.end() , std::default_random_engine(13) );
+      int tot = 0;
+      for (int i=0; i < 99; i++) { tot += std::abs(indices(i+1) - indices(i)); }
+      if (tot == 99) die("ERROR: Shuffle is not working on CArray");
+    }
+
+    {
+      yakl::SArray<int,1,100> indices;
+      for (int i=0; i < 100; i++) { indices(i) = i; }
+      std::shuffle( indices.begin() , indices.end() , std::default_random_engine(13) );
+      int tot = 0;
+      for (int i=0; i < 99; i++) { tot += std::abs(indices(i+1) - indices(i)); }
+      if (tot == 99) die("ERROR: Shuffle is not working on CArray");
+    }
 
   }
   yakl::finalize();
