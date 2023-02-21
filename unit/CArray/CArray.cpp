@@ -378,7 +378,7 @@ int main() {
     // Test subset_slowest_dimension
     ///////////////////////////////////////////////////////////
     test8d = 1;
-    test8d.subset_slowest_dimension(0) = 2;
+    test8d.subset_slowest_dimension(1) = 2;
     if (yakl::intrinsics::sum(test8d) != d2*d3*d4*d5*d6*d7*d8*3) { die("SimpleBounds: wrong sum for reshaped subset"); }
 
     {
