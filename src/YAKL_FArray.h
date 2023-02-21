@@ -670,7 +670,8 @@ namespace yakl {
     }
 
 
-
+    /** @brief Return an array aliasing a contiguous subset of the slowest dimension. Retuns the same array with the slowest dimension truncated
+               to [lbounds(rank-1) , u]. */
     YAKL_INLINE Array<T,rank,myMem,styleFortran> subset_slowest_dimension(int u) const { return subset_slowest_dimension(lbounds[rank-1],u); }
 
 
