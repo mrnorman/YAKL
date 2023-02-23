@@ -33,6 +33,8 @@ typedef Array<real,6,memDevice,styleC> real6d;
 typedef Array<real,7,memDevice,styleC> real7d;
 typedef Array<real,8,memDevice,styleC> real8d;
 
+real1d glob;
+
 void die(std::string msg) {
   yakl::yakl_throw(msg.c_str());
 }
@@ -398,6 +400,9 @@ int main() {
       for (int i=0; i < 99; i++) { tot += std::abs(indices(i+1) - indices(i)); }
       if (tot == 99) die("ERROR: Shuffle is not working on CArray");
     }
+
+    glob = real1d("glob",10000);
+    yakl::register_finalize_callback( [] () { glob.deallocate(); } );
 
   }
   yakl::finalize();
