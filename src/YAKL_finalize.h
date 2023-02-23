@@ -15,11 +15,16 @@ namespace yakl {
    * is initialized for you. THREAD SAFE!
    */
   inline void finalize() {
-    yakl_mtx_lock();
+    // We don't know what happens in finalize_callbacks, so to be safe, let's use a unique mutex here.
+    get_yakl_instance().yakl_final_mtx.lock();
 
     // Only finalize if YAKL's already initialized
     if ( isInitialized() ) {
       fence();  // Make sure all device work is done before we start freeing pool memory
+
+      for (int i=0; i < get_yakl_instance().finalize_callbacks.size(); i++) {
+        get_yakl_instance().finalize_callbacks[i]();
+      }
 
       #if defined(YAKL_ARCH_HIP)
         rocfft_cleanup();
@@ -67,8 +72,19 @@ namespace yakl {
 
     get_yakl_instance().yakl_is_initialized = false;
 
-    yakl_mtx_unlock();
+    // We don't know what happens in finalize_callbacks, so to be safe, let's use a unique mutex here.
+    get_yakl_instance().yakl_final_mtx.unlock();
   }
+
+  /** @brief Add a host-only callback to be called just before YAKL finalizes. This is useful for ensuring allcoated
+   *         global variables are always deallocated before YAKL finalization.
+   *  @details YAKL calls a fence() beforehand and does nothing else until all finalize callbacks are completed. One
+   *           thing this protects against in particular is the pool being finalized before all variables ar
+   *           deallocated.
+   *  @param  callback   A void function with no parameters that does finalization / cleanup / deallocation work
+   *                     before YAKL finalize.
+   */
+  inline void register_finalize_callback( std::function<void ()> callback ) { get_yakl_instance().finalize_callbacks.push_back(callback); }
 }
 
 
