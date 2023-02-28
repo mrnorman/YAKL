@@ -47,7 +47,7 @@ else()
 endif()
 
 # Ensure the Fortran file uses the desired flags
-set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
+set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS} ${YAKL_DEFINITIONS}")
 
 # Set YAKL_TARGET and YAKL_FORTRAN_INTERFACE_TARGET in this and parent scopes
 # These are the names for the YAKL targets in this build

@@ -85,12 +85,12 @@ macro(yakl_process_target tname)
   set_property(TARGET ${tname} PROPERTY CXX_STANDARD 17)
 
   if ("${YAKL_TARGET_SUFFIX}" STREQUAL "")
-    set(YAKL_TARGET_LABEL yakl)
+    set(YAKL_TARGET yakl)
   else()
-    set(YAKL_TARGET_LABEL yakl_${YAKL_TARGET_SUFFIX})
+    set(YAKL_TARGET yakl_${YAKL_TARGET_SUFFIX})
   endif()
 
-  target_link_libraries(${tname} ${YAKL_TARGET_LABEL})
+  target_link_libraries(${tname} ${YAKL_TARGET})
 endmacro(yakl_process_target)
 
 
