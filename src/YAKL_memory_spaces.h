@@ -5,6 +5,7 @@
 
 #pragma once
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // Labels for memory spaces. Only memDevice and memHost are expected to be used explicitly by the user
@@ -20,5 +21,6 @@ namespace yakl {
   #endif
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

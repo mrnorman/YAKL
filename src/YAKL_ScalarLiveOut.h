@@ -2,6 +2,7 @@
 #pragma once
 // Included by YAKL.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /** @brief Class to handle scalars that exist before kernels, are written to by kernels, and read after the kernel terminates.
@@ -94,5 +95,6 @@ namespace yakl {
 
   };
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

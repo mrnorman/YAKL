@@ -16,5 +16,7 @@ unset FFLAGS
 cmake -DYAKL_CXX_FLAGS="-O0 -g -DYAKL_DEBUG -DYAKL_VERBOSE_FILE -I`nc-config --includedir`" \
       -DYAKL_F90_FLAGS="-O3"                 \
       -DNETCDF_LINK_FLAGS="`nc-config --libs`"        \
+      -DCMAKE_INSTALL_PREFIX="`pwd`" \
+      -DYAKL_TARGET_SUFFIX="debug" \
       ../../..
 

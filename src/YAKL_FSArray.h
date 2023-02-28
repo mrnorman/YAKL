@@ -2,6 +2,7 @@
 #pragma once
 // Included by YAKL_Array.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // [S]tatic (compile-time) Array [B]ounds (templated)
@@ -255,5 +256,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

@@ -7,6 +7,7 @@
 
 
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   //Error reporting routine for the PNetCDF I/O
   /** @private */
@@ -610,5 +611,6 @@ namespace yakl {
 
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

@@ -7,6 +7,7 @@
 #pragma once
 // Included by YAKL_parallel_for_c.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 namespace c {
 
@@ -369,5 +370,6 @@ namespace c {
   template <int N> using SimpleBounds = Bounds<N,true>;
 }
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

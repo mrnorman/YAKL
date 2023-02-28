@@ -7,6 +7,7 @@
 #pragma once
 // Included by YAKL.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // These are YAKL's atomic operations: atomicAdd, atomicMin, and atomicMax
@@ -335,5 +336,6 @@ namespace yakl {
   #endif
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

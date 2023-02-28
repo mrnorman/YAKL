@@ -7,6 +7,7 @@
 #pragma once
 // Included by YAKL.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /**
@@ -253,5 +254,6 @@ namespace yakl {
   inline void   free_device ( void * ptr  , char const *label) {        get_yakl_instance().free_device_func (ptr  ,label); }
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 
