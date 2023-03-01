@@ -4,7 +4,7 @@
 ! through YAKL's memory pool so that the same data is accessible in both C++ and Fortran codes
 ! Also gives Fortran access to efficient managed memory allocations through YAKL's pool
 
-module gator_mod
+module gator_mod${YAKL_NAME_APPEND}
   use iso_c_binding
   implicit none
   integer    :: i4
@@ -16,21 +16,21 @@ module gator_mod
   logical    :: lg
 
   interface gator_init
-    subroutine gator_init() bind(C, name="gatorInit")
+    subroutine gator_init() bind(C, name="gatorInit${YAKL_NAME_APPEND}")
     end subroutine gator_init
   end interface gator_init
 
   interface
-    subroutine gator_finalize() bind(C, name="gatorFinalize")
+    subroutine gator_finalize() bind(C, name="gatorFinalize${YAKL_NAME_APPEND}")
     end subroutine gator_finalize
 
-    function gator_allocate_c( bytes ) result(ptr) bind(C, name="gatorAllocate")
+    function gator_allocate_c( bytes ) result(ptr) bind(C, name="gatorAllocate${YAKL_NAME_APPEND}")
       use iso_c_binding
       type(c_ptr)              :: ptr
       integer(c_size_t), value :: bytes
     end function gator_allocate_c
 
-    subroutine gator_deallocate_c( ptr ) bind(C, name="gatorDeallocate")
+    subroutine gator_deallocate_c( ptr ) bind(C, name="gatorDeallocate${YAKL_NAME_APPEND}")
       use iso_c_binding
       type(c_ptr)      , value :: ptr
     end subroutine gator_deallocate_c
@@ -1211,4 +1211,4 @@ contains
   end subroutine gator_deallocate_log_7d
 
 
-end module gator_mod
+end module gator_mod${YAKL_NAME_APPEND}

@@ -26,11 +26,6 @@ option(YAKL_B4B "Force serial computation (default OFF)." OFF)
 option(YAKL_MANAGED_MEMORY "Turn on managed memory (default OFF)." OFF)
 option(YAKL_MEMORY_DEBUG "Turn on memory allocation debugging (default OFF)." OFF)
 
-# Sources for the Fortran interface library
-set(YAKL_CXX_SOURCE src/YAKL_fortran_interfaces.cpp)
-set(YAKL_F90_SOURCE src/YAKL_gator_mod.F90)
-set(YAKL_SOURCE ${YAKL_CXX_SOURCE} ${YAKL_F90_SOURCE})
-
 # Inform the user of the backend being used
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   message(STATUS "** Building YAKL for a CUDA backend **")
@@ -46,22 +41,32 @@ else()
   message(FATAL_ERROR "** YAKL_ARCH set to an invalid backend target: ${YAKL_ARCH} **")
 endif()
 
-# Ensure the Fortran file uses the desired flags
-set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS} ${YAKL_DEFINITIONS}")
+# Set YAKL_NAME_APPEND to be used to change file and target names
+if ("${YAKL_TARGET_SUFFIX}" STREQUAL "")
+  set(YAKL_NAME_APPEND "" PARENT_SCOPE)
+  set(YAKL_NAME_APPEND "")
+else()
+  set(YAKL_NAME_APPEND "_${YAKL_TARGET_SUFFIX}" PARENT_SCOPE)
+  set(YAKL_NAME_APPEND "_${YAKL_TARGET_SUFFIX}")
+endif()
 
 # Set YAKL_TARGET and YAKL_FORTRAN_INTERFACE_TARGET in this and parent scopes
 # These are the names for the YAKL targets in this build
-if ("${YAKL_TARGET_SUFFIX}" STREQUAL "")
-  set(YAKL_TARGET yakl PARENT_SCOPE)
-  set(YAKL_TARGET yakl)
-  set(YAKL_FORTRAN_INTERFACE_TARGET yakl_fortran_interface PARENT_SCOPE)
-  set(YAKL_FORTRAN_INTERFACE_TARGET yakl_fortran_interface)
-else()
-  set(YAKL_TARGET yakl_${YAKL_TARGET_SUFFIX} PARENT_SCOPE)
-  set(YAKL_TARGET yakl_${YAKL_TARGET_SUFFIX})
-  set(YAKL_FORTRAN_INTERFACE_TARGET yakl_fortran_interface_${YAKL_TARGET_SUFFIX} PARENT_SCOPE)
-  set(YAKL_FORTRAN_INTERFACE_TARGET yakl_fortran_interface_${YAKL_TARGET_SUFFIX})
-endif()
+set(YAKL_TARGET yakl${YAKL_NAME_APPEND} PARENT_SCOPE)
+set(YAKL_TARGET yakl${YAKL_NAME_APPEND})
+set(YAKL_FORTRAN_INTERFACE_TARGET yakl_fortran_interface${YAKL_NAME_APPEND} PARENT_SCOPE)
+set(YAKL_FORTRAN_INTERFACE_TARGET yakl_fortran_interface${YAKL_NAME_APPEND})
+
+# Configure fortran interface files to append "_${YAKL_TARGET_SIFFIX}" if YAKL_TARGET_SUFFIX is defined
+# This ensures Fortran can control the correct YAKL build
+configure_file(src/YAKL_gator_mod.F90.in          src/YAKL_gator_mod${YAKL_NAME_APPEND}.F90         )
+configure_file(src/YAKL_fortran_interfaces.cpp.in src/YAKL_fortran_interfaces${YAKL_NAME_APPEND}.cpp)
+set(YAKL_F90_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/src/YAKL_gator_mod${YAKL_NAME_APPEND}.F90)
+set(YAKL_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/src/YAKL_fortran_interfaces${YAKL_NAME_APPEND}.cpp
+                ${CMAKE_CURRENT_BINARY_DIR}/src/YAKL_gator_mod${YAKL_NAME_APPEND}.F90)
+
+# Ensure the Fortran file uses the desired flags
+set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
 
 # Add the header-only YAKL C++ library target as well as the YAKL Fortran interface library target
 add_library(${YAKL_TARGET} INTERFACE)
@@ -184,7 +189,7 @@ install(
   ARCHIVE DESTINATION ${INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY src/ external/ DESTINATION include FILES_MATCHING PATTERN "*.h")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gator_mod.mod DESTINATION include)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gator_mod${YAKL_NAME_APPEND}.mod DESTINATION include)
 install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl_variables.cmake \"set(YAKL_COMPILER_FLAGS \\\"${YAKL_COMPILER_FLAGS}\\\")\nset(YAKL_ARCH \\\"${YAKL_ARCH}\\\")\n\")" )
 install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl_variables.make \"YAKL_COMPILER_FLAGS := ${YAKL_COMPILER_FLAGS}\nYAKL_ARCH := ${YAKL_ARCH}\n\")" )
 

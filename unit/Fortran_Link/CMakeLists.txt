@@ -1,9 +1,7 @@
 
 
-set(CXX_SRC simple.cpp)
-set(F90_SRC wrapper.F90)
-
-add_executable(Fortran_Link ${CXX_SRC} ${F90_SRC})
+configure_file(wrapper.F90.in wrapper${YAKL_NAME_APPEND}.F90)
+add_executable(Fortran_Link simple.cpp ${CMAKE_CURRENT_BINARY_DIR}/wrapper${YAKL_NAME_APPEND}.F90)
 include(../../yakl_utils.cmake)
 yakl_process_target(Fortran_Link)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/../yakl)
