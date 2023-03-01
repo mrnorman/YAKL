@@ -151,7 +151,6 @@ namespace yakl {
       #elif defined(YAKL_ARCH_SYCL)
         #if defined(YAKL_SYCL_BBFFT)
           
-          //auto precision = (constexpr (std::is_same_v<T,float>)) ? bbfft::precision::f32 : bbfft::precision::f64;
           auto precision = std::is_same_v<T,float> ? bbfft::precision::f32 : bbfft::precision::f64;  
 
           bbfft::configuration cfg_forward = {1, {1, (unsigned long) tr_size, (unsigned long) batch}, precision, bbfft::direction::forward, bbfft::transform_type::r2c};
