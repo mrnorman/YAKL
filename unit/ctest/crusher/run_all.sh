@@ -1,4 +1,7 @@
 #!/bin/bash
 
-./main-hip-opt.sh
+./main-crayclang-debug.sh  
+./main-crayclang-opt.sh  
+./main-hipcc-debug.sh  
+./main-hipcc-opt.sh
 
