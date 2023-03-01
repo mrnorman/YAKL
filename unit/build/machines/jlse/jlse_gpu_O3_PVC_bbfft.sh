@@ -6,8 +6,6 @@ module load oneapi/eng-compiler/2022.12.30.003
 module use /soft/modulefiles
 module load cmake/3.23.2
 
-export PATH=/home/ac.oahmed2/cmake/cmake-3.26.0-rc4-linux-x86_64/bin:$PATH
-
 unset GATOR_DISABLE
 
 export CC=icx
@@ -23,8 +21,9 @@ cmake -DYAKL_ARCH="SYCL" \
       -DCMAKE_CXX_FLAGS="-O3" \
       -DYAKL_F90_FLAGS="-O3" \
       -DYAKL_C_FLAGS="-O3"   \
-      -DYAKL_SYCL_BBFFT=1      \                                                                                                     \
-      -DYAKL_SYCL_BBFFT_AOT=0       \                                                                                            \
+      -DYAKL_SYCL_USE_BBFFT=1      \
+      -DYAKL_SYCL_BBFFT_HOME="/home/ac.oahmed2/git-repos/double-batched-fft-library/install"  \
+      -DYAKL_SYCL_BBFFT_USE_AOT=0    \
       ../../..
 
 

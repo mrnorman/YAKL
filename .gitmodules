@@ -1,3 +1,0 @@
-[submodule "external/double-batched-fft-library"]
-	path = external/double-batched-fft-library
-	url = https://github.com/omarkahmed/double-batched-fft-library.git

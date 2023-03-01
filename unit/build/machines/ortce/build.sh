@@ -5,8 +5,6 @@ arch="SYCL"
 fft="mkl"
 aot=1
 bbfft_aot=1
-bbfft_size=7
-bbfft_batch=64
 profile_flag=""
 build="Release"
 unit="FFT"
@@ -40,7 +38,7 @@ if [[ $1 == '-h' || $1 == '--help' || $1 == '-help' ]]; then
 fi
 
 # fetch input arguments, if any
-while getopts "c:a:f:jpdu:" flag
+while getopts "c:a:f:ujpd:" flag
 do
     case "${flag}" in
         c) config=${OPTARG};;
@@ -74,10 +72,9 @@ cmake -DYAKL_ARCH="${arch}"                                                     
       -DYAKL_SYCL_FLAGS="-O3 -fsycl -sycl-std=2020 -fsycl-unnamed-lambda -fsycl-device-code-split=per_kernel ${aot_flags} ${profile_flag}" \
       -DCMAKE_CXX_FLAGS="-O3"                                                                                                              \
       -DYAKL_F90_FLAGS="-O3"                                                                                                               \
-      -DYAKL_SYCL_BBFFT=${bbfft}                                                                                                           \
-      -DYAKL_SYCL_BBFFT_AOT=${bbfft_aot}                                                                                                   \
-      -DYAKL_SYCL_BBFFT_AOT_SIZE=${bbfft_size}                                                                                               \
-      -DYAKL_SYCL_BBFFT_AOT_BATCH=${bbfft_batch}                                                                                             \
+      -DYAKL_SYCL_USE_BBFFT=${bbfft}                                                                                                       \
+      -DYAKL_SYCL_BBFFT_USE_AOT=${bbfft_aot}                                                                                               \
+      -DYAKL_SYCL_BBFFT_HOME="/nfs/site/home/omarahme/git-repos/double-batched-fft-library/install"                                        \
       -DCMAKE_BUILD_TYPE=${build}                                                                                                          \
       ${SCRIPT_DIR}/../../..
 
