@@ -29,7 +29,7 @@ export CTEST_MPI_COMMAND=""
 
 ctest_dir=`pwd`
 cd ${test_home}
-git clone --recurse-submodules git@github.com:E3SM-Project/YAKL.git
+git clone --recurse-submodules git@github.com:mrnorman/YAKL.git
 
 cd ${ctest_dir}
 
