@@ -26,8 +26,8 @@ export CTEST_VALGRIND=0
 export CTEST_MPI_COMMAND="jsrun -n 1 -a 1 -c 1 -g 1"
 
 ctest_dir=`pwd`
-cd ${test_home}
-git clone --recurse-submodules git@github.com:mrnorman/YAKL.git
+# cd ${test_home}
+# git clone --recurse-submodules git@github.com:mrnorman/YAKL.git
 
 cd ${ctest_dir}
 
