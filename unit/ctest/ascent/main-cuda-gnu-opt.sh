@@ -3,7 +3,6 @@
 test_home=/gpfs/wolf/cli115/proj-shared/yakl-testing
 export YAKL_CTEST_SRC=${test_home}/YAKL
 export YAKL_CTEST_BIN=${test_home}/scratch
-rm -rf ${YAKL_CTEST_SRC}
 rm -rf ${YAKL_CTEST_BIN}
 
 source $MODULESHOME/init/bash
