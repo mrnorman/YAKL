@@ -8,16 +8,15 @@ rm -rf ${YAKL_CTEST_BIN}
 
 source $MODULESHOME/init/bash
 module purge
-module load DefApps gcc/11.2.0 cuda/11.4.2 cmake
+module load DefApps nvhpc cuda cmake
 
-export CTEST_BUILD_NAME=main-cuda-gnu-opt
-export CC=gcc
-export CXX=g++
-export FC=gfortran
+export CTEST_BUILD_NAME=main-nvhpc-opt
+export CC=mpicc
+export CXX=mpic++
+export FC=mpif90
 
-
-export CTEST_YAKL_ARCH="CUDA"
-export CTEST_CUDA_FLAGS="-O3 --use_fast_math -arch sm_70 -ccbin g++ -DTHRUST_IGNORE_CUB_VERSION_CHECK"
+# export CTEST_YAKL_ARCH="CUDA"
+export CTEST_CXX_FLAGS="-O3"
 export CTEST_C_FLAGS="-O3"
 export CTEST_F90_FLAGS="-O3"
 export CTEST_LD_FLAGS=""
