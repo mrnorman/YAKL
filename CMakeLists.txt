@@ -72,7 +72,7 @@ set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_
 add_library(${YAKL_TARGET} INTERFACE)
 add_library(${YAKL_FORTRAN_INTERFACE_TARGET} STATIC ${YAKL_SOURCE})
 
-# Process the YAKL Fortran interface libraray target appropriately
+# Process the YAKL Fortran interface library target appropriately
 include(yakl_utils.cmake)
 yakl_process_target(${YAKL_FORTRAN_INTERFACE_TARGET})
 
@@ -91,7 +91,15 @@ target_include_directories(${YAKL_TARGET} INTERFACE
 # Special treatment for CUDA
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   set_target_properties(${YAKL_TARGET} PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
-  target_link_libraries(${YAKL_TARGET} INTERFACE cufft)
+
+  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.22.0 )
+    message("Using CUDAToolkit macros")
+    find_package(CUDAToolkit REQUIRED)
+    target_link_libraries(${YAKL_TARGET} INTERFACE CUDA::cufft)
+  else()
+    target_link_libraries(${YAKL_TARGET} INTERFACE cufft)
+  endif()
+
   if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
     set_property(TARGET ${YAKL_TARGET} PROPERTY CUDA_ARCHITECTURES OFF)
   endif()
@@ -125,6 +133,13 @@ if ("${YAKL_ARCH}" STREQUAL "OPENMP")
   target_link_libraries(${YAKL_TARGET} INTERFACE "${YAKL_OPENMP_FLAGS}")
 endif()
 
+# Special treatment for MPI
+if (YAKL_HAVE_MPI)
+  find_package(MPI COMPONENTS C REQUIRED)
+  if(MPI_FOUND)
+    target_link_libraries(${YAKL_TARGET} INTERFACE MPI::MPI_C)
+  endif()
+endif()
 
 ######################################################################
 ## Everything below is installation stuff
