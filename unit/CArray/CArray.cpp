@@ -75,6 +75,8 @@ int main() {
     real7d test7d("test7d",d1,d2,d3,d4,d5,d6,d7);
     real8d test8d("test8d",d1,d2,d3,d4,d5,d6,d7,d8);
 
+    std::cout << "Is CSArray trivially copyable? " << std::is_trivially_copyable<yakl::CSArray<real,1,1>>::value << std::endl;
+
     yakl::memset(test1d,0.f);
     yakl::memset(test2d,0.f);
     yakl::memset(test3d,0.f);
