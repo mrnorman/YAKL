@@ -2,6 +2,7 @@
 #pragma once
 // Included by YAKL_Array.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // This is a low-overhead class to represent a multi-dimensional C-style array with compile-time
@@ -213,5 +214,6 @@ namespace yakl {
   using SArray = CSArray<T,rank,D0,D1,D2,D3>;
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

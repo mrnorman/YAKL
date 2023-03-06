@@ -1,6 +1,7 @@
 
 #pragma once
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /** @private */
@@ -61,4 +62,5 @@ namespace yakl {
   /** @private */
   inline YAKL_Internal & get_yakl_instance() { return YAKL_Internal::get_instance(); }
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 

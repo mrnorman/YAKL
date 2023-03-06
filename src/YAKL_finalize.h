@@ -6,6 +6,7 @@
 #pragma once
 // Included by YAKL.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /**
@@ -86,5 +87,6 @@ namespace yakl {
    */
   inline void register_finalize_callback( std::function<void ()> callback ) { get_yakl_instance().finalize_callbacks.push_back(callback); }
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

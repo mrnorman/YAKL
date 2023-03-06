@@ -1,6 +1,7 @@
 
 #pragma once
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   #ifdef YAKL_ENABLE_STREAMS
@@ -469,5 +470,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

@@ -2,6 +2,7 @@
 #pragma once
 // Included by YAKL_Gator.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
 
@@ -291,5 +292,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

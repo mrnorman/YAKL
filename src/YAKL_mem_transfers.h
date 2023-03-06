@@ -6,6 +6,7 @@
 #pragma once
 // Included by YAKL.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // Your one-stop shop for memory transfers to / from host / device
@@ -171,5 +172,6 @@ namespace yakl {
   }
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

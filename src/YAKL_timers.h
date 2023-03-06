@@ -10,6 +10,7 @@
 
 #include "YAKL_Toney.h"
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /** @brief Initialize the YAKL timers */
@@ -38,4 +39,5 @@ namespace yakl {
   /** @brief Override YAKL's default routine to stop an individual timer */
   inline void set_timer_stop    ( std::function<void (char const *)> func ) { get_yakl_instance().timer_stop_func     = func; }
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 

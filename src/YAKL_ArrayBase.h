@@ -7,6 +7,7 @@
 #pragma once
 // Included by YAKL_Array.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // This implements all functionality used by all dynamically allocated arrays
@@ -373,5 +374,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

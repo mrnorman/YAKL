@@ -6,6 +6,7 @@
 #pragma once
 // Included by YAKL.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /**
@@ -145,5 +146,6 @@ namespace yakl {
     yakl_mtx_unlock();
   } //
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

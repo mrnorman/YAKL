@@ -8,6 +8,7 @@
 
 #include "YAKL_LinearAllocator.h"
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /** @brief YAKL Pool allocator class.
@@ -354,5 +355,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

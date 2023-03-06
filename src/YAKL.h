@@ -4,12 +4,30 @@
 #include "YAKL_header.h"
 #include "YAKL_defines.h"
 
+// These wrap the yakl namespace in a user-defined namespace to allow multiple YAKLs to be used in
+// the same codebase. Anonymous / unnamed namespaces are not the best choice because they would leave
+// out the Fortran interoperability.
+#ifdef YAKL_NAMESPACE_WRAPPER_LABEL
+
+#define __YAKL_NAMESPACE_WRAPPER_BEGIN__ namespace YAKL_NAMESPACE_WRAPPER_LABEL {
+#define __YAKL_NAMESPACE_WRAPPER_END__ }
+namespace YAKL_NAMESPACE_WRAPPER_LABEL {}
+using namespace YAKL_NAMESPACE_WRAPPER_LABEL ;
+
+#else
+
+#define __YAKL_NAMESPACE_WRAPPER_BEGIN__
+#define __YAKL_NAMESPACE_WRAPPER_END__
+
+#endif
+
 /** @namespace yakl::c
   * @brief Contains `Bounds` class, and `parallel_for()` routines using C-style indexing and ordering */
 
 /** @namespace yakl::fortran
   * @brief Contains `Bounds` class, and `parallel_for()` routines using Fortran-style indexing and ordering */
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   typedef unsigned int uint;
   using std::cos;
@@ -23,6 +41,7 @@ namespace yakl {
   typedef unsigned int index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 #include "ArrayIR.h"
 #include "YAKL_verbose.h"

@@ -2,6 +2,7 @@
 #pragma once
 // Included by YAKL.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   // This exists to create a queue for SYCL kernels and data transfers
   #ifdef YAKL_ARCH_SYCL
@@ -76,6 +77,7 @@ namespace yakl {
 
   #endif // YAKL_ARCH_SYCL
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 
 #if defined(YAKL_ARCH_SYCL) && defined(SYCL_DEVICE_COPYABLE)

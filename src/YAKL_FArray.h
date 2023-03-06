@@ -2,6 +2,7 @@
 #pragma once
 // Included by YAKL_Array.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /** @brief This implements the yakl:Array class with yakl::styleFortran behavior
@@ -1088,5 +1089,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 
