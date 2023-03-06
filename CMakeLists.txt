@@ -133,63 +133,56 @@ endif()
 include(CMakePackageConfigHelpers)
 
 # setup some variables
-set(version_config ${PROJECT_BINARY_DIR}/yakl-config-version.cmake)
-set(project_config_src ${PROJECT_SOURCE_DIR}/src/yakl-config.cmake.in)
-set(project_config_dst ${PROJECT_BINARY_DIR}/src/yakl-config.cmake)
 set(targets_export_name yakl-targets)
 
 set(INSTALL_LIBDIR ${CMAKE_INSTALL_LIBDIR} CACHE STRING
-  "Installation directory for libraries, relative to ${CMAKE_INSTALL_PREFIX}.")
+    "Installation directory for libraries, relative to ${CMAKE_INSTALL_PREFIX}.")
 
 set(INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE STRING
-  "Installation directory for include files, relative to ${CMAKE_INSTALL_PREFIX}.")
+    "Installation directory for include files, relative to ${CMAKE_INSTALL_PREFIX}.")
 
 set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_LIBDIR}/pkgconfig CACHE PATH
-  "Installation directory for pkgconfig (.pc) files, relative to ${CMAKE_INSTALL_PREFIX}.")
+    "Installation directory for pkgconfig (.pc) files, relative to ${CMAKE_INSTALL_PREFIX}.")
 
 set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake CACHE STRING
-  "Installation directory for cmake files, relative to ${CMAKE_INSTALL_PREFIX}.")
+    "Installation directory for cmake files, relative to ${CMAKE_INSTALL_PREFIX}.")
 
 # Generate the version, config and target files into the build directory.
-write_basic_package_version_file(
-  ${version_config}
-  VERSION ${PROJECT_VERSION}
-  COMPATIBILITY AnyNewerVersion)
+write_basic_package_version_file(${PROJECT_BINARY_DIR}/yakl-config-version.cmake
+                                 VERSION ${PROJECT_VERSION}
+                                 COMPATIBILITY AnyNewerVersion)
 
 # generate cmake my_package-config.cmake file
-configure_package_config_file(
-  ${project_config_src}
-  ${project_config_dst}
-  INSTALL_DESTINATION ${INSTALL_CMAKE_DIR})
+configure_package_config_file(${PROJECT_SOURCE_DIR}/src/yakl-config.cmake.in
+                              ${PROJECT_BINARY_DIR}/src/yakl-config.cmake
+                              INSTALL_DESTINATION ${INSTALL_CMAKE_DIR})
+
+configure_package_config_file(${PROJECT_SOURCE_DIR}/src/yakl-variables.cmake.in
+                              ${PROJECT_BINARY_DIR}/src/yakl-variables.cmake
+                              INSTALL_DESTINATION ${INSTALL_CMAKE_DIR})
 
 # setup the list of targets to install
-set (INSTALL_TARGETS ${YAKL_TARGET} ${YAKL_FORTRAN_INTERFACE_TARGET})
+set(INSTALL_TARGETS ${YAKL_TARGET} ${YAKL_FORTRAN_INTERFACE_TARGET})
 
-# Use a namespace because CMake provides better diagnostics
-# for namespaced imported targets.
-export(
-  TARGETS ${INSTALL_TARGETS} NAMESPACE ${YAKL_TARGET}::
-  FILE ${PROJECT_BINARY_DIR}/${targets_export_name}.cmake)
+# Use a namespace because CMake provides better diagnostics for namespaced imported targets.
+export(TARGETS ${INSTALL_TARGETS} NAMESPACE ${YAKL_TARGET}:: FILE ${PROJECT_BINARY_DIR}/${targets_export_name}.cmake)
 
 # Install cmake config and target files.
-install(
-  FILES ${project_config_dst} ${version_config}
-  DESTINATION ${INSTALL_CMAKE_DIR})
+install(FILES ${PROJECT_BINARY_DIR}/src/yakl-config.cmake
+              ${PROJECT_BINARY_DIR}/src/yakl-variables.cmake
+              ${PROJECT_BINARY_DIR}/yakl-config-version.cmake
+        DESTINATION ${INSTALL_CMAKE_DIR})
 
-install(
-  EXPORT ${targets_export_name}
-  DESTINATION ${INSTALL_CMAKE_DIR}
-  NAMESPACE ${YAKL_TARGET}::)
+install(EXPORT ${targets_export_name} DESTINATION ${INSTALL_CMAKE_DIR} NAMESPACE ${YAKL_TARGET}::)
 
 # install libyakl
-install(
-  TARGETS ${INSTALL_TARGETS}
-  EXPORT ${targets_export_name}
-  LIBRARY DESTINATION ${INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS ${INSTALL_TARGETS}
+        EXPORT ${targets_export_name}
+        LIBRARY DESTINATION ${INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY src/ external/ DESTINATION include FILES_MATCHING PATTERN "*.h")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gator_mod${YAKL_NAME_APPEND}.mod DESTINATION include)
-install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl_variables.cmake \"set(YAKL_COMPILER_FLAGS \\\"${YAKL_COMPILER_FLAGS}\\\")\nset(YAKL_ARCH \\\"${YAKL_ARCH}\\\")\n\")" )
-install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl_variables.make \"YAKL_COMPILER_FLAGS := ${YAKL_COMPILER_FLAGS}\nYAKL_ARCH := ${YAKL_ARCH}\n\")" )
+install(FILES ${PROJECT_BINARY_DIR}/src/yakl-variables.cmake DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl-variables.make \"YAKL_COMPILER_FLAGS := ${YAKL_COMPILER_FLAGS}\nYAKL_ARCH := ${YAKL_ARCH}\n\")" )
 

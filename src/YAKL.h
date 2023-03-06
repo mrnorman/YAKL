@@ -11,6 +11,8 @@
 
 #define __YAKL_NAMESPACE_WRAPPER_BEGIN__ namespace YAKL_NAMESPACE_WRAPPER_LABEL {
 #define __YAKL_NAMESPACE_WRAPPER_END__ }
+namespace YAKL_NAMESPACE_WRAPPER_LABEL {}
+using namespace YAKL_NAMESPACE_WRAPPER_LABEL ;
 
 #else
 
@@ -71,17 +73,6 @@ __YAKL_NAMESPACE_WRAPPER_END__
 #include "extensions/YAKL_intrinsics.h"
 #include "extensions/YAKL_tridiagonal.h"
 #include "extensions/YAKL_pentadiagonal.h"
-
-
-#ifdef YAKL_NAMESPACE_WRAPPER_LABEL
-
-using namespace YAKL_NAMESPACE_WRAPPER_LABEL;
-
-#else
-
-#define YAKL_NAMESPACE_WRAPPER_LABEL
-
-#endif
 
 
 /** @mainpage Yet Another Kernel Launcher (YAKL) API Documentation
