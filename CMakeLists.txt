@@ -138,6 +138,7 @@ if (YAKL_HAVE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
   if(MPI_FOUND)
     target_link_libraries(${YAKL_TARGET} INTERFACE MPI::MPI_C)
+    target_link_libraries(${YAKL_FORTRAN_INTERFACE_TARGET} MPI::MPI_C)
   endif()
 endif()
 
@@ -200,4 +201,3 @@ install(DIRECTORY src/ external/ DESTINATION include FILES_MATCHING PATTERN "*.h
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gator_mod${YAKL_NAME_APPEND}.mod DESTINATION include)
 install(FILES ${PROJECT_BINARY_DIR}/src/yakl-variables.cmake DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(CODE "file(WRITE ${CMAKE_INSTALL_PREFIX}/yakl-variables.make \"YAKL_COMPILER_FLAGS := ${YAKL_COMPILER_FLAGS}\nYAKL_ARCH := ${YAKL_ARCH}\n\")" )
-
