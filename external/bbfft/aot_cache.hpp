@@ -23,7 +23,7 @@ class aot_cache : public bbfft::jit_cache {
       auto handle = bbfft::sycl::build_native_module(&_binary_kernels_XE_HPC_COREpvc_bin_start,
                                                      &_binary_kernels_XE_HPC_COREpvc_bin_end -
                                                      &_binary_kernels_XE_HPC_COREpvc_bin_start,
-                                                     q.get_context(), q.get_device());
+                                                     bbfft::module_format::native, q.get_context(), q.get_device());
 
       module_ = bbfft::sycl::make_shared_handle(handle, q.get_backend());
   #else
@@ -32,7 +32,7 @@ class aot_cache : public bbfft::jit_cache {
       auto handle = bbfft::sycl::build_native_module(&_binary_kernels_pvc_bin_start,
                                                      &_binary_kernels_pvc_bin_end -
                                                      &_binary_kernels_pvc_bin_start,
-                                                     q.get_context(), q.get_device());
+                                                     bbfft::module_format::native, q.get_context(), q.get_device());
 
       module_ = bbfft::sycl::make_shared_handle(handle, q.get_backend());
   #endif
