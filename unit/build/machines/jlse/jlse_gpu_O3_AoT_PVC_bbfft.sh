@@ -5,6 +5,7 @@ module use /soft/restricted/CNDA/modulefiles
 module load oneapi
 module use /soft/modulefiles
 module load cmake/3.23.2
+module load bbfft
 
 ../../cmakeclean.sh
 
@@ -22,7 +23,6 @@ cmake -DYAKL_ARCH="SYCL" \
       -DYAKL_F90_FLAGS="-O3" \
       -DYAKL_C_FLAGS="-O3"   \
       -DYAKL_SYCL_USE_BBFFT=1      \
-      -DYAKL_SYCL_BBFFT_HOME="/home/ac.oahmed2/git-repos/double-batched-fft-library/install"  \
       -DYAKL_SYCL_BBFFT_USE_AOT=1    \
       -DYAKL_SYCL_BBFFT_AOT_LEGACY_UMD=1 \
       ../../..
