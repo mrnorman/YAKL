@@ -93,6 +93,9 @@ macro(yakl_process_target tname)
   endif()
 
   target_link_libraries(${tname} ${YAKL_TARGET})
+  if (${CMAKE_VERSION} VERSION_GREATER "3.18.0")
+    set_target_properties(${tname}  PROPERTIES CUDA_ARCHITECTURES OFF)
+  endif()
 endmacro(yakl_process_target)
 
 
