@@ -16,6 +16,7 @@
 # define GET_SIMD_PRAGMA()
 #endif
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
 /** @brief Holds YAKL's Pack class and operators to encourage SIMD vectorization */
@@ -427,5 +428,6 @@ namespace simd {
 }
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

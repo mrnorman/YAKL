@@ -6,6 +6,7 @@
 #include "mpi.h"
 #include <pnetcdf.h>
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   //Error reporting routine for the PNetCDF I/O
@@ -523,5 +524,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 
 

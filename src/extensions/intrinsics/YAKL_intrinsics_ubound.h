@@ -2,6 +2,7 @@
 #pragma once
 // Included by YAKL_intrinsics.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   namespace intrinsics {
 
@@ -21,4 +22,5 @@ namespace yakl {
 
   }
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 

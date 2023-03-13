@@ -2,6 +2,7 @@
 #pragma once
 // Included by YAKL_Array.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // [S]tatic (compile-time) Array [B]ounds (templated)
@@ -99,17 +100,9 @@ namespace yakl {
 
     // All copies are deep, so be wary of copies. Use references where possible
     /** @brief No constructor arguments allowed */
-    YAKL_INLINE FSArray() {}
     YAKL_INLINE FSArray(T init_fill) { for (int i=0; i < size(); i++) { myData[i] = init_fill; } }
-    /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
-    YAKL_INLINE FSArray           (FSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
-    /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
-    YAKL_INLINE FSArray           (FSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; } }
-    /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
-    YAKL_INLINE FSArray &operator=(FSArray      &&in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
-    /** @brief [DEEP_COPY] Copy and move constructors deep copy all data. */
-    YAKL_INLINE FSArray &operator=(FSArray const &in) { for (uint i=0; i < totElems(); i++) { myData[i] = in.myData[i]; }; return *this; }
-    YAKL_INLINE ~FSArray() { }
+    FSArray()  = default;
+    ~FSArray() = default;
 
     /** @brief Returns a reference to the indexed element (1-D).
       * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
@@ -190,6 +183,10 @@ namespace yakl {
     YAKL_INLINE T *data    () const { return myData; }
     /** @brief Get the underlying raw data pointer */
     YAKL_INLINE T *get_data() const { return myData; }
+    /** @brief Returns pointer to beginning of the data */
+    YAKL_INLINE T *begin() const { return myData; }
+    /** @brief Returns pointer to end of the data */
+    YAKL_INLINE T *end() const { return begin() + size(); }
     /** @brief Get the total number of array elements */
     static unsigned constexpr totElems      () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
@@ -251,5 +248,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

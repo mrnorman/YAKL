@@ -5,6 +5,7 @@
 
 #pragma once
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   
   /** @brief An object of this class can optionally be passed to yakl::init() to configure the initialization.
@@ -142,5 +143,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 

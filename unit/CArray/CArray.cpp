@@ -1,6 +1,8 @@
 
 #include <iostream>
 #include "YAKL.h"
+#include <random>
+#include <algorithm>
 
 using yakl::Array;
 using yakl::styleC;
@@ -30,6 +32,8 @@ typedef Array<real,5,memDevice,styleC> real5d;
 typedef Array<real,6,memDevice,styleC> real6d;
 typedef Array<real,7,memDevice,styleC> real7d;
 typedef Array<real,8,memDevice,styleC> real8d;
+
+real1d glob;
 
 void die(std::string msg) {
   yakl::yakl_throw(msg.c_str());
@@ -70,6 +74,8 @@ int main() {
     real6d test6d("test6d",d1,d2,d3,d4,d5,d6);
     real7d test7d("test7d",d1,d2,d3,d4,d5,d6,d7);
     real8d test8d("test8d",d1,d2,d3,d4,d5,d6,d7,d8);
+
+    std::cout << "Is CSArray trivially copyable? " << std::is_trivially_copyable<yakl::CSArray<real,1,1>>::value << std::endl;
 
     yakl::memset(test1d,0.f);
     yakl::memset(test2d,0.f);
@@ -376,8 +382,29 @@ int main() {
     // Test subset_slowest_dimension
     ///////////////////////////////////////////////////////////
     test8d = 1;
-    test8d.subset_slowest_dimension(0) = 2;
+    test8d.subset_slowest_dimension(1) = 2;
     if (yakl::intrinsics::sum(test8d) != d2*d3*d4*d5*d6*d7*d8*3) { die("SimpleBounds: wrong sum for reshaped subset"); }
+
+    {
+      yakl::Array<int,1,memHost,styleC> indices("indices",100);
+      for (int i=0; i < 100; i++) { indices(i) = i; }
+      std::shuffle( indices.begin() , indices.end() , std::default_random_engine(13) );
+      int tot = 0;
+      for (int i=0; i < 99; i++) { tot += std::abs(indices(i+1) - indices(i)); }
+      if (tot == 99) die("ERROR: Shuffle is not working on CArray");
+    }
+
+    {
+      yakl::SArray<int,1,100> indices;
+      for (int i=0; i < 100; i++) { indices(i) = i; }
+      std::shuffle( indices.begin() , indices.end() , std::default_random_engine(13) );
+      int tot = 0;
+      for (int i=0; i < 99; i++) { tot += std::abs(indices(i+1) - indices(i)); }
+      if (tot == 99) die("ERROR: Shuffle is not working on CArray");
+    }
+
+    glob = real1d("glob",10000);
+    yakl::register_finalize_callback( [] () { glob.deallocate(); } );
 
   }
   yakl::finalize();

@@ -2,6 +2,7 @@
 #pragma once
 // Included by YAKL_Array.h
 
+__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /** @brief This implements the yakl:Array class with yakl::styleFortran behavior
@@ -657,7 +658,6 @@ namespace yakl {
     template <class TLOC>
     void memset_loc(TLOC rhs) const {
       if (myMem == memDevice) {
-        YAKL_SCOPE( arr , *this );
         #ifdef YAKL_ENABLE_STREAMS
           fence();
         #endif
@@ -671,7 +671,8 @@ namespace yakl {
     }
 
 
-
+    /** @brief Return an array aliasing a contiguous subset of the slowest dimension. Retuns the same array with the slowest dimension truncated
+               to [lbounds(rank-1) , u]. */
     YAKL_INLINE Array<T,rank,myMem,styleFortran> subset_slowest_dimension(int u) const { return subset_slowest_dimension(lbounds[rank-1],u); }
 
 
@@ -1088,5 +1089,6 @@ namespace yakl {
   };
 
 }
+__YAKL_NAMESPACE_WRAPPER_END__
 
 
