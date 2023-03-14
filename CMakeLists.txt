@@ -26,6 +26,16 @@ option(YAKL_B4B "Force serial computation (default OFF)." OFF)
 option(YAKL_MANAGED_MEMORY "Turn on managed memory (default OFF)." OFF)
 option(YAKL_MEMORY_DEBUG "Turn on memory allocation debugging (default OFF)." OFF)
 
+
+set(YAKL_SYCL_BBFFT                  OFF                  CACHE BOOL    "Use Double-Batched FFT")
+set(YAKL_SYCL_BBFFT_AOT              OFF                  CACHE BOOL    "Use Double-Batched FFT AOT")
+set(YAKL_SYCL_BBFFT_HOME             $ENV{BBFFT_HOME}     CACHE PATH    "Double-Batched FFT Home directory")
+set(YAKL_SYCL_BBFFT_AOT_LEGACY_UMD   OFF                  CACHE BOOL    "Use older PVC user mode driver")
+
+set(YAKL_CXX_SOURCE src/YAKL_fortran_interfaces.cpp)
+set(YAKL_F90_SOURCE src/YAKL_gator_mod.F90)
+set(YAKL_SOURCE ${YAKL_CXX_SOURCE} ${YAKL_F90_SOURCE})
+
 # Inform the user of the backend being used
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   message(STATUS "** Building YAKL for a CUDA backend **")
@@ -99,7 +109,6 @@ if ("${YAKL_ARCH}" STREQUAL "CUDA")
   else()
     target_link_libraries(${YAKL_TARGET} INTERFACE cufft)
   endif()
-
   if (${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
     set_property(TARGET ${YAKL_TARGET} PROPERTY CUDA_ARCHITECTURES OFF)
   endif()
@@ -112,20 +121,29 @@ endif()
 
 # Special treatment for SYCL
 if ("${YAKL_ARCH}" STREQUAL "SYCL")
-  if(NOT MKL_ROOT)
-    set(MKL_ROOT $ENV{MKLROOT} CACHE PATH "Folder contains MKL")
-  endif(NOT MKL_ROOT)
-  message("-- ** Looking for MKL installation, ${MKL_ROOT}")
-  add_compile_options(-fsycl-default-sub-group-size=16)
-  add_compile_definitions(MKL_ILP64)
-  find_path(MKL_INCLUDE mkl.h HINTS $ENV{MKLROOT} ${MKL_ROOT} PATH_SUFFIXES include)
-  target_include_directories(${YAKL_TARGET} INTERFACE "${MKL_INCLUDE}")
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-  find_library(MKL_SEQU NAMES mkl_sequential PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
-  find_library(MKL_CORE NAMES mkl_core PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
-  find_library(MKL_SYCL NAMES mkl_sycl PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
-  find_library(MKL_IPL64 NAMES mkl_intel_ilp64 PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
-  target_link_libraries(${YAKL_TARGET} INTERFACE "${YAKL_COMPILER_FLAGS} ${MKL_SYCL} -Wl,-export-dynamic -Wl,--start-group ${MKL_SEQU} ${MKL_IPL64} ${MKL_CORE} -Wl,--end-group -lsycl -lOpenCL -lpthread -lm -ldl")
+  if (YAKL_SYCL_BBFFT)
+    set(CMAKE_PREFIX_PATH ${YAKL_SYCL_BBFFT_HOME})
+    set(BBFFT_AUX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/external/bbfft)
+    find_package(bbfft-sycl REQUIRED)
+    target_include_directories(${YAKL_TARGET} INTERFACE "${BBFFT_AUX_PATH}")
+    target_link_libraries(${YAKL_TARGET} INTERFACE bbfft::bbfft-sycl "${YAKL_COMPILER_FLAGS}")
+  else()
+    message("Building with MKL")
+    if(NOT MKL_ROOT)
+      set(MKL_ROOT $ENV{MKLROOT} CACHE PATH "Folder contains MKL")
+    endif(NOT MKL_ROOT)
+    message("-- ** Looking for MKL installation, ${MKL_ROOT}")
+    add_compile_options(-fsycl-default-sub-group-size=16)
+    add_compile_definitions(MKL_ILP64)
+    find_path(MKL_INCLUDE mkl.h HINTS $ENV{MKLROOT} ${MKL_ROOT} PATH_SUFFIXES include)
+    target_include_directories(${YAKL_TARGET} INTERFACE "${MKL_INCLUDE}")
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    find_library(MKL_SEQU NAMES mkl_sequential PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+    find_library(MKL_CORE NAMES mkl_core PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+    find_library(MKL_SYCL NAMES mkl_sycl PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+    find_library(MKL_IPL64 NAMES mkl_intel_ilp64 PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
+    target_link_libraries(${YAKL_TARGET} INTERFACE "${YAKL_COMPILER_FLAGS} ${MKL_SYCL} -Wl,-export-dynamic -Wl,--start-group ${MKL_SEQU} ${MKL_IPL64} ${MKL_CORE} -Wl,--end-group -lsycl -lOpenCL -lpthread -lm -ldl")
+  endif()
 endif()
 
 # Special treatment for SYCL
@@ -178,8 +196,8 @@ configure_package_config_file(${PROJECT_SOURCE_DIR}/src/yakl-variables.cmake.in
                               INSTALL_DESTINATION ${INSTALL_CMAKE_DIR})
 
 # setup the list of targets to install
-set(INSTALL_TARGETS ${YAKL_TARGET} ${YAKL_FORTRAN_INTERFACE_TARGET})
 
+set(INSTALL_TARGETS ${YAKL_TARGET} ${YAKL_FORTRAN_INTERFACE_TARGET})
 # Use a namespace because CMake provides better diagnostics for namespaced imported targets.
 export(TARGETS ${INSTALL_TARGETS} NAMESPACE ${YAKL_TARGET}:: FILE ${PROJECT_BINARY_DIR}/${targets_export_name}.cmake)
 

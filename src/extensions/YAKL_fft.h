@@ -63,18 +63,23 @@ namespace yakl {
       rocfft_plan plan_inverse;
       #define CHECK(func) { int myloc = func; if (myloc != rocfft_status_success) { std::cerr << "ERROR: YAKL ROCFFT: " << __FILE__ << ": " <<__LINE__ << std::endl; yakl_throw(""); } }
     #elif defined(YAKL_ARCH_SYCL)
-      typedef oneapi::mkl::dft::descriptor<oneapi::mkl::dft::precision::SINGLE, oneapi::mkl::dft::domain::REAL> desc_single_t;
-      typedef oneapi::mkl::dft::descriptor<oneapi::mkl::dft::precision::DOUBLE, oneapi::mkl::dft::domain::REAL> desc_double_t;
-      void *plan_forward, *plan_inverse;
-      #define CHECK(func) {                                                        \
-        try {                                                                      \
-          func;                                                                    \
-        }                                                                          \
-        catch (oneapi::mkl::exception const &ex) {                                 \
-          std::cerr << "ERROR: YAKL ONEMKL-FFT: " << __FILE__ << " : " << __LINE__ \
-          << std::endl; yakl_throw("");                                            \
-        }                                                                          \
-      }
+      
+      #if defined(YAKL_SYCL_BBFFT)
+        bbfft::plan<sycl::event> plan_forward, plan_inverse;      
+      #else
+        typedef oneapi::mkl::dft::descriptor<oneapi::mkl::dft::precision::SINGLE, oneapi::mkl::dft::domain::REAL> desc_single_t;
+        typedef oneapi::mkl::dft::descriptor<oneapi::mkl::dft::precision::DOUBLE, oneapi::mkl::dft::domain::REAL> desc_double_t;
+        void *plan_forward, *plan_inverse;
+        #define CHECK(func) {                                                        \
+          try {                                                                      \
+            func;                                                                    \
+          }                                                                          \
+          catch (oneapi::mkl::exception const &ex) {                                 \
+            std::cerr << "ERROR: YAKL ONEMKL-FFT: " << __FILE__ << " : " << __LINE__ \
+            << std::endl; yakl_throw("");                                            \
+          }                                                                          \
+        }
+      #endif
     #endif
 
     void nullify() {batch_size = -1;  transform_size = -1;  trdim = -1;}
@@ -145,35 +150,56 @@ namespace yakl {
           CHECK( rocfft_plan_description_destroy( desc ) );
         }
       #elif defined(YAKL_ARCH_SYCL)
-        if constexpr (std::is_same_v<T,float>) {
-          plan_forward = new desc_single_t(n);
-          plan_inverse = new desc_single_t(n);
+        #if defined(YAKL_SYCL_BBFFT)
+          
+          auto precision = std::is_same_v<T,float> ? bbfft::precision::f32 : bbfft::precision::f64;  
 
-          CHECK( static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch) );
-          CHECK( static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE,         idist) );
-          CHECK( static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE,         odist + 2) );
+          bbfft::configuration cfg_forward = {1, {1, (unsigned long) tr_size, (unsigned long) batch}, precision, bbfft::direction::forward, bbfft::transform_type::r2c};
+          cfg_forward.set_strides_default(true);
 
-          CHECK( static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch) );
-          CHECK( static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE,         odist) );
-          CHECK( static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE,         idist) );
+          bbfft::configuration cfg_inverse = {1, {1, (unsigned long) tr_size, (unsigned long) batch}, precision, bbfft::direction::backward, bbfft::transform_type::c2r};
+          cfg_inverse.set_strides_default(true);
 
-          CHECK( static_cast<desc_single_t*>(plan_forward)->commit( sycl_default_stream() ) );
-          CHECK( static_cast<desc_single_t*>(plan_inverse)->commit( sycl_default_stream() ) );
-        } else if constexpr (std::is_same_v<T,double>) {
-          plan_forward = new desc_double_t(n);
-          plan_inverse = new desc_double_t(n);
+          #if defined(YAKL_SYCL_BBFFT_AOT)
+            auto cache = aot_cache(sycl_default_stream());
+            plan_forward = bbfft::make_plan(cfg_forward, sycl_default_stream(), &cache);
+            plan_inverse = bbfft::make_plan(cfg_inverse, sycl_default_stream(), &cache);
+          #else
+            plan_forward = bbfft::make_plan(cfg_forward, sycl_default_stream());
+            plan_inverse = bbfft::make_plan(cfg_inverse, sycl_default_stream());
+          #endif
 
-          CHECK( static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch) );
-          CHECK( static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE,         idist) );
-          CHECK( static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE,         odist + 2) );
+        #else
+          if constexpr (std::is_same_v<T,float>) {
+            plan_forward = new desc_single_t(n);
+            plan_inverse = new desc_single_t(n);
 
-          CHECK( static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch) );
-          CHECK( static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE,         idist) );
-          CHECK( static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE,         odist) );
+            CHECK( static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch) );
+            CHECK( static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE,         idist) );
+            CHECK( static_cast<desc_single_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE,         odist + 2) );
 
-          CHECK( static_cast<desc_double_t*>(plan_forward)->commit( sycl_default_stream() ) );
-          CHECK( static_cast<desc_double_t*>(plan_inverse)->commit( sycl_default_stream() ) );
-        }
+            CHECK( static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch) );
+            CHECK( static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE,         odist) );
+            CHECK( static_cast<desc_single_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE,         idist) );
+
+            CHECK( static_cast<desc_single_t*>(plan_forward)->commit( sycl_default_stream() ) );
+            CHECK( static_cast<desc_single_t*>(plan_inverse)->commit( sycl_default_stream() ) );
+          } else if constexpr (std::is_same_v<T,double>) {
+            plan_forward = new desc_double_t(n);
+            plan_inverse = new desc_double_t(n);
+
+            CHECK( static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch) );
+            CHECK( static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE,         idist) );
+            CHECK( static_cast<desc_double_t*>(plan_forward)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE,         odist + 2) );
+
+            CHECK( static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::NUMBER_OF_TRANSFORMS, batch) );
+            CHECK( static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::FWD_DISTANCE,         idist) );
+            CHECK( static_cast<desc_double_t*>(plan_inverse)->set_value(oneapi::mkl::dft::config_param::BWD_DISTANCE,         odist) );
+
+            CHECK( static_cast<desc_double_t*>(plan_forward)->commit( sycl_default_stream() ) );
+            CHECK( static_cast<desc_double_t*>(plan_inverse)->commit( sycl_default_stream() ) );
+          }
+        #endif
 
       #endif
 
@@ -230,11 +256,15 @@ namespace yakl {
         CHECK( rocfft_execute(plan_forward, (void **) ibuf.data(), (void **) obuf.data(), info) );
         CHECK( rocfft_execution_info_destroy( info ) );
       #elif defined(YAKL_ARCH_SYCL)
-        if        constexpr (std::is_same<T,float >::value) {
-          CHECK( oneapi::mkl::dft::compute_forward(*(static_cast<desc_single_t*>(plan_forward)), static_cast<T*>(copy.data())) );
-        } else if constexpr (std::is_same<T,double>::value) {
-          CHECK( oneapi::mkl::dft::compute_forward(*(static_cast<desc_double_t*>(plan_forward)), static_cast<T*>(copy.data())) );
-        }
+        #if defined(YAKL_SYCL_BBFFT)
+          plan_forward.execute(static_cast<T*>(copy.data()));          
+        #else
+          if        constexpr (std::is_same<T,float >::value) {
+            CHECK( oneapi::mkl::dft::compute_forward(*(static_cast<desc_single_t*>(plan_forward)), static_cast<T*>(copy.data())) );
+          } else if constexpr (std::is_same<T,double>::value) {
+            CHECK( oneapi::mkl::dft::compute_forward(*(static_cast<desc_double_t*>(plan_forward)), static_cast<T*>(copy.data())) );
+          }
+        #endif
       #else
         Array<T              ,3,memHost,styleC> pfft_in ("pfft_in" ,d0,d2, transform_size     );
         Array<std::complex<T>,3,memHost,styleC> pfft_out("pfft_out",d0,d2,(transform_size+2)/2);
@@ -324,11 +354,15 @@ namespace yakl {
         CHECK( rocfft_execute(plan_inverse, (void **) ibuf.data(), (void **) obuf.data(), info) );
         CHECK( rocfft_execution_info_destroy( info ) );
       #elif defined(YAKL_ARCH_SYCL)
-        if        constexpr (std::is_same<T,float >::value) {
-          CHECK( oneapi::mkl::dft::compute_backward(*(static_cast<desc_single_t*>(plan_inverse)), static_cast<T*>(copy.data())) );
-        } else if constexpr (std::is_same<T,double>::value) {
-          CHECK( oneapi::mkl::dft::compute_backward(*(static_cast<desc_double_t*>(plan_inverse)), static_cast<T*>(copy.data())) );
-        }
+        #if defined(YAKL_SYCL_BBFFT)
+          plan_inverse.execute(static_cast<T*>(copy.data()));
+        #else
+          if        constexpr (std::is_same<T,float >::value) {
+            CHECK( oneapi::mkl::dft::compute_backward(*(static_cast<desc_single_t*>(plan_inverse)), static_cast<T*>(copy.data())) );
+          } else if constexpr (std::is_same<T,double>::value) {
+            CHECK( oneapi::mkl::dft::compute_backward(*(static_cast<desc_double_t*>(plan_inverse)), static_cast<T*>(copy.data())) );
+          }
+        #endif
       #else
         Array<std::complex<T>,3,memHost,styleC> pfft_in ("pfft_in" ,d0,d2,(transform_size+2)/2);
         Array<T              ,3,memHost,styleC> pfft_out("pfft_out",d0,d2, transform_size     );
