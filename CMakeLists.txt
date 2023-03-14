@@ -98,7 +98,6 @@ target_include_directories(${YAKL_TARGET} INTERFACE
   $<INSTALL_INTERFACE:include>
   $<INSTALL_INTERFACE:include/extensions>)
 
-=======
 # Special treatment for CUDA
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
   set_target_properties(${YAKL_FORTRAN_INTERFACE_TARGET} PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
@@ -122,12 +121,12 @@ endif()
 
 # Special treatment for SYCL
 if ("${YAKL_ARCH}" STREQUAL "SYCL")
-  target_compile_options(yakl PUBLIC "-fsycl")
-  if (YAKL_SYCL_USE_BBFFT)
+  target_compile_options(${YAKL_TARGET} INTERFACE "-fsycl")
+  if (YAKL_SYCL_BBFFT)
     set(CMAKE_PREFIX_PATH ${YAKL_SYCL_BBFFT_HOME})
     set(BBFFT_AUX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/external/bbfft)
     find_package(bbfft-sycl REQUIRED)
-    target_include_directories(yakl PUBLIC "${BBFFT_AUX_PATH}")
+    target_include_directories(${YAKL_TARGET} INTERFACE "${BBFFT_AUX_PATH}")
     target_link_libraries(${YAKL_TARGET} INTERFACE bbfft::bbfft-sycl "${YAKL_COMPILER_FLAGS}")
   else()
     message("Building with MKL")
@@ -138,7 +137,7 @@ if ("${YAKL_ARCH}" STREQUAL "SYCL")
     add_compile_options(-fsycl-default-sub-group-size=16)
     add_compile_definitions(MKL_ILP64)
     find_path(MKL_INCLUDE mkl.h HINTS $ENV{MKLROOT} ${MKL_ROOT} PATH_SUFFIXES include)
-    target_include_directories(yakl PUBLIC "${MKL_INCLUDE}")
+    target_include_directories(${YAKL_TARGET} INTERFACE "${MKL_INCLUDE}")
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     find_library(MKL_SEQU NAMES mkl_sequential PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)
     find_library(MKL_CORE NAMES mkl_core PATHS ${MKL_ROOT}/lib/intel64 REQUIRED)

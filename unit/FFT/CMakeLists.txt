@@ -10,10 +10,10 @@ separate_arguments(REAL_MPI_COMMAND UNIX_COMMAND ${MPI_COMMAND})
 
 add_test(NAME FFT_test COMMAND ${REAL_MPI_COMMAND} ./FFT)
 
-if (YAKL_SYCL_USE_BBFFT)
+if (YAKL_SYCL_BBFFT)
   #  list(APPEND CMAKE_PREFIX_PATH ${YAKL_SYCL_BBFFT_HOME})
 
-  if (YAKL_SYCL_BBFFT_USE_AOT)
+  if (YAKL_SYCL_BBFFT_AOT)
     message("Building with BBFFT AOT")
     find_package(bbfft-sycl REQUIRED)
     find_program(OCLOC ocloc REQUIRED)
@@ -24,9 +24,11 @@ if (YAKL_SYCL_USE_BBFFT)
     set(SRC_FILE "kernels.cl")
     set(NAMES_FILE "aot_compiled_kernels.cpp")
     if (YAKL_SYCL_BBFFT_AOT_LEGACY_UMD)
+      message("Building with legacy UMD")
       # older UMD - agama-ci-devel <= 543
       set(BIN_FILE "kernels_XE_HPC_COREpvc.bin")
     else()
+      message("Building with standard UMD")
       # newer UMD - ci-neo-master >= 025611
       set(BIN_FILE "kernels_pvc.bin")
     endif()

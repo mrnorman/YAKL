@@ -22,8 +22,8 @@ cmake -DYAKL_ARCH="SYCL" \
       -DCMAKE_CXX_FLAGS="-O3" \
       -DYAKL_F90_FLAGS="-O3" \
       -DYAKL_C_FLAGS="-O3"   \
-      -DYAKL_SYCL_USE_BBFFT=1      \
-      -DYAKL_SYCL_BBFFT_USE_AOT=0    \
+      -DYAKL_SYCL_BBFFT=1      \
+      -DYAKL_SYCL_BBFFT_AOT=0    \
       ../../..
 
 
