@@ -33,7 +33,9 @@ int main() {
           data(k,j,i) = i+1;
         });
 
+        yakl::timer_start("fft.forward_real");
         fft.forward_real( data , trdim , n );
+        yakl::timer_stop("fft.forward_real");
 
         {
           auto data_host = data.createHostCopy();
@@ -48,7 +50,9 @@ int main() {
           }
         }
 
+        yakl::timer_start("fft.inverse_real");
         fft.inverse_real( data , trdim , n );
+        yakl::timer_stop("fft.inverse_real");
 
         {
           auto data_host = data.createHostCopy();
@@ -75,7 +79,9 @@ int main() {
           data(k,j,i) = j+1;
         });
 
+        yakl::timer_start("fft.forward_real");
         fft.forward_real( data , trdim , n );
+        yakl::timer_stop("fft.forward_real");
 
         {
           auto data_host = data.createHostCopy();
@@ -90,7 +96,9 @@ int main() {
           }
         }
 
+        yakl::timer_start("fft.inverse_real");
         fft.inverse_real( data , trdim , n );
+        yakl::timer_stop("fft.inverse_real");
 
         {
           auto data_host = data.createHostCopy();
@@ -119,7 +127,10 @@ int main() {
           data(k,j,i) = k+1;
         });
 
+        
+        yakl::timer_start("fft.forward_real");
         fft.forward_real( data );
+        yakl::timer_stop("fft.forward_real");
 
         {
           auto data_host = data.createHostCopy();
@@ -134,7 +145,9 @@ int main() {
           }
         }
 
+        yakl::timer_start("fft.inverse_real");
         fft.inverse_real( data );
+        yakl::timer_stop("fft.inverse_real");
 
         {
           auto data_host = data.createHostCopy();
