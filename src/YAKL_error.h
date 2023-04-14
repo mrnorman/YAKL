@@ -20,7 +20,7 @@ namespace yakl {
       fence();
       std::cerr << "YAKL FATAL ERROR:\n";
       std::cerr << msg << std::endl;
-      throw msg;
+      throw std::runtime_error(msg);
     // Otherwise, we need to be more careful with printf and intentionally segfaulting to stop the program
     #else
       #ifdef YAKL_ARCH_SYCL

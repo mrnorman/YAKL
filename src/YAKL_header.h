@@ -23,13 +23,13 @@
 #include "stdlib.h"
 #include <list>
 #include <functional>
+#include <stdexcept>
 
 #ifdef HAVE_MPI
 #include <mpi.h>
 #endif
 
 #ifdef YAKL_DEBUG
-#include <stdexcept>
 #include <sstream>
 #include <string>
 #endif
