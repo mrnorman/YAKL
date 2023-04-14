@@ -344,7 +344,14 @@ namespace yakl {
       bool operator==(Stream stream) const { return get_real_stream() == stream.get_real_stream(); }
       inline void wait_on_event(Event event);
       bool is_default_stream() const { return get_real_stream() == sycl_default_stream(); }
-      bool completed() { return false; /* return my_stream->ext_oneapi_empty(); */ }
+      bool completed() {
+        /* macro SYCL_EXT_ONEAPI_QUEUE_EMPTY is defined by the supported compilers */
+        #if defined(SYCL_EXT_ONEAPI_QUEUE_EMPTY)
+          return my_stream->ext_oneapi_empty();
+        #else
+          return false;
+        #endif
+      }
       void fence() { if(!completed()) my_stream->wait(); }
     };
 
