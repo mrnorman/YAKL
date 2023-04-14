@@ -5,6 +5,7 @@
 #include "YAKL.h"
 #include "mpi.h"
 #include <pnetcdf.h>
+#include <stdexcept>
 
 __YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
@@ -13,9 +14,8 @@ namespace yakl {
   /** @private */
   inline void ncmpiwrap( int ierr , int line ) {
     if (ierr != NC_NOERR) {
-      printf("NetCDF Error at line: %d\n", line);
-      printf("%s\n",ncmpi_strerror(ierr));
-      throw "";
+      std::cerr << "PNetCDF ERROR at line: " << line << std::endl;
+      throw std::runtime_error(ncmpi_strerror(ierr));
     }
   }
 

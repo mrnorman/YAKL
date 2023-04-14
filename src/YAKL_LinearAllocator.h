@@ -285,7 +285,7 @@ namespace yakl {
 
     void die(std::string str="") {
       std::cerr << str << std::endl;
-      throw str;
+      throw std::runtime_error(str);
     }
 
 

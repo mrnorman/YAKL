@@ -185,7 +185,7 @@ namespace yakl {
     }
 
 
-    void die(std::string msg) { std::cerr << msg << std::endl; throw ""; }
+    void die(std::string msg) { std::cerr << msg << std::endl; throw std::runtime_error(msg); }
   };
 
 }
