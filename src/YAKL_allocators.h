@@ -101,9 +101,6 @@ namespace yakl {
           // Allocate unified shared memory
           void *ptr = sycl::malloc_shared(bytes,sycl_default_stream());
           if (ptr == nullptr) yakl_throw("ERROR: sycl::malloc_shared returned nullptr. You have likely run out of memory");
-          sycl_default_stream().memset(ptr, 0, bytes);
-          check_last_error();
-          sycl_default_stream().prefetch(ptr,bytes);
           #ifdef _OPENMP45
             // if using OMP target offload, make sure OMP runtime knows to leave this memory alone
             omp_target_associate_ptr(ptr,ptr,bytes,0,0);
@@ -121,28 +118,14 @@ namespace yakl {
       #else
         alloc = [] ( size_t bytes ) -> void* {
           if (bytes == 0) return nullptr;
-          #ifdef YAKL_ENABLE_STREAMS
-            fence();
-          #endif
           void *ptr = sycl::malloc_device(bytes,sycl_default_stream());
-          #ifdef YAKL_ENABLE_STREAMS
-            fence();
-          #endif
           if (ptr == nullptr) yakl_throw("ERROR: sycl::malloc_device returned nullptr. You have likely run out of memory");
-          #ifdef YAKL_ENABLE_STREAMS
-            fence();
-          #endif
-          sycl_default_stream().memset(ptr, 0, bytes);
-          #ifdef YAKL_ENABLE_STREAMS
-            fence();
-          #endif
           check_last_error();
           return ptr;
         };
         dealloc = [] ( void *ptr ) {
           sycl::free(ptr, sycl_default_stream());
           check_last_error();
-          // ptr = nullptr;
         };
       #endif
     #else

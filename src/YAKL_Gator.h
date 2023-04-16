@@ -12,15 +12,15 @@ __YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /** @brief YAKL Pool allocator class.
-    * 
+    *
     * Growable pool allocator for efficient frequent allocations and deallocations.
     * User determines allocation, free, initial pool size, additional pool size, and other pool allocator
     * characteristics upon initiailization.
-    * 
+    *
     * Once existing pools run out of memory, additional pools are create. Each pool is based on a simple
     * linear search for free slots that is as efficient in memory usage as possible. While search time is
     * linear rather than log in complexity, allocations and frees are typically overlapped with kernel execution.
-    * 
+    *
     * Gator objects **are thread safe** for allocate() and free() calls.
     */
   class Gator {
@@ -94,7 +94,7 @@ namespace yakl {
 
 
     /** @brief Initialize the pool.
-      * 
+      *
       * @param myalloc The allocator to use when creating the initial and additional pools
       * @param myfree  The deallocator to use when destroying all pools upon the Gator object destruction.
       * @param myzero  [NOT CURRENTLY USED] The function to use to memset the memory to a value
@@ -138,8 +138,9 @@ namespace yakl {
       */
     void finalize() {
       if (pools.size() > 0) {
-        // SYCL has a bug here, and I haven't figured out why yet
-        #ifndef YAKL_ARCH_SYCL
+        // SYCL rev6: The memory is freed without waiting for operating on
+        // it to be completed. CUDA/HIP performs implicit synchronizations
+        #ifdef YAKL_ARCH_SYCL
           fence();
         #endif
         if (yakl_mainproc()) std::cout << "Pool Memory High Water Mark:       " << get_high_water_mark() << std::endl;
@@ -163,13 +164,13 @@ namespace yakl {
     }
 
 
-    /** @brief Allocate the requested number of bytes using the requested label, and return the pointer to allocated space. 
+    /** @brief Allocate the requested number of bytes using the requested label, and return the pointer to allocated space.
       * @details The pool allocator will search from beginning to end for a slot large enough to fit
       * this allocation request. This minimizes segmentation at the cost of a linear search time.
       * If the current pool(s) do not contain enough room, a new pool is created.
-      * 
+      *
       * Attempting to allocate zero bytes will return `nullptr`. This is a thread safe call.
-      * 
+      *
       * This always checks to see if entries waiting on stream events are able to be deallocated before allocating. */
     void * allocate(size_t bytes, char const * label="") {
       if (bytes == 0) return nullptr;
@@ -236,7 +237,7 @@ namespace yakl {
     };
 
 
-    /** @brief Free the passed pointer, and return the pointer to allocated space. 
+    /** @brief Free the passed pointer, and return the pointer to allocated space.
       * @details Attempting to free a pointer not found in the list of pools will result in a thrown exception */
     void free(void *ptr , char const * label = "" ) {
       bool pointer_valid = false;
@@ -262,7 +263,7 @@ namespace yakl {
     };
 
 
-    /** @brief Free the passed pointer, and return the pointer to allocated space. 
+    /** @brief Free the passed pointer, and return the pointer to allocated space.
       * @details Attempting to free a pointer not found in the list of pools will result in a thrown exception */
     void free_with_event_dependencies(void *ptr , std::vector<Event> events_in , char const * label = "") {
       mtx2.lock();
@@ -278,7 +279,7 @@ namespace yakl {
     };
 
 
-    /** @brief Check all deallcation entries that are waiting on stream events to see if those events have completed. 
+    /** @brief Check all deallcation entries that are waiting on stream events to see if those events have completed.
       *        If the events are completed, then free the entry from the pool. */
     void free_completed_waiting_entries() {
       mtx2.lock();
@@ -350,11 +351,9 @@ namespace yakl {
     double get_pool_high_water_space_efficiency() const {
       return static_cast<double>(get_high_water_mark()) / static_cast<double>(get_pool_capacity());
     }
-   
+
 
   };
 
 }
 __YAKL_NAMESPACE_WRAPPER_END__
-
-
