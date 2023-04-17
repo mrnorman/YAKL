@@ -62,11 +62,8 @@ namespace yakl {
     YAKL_INLINE T &operator()(uint const i0) const {
       static_assert(rank==1,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
-        #if YAKL_CURRENTLY_ON_HOST()
-          if constexpr (rank >= 1) { if (i0>D0-1) { printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
-        #else
+          if constexpr (rank >= 1) { if (i0>D0-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); ) } }
           if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-        #endif
       #endif
       return myData[i0];
     }
@@ -76,13 +73,10 @@ namespace yakl {
     YAKL_INLINE T &operator()(uint const i0, uint const i1) const {
       static_assert(rank==2,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
-        #if YAKL_CURRENTLY_ON_HOST()
-          if constexpr (rank >= 1) { if (i0>D0-1) { printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
-          if constexpr (rank >= 2) { if (i1>D1-1) { printf("CSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); yakl_throw(""); } }
-        #else
-          if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-          if constexpr (rank >= 2) { if (i1>D1-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-        #endif
+        if constexpr (rank >= 1) { if (i0>D0-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); ) } }
+        if constexpr (rank >= 2) { if (i1>D1-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); ) } }
+        if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
+        if constexpr (rank >= 2) { if (i1>D1-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
       #endif
       return myData[i0*OFF0 + i1];
     }
@@ -92,15 +86,12 @@ namespace yakl {
     YAKL_INLINE T &operator()(uint const i0, uint const i1, uint const i2) const {
       static_assert(rank==3,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
-        #if YAKL_CURRENTLY_ON_HOST()
-          if constexpr (rank >= 1) { if (i0>D0-1) { printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
-          if constexpr (rank >= 2) { if (i1>D1-1) { printf("CSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); yakl_throw(""); } }
-          if constexpr (rank >= 3) { if (i2>D2-1) { printf("CSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d)\n",i2,0,D2-1); yakl_throw(""); } }
-        #else
-          if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-          if constexpr (rank >= 2) { if (i1>D1-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-          if constexpr (rank >= 3) { if (i2>D2-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-        #endif
+        if constexpr (rank >= 1) { if (i0>D0-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); ) } }
+        if constexpr (rank >= 2) { if (i1>D1-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); ) } }
+        if constexpr (rank >= 3) { if (i2>D2-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d)\n",i2,0,D2-1); ) } }
+        if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
+        if constexpr (rank >= 2) { if (i1>D1-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
+        if constexpr (rank >= 3) { if (i2>D2-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
       #endif
       return myData[i0*OFF0 + i1*OFF1 + i2];
     }
@@ -110,17 +101,14 @@ namespace yakl {
     YAKL_INLINE T &operator()(uint const i0, uint const i1, uint const i2, uint const i3) const {
       static_assert(rank==4,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
-        #if YAKL_CURRENTLY_ON_HOST()
-          if constexpr (rank >= 1) { if (i0>D0-1) { printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); yakl_throw(""); } }
-          if constexpr (rank >= 2) { if (i1>D1-1) { printf("CSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); yakl_throw(""); } }
-          if constexpr (rank >= 3) { if (i2>D2-1) { printf("CSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d)\n",i2,0,D2-1); yakl_throw(""); } }
-          if constexpr (rank >= 4) { if (i3>D3-1) { printf("CSArray i3 out of bounds (i3: %d; lb3: %d; ub3: %d)\n",i3,0,D3-1); yakl_throw(""); } }
-        #else
-          if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-          if constexpr (rank >= 2) { if (i1>D1-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-          if constexpr (rank >= 3) { if (i2>D2-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-          if constexpr (rank >= 4) { if (i3>D3-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
-        #endif
+        if constexpr (rank >= 1) { if (i0>D0-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); ) } }
+        if constexpr (rank >= 2) { if (i1>D1-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d)\n",i1,0,D1-1); ) } }
+        if constexpr (rank >= 3) { if (i2>D2-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d)\n",i2,0,D2-1); ) } }
+        if constexpr (rank >= 4) { if (i3>D3-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i3 out of bounds (i3: %d; lb3: %d; ub3: %d)\n",i3,0,D3-1); ) } }
+        if constexpr (rank >= 1) { if (i0>D0-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
+        if constexpr (rank >= 2) { if (i1>D1-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
+        if constexpr (rank >= 3) { if (i2>D2-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
+        if constexpr (rank >= 4) { if (i3>D3-1) { yakl_throw("ERROR: CSArray index out of bounds"); } }
       #endif
       return myData[i0*OFF0 + i1*OFF1 + i2*OFF2 + i3];
     }

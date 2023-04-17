@@ -1,7 +1,8 @@
 #!/bin/bash
 
 source $MODULESHOME/init/bash
-module load PrgEnv-amd craype-accel-amd-gfx90a rocm
+module reset
+module load PrgEnv-amd craype-accel-amd-gfx90a
 
 ../../cmakeclean.sh
 

@@ -16,24 +16,25 @@ namespace yakl {
    */
   YAKL_INLINE void yakl_throw(const char * msg) {
     // If we're on the host, then let's throw a real exception
-    #if YAKL_CURRENTLY_ON_HOST()
+    YAKL_EXECUTE_ON_HOST_ONLY(
       fence();
       std::cerr << "YAKL FATAL ERROR:\n";
       std::cerr << msg << std::endl;
       throw std::runtime_error(msg);
+    )
     // Otherwise, we need to be more careful with printf and intentionally segfaulting to stop the program
-    #else
+    YAKL_EXECUTE_ON_DEVICE_ONLY(
       #ifdef YAKL_ARCH_SYCL
         // SYCL cannot printf like the other backends quite yet
         const CL_CONSTANT char format[] = "KERNEL CHECK FAILED:\n   %s\n";
         sycl::ext::oneapi::experimental::printf(format,msg);
-      #else
+      #elif defined(YAKL_ARCH_CUDA) || defined(YAKL_ARCH_HIP)
         printf("%s\n",msg);
       #endif
       // Intentionally cause a segfault to kill the run
       int *segfault = nullptr;
       *segfault = 10;
-    #endif
+    )
   }
 
 
