@@ -15,8 +15,8 @@ unset CXXFLAGS
 unset FFLAGS
 
 cmake -DYAKL_ARCH="CUDA"                                                                               \
-      -DYAKL_CUDA_FLAGS="-O0 -g -DYAKL_DEBUG -DYAKL_ENABLE_STREAMS -DYAKL_VERBOSE_FILE -gpu=cc86 -Minfo=all -Minform=inform -traceback -I`nc-config --includedir`" \
-      -DYAKL_F90_FLAGS="-O0 -g"                                                                           \
+      -DYAKL_CUDA_FLAGS="-O3 -DYAKL_ENABLE_STREAMS -gpu=cc86 -traceback -I`nc-config --includedir`" \
+      -DYAKL_F90_FLAGS="-O3"                                                                           \
       -DCMAKE_INSTALL_PREFIX="`pwd`" \
       -DNETCDF_LINK_FLAGS="`nc-config --libs`"        \
       ../../..

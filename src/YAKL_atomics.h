@@ -56,18 +56,16 @@ namespace yakl {
       ::atomicMin( &update , value );
     }
     __device__ __forceinline__ void atomicMin_device(unsigned long long int &update , unsigned long long int value) {
-      #if __CUDA_ARCH__ >= 350
+      #if ( defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 350) ) || ( defined(__NVCOMPILER_CUDA_ARCH__) && (__NVCOMPILER_CUDA_ARCH__ >= 350) )
         ::atomicMin( &update , value );
       #else
         yakl_throw("ERROR: atomicMin not implemented for unsigned long long int for this CUDA architecture");
       #endif
     }
     template <class T> __host__ __device__ __forceinline__ void atomicMin(T &update , T value) {
-      #if YAKL_CURRENTLY_ON_DEVICE()
-        atomicMin_device(update,value);
-      #else
-        atomicMin_host  (update,value);
-      #endif
+      // This is safe from executing the command twice because with a CUDA backend, only one of these executes
+      YAKL_EXECUTE_ON_DEVICE_ONLY( atomicMin_device(update,value); )
+      YAKL_EXECUTE_ON_HOST_ONLY( atomicMin_host  (update,value); )
     }
 
     __device__ __forceinline__ void atomicMax_device(float &update , float value) {
@@ -96,25 +94,23 @@ namespace yakl {
       ::atomicMax( &update , value );
     }
     __device__ __forceinline__ void atomicMax_device(unsigned long long int &update , unsigned long long int value) {
-      #if __CUDA_ARCH__ >= 350
+      #if ( defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 350) ) || ( defined(__NVCOMPILER_CUDA_ARCH__) && (__NVCOMPILER_CUDA_ARCH__ >= 350) )
         ::atomicMax( &update , value );
       #else
         yakl_throw("ERROR: atomicMin not implemented for unsigned long long int for this CUDA architecture");
       #endif
     }
     template <class T> __host__ __device__ __forceinline__ void atomicMax(T &update , T value) {
-      #if YAKL_CURRENTLY_ON_DEVICE()
-        atomicMax_device(update,value);
-      #else
-        atomicMax_host  (update,value);
-      #endif
+      // This is safe from executing the command twice because with a CUDA backend, only one of these executes
+      YAKL_EXECUTE_ON_DEVICE_ONLY( atomicMax_device(update,value); )
+      YAKL_EXECUTE_ON_HOST_ONLY( atomicMax_host  (update,value); )
     }
 
     __device__ __forceinline__ void atomicAdd_device(float &update , float value) {
       ::atomicAdd( &update , value );
     }
     __device__ __forceinline__ void atomicAdd_device(double &update , double value) {
-      #if __CUDA_ARCH__ >= 600
+      #if ( defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 600) ) || ( defined(__NVCOMPILER_CUDA_ARCH__) && (__NVCOMPILER_CUDA_ARCH__ >= 600) )
         ::atomicAdd( &update , value );
       #else
         unsigned long long oldval, newval, readback;
@@ -136,11 +132,9 @@ namespace yakl {
       ::atomicAdd( &update , value );
     }
     template <class T> __host__ __device__ __forceinline__ void atomicAdd(T &update , T value) {
-      #if YAKL_CURRENTLY_ON_DEVICE()
-        atomicAdd_device(update,value);
-      #else
-        atomicAdd_host  (update,value);
-      #endif
+      // This is safe from executing the command twice because with a CUDA backend, only one of these executes
+      YAKL_EXECUTE_ON_DEVICE_ONLY( atomicAdd_device(update,value); )
+      YAKL_EXECUTE_ON_HOST_ONLY( atomicAdd_host  (update,value); )
     }
 
 
@@ -206,11 +200,9 @@ namespace yakl {
       ::atomicMin( &update , value );
     }
     template <class T> __host__ __device__ __forceinline__ void atomicMin(T &update , T value) {
-      #if YAKL_CURRENTLY_ON_DEVICE()
-        atomicMin_device(update,value);
-      #else
-        atomicMin_host  (update,value);
-      #endif
+      // This is safe from executing the command twice because with a HIP backend, only one of these executes
+      YAKL_EXECUTE_ON_DEVICE_ONLY( atomicMin_device(update,value); )
+      YAKL_EXECUTE_ON_HOST_ONLY( atomicMin_host  (update,value); )
     }
 
     __device__ __forceinline__ void atomicMax_device(float &update , float value) {
@@ -242,11 +234,9 @@ namespace yakl {
       ::atomicMax( &update , value );
     }
     template <class T> __host__ __device__ __forceinline__ void atomicMax(T &update , T value) {
-      #if YAKL_CURRENTLY_ON_DEVICE()
-        atomicMax_device(update,value);
-      #else
-        atomicMax_host  (update,value);
-      #endif
+      // This is safe from executing the command twice because with a HIP backend, only one of these executes
+      YAKL_EXECUTE_ON_DEVICE_ONLY( atomicMax_device(update,value); )
+      YAKL_EXECUTE_ON_HOST_ONLY( atomicMax_host  (update,value); )
     }
 
     __device__ __forceinline__ void atomicAdd_device(float &update , float value) {
@@ -265,11 +255,9 @@ namespace yakl {
       ::atomicAdd( &update , value );
     }
     template <class T> __host__ __device__ __forceinline__ void atomicAdd(T &update , T value) {
-      #if YAKL_CURRENTLY_ON_DEVICE()
-        atomicAdd_device(update,value);
-      #else
-        atomicAdd_host  (update,value);
-      #endif
+      // This is safe from executing the command twice because with a HIP backend, only one of these executes
+      YAKL_EXECUTE_ON_DEVICE_ONLY( atomicAdd_device(update,value); )
+      YAKL_EXECUTE_ON_HOST_ONLY( atomicAdd_host  (update,value); )
     }
 
 

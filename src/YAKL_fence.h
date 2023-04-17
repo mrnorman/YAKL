@@ -32,16 +32,14 @@ namespace yakl {
    * @param handler The yakl::InnerHandler object create by yakl::parallel_outer
    */
   YAKL_INLINE void fence_inner(InnerHandler &handler) {
-    #if YAKL_CURRENTLY_ON_DEVICE()
-      #if   defined(YAKL_ARCH_CUDA)
-        __syncthreads();
-      #elif defined(YAKL_ARCH_HIP)
-        __syncthreads();
-      #elif defined(YAKL_ARCH_SYCL)
-        handler.get_item().barrier(sycl::access::fence_space::local_space);
-      #elif defined(YAKL_ARCH_OPENMP)
-        // OpenMP doesn't do parallelism at the inner level, so nothing needed here
-      #endif
+    #if   defined(YAKL_ARCH_CUDA)
+      YAKL_EXECUTE_ON_DEVICE_ONLY( __syncthreads(); )
+    #elif defined(YAKL_ARCH_HIP)
+      YAKL_EXECUTE_ON_DEVICE_ONLY( __syncthreads(); )
+    #elif defined(YAKL_ARCH_SYCL)
+      YAKL_EXECUTE_ON_DEVICE_ONLY( handler.get_item().barrier(sycl::access::fence_space::local_space); )
+    #elif defined(YAKL_ARCH_OPENMP)
+      // OpenMP doesn't do parallelism at the inner level, so nothing needed here
     #endif
   }
 

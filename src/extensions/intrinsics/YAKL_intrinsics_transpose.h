@@ -52,8 +52,6 @@ namespace yakl {
           return out;
         }
       }
-      // Can't get here, but nvcc isn't smart enough to know that evidently.
-      return Array<T,2,myMem,myStyle>();
     }
 
     template <unsigned int n1, unsigned int n2, class T>
