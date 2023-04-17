@@ -102,7 +102,6 @@ namespace yakl {
         if (yakl_mainproc()) std::cout << "Running on "
                                        << sycl_default_stream().get_device().get_info<sycl::info::device::name>()
                                        << "\n";
-        fence();
       #endif
 
       // Print the device name being run on
