@@ -331,23 +331,23 @@ namespace yakl {
     size_t get_high_water_mark() const { return high_water_mark; }
 
 
-    /** @brief Get the current memory high water mark in bytes for all allocations passing through the pool */
+    /** @brief Get the current number of pools that have been allocated */
     int get_num_pools() const { return pools.size(); }
 
 
-    /** @brief Get the current memory high water mark in bytes for all allocations passing through the pool */
+    /** @brief Get the current number of bytes that have been allocated in the pools (this is actual allocation, not pool capacity) */
     size_t get_bytes_currently_allocated() const {
       return bytes_currently_allocated;
     }
 
 
-    /** @brief Get the current memory high water mark in bytes for all allocations passing through the pool */
+    /** @brief Get the current proportion of total capacity among pools that is actually allocated */
     double get_pool_space_efficiency() const {
       return static_cast<double>(get_bytes_currently_allocated()) / static_cast<double>(get_pool_capacity());
     }
 
 
-    /** @brief Get the current memory high water mark in bytes for all allocations passing through the pool */
+    /** @brief Get the proportion of total capacity among pools that has been allocated at this largest past memory usage */
     double get_pool_high_water_space_efficiency() const {
       return static_cast<double>(get_high_water_mark()) / static_cast<double>(get_pool_capacity());
     }
