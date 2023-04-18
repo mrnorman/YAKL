@@ -55,8 +55,8 @@ namespace yakl {
         mem_free  /= 1024*1024;
         mem_total /= 1024*1024;
       #elif defined(YAKL_ARCH_SYCL)
-        mem_total = myDev->get_info<sycl::info::device::global_mem_size>();
-        mem_free  = myDev->get_info<sycl::ext::intel::info::device::free_memory>();
+        mem_total = sycl_default_stream().get_device().get_info<sycl::info::device::global_mem_size>();
+        mem_free  = sycl_default_stream().get_device().get_info<sycl::ext::intel::info::device::free_memory>();
         mem_free  /= 1024*1024;
         mem_total /= 1024*1024;
       #else
