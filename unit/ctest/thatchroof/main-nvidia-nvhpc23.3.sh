@@ -1,6 +1,6 @@
 #!/bin/bash
 source reset_env.sh
-module load nvhpc/23.3
+module load cmake-3.23.2-gcc-11.1.0-kvgnqc6 nvhpc-23.3-gcc-11.1.0-lyprlux
 
 ###############################################
 ## User configurable options
