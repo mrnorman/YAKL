@@ -1,15 +1,15 @@
 #!/bin/bash
 source reset_env.sh
-module load llvm-16.0.0-gcc-11.1.0-osjq4g2
+module load cuda-12.0.0-gcc-11.1.0-5vplmv2
 
 ###############################################
 ## User configurable options
 ###############################################
-export CTEST_BUILD_NAME=main-openmp-llvm16
-export CC=clang
-export CXX=clang++
-export FC=/home/imn/spack/opt/spack/linux-ubuntu20.04-haswell/gcc-11.1.0/aocc-4.0.0-mhd5bfooicxfjgm5xnzeds2czqjgpj5k/bin/flang
-export YAKL_ARCH="OPENMP"
+export CTEST_BUILD_NAME=main-nvidia-cuda12.0-gcc11-managed
+export CC=gcc-11
+export CXX=g++-11
+export FC=gfortran-11
+export YAKL_ARCH="CUDA"
 export YAKL_VERBOSE=OFF
 export YAKL_VERBOSE_FILE=OFF
 export YAKL_DEBUG=OFF
@@ -19,13 +19,13 @@ export YAKL_AUTO_PROFILE=OFF
 export YAKL_PROFILE=ON
 export YAKL_AUTO_FENCE=OFF
 export YAKL_B4B=OFF
-export YAKL_MANAGED_MEMORY=OFF
+export YAKL_MANAGED_MEMORY=ON
 export YAKL_MEMORY_DEBUG=OFF
 export YAKL_TARGET_SUFFIX=""
 export YAKL_F90_FLAGS="-O3"
 export YAKL_CXX_FLAGS=""
-export YAKL_OPENMP_FLAGS="-O3 -fopenmp"
-export YAKL_CUDA_FLAGS=""
+export YAKL_OPENMP_FLAGS=""
+export YAKL_CUDA_FLAGS="-arch sm_86 -O3 --use_fast_math"
 export YAKL_HIP_FLAGS=""
 export YAKL_SYCL_FLAGS=""
 export CTEST_GCOV=0
