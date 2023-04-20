@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ./main-cpu-gnu11-debug.sh
+./main-cpu-gnu11-debug-valgrind.sh
 ./main-nvidia-cuda11.1-gcc11.sh
 ./main-nvidia-cuda11.2-gcc11.sh
 ./main-nvidia-cuda11.3-gcc11.sh
@@ -9,6 +10,7 @@
 ./main-nvidia-cuda11.6-gcc11.sh
 ./main-nvidia-cuda11.7-gcc11.sh
 ./main-nvidia-cuda11.8-gcc11.sh
+./main-nvidia-cuda12.0-gcc11-managed.sh
 ./main-nvidia-cuda12.0-gcc11.sh
 ./main-nvidia-cuda12-gcc11-debug.sh
 ./main-nvidia-nvhpc23.3.sh
@@ -23,5 +25,4 @@
 ./main-openmp-llvm14.0.6
 ./main-openmp-llvm16.sh
 ./main-openmp-nvhpc23.3.sh
-
 
