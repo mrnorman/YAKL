@@ -50,5 +50,5 @@ git fetch origin
 git checkout main
 git reset --hard origin/main
 cd ${ctest_dir}
-ctest -j 8 -S ctest_script.cmake
+ctest -j 4 -S ctest_script.cmake
 
