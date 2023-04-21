@@ -49,8 +49,8 @@ cd $test_home
 [ ! -d "${YAKL_CTEST_SRC}" ] && git clone git@github.com:mrnorman/YAKL.git
 cd ${YAKL_CTEST_SRC}
 git fetch origin
-git checkout mrnorman/crusher-tests
-git reset --hard origin/mrnorman/crusher-tests
+git checkout main
+git reset --hard origin/main
 cd ${ctest_dir}
 ctest -j 4 -S ctest_script.cmake
 
