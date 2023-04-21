@@ -26,11 +26,12 @@ export YAKL_F90_FLAGS="-O3"
 export YAKL_CXX_FLAGS=""
 export YAKL_OPENMP_FLAGS=""
 export YAKL_CUDA_FLAGS=""
-export YAKL_HIP_FLAGS="-O3 -ffast-math -D__HIP_ROCclr__ -D__HIP_ARCH_GFX90A__=1 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a -x hip"
+export YAKL_HIP_FLAGS="-O3 -ffast-math -Wno-unused-result -D__HIP_ROCclr__ -D__HIP_ARCH_GFX90A__=1 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a -x hip"
 export YAKL_SYCL_FLAGS=""
 export CTEST_GCOV=0
 export CTEST_VALGRIND=0
 export YAKL_UNIT_CXX_LINK_FLAGS="--rocm-path=${ROCM_PATH} -L${ROCM_PATH}/lib -lamdhip64"
+export CMAKE_EXE_LINKER_FLAGS=" -L${ROCM_PATH}/lib -lamdhip64"
 export MPI_COMMAND=""
 # export GATOR_DISABLE=0
 # export GATOR_INITIAL_MB=1024
