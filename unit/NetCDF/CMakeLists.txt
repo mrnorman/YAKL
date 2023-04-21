@@ -8,7 +8,6 @@ yakl_process_target(NetCDF)
 target_link_libraries(NetCDF "${NETCDF_LINK_FLAGS}")
 
 if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
-  message(STATUS "********************** DEBUG USING YAKL_UNIT_CXX_LINK_FLAGS: ${YAKL_UNIT_CXX_LINK_FLAGS}")
   target_link_libraries(NetCDF "${YAKL_UNIT_CXX_LINK_FLAGS}")
 endif()
 

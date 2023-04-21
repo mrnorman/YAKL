@@ -1,6 +1,8 @@
 #!/bin/bash
 
-./main-nvidia-cuda11.4-gcc11.2.sh
-./main-openmp-nvhpc21.11.sh
-./main-openmp-xl16.1.1-10
+./main-amdgcn-PrgEnv-amd8.3.3-debug.sh
+./main-amdgcn-PrgEnv-amd8.3.3-managed.sh
+./main-amdgcn-PrgEnv-amd8.3.3.sh
+./main-amdgcn-PrgEnv-cray8.3.3.sh
+
 

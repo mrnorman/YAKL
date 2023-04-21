@@ -31,7 +31,7 @@ export YAKL_SYCL_FLAGS=""
 export CTEST_GCOV=0
 export CTEST_VALGRIND=0
 export YAKL_UNIT_CXX_LINK_FLAGS="--rocm-path=${ROCM_PATH} -L${ROCM_PATH}/lib -lamdhip64"
-export CMAKE_EXE_LINKER_FLAGS=" -L${ROCM_PATH}/lib -lamdhip64"
+export CMAKE_EXE_LINKER_FLAGS="-L${ROCM_PATH}/lib -lamdhip64"
 export MPI_COMMAND=""
 # export GATOR_DISABLE=0
 # export GATOR_INITIAL_MB=1024
@@ -52,5 +52,5 @@ git fetch origin
 git checkout mrnorman/crusher-tests
 git reset --hard origin/mrnorman/crusher-tests
 cd ${ctest_dir}
-ctest -j 8 -S ctest_script.cmake
+ctest -j 4 -S ctest_script.cmake
 
