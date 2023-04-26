@@ -2,10 +2,10 @@ set(CTEST_BUILD_NAME "$ENV{CTEST_BUILD_NAME}")
 
 set(CTEST_SOURCE_DIRECTORY $ENV{YAKL_CTEST_SRC})
 set(CTEST_BINARY_DIRECTORY $ENV{YAKL_CTEST_BIN})
-set(CTEST_NIGHTLY_START_TIME "18:00:00 EST")
+set(CTEST_NIGHTLY_START_TIME "10:00:00 EST")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_COVERAGE_COMMAND "gcov")
-set(CTEST_MEMORYCHECK_COMMAND "/usr/bin/valgrind")
+set(CTEST_MEMORYCHECK_COMMAND "/sw/ascent/spack-envs/base/opt/linux-rhel8-ppc64le/gcc-8.3.1/valgrind-3.18.1-zgeulw7ihxcqfqpj2ljnf6y3hmrgq6ef/bin/valgrind")
 
 SET(CTEST_DROP_METHOD "http")
 set(CTEST_SITE "ascent")
