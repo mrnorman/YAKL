@@ -5,7 +5,7 @@ set(CTEST_BINARY_DIRECTORY $ENV{YAKL_CTEST_BIN})
 set(CTEST_NIGHTLY_START_TIME "18:00:00 EST")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_COVERAGE_COMMAND "gcov")
-set(CTEST_MEMORYCHECK_COMMAND "/usr/bin/valgrind")
+set(CTEST_MEMORYCHECK_COMMAND "/opt/cray/pe/valgrind4hpc/2.12.11/bin/valgrind")
 
 SET(CTEST_DROP_METHOD "http")
 set(CTEST_SITE "crusher")
