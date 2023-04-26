@@ -7,7 +7,7 @@ test_home=/lustre/orion/cli115/world-shared/yakl-testing
 ###############################################
 ## User configurable options
 ###############################################
-export CTEST_BUILD_NAME=main-amdgcn-PrgEnv-cray8.3.3
+export CTEST_BUILD_NAME=main-amdgcn-hipcc-PrgEnv-cray8.3.3
 export CC=cc
 export CXX=hipcc
 export FC=ftn
