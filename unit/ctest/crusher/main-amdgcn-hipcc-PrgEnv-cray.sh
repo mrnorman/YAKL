@@ -1,13 +1,15 @@
 #!/bin/bash
 source reset_env.sh
-module load PrgEnv-amd/8.3.3 craype-accel-amd-gfx90a
+module load PrgEnv-cray/8.3.3 craype-accel-amd-gfx90a rocm
+
+test_home=/lustre/orion/cli115/world-shared/yakl-testing
 
 ###############################################
 ## User configurable options
 ###############################################
-export CTEST_BUILD_NAME=main-amdgcn-PrgEnv-amd8.3.3
+export CTEST_BUILD_NAME=main-amdgcn-hipcc-PrgEnv-cray8.3.3
 export CC=cc
-export CXX=CC
+export CXX=hipcc
 export FC=ftn
 export YAKL_ARCH="HIP"
 export YAKL_VERBOSE=OFF
@@ -39,17 +41,12 @@ export MPI_COMMAND=""
 # export GATOR_BLOCK_BYTES=1024
 ###############################################
 
-test_home=/lustre/orion/cli115/world-shared/yakl-testing
 ctest_dir=`pwd`
 export YAKL_CTEST_SRC=${test_home}/YAKL
 export YAKL_CTEST_BIN=${test_home}/scratch
+rm -rf ${YAKL_CTEST_BIN}
 mkdir -p $YAKL_CTEST_BIN
-rm -rf ${YAKL_CTEST_BIN}/*
-cd $test_home
-[ ! -d "${YAKL_CTEST_SRC}" ] && git clone git@github.com:mrnorman/YAKL.git
 cd ${YAKL_CTEST_SRC}
-git fetch origin
-git checkout main
 git reset --hard origin/main
 cd ${ctest_dir}
 ctest -j 4 -S ctest_script.cmake

@@ -2,6 +2,8 @@
 source reset_env.sh
 module load DefApps gcc/11.2.0 cuda/11.4.2 cmake
 
+test_home=/gpfs/wolf/cli115/proj-shared/yakl-testing
+
 ###############################################
 ## User configurable options
 ###############################################
@@ -31,23 +33,19 @@ export YAKL_SYCL_FLAGS=""
 export CTEST_GCOV=0
 export CTEST_VALGRIND=0
 export MPI_COMMAND="jsrun -n 1 -a 1 -c 1 -g 1"
+# export OMP_NUM_THREADS=
 # export GATOR_DISABLE=0
 # export GATOR_INITIAL_MB=1024
 # export GATOR_GROW_MB=1024
 # export GATOR_BLOCK_BYTES=1024
 ###############################################
 
-test_home=/gpfs/wolf/cli115/proj-shared/yakl-testing
 ctest_dir=`pwd`
 export YAKL_CTEST_SRC=${test_home}/YAKL
 export YAKL_CTEST_BIN=${test_home}/scratch
+rm -rf ${YAKL_CTEST_BIN}
 mkdir -p $YAKL_CTEST_BIN
-rm -rf ${YAKL_CTEST_BIN}/*
-cd $test_home
-[ ! -d "${YAKL_CTEST_SRC}" ] && git clone git@github.com:mrnorman/YAKL.git
 cd ${YAKL_CTEST_SRC}
-git fetch origin
-git checkout main
 git reset --hard origin/main
 cd ${ctest_dir}
 ctest -j 4 -S ctest_script.cmake
