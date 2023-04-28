@@ -1,6 +1,6 @@
 #!/bin/bash
 source reset_env.sh
-module load PrgEnv-cray/8.3.3 craype-accel-amd-gfx90a rocm
+module load PrgEnv-cray/8.3.3 craype-accel-amd-gfx90a rocm cce/15.0.0
 module load craype/2.7.20
 
 test_home=/lustre/orion/cli115/world-shared/yakl-testing
@@ -8,7 +8,7 @@ test_home=/lustre/orion/cli115/world-shared/yakl-testing
 ###############################################
 ## User configurable options
 ###############################################
-export CTEST_BUILD_NAME=main-amdgcn-hipcc-PrgEnv-cray8.3.3
+export CTEST_BUILD_NAME=main-amdgcn-hipcc-cce15.0.0
 export CC=cc
 export CXX=hipcc
 export FC=ftn
