@@ -1,13 +1,13 @@
 #!/bin/bash
 source reset_env.sh
-module load PrgEnv-amd/8.3.3 craype-accel-amd-gfx90a
+module load PrgEnv-amd/8.3.3 craype-accel-amd-gfx90a amd/5.3.0
 
 test_home=/lustre/orion/cli115/world-shared/yakl-testing
 
 ###############################################
 ## User configurable options
 ###############################################
-export CTEST_BUILD_NAME=main-amdgcn-PrgEnv-amd8.3.3-managed
+export CTEST_BUILD_NAME=main-amdgcn-amd5.3.0-managed
 export CC=cc
 export CXX=CC
 export FC=ftn
