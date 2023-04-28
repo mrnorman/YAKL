@@ -1,6 +1,7 @@
 #!/bin/bash
 source reset_env.sh
 module load PrgEnv-cray/8.3.3 craype-accel-amd-gfx90a rocm
+module load craype/2.7.20
 
 test_home=/lustre/orion/cli115/world-shared/yakl-testing
 
