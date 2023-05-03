@@ -1,5 +1,3 @@
-
-
 set(MYSRC FFT.cpp)
 
 add_executable(FFT ${MYSRC})
@@ -15,43 +13,15 @@ separate_arguments(REAL_MPI_COMMAND UNIX_COMMAND ${MPI_COMMAND})
 add_test(NAME FFT_test COMMAND ${REAL_MPI_COMMAND} ./FFT)
 
 if (YAKL_SYCL_BBFFT)
-
   if (YAKL_SYCL_BBFFT_AOT)
-
     message("-- Building with BBFFT AOT")
-    find_package(bbfft-sycl REQUIRED)
-    find_program(OCLOC ocloc REQUIRED)
-    add_executable(yakl-aot-generate bbfft/generate.cpp bbfft/configurations.cpp)
-    target_compile_features(yakl-aot-generate PRIVATE cxx_std_17)
-    target_link_libraries(yakl-aot-generate PRIVATE bbfft::bbfft-base)
-    target_include_directories(yakl-aot-generate PRIVATE bbfft)
-
-    set(SRC_FILE "kernels.cl")
-    set(NAMES_FILE "aot_compiled_kernels.cpp")
-    if (YAKL_SYCL_BBFFT_AOT_LEGACY_UMD)
-      message("-- Building with legacy UMD")
-      # older UMD - ci-neo-master <= 025137
-      set(BIN_FILE "kernels_XE_HPC_COREpvc.bin")
-    else()
-      message("-- Building with standard UMD")
-      # newer UMD - ci-neo-master >= 025375
-      set(BIN_FILE "kernels_pvc.bin")
-    endif()
-    set(OBJ_FILE "kernels.o")
-    add_custom_command(
-      OUTPUT ${OBJ_FILE}
-      BYPRODUCTS ${SRC_FILE} ${NAMES_FILE} ${BIN_FILE}
-      COMMAND yakl-aot-generate ${SRC_FILE} ${NAMES_FILE}
-      COMMAND ${OCLOC} compile -file ${SRC_FILE} -device pvc -internal_options "-cl-ext=+cl_khr_fp64"
-      COMMAND ${CMAKE_LINKER} -r -b binary -o ${OBJ_FILE} ${BIN_FILE}
-      DEPENDS yakl-aot-generate
-      COMMENT "Ahead-of-time compilation of FFT kernels"
-    )
-    add_library(yakl-kernels OBJECT IMPORTED)
-    set_property(TARGET yakl-kernels PROPERTY IMPORTED_OBJECTS "${CMAKE_CURRENT_BINARY_DIR}/${OBJ_FILE}")
-    target_sources(FFT PRIVATE ${NAMES_FILE})
-
-    target_link_libraries(FFT yakl-kernels)
+    find_package(bbfft-aot-generate REQUIRED)
+    # Adding AOT compilation for:
+    # * double precision (d), real-to-complex (r), forward (f), in-place (i), FFT size of 7, maximum batch size of 16384
+    # * double precision (d), real-to-complex (r), forward (b), in-place (i), FFT size of 7, maximum batch size of 16384
+    # * double precision (d), real-to-complex (r), forward (f), in-place (i), FFT size of 100, maximum batch size of 16384
+    set(descriptor_list drfi7*16384 drbi7*16384 drfi100*16384)
+    add_aot_kernels_to_target(NO_LINK_SCOPE TARGET FFT PREFIX kernels DEVICE pvc LIST ${descriptor_list})
   else()
     message("-- Building with BBFFT JIT")
   endif()

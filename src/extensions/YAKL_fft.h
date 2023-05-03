@@ -8,6 +8,10 @@
   #include "pocketfft_hdronly.h"
 #endif
 
+#if defined(YAKL_ARCH_SYCL) && defined(YAKL_SYCL_BBFFT) && defined(YAKL_SYCL_BBFFT_AOT)
+extern std::uint8_t _binary_kernels_bin_start, _binary_kernels_bin_end;
+#endif
+
 __YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
@@ -161,7 +165,14 @@ namespace yakl {
           cfg_inverse.set_strides_default(true);
 
           #if defined(YAKL_SYCL_BBFFT_AOT)
-            auto cache = aot_cache(sycl_default_stream());
+            auto cache = bbfft::aot_cache{};
+            try {
+              cache.register_module(bbfft::sycl::create_aot_module(&_binary_kernels_bin_start, 
+                                                                   &_binary_kernels_bin_end - &_binary_kernels_bin_start,
+                                                                   bbfft::module_format::native, sycl_default_stream().get_context(), sycl_default_stream().get_device()));
+            } catch (std::exception const &e) {
+              std::cerr << "Could not load ahead-of-time compiled FFT kernels:" << std::endl << e.what() << std::endl;
+            }
             plan_forward = bbfft::make_plan(cfg_forward, sycl_default_stream(), &cache);
             plan_inverse = bbfft::make_plan(cfg_inverse, sycl_default_stream(), &cache);
           #else

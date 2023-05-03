@@ -56,7 +56,8 @@
     #include "bbfft/configuration.hpp"
     #include "bbfft/sycl/make_plan.hpp"
     #if defined(YAKL_SYCL_BBFFT_AOT)
-      #include "aot_cache.hpp"
+      #include "bbfft/aot_cache.hpp"
+      #include "bbfft/sycl/online_compiler.hpp"
     #endif
   #else
     #include <oneapi/mkl/exceptions.hpp>
