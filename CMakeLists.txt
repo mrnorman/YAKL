@@ -31,7 +31,6 @@ option(YAKL_MEMORY_DEBUG "Turn on memory allocation debugging (default OFF)." OF
 set(YAKL_SYCL_BBFFT                  OFF                  CACHE BOOL    "Use Double-Batched FFT")
 set(YAKL_SYCL_BBFFT_AOT              OFF                  CACHE BOOL    "Use Double-Batched FFT AOT")
 set(YAKL_SYCL_BBFFT_HOME             $ENV{BBFFT_HOME}     CACHE PATH    "Double-Batched FFT Home directory")
-set(YAKL_SYCL_BBFFT_AOT_LEGACY_UMD   OFF                  CACHE BOOL    "Use older PVC user mode driver, ci-neo-master <= 024628")
 
 
 # Inform the user of the backend being used
