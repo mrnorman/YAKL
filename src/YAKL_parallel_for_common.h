@@ -221,15 +221,15 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
             callFunctor( *fp , bounds , item.get_global_id(0) );
           }
         });
-      #ifdef YAKL_ENABLE_STREAMS
-        if (use_pool() && get_yakl_instance().device_allocators_are_default) {
-          get_yakl_instance().pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
-        } else {
+        #ifdef YAKL_ENABLE_STREAMS
+          if (use_pool() && get_yakl_instance().device_allocators_are_default) {
+            get_yakl_instance().pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
+          } else {
+            free_device( fp , "functor_buffer" );
+          }
+        #else
           free_device( fp , "functor_buffer" );
-        }
-      #else
-        free_device( fp , "functor_buffer" );
-      #endif
+        #endif
       }
     #else
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
@@ -272,7 +272,15 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
                                                [=] (sycl::nd_item<1> item) {
           callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
         });
-        free_device( fp , "functor_buffer" );
+        #ifdef YAKL_ENABLE_STREAMS
+          if (use_pool() && get_yakl_instance().device_allocators_are_default) {
+            get_yakl_instance().pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
+          } else {
+            free_device( fp , "functor_buffer" );
+          }
+        #else
+          free_device( fp , "functor_buffer" );
+        #endif
       }
     #else
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
@@ -281,7 +289,15 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
                                              [=] (sycl::nd_item<1> item) {
         callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
       });
-      free_device( fp , "functor_buffer" );
+      #ifdef YAKL_ENABLE_STREAMS
+        if (use_pool() && get_yakl_instance().device_allocators_are_default) {
+          get_yakl_instance().pool.free_with_event_dependencies( fp , {record_event(stream)} , "functor_buffer" );
+        } else {
+          free_device( fp , "functor_buffer" );
+        }
+      #else
+        free_device( fp , "functor_buffer" );
+      #endif
     #endif
 
     check_last_error();
