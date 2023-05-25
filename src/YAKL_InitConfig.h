@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <unistd.h>
+
 __YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   
@@ -43,9 +45,32 @@ namespace yakl {
       *        allocation and deallocation overrides. **IMPORTANT**: Creating an InitConfig object pings environment
       *        variables, making it quite expensive to create. Please do not create a lot of these. */
     InitConfig() {
+      size_t mem_total, mem_free;
+      #if   defined(YAKL_ARCH_CUDA)
+        cudaMemGetInfo(&mem_free, &mem_total);
+        mem_free  /= 1024*1024;
+        mem_total /= 1024*1024;
+      #elif defined(YAKL_ARCH_HIP)
+        hipMemGetInfo(&mem_free, &mem_total);
+        mem_free  /= 1024*1024;
+        mem_total /= 1024*1024;
+      #elif defined(YAKL_ARCH_SYCL)
+        mem_total = sycl_default_stream().get_device().get_info<sycl::info::device::global_mem_size>();
+        mem_free  = sycl_default_stream().get_device().get_info<sycl::ext::intel::info::device::free_memory>();
+        mem_free  /= 1024*1024;
+        mem_total /= 1024*1024;
+      #else
+        long pages = sysconf(_SC_PHYS_PAGES);
+        long page_size = sysconf(_SC_PAGE_SIZE);
+        mem_total = (size_t)pages*(size_t)page_size;
+        mem_free  = mem_total;
+        mem_free  /= 1024*1024;
+        mem_total /= 1024*1024;
+      #endif
       pool_enabled     = true;
-      pool_initial_mb  = 1024;
-      pool_grow_mb     = 1024;
+      pool_initial_mb  = mem_total / 8;
+      if (mem_free < pool_initial_mb) pool_initial_mb = 0.5*mem_free;
+      pool_grow_mb     = pool_initial_mb;
       pool_block_bytes = 16*sizeof(size_t);
 
       char * env = std::getenv("GATOR_DISABLE");

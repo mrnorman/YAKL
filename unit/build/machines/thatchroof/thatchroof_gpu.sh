@@ -3,6 +3,7 @@
 source /usr/share/modules/init/bash
 module purge
 
+
 ../../cmakeclean.sh
 
 unset GATOR_DISABLE

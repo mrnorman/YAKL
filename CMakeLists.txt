@@ -21,6 +21,7 @@ option(YAKL_DEBUG "Turn on error message throwing (default OFF)." OFF)
 option(YAKL_HAVE_MPI "Turn on MPI (default OFF)." OFF)
 option(YAKL_ENABLE_STREAMS "Turn on streams (default OFF)." OFF)
 option(YAKL_AUTO_PROFILE "Turn on (nvtx-based) profiling (default OFF)." OFF)
+option(YAKL_PROFILE "Turn on (nvtx-based) profiling (default OFF)." OFF)
 option(YAKL_AUTO_FENCE "Turn on auto fence (default OFF)." OFF)
 option(YAKL_B4B "Force serial computation (default OFF)." OFF)
 option(YAKL_MANAGED_MEMORY "Turn on managed memory (default OFF)." OFF)
@@ -90,8 +91,6 @@ target_include_directories(${YAKL_TARGET} INTERFACE
 
 # Special treatment for CUDA
 if ("${YAKL_ARCH}" STREQUAL "CUDA")
-  set_target_properties(${YAKL_FORTRAN_INTERFACE_TARGET} PROPERTIES LINKER_LANGUAGE CUDA CUDA_SEPARABLE_COMPILATION OFF CUDA_RESOLVE_DEVICE_SYMBOLS ON)
-
   if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.22.0 )
     message("Using CUDAToolkit macros")
     find_package(CUDAToolkit REQUIRED)

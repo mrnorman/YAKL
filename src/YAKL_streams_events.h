@@ -449,14 +449,10 @@ namespace yakl {
     std::mutex mtx_loc;
     /** @brief Create an empty stream list */
     YAKL_INLINE StreamList() {
-      #if YAKL_CURRENTLY_ON_HOST()
-        list = new std::vector<Stream>;
-      #endif
+      YAKL_EXECUTE_ON_HOST_ONLY( list = new std::vector<Stream>; )
     }
     YAKL_INLINE ~StreamList() {
-      #if YAKL_CURRENTLY_ON_HOST()
-        delete list;
-      #endif
+      YAKL_EXECUTE_ON_HOST_ONLY( delete list; )
     }
     /** @brief Add a stream to the end of the list */
     void push_back(Stream stream) {

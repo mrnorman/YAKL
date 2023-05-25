@@ -15,7 +15,7 @@ namespace yakl {
     if (ierr != NC_NOERR) {
       printf("NetCDF Error at line: %d\n", line);
       printf("%s\n",nc_strerror(ierr));
-      yakl_throw("");
+      yakl_throw(nc_strerror(ierr));
     }
   }
 

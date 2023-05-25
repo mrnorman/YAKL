@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./main-cuda-gnu-opt.sh
-./main-ibm-omp-opt.sh
-./main-nvhpc-opt.sh
+./main-nvidia-cuda-gcc.sh
+./main-openmp-nvhpc.sh
+./main-openmp-xl.sh
 

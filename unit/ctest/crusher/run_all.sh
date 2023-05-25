@@ -1,9 +1,9 @@
 #!/bin/bash
 
-./main-crayclang-debug.sh  
-./main-crayclang-opt.sh  
-./main-hipcc-debug.sh  
-./main-hipcc-opt.sh
-# Comment out below if Valgrind is needed
-# ./main-hipcc-opt-valgrind.sh
-# ./main-hipcc-debug-valgrind.sh
+./main-amdgcn-hipcc-PrgEnv-amd.sh
+./main-amdgcn-hipcc-PrgEnv-cray.sh
+./main-amdgcn-PrgEnv-amd-debug.sh
+./main-amdgcn-PrgEnv-amd-managed.sh
+./main-amdgcn-PrgEnv-amd.sh
+./main-amdgcn-PrgEnv-cray.sh
+

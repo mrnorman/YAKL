@@ -41,6 +41,7 @@
 
 #ifdef YAKL_ARCH_CUDA
 
+
   #define YAKL_LAMBDA [=] __host__ __device__
   #define YAKL_DEVICE_LAMBDA [=] __device__
   #define YAKL_CLASS_LAMBDA [=, *this] __host__ __device__
@@ -50,10 +51,22 @@
   #ifndef YAKL_SINGLE_MEMORY_SPACE
     #define YAKL_SEPARATE_MEMORY_SPACE
   #endif
-  #define YAKL_CURRENTLY_ON_HOST() (! defined(__CUDA_ARCH__))
-  #define YAKL_CURRENTLY_ON_DEVICE() (defined(__CUDA_ARCH__))
+  #if defined(__NVCOMPILER_CUDA__)
+    #define YAKL_EXECUTE_ON_HOST_ONLY(...) NV_IF_TARGET(NV_IS_HOST, __VA_ARGS__)
+    #define YAKL_EXECUTE_ON_DEVICE_ONLY(...) NV_IF_TARGET(NV_IS_DEVICE, __VA_ARGS__)
+  #else
+    #ifdef __CUDA_ARCH__
+      #define YAKL_EXECUTE_ON_HOST_ONLY(...)
+      #define YAKL_EXECUTE_ON_DEVICE_ONLY(...) __VA_ARGS__
+    #else
+      #define YAKL_EXECUTE_ON_HOST_ONLY(...) __VA_ARGS__
+      #define YAKL_EXECUTE_ON_DEVICE_ONLY(...) 
+    #endif
+  #endif
+
 
 #elif defined(YAKL_ARCH_HIP)
+
 
   #define YAKL_LAMBDA [=] __host__ __device__
   #define YAKL_DEVICE_LAMBDA [=] __device__
@@ -64,10 +77,17 @@
   #ifndef YAKL_SINGLE_MEMORY_SPACE
     #define YAKL_SEPARATE_MEMORY_SPACE
   #endif
-  #define YAKL_CURRENTLY_ON_HOST() (! defined(__HIP_DEVICE_COMPILE__))
-  #define YAKL_CURRENTLY_ON_DEVICE() (defined(__HIP_DEVICE_COMPILE__))
+  #ifdef __HIP_DEVICE_COMPILE__
+    #define YAKL_EXECUTE_ON_HOST_ONLY(...)
+    #define YAKL_EXECUTE_ON_DEVICE_ONLY(...) __VA_ARGS__
+  #else
+    #define YAKL_EXECUTE_ON_HOST_ONLY(...) __VA_ARGS__
+    #define YAKL_EXECUTE_ON_DEVICE_ONLY(...) 
+  #endif
+
 
 #elif defined(YAKL_ARCH_SYCL)
+
 
   #define YAKL_LAMBDA [=]
   #define YAKL_DEVICE_LAMBDA [=]
@@ -78,15 +98,19 @@
   #ifndef YAKL_SINGLE_MEMORY_SPACE
     #define YAKL_SEPARATE_MEMORY_SPACE
   #endif
-  #define YAKL_CURRENTLY_ON_HOST() (! defined(__SYCL_DEVICE_ONLY__))
-  #define YAKL_CURRENTLY_ON_DEVICE() (defined(__SYCL_DEVICE_ONLY__))
   #ifdef __SYCL_DEVICE_ONLY__
+    #define YAKL_EXECUTE_ON_HOST_ONLY(...)
+    #define YAKL_EXECUTE_ON_DEVICE_ONLY(...) __VA_ARGS__
     #define CL_CONSTANT __attribute__((opencl_constant))
   #else
+    #define YAKL_EXECUTE_ON_HOST_ONLY(...) __VA_ARGS__
+    #define YAKL_EXECUTE_ON_DEVICE_ONLY(...) 
     #define CL_CONSTANT
   #endif
 
+
 #elif defined(YAKL_ARCH_OPENMP)
+
 
   #define YAKL_LAMBDA [=] 
   #define YAKL_DEVICE_LAMBDA [=] 
@@ -94,8 +118,8 @@
   #define YAKL_INLINE inline 
   #define YAKL_DEVICE_INLINE inline 
   #define YAKL_SCOPE(a,b) auto &a = b
-  #define YAKL_CURRENTLY_ON_HOST() 1
-  #define YAKL_CURRENTLY_ON_DEVICE() 1
+  #define YAKL_EXECUTE_ON_HOST_ONLY(...) __VA_ARGS__
+  #define YAKL_EXECUTE_ON_DEVICE_ONLY(...) __VA_ARGS__
 
 #else
 
@@ -126,12 +150,12 @@
   /** @brief [NOT COMMONLY USED] Macro function used to determine if the current code is compiling for the host.
     * @details This particular definition is for CPU targets only. It differs for other hardware backends. 
     * This is used to hide device-only code from the host compiler. */
-  #define YAKL_CURRENTLY_ON_HOST() 1
+  #define YAKL_EXECUTE_ON_HOST_ONLY(...) __VA_ARGS__
 
   /** @brief [NOT COMMONLY USED] Macro function used to determine if the current code is compiling for the device.
     * @details This particular definition is for CPU targets only. It differs for other hardware backends. 
     * This is used to hide host-only code from the device compiler. */
-  #define YAKL_CURRENTLY_ON_DEVICE() 1
+  #define YAKL_EXECUTE_ON_DEVICE_ONLY(...) __VA_ARGS__
 
 #endif
 
