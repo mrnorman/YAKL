@@ -232,6 +232,7 @@ namespace yakl {
     template <class T, int RED> class ParallelReduction<T,memDevice,RED> {
       int    nItems; // Number of items in the array that will be reduced
       T      *rsltP; // Device pointer for reduction result
+      Stream stream;
       public:
       ParallelReduction() { rsltP = nullptr; }
       ParallelReduction(int const nItems, Stream stream = Stream()) { rsltP = nullptr; setup(nItems); }
@@ -249,6 +250,7 @@ namespace yakl {
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_setup");
         #endif
+        this->stream = stream;
       }
 
       void finalize() {
@@ -268,7 +270,7 @@ namespace yakl {
         #ifdef YAKL_VERBOSE
           verbose_inform("Launching device reduction");
         #endif
-        sycl_default_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
+        stream.get_real_stream().submit([&, nItems = this->nItems](sycl::handler &cgh) {
           if constexpr        (RED == YAKL_REDUCTION_MIN) {
             cgh.parallel_for(sycl::range<1>(nItems),
                              sycl::reduction(rsltP, sycl::minimum<>(),
@@ -294,8 +296,8 @@ namespace yakl {
         #ifdef YAKL_VERBOSE
           verbose_inform("Initiating device to host memcpy of reduction scalar value of size "+std::to_string(sizeof(T))+std::string(" bytes"));
         #endif
-        memcpy_device_to_host(&rslt , rsltP , 1 );
-        fence();
+        memcpy_device_to_host(&rslt , rsltP , 1 , stream );
+        stream.fence();
         #ifdef YAKL_AUTO_PROFILE
           timer_stop("YAKL_internal_reduction_apply");
         #endif
@@ -343,7 +345,7 @@ namespace yakl {
       }
     };
 
-    
+
   #else
 
 
@@ -383,5 +385,3 @@ namespace yakl {
 
 }
 __YAKL_NAMESPACE_WRAPPER_END__
-
-
