@@ -216,4 +216,147 @@ GATOR_DISABLE=1 ./diffusion
 
 With the pool allocator, I got 3.058049e-02 seconds. Without the pool allocator, I got 6.319616e-02 seconds. So even on the host, the pool allocator can make a difference. 
 
+## DEBUGGGING 1: Array creation with wrong number of dimensions
+
+Now we'll go through some debugging exercises to get you used to the kinds of errors you'll encounter from time to time.
+
+Here, we'll compile a file that creates an array with the wrong number of dimensions. We'll need `-DYAKL_DEBUG -g` in the compile flags from here on out to ensure we catch errors and have debug symbols.
+
+```bash
+g++ -DYAKL_DEBUG -g -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_creation_dimension.cpp -o diffusion
+```
+
+Here, you should get a compile-time error as follows:
+
+```
+In file included from ../../../src/YAKL_Array.h:347,
+                 from ../../../src/YAKL.h:68,
+                 from diffusion_bug_creation_dimension.cpp:2:
+../../../src/YAKL_CArray.h: In instantiation of ‘yakl::Array<T, rank, myMem, 1>::Array(const char*, yakl::index_t, yakl::index_t) [with T = float; int rank = 1; int myMem = 1; yakl::index_t = unsigned int]’:
+diffusion_bug_creation_dimension.cpp:90:32:   required from here
+../../../src/YAKL_CArray.h:126:27: error: static assertion failed: ERROR: Calling constructor with 2 bound on non-rank-2 array
+  126 |       static_assert( rank == 2 , "ERROR: Calling constructor with 2 bound on non-rank-2 array" );
+      |                      ~~~~~^~~~
+../../../src/YAKL_CArray.h:126:27: note: ‘(1 == 2)’ evaluates to false
+```
+
+When you create an array, the number of dimensions you provide must equal the rank of the array you're declaring. We declared the array to have a rank of 1, but we provided two dimensions when creating it, leading to a compile-time error.
+
+## DEBUGGGING 2: Array indexing with wrong number of dimensions
+
+Here, we'll compile a file that indexes an array with the wrong number of dimensions.
+
+```bash
+g++ -DYAKL_DEBUG -g -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_indexing_dimension.cpp -o diffusion
+```
+
+Here, you should get a compile-time error as follows:
+```
+In file included from ../../../src/YAKL_Array.h:347,
+                 from ../../../src/YAKL.h:68,
+                 from diffusion_bug_indexing_dimension.cpp:2:
+../../../src/YAKL_CArray.h: In instantiation of ‘T& yakl::Array<T, rank, myMem, 1>::operator()(yakl::index_t, yakl::index_t) const [with T = float; int rank = 1; int myMem = 1; yakl::index_t = unsigned int]’:
+diffusion_bug_indexing_dimension.cpp:100:27:   required from here
+../../../src/YAKL_CArray.h:482:27: error: static assertion failed: ERROR: Indexing non-rank-2 array with 2 indices
+  482 |       static_assert( rank == 2 , "ERROR: Indexing non-rank-2 array with 2 indices" );
+      |                      ~~~~~^~~~
+../../../src/YAKL_CArray.h:482:27: note: ‘(1 == 2)’ evaluates to false
+```
+
+When indexing an array, the number of indices must always match the rank you declared the array as. Note that Fortran compilers do not always enforce this. But YAKL always does. The rank of an array can never changes. You can call the `reshape()` member function of an Array object to create a new Array object with a different rank / shape that points to the same data. But that's creating a new Array object pointing to the same data, not changing the rank of an Array object.
+
+## DEBUGGING 3: Array index out of bounds
+
+Now we're going to index the flux array out of bounds on purpose by declaring flux with `nx` elements instead of `nx+1`. C++ doesn't allow this to be caught at compile time, so this will have to be caught at runtime instead.
+
+```bash
+g++ -DYAKL_DEBUG -g -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_index_oob.cpp -o diffusion
+./diffusion
+```
+
+You should get an error as follows:
+
+```
+Using memory pool. Initial size: 0.704102GB ;  Grow size: 0.704102GB.
+INFORM: Automatically inserting fence() after every parallel_for
+ERROR: For Array labeled: flux:
+Index 1 of 1 is out of bounds.  Provided index: 32.  Upper Bound: 31
+YAKL FATAL ERROR:
+ERROR: Index out of bounds.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  ERROR: Index out of bounds.
+Aborted (core dumped)
+```
+
+To find out the line where this failed, you can use `gdb`. You'll use `gdb [./executable]`, then type `run`. When it fails, type `bt` to get a backtrace of the error with the file and line number it occurred at.I always recommend running on the host for debugging first to catch these type of errors. You get more information on the host than you do on the GPU.
+
+If you only have a core file, you can use `gdb [/path/to/executable] [/path/to/core]` and use `bt` to get a backgrace from there as well.
+
+```
+[imn@imn-virtual-machine:~/YAKL/tutorial/diffusion/original] 8-) gdb ./diffusion 
+GNU gdb (Ubuntu 12.1-0ubuntu1~22.04) 12.1
+Copyright (C) 2022 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<https://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from ./diffusion...
+(gdb) run
+Starting program: /home/oem/YAKL/tutorial/diffusion/original/diffusion 
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+Using memory pool. Initial size: 0.704102GB ;  Grow size: 0.704102GB.
+INFORM: Automatically inserting fence() after every parallel_for
+ERROR: For Array labeled: flux:
+Index 1 of 1 is out of bounds.  Provided index: 32.  Upper Bound: 31
+YAKL FATAL ERROR:
+ERROR: Index out of bounds.
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  ERROR: Index out of bounds.
+
+Program received signal SIGABRT, Aborted.
+__pthread_kill_implementation (no_tid=0, signo=6, threadid=140737352688576) at ./nptl/pthread_kill.c:44
+44	./nptl/pthread_kill.c: No such file or directory.
+(gdb) bt
+#0  __pthread_kill_implementation (no_tid=0, signo=6, threadid=140737352688576) at ./nptl/pthread_kill.c:44
+#1  __pthread_kill_internal (signo=6, threadid=140737352688576) at ./nptl/pthread_kill.c:78
+#2  __GI___pthread_kill (threadid=140737352688576, signo=signo@entry=6) at ./nptl/pthread_kill.c:89
+#3  0x00007ffff7842476 in __GI_raise (sig=sig@entry=6) at ../sysdeps/posix/raise.c:26
+#4  0x00007ffff78287f3 in __GI_abort () at ./stdlib/abort.c:79
+#5  0x00007ffff7ca2bbe in ?? () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#6  0x00007ffff7cae24c in ?? () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#7  0x00007ffff7cae2b7 in std::terminate() () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#8  0x00007ffff7cae518 in __cxa_throw () from /lib/x86_64-linux-gnu/libstdc++.so.6
+#9  0x0000555555559511 in yakl::yakl_throw (msg=0x5555555722be "ERROR: Index out of bounds.") at ../../../src/YAKL_error.h:19
+#10 0x0000555555569309 in yakl::Array<float, 1, 1, 1>::ind_out_bounds<0> (this=0x7fffffffdcf8, ind=32) at ../../../src/YAKL_CArray.h:611
+#11 0x0000555555565754 in yakl::Array<float, 1, 1, 1>::check (this=0x7fffffffdcf8, i0=32, i1=0, i2=0, i3=0, i4=0, i5=0, i6=0, i7=0) at ../../../src/YAKL_CArray.h:578
+#12 0x0000555555561dd4 in yakl::Array<float, 1, 1, 1>::operator() (this=0x7fffffffdcf8, i0=32) at ../../../src/YAKL_CArray.h:474
+#13 0x0000555555557a51 in operator() (__closure=0x7fffffffdcf0, i=32) at diffusion_bug_index_oob.cpp:103
+#14 0x0000555555558b35 in yakl::c::parallel_for_cpu_serial<main()::<lambda(int)>, false, 1>(const yakl::c::Bounds<1, false> &, const struct {...} &, yakl::c::DoOuter<false>) (bounds=..., f=..., dummy=...)
+    at ../../../src/YAKL_parallel_for_common.h:338
+#15 0x0000555555558637 in yakl::c::parallel_for<main()::<lambda(int)>, 1, false>(const char *, const yakl::c::Bounds<1, false> &, const struct {...} &, yakl::LaunchConfig<128, false>) (
+    str=0x555555571f7c "Compute Fluxes", bounds=..., f=..., config=...) at ../../../src/YAKL_parallel_for_common.h:536
+#16 0x0000555555557f3f in main () at diffusion_bug_index_oob.cpp:96
+(gdb) quit
+A debugging session is active.
+
+	Inferior 1 [process 29289] will be killed.
+
+Quit anyway? (y or n) y
+[imn@imn-virtual-machine:~/YAKL/tutorial/diffusion/original] 8-) 
+```
+
+From this, we can see that the error occurs at line 103 of `diffusion_bug_index_oob.cpp`. You'll see the entire stack and a lot of other output. My recommendation is to go from top to bottom in the output you get for the stack trace. The moment you no longer see `YAKL_` in the filename, you're now in **your own** code.
+
+
+
 
