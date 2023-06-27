@@ -357,6 +357,108 @@ Quit anyway? (y or n) y
 
 From this, we can see that the error occurs at line 103 of `diffusion_bug_index_oob.cpp`. You'll see the entire stack and a lot of other output. My recommendation is to go from top to bottom in the output you get for the stack trace. The moment you no longer see `YAKL_` in the filename, you're now in **your own** code.
 
+## DEBUGGING 4: Using uninitialized memory
+
+One of the most nefarious, sneaky, and frustrating bugs you'll encounter is using uninitialized memory, leading to undefined code behavior and bugs the present at random places at random times. It can feel like a ghost in the machine. Here, we'll get introduced to the `valgrind` tool that detects situations like this. It also detects invalid memory address errors, but you likely won't find those often because of YAKL's index checking capabilities. Here, we'll simply delete the line that initialized the state to zero.
+
+```
+g++ -DYAKL_DEBUG -g -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_read_uninitialized_memory.cpp -o diffusion
+./diffusion
+```
+
+The thing is that you will likely be able to run this with no errors and even get the expected output because it's possible that the initial data is zeros already. But this **will** come back to bite you and probably at scale where it's nearly impossible to reproduce reliably. If we run this through `valgrind`, we'll find a different story and a **ton** of errors. Unfortunately, `valgrind` is very verbose, and not always that easy to interpret. But running cleanly without warnings or errors through `valgrind` is something that we should ensure for every code inside E3SM. It will save us money, time, and computing allocations.
+
+valgrind is **very, very** slow to run, so please use the absolute smallest problem size possible. Also, you must turn off the pool allocator to properly identify memory bugs. The pool allocator will mask issues. This can be done with `export GATOR_DISABLE=1` or `setenv GATOR_DISABLE 1` depending on your shell.
+
+```
+export GATOR_DISABLE=1
+valgrind ./diffusion >& valgrind_output.txt
+```
+
+In this, we'll see errors of the following form:
+
+```
+==29652== Conditional jump or move depends on uninitialised value(s)
+==29652==    at 0x4B14D08: __printf_fp_l (printf_fp.c:396)
+==29652==    by 0x4B309AC: __printf_fp_spec (vfprintf-internal.c:354)
+==29652==    by 0x4B309AC: __vfprintf_internal (vfprintf-internal.c:1558)
+==29652==    by 0x4B42519: __vsnprintf_internal (vsnprintf.c:114)
+==29652==    by 0x496B1FF: ??? (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==29652==    by 0x499DBD2: std::ostreambuf_iterator<char, std::char_traits<char> > std::num_put<char, std::ostreambuf_iterator<char, std::char_traits<char> > >::_M_insert_float<double>(std::ostreambuf_iterat    or<char, std::char_traits<char> >, std::ios_base&, char, char, double) const (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==29652==    by 0x49ADCFD: std::ostream& std::ostream::_M_insert<double>(double) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==29652==    by 0x1161CB: yakl::operator<<(std::ostream&, yakl::Array<float, 1, 1, 1> const&) (YAKL_ArrayBase.h:364)
+==29652==    by 0x10C133: main (diffusion_bug_read_uninitialized_memory.cpp:132)
+
+...
+
+==29652== Use of uninitialised value of size 8
+==29652==    at 0x4B150DE: __printf_fp_l (printf_fp.c:438)
+==29652==    by 0x4B309AC: __printf_fp_spec (vfprintf-internal.c:354)
+==29652==    by 0x4B309AC: __vfprintf_internal (vfprintf-internal.c:1558)
+==29652==    by 0x4B42519: __vsnprintf_internal (vsnprintf.c:114)
+==29652==    by 0x496B1FF: ??? (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==29652==    by 0x499DBD2: std::ostreambuf_iterator<char, std::char_traits<char> > std::num_put<char, std::ostreambuf_iterator<char, std::char_traits<char> > >::_M_insert_float<double>(std::ostreambuf_iterat    or<char, std::char_traits<char> >, std::ios_base&, char, char, double) const (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==29652==    by 0x49ADCFD: std::ostream& std::ostream::_M_insert<double>(double) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==29652==    by 0x1161CB: yakl::operator<<(std::ostream&, yakl::Array<float, 1, 1, 1> const&) (YAKL_ArrayBase.h:364)
+==29652==    by 0x10C161: main (diffusion_bug_read_uninitialized_memory.cpp:133)
+```
+
+`valgrind` has an interesting M.O. You often don't get a warning or error just by reading from uninitialized data, but once it changes program behavior (e.g., if-then-else branching), then you get the warning. So it can be tough at times to sleuth out the original problem and fix it. Here, we see program behavior changing due to uninitialized values at line 132, which is this line:
+```
+    std::cout << "\n" << state_init << "\n";
+```
+So, the entire simulation ran without valgrind complaining, but once we dump the data out, valgrind then complains. Again, this can be hard to sleuth out. So we'll add an option to valgrind once we find an error that traces the initial allocation of the offending data that's uninitialized. Warning this tracking increases the time valgrind takes substantially, so only use it once you've found an error you cannot figure out how to fix.
+
+```
+valgrind --track-origins=yes ./diffusion >& valgrind_output.txt
+```
+
+Now, we get the output:
+
+```
+==30013== Conditional jump or move depends on uninitialised value(s)
+==30013==    at 0x4B14D08: __printf_fp_l (printf_fp.c:396)
+==30013==    by 0x4B309AC: __printf_fp_spec (vfprintf-internal.c:354)
+==30013==    by 0x4B309AC: __vfprintf_internal (vfprintf-internal.c:1558)
+==30013==    by 0x4B42519: __vsnprintf_internal (vsnprintf.c:114)
+==30013==    by 0x496B1FF: ??? (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==30013==    by 0x499DBD2: std::ostreambuf_iterator<char, std::char_traits<char> > std::num_put<char, std::ostreambuf_iterator<char, std::char_traits<char> > >::_M_insert_float<double>(std::ostreambuf_itera     tor<char, std::char_traits<char> >, std::ios_base&, char, char, double) const (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==30013==    by 0x49ADCFD: std::ostream& std::ostream::_M_insert<double>(double) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.30)
+==30013==    by 0x1161CB: yakl::operator<<(std::ostream&, yakl::Array<float, 1, 1, 1> const&) (YAKL_ArrayBase.h:364)
+==30013==    by 0x10C133: main (diffusion_bug_read_uninitialized_memory.cpp:132)
+==30013==  Uninitialised value was created by a heap allocation
+==30013==    at 0x4848899: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==30013==    by 0x110DA7: yakl::set_device_alloc_free(std::function<void* (unsigned long)>&, std::function<void (void*)>&)::{lambda(unsigned long)#1}::operator()(unsigned long) const (YAKL_allocators.h:134)
+==30013==    by 0x12122B: void* std::__invoke_impl<void*, yakl::set_device_alloc_free(std::function<void* (unsigned long)>&, std::function<void (void*)>&)::{lambda(unsigned long)#1}&, unsigned long>(std::__     invoke_other, yakl::set_device_alloc_free(std::function<void* (unsigned long)>&, std::function<void (void*)>&)::{lambda(unsigned long)#1}&, unsigned long&&) (invoke.h:61)
+==30013==    by 0x11EAA8: std::enable_if<is_invocable_r_v<void*, yakl::set_device_alloc_free(std::function<void* (unsigned long)>&, std::function<void (void*)>&)::{lambda(unsigned long)#1}&, unsigned long>,      void*>::type std::__invoke_r<void*, yakl::set_device_alloc_free(std::function<void* (unsigned long)>&, std::function<void (void*)>&)::{lambda(unsigned long)#1}&, unsigned long>(yakl::set_device_alloc_free(     std::function<void* (unsigned long)>&, std::function<void (void*)>&)::{lambda(unsigned long)#1}&, unsigned long&&) (invoke.h:114)
+==30013==    by 0x11BB9C: std::_Function_handler<void* (unsigned long), yakl::set_device_alloc_free(std::function<void* (unsigned long)>&, std::function<void (void*)>&)::{lambda(unsigned long)#1}>::_M_invok     e(std::_Any_data const&, unsigned long&&) (std_function.h:290)
+==30013==    by 0x112B0E: std::function<void* (unsigned long)>::operator()(unsigned long) const (std_function.h:590)
+==30013==    by 0x110EEA: yakl::set_yakl_allocators_to_default()::{lambda(unsigned long, char const*)#3}::operator()(unsigned long, char const*) const (YAKL_allocators.h:178)
+==30013==    by 0x12166F: void* std::__invoke_impl<void*, yakl::set_yakl_allocators_to_default()::{lambda(unsigned long, char const*)#3}&, unsigned long, char const*>(std::__invoke_other, yakl::set_yakl_all     ocators_to_default()::{lambda(unsigned long, char const*)#3}&, unsigned long&&, char const*&&) (invoke.h:61)
+==30013==    by 0x11F0FE: std::enable_if<is_invocable_r_v<void*, yakl::set_yakl_allocators_to_default()::{lambda(unsigned long, char const*)#3}&, unsigned long, char const*>, void*>::type std::__invoke_r<vo     id*, yakl::set_yakl_allocators_to_default()::{lambda(unsigned long, char const*)#3}&, unsigned long, char const*>(yakl::set_yakl_allocators_to_default()::{lambda(unsigned long, char const*)#3}&, unsigned lo     ng&&, char const*&&) (invoke.h:114)
+==30013==    by 0x11C00C: std::_Function_handler<void* (unsigned long, char const*), yakl::set_yakl_allocators_to_default()::{lambda(unsigned long, char const*)#3}>::_M_invoke(std::_Any_data const&, unsigne     d long&&, char const*&&) (std_function.h:290)
+==30013==    by 0x1150A6: std::function<void* (unsigned long, char const*)>::operator()(unsigned long, char const*) const (std_function.h:590)
+==30013==    by 0x111137: yakl::alloc_device(unsigned long, char const*) (YAKL_allocators.h:234)
+``
+
+So, here we see the uninitialized data was created "by a heap allocation", which means "malloc" (the C equivalent of Fortran's `allocate()` statement). So this clues us in that this is a YAKL Array. We see it's created in line 12. In this case, we never really see the line it's allocated. It's buried quite throughly in a bunch of C++ gobbledygook. But at least from the line it occurred, we know it has to do with state_init, which we know came from state, and we can then trace the initializeation of state to see how and where it happened. It's worth persevering with getting valgrind to run clean on your code.
+
+It's worth noting that MPI and I/O libraries often throw false warnings through valgrind, so please keep that in mind. I regularly get valgrind errors MPI routines that are of no fault of my codes.
+
+## DEBUGGING 5: Using an Array that isn't allocated
+
+Here, we will "forget" to allocate a variable and then try to index it. You'll get a thrown exception, and you can track the line with `gdb` just as before:
+
+```
+>  g++ -g -DYAKL_DEBUG -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_not_allocated.cpp -o diffusion
+>  ./diffusion
+INFORM: Automatically inserting fence() after every parallel_for
+YAKL FATAL ERROR:
+Error: Using operator() on an Array that isn't allocated
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  Error: Using operator() on an Array that isn't allocated
+Aborted (core dumped)
+```
 
 
 
