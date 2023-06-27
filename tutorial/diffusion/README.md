@@ -21,7 +21,7 @@ To start with, we'll compile with a vanilla `g++` compiler. You'll need to insta
 
 ```bash
 cd original
-g++ -I../../../src -I../../../src/extensions -I../../../external diffusion.cpp -o diffusion
+g++ -I../../src -I../../src/extensions -I../../external diffusion.cpp -o diffusion
 ./diffusion
 ```
 
@@ -57,7 +57,7 @@ The second output is the information and data of the initial state array. The ne
 You'll notice that the Array labels are "Unlabeled...". To enable storing and printing Array labels, we need to add `-DYAKL_DEBUG` to the compile line:
 
 ```bash
-g++ -DYAKL_DEBUG -I../../../src -I../../../src/extensions -I../../../external diffusion.cpp -o diffusion
+g++ -DYAKL_DEBUG -I../../src -I../../src/extensions -I../../external diffusion.cpp -o diffusion
 ./diffusion
 ```
 
@@ -68,7 +68,7 @@ This time, you should see actual labels for the arrays when they are printed out
 `diffusion.cpp` contains `yakl::timer_start` and `yakl::timer_stop` calls, but you'll notice there's no timer output. To enable this, we need to add `-DYAKL_PROFILE` so that timers are actually used.
 
 ```bash
-g++ -DYAKL_PROFILE -I../../../src -I../../../src/extensions -I../../../external diffusion.cpp -o diffusion
+g++ -DYAKL_PROFILE -I../../src -I../../src/extensions -I../../external diffusion.cpp -o diffusion
 ./diffusion
 ```
 
@@ -93,7 +93,7 @@ YAKL also has the ability to put timers around all `parallel_for` and data copy 
 
 
 ```bash
-g++ -DYAKL_AUTO_PROFILE -I../../../src -I../../../src/extensions -I../../../external diffusion.cpp -o diffusion
+g++ -DYAKL_AUTO_PROFILE -I../../src -I../../src/extensions -I../../external diffusion.cpp -o diffusion
 ./diffusion
 ```
 
@@ -126,7 +126,7 @@ If you only want the master MPI task's output in stdout, you can specify `-DYAKL
 
 
 ```bash
-g++ -DYAKL_DEBUG -DYAKL_VERBOSE_FILE -I../../../src -I../../../src/extensions -I../../../external diffusion.cpp -o diffusion
+g++ -DYAKL_DEBUG -DYAKL_VERBOSE_FILE -I../../src -I../../src/extensions -I../../external diffusion.cpp -o diffusion
 ./diffusion
 ```
 
@@ -222,7 +222,7 @@ If you were to have an error (segmentation fault, out-of-bounds index error, bus
 The YAKL pool allocator makes frequent allocation and deallocation faster, **especially on GPU devices**. But even on the host, it typically makes a difference. Change `nx` to `1024*1024` in the code (you may want to comment out the "std::cout << state" lines as well). Then run with and without the pool allocator. The pool allocator can be disable with the shell environment variable `GATOR_DISABLE=1`.
 
 ```bash
-g++ -DYAKL_PROFILE -O3 -I../../../src -I../../../src/extensions -I../../../external diffusion.cpp -o diffusion
+g++ -DYAKL_PROFILE -O3 -I../../src -I../../src/extensions -I../../external diffusion.cpp -o diffusion
 # With pool allocator
 ./diffusion
 # Without pool allocator (no need to recompile)
@@ -238,21 +238,21 @@ Now we'll go through some debugging exercises to get you used to the kinds of er
 Here, we'll compile a file that creates an array with the wrong number of dimensions. We'll need `-DYAKL_DEBUG -g` in the compile flags from here on out to ensure we catch errors and have debug symbols.
 
 ```bash
-g++ -DYAKL_DEBUG -g -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_creation_dimension.cpp -o diffusion
+g++ -DYAKL_DEBUG -g -I../../src -I../../src/extensions -I../../external diffusion_bug_creation_dimension.cpp -o diffusion
 ```
 
 Here, you should get a compile-time error as follows:
 
 ```
-In file included from ../../../src/YAKL_Array.h:347,
-                 from ../../../src/YAKL.h:68,
+In file included from ../../src/YAKL_Array.h:347,
+                 from ../../src/YAKL.h:68,
                  from diffusion_bug_creation_dimension.cpp:2:
-../../../src/YAKL_CArray.h: In instantiation of ‘yakl::Array<T, rank, myMem, 1>::Array(const char*, yakl::index_t, yakl::index_t) [with T = float; int rank = 1; int myMem = 1; yakl::index_t = unsigned int]’:
+../../src/YAKL_CArray.h: In instantiation of ‘yakl::Array<T, rank, myMem, 1>::Array(const char*, yakl::index_t, yakl::index_t) [with T = float; int rank = 1; int myMem = 1; yakl::index_t = unsigned int]’:
 diffusion_bug_creation_dimension.cpp:90:32:   required from here
-../../../src/YAKL_CArray.h:126:27: error: static assertion failed: ERROR: Calling constructor with 2 bound on non-rank-2 array
+../../src/YAKL_CArray.h:126:27: error: static assertion failed: ERROR: Calling constructor with 2 bound on non-rank-2 array
   126 |       static_assert( rank == 2 , "ERROR: Calling constructor with 2 bound on non-rank-2 array" );
       |                      ~~~~~^~~~
-../../../src/YAKL_CArray.h:126:27: note: ‘(1 == 2)’ evaluates to false
+../../src/YAKL_CArray.h:126:27: note: ‘(1 == 2)’ evaluates to false
 ```
 
 When you create an array, the number of dimensions you provide must equal the rank of the array you're declaring. We declared the array to have a rank of 1, but we provided two dimensions when creating it, leading to a compile-time error.
@@ -262,20 +262,20 @@ When you create an array, the number of dimensions you provide must equal the ra
 Here, we'll compile a file that indexes an array with the wrong number of dimensions.
 
 ```bash
-g++ -DYAKL_DEBUG -g -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_indexing_dimension.cpp -o diffusion
+g++ -DYAKL_DEBUG -g -I../../src -I../../src/extensions -I../../external diffusion_bug_indexing_dimension.cpp -o diffusion
 ```
 
 Here, you should get a compile-time error as follows:
 ```
-In file included from ../../../src/YAKL_Array.h:347,
-                 from ../../../src/YAKL.h:68,
+In file included from ../../src/YAKL_Array.h:347,
+                 from ../../src/YAKL.h:68,
                  from diffusion_bug_indexing_dimension.cpp:2:
-../../../src/YAKL_CArray.h: In instantiation of ‘T& yakl::Array<T, rank, myMem, 1>::operator()(yakl::index_t, yakl::index_t) const [with T = float; int rank = 1; int myMem = 1; yakl::index_t = unsigned int]’:
+../../src/YAKL_CArray.h: In instantiation of ‘T& yakl::Array<T, rank, myMem, 1>::operator()(yakl::index_t, yakl::index_t) const [with T = float; int rank = 1; int myMem = 1; yakl::index_t = unsigned int]’:
 diffusion_bug_indexing_dimension.cpp:100:27:   required from here
-../../../src/YAKL_CArray.h:482:27: error: static assertion failed: ERROR: Indexing non-rank-2 array with 2 indices
+../../src/YAKL_CArray.h:482:27: error: static assertion failed: ERROR: Indexing non-rank-2 array with 2 indices
   482 |       static_assert( rank == 2 , "ERROR: Indexing non-rank-2 array with 2 indices" );
       |                      ~~~~~^~~~
-../../../src/YAKL_CArray.h:482:27: note: ‘(1 == 2)’ evaluates to false
+../../src/YAKL_CArray.h:482:27: note: ‘(1 == 2)’ evaluates to false
 ```
 
 When indexing an array, the number of indices must always match the rank you declared the array as. Note that Fortran compilers do not always enforce this. But YAKL always does. The rank of an array can never changes. You can call the `reshape()` member function of an Array object to create a new Array object with a different rank / shape that points to the same data. But that's creating a new Array object pointing to the same data, not changing the rank of an Array object.
@@ -285,7 +285,7 @@ When indexing an array, the number of indices must always match the rank you dec
 Now we're going to index the flux array out of bounds on purpose by declaring flux with `nx` elements instead of `nx+1`. C++ doesn't allow this to be caught at compile time, so this will have to be caught at runtime instead.
 
 ```bash
-g++ -DYAKL_DEBUG -g -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_index_oob.cpp -o diffusion
+g++ -DYAKL_DEBUG -g -I../../src -I../../src/extensions -I../../external diffusion_bug_index_oob.cpp -o diffusion
 ./diffusion
 ```
 
@@ -351,15 +351,15 @@ __pthread_kill_implementation (no_tid=0, signo=6, threadid=140737352688576) at .
 #6  0x00007ffff7cae24c in ?? () from /lib/x86_64-linux-gnu/libstdc++.so.6
 #7  0x00007ffff7cae2b7 in std::terminate() () from /lib/x86_64-linux-gnu/libstdc++.so.6
 #8  0x00007ffff7cae518 in __cxa_throw () from /lib/x86_64-linux-gnu/libstdc++.so.6
-#9  0x0000555555559511 in yakl::yakl_throw (msg=0x5555555722be "ERROR: Index out of bounds.") at ../../../src/YAKL_error.h:19
-#10 0x0000555555569309 in yakl::Array<float, 1, 1, 1>::ind_out_bounds<0> (this=0x7fffffffdcf8, ind=32) at ../../../src/YAKL_CArray.h:611
-#11 0x0000555555565754 in yakl::Array<float, 1, 1, 1>::check (this=0x7fffffffdcf8, i0=32, i1=0, i2=0, i3=0, i4=0, i5=0, i6=0, i7=0) at ../../../src/YAKL_CArray.h:578
-#12 0x0000555555561dd4 in yakl::Array<float, 1, 1, 1>::operator() (this=0x7fffffffdcf8, i0=32) at ../../../src/YAKL_CArray.h:474
+#9  0x0000555555559511 in yakl::yakl_throw (msg=0x5555555722be "ERROR: Index out of bounds.") at ../../src/YAKL_error.h:19
+#10 0x0000555555569309 in yakl::Array<float, 1, 1, 1>::ind_out_bounds<0> (this=0x7fffffffdcf8, ind=32) at ../../src/YAKL_CArray.h:611
+#11 0x0000555555565754 in yakl::Array<float, 1, 1, 1>::check (this=0x7fffffffdcf8, i0=32, i1=0, i2=0, i3=0, i4=0, i5=0, i6=0, i7=0) at ../../src/YAKL_CArray.h:578
+#12 0x0000555555561dd4 in yakl::Array<float, 1, 1, 1>::operator() (this=0x7fffffffdcf8, i0=32) at ../../src/YAKL_CArray.h:474
 #13 0x0000555555557a51 in operator() (__closure=0x7fffffffdcf0, i=32) at diffusion_bug_index_oob.cpp:103
 #14 0x0000555555558b35 in yakl::c::parallel_for_cpu_serial<main()::<lambda(int)>, false, 1>(const yakl::c::Bounds<1, false> &, const struct {...} &, yakl::c::DoOuter<false>) (bounds=..., f=..., dummy=...)
-    at ../../../src/YAKL_parallel_for_common.h:338
+    at ../../src/YAKL_parallel_for_common.h:338
 #15 0x0000555555558637 in yakl::c::parallel_for<main()::<lambda(int)>, 1, false>(const char *, const yakl::c::Bounds<1, false> &, const struct {...} &, yakl::LaunchConfig<128, false>) (
-    str=0x555555571f7c "Compute Fluxes", bounds=..., f=..., config=...) at ../../../src/YAKL_parallel_for_common.h:536
+    str=0x555555571f7c "Compute Fluxes", bounds=..., f=..., config=...) at ../../src/YAKL_parallel_for_common.h:536
 #16 0x0000555555557f3f in main () at diffusion_bug_index_oob.cpp:96
 (gdb) quit
 A debugging session is active.
@@ -377,7 +377,7 @@ From this, we can see that the error occurs at line 103 of `diffusion_bug_index_
 One of the most nefarious, sneaky, and frustrating bugs you'll encounter is using uninitialized memory, leading to undefined code behavior and bugs the present at random places at random times. It can feel like a ghost in the machine. Here, we'll get introduced to the `valgrind` tool that detects situations like this. It also detects invalid memory address errors, but you likely won't find those often because of YAKL's index checking capabilities. Here, we'll simply delete the line that initialized the state to zero.
 
 ```
-g++ -DYAKL_DEBUG -g -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_read_uninitialized_memory.cpp -o diffusion
+g++ -DYAKL_DEBUG -g -I../../src -I../../src/extensions -I../../external diffusion_bug_read_uninitialized_memory.cpp -o diffusion
 ./diffusion
 ```
 
@@ -458,14 +458,14 @@ Now, we get the output:
 
 So, here we see the uninitialized data was created "by a heap allocation", which means "malloc" (the C equivalent of Fortran's `allocate()` statement). So this clues us in that this is a YAKL Array. We see it's created in line 12. In this case, we never really see the line it's allocated. It's buried quite throughly in a bunch of C++ gobbledygook. This is because `state_init` was allocated inside YAKL in the `state.createDeviceCopy()` call. But at least from the line it occurred, we know it has to do with `state_init`, which we know came from state, and we can then trace the initializeation of state to see how and where it happened. It's worth persevering with getting valgrind to run clean on your code.
 
-It's worth noting that MPI and I/O libraries often throw false warnings through valgrind, so please keep that in mind. I regularly get valgrind errors MPI routines that are of no fault of my codes.
+It's worth noting that MPI and I/O libraries often throw false warnings through valgrind, so please keep that in mind. I regularly get valgrind errors MPI routines that are of no fault of my codes. By I/O, I mean netcdf, pnetcdf, and hdf5, not `std::cout` or `printf`. If you get a valgrind warning in `std::cout` or `printf` or `std::ofstream file <<`, the error is most likely in your own code.
 
 ## DEBUGGING 5: Using an Array that isn't allocated
 
 Here, we will "forget" to allocate a variable and then try to index it. You'll get a thrown exception, and you can track the line with `gdb` just as before:
 
 ```
->  g++ -g -DYAKL_DEBUG -I../../../src -I../../../src/extensions -I../../../external diffusion_bug_not_allocated.cpp -o diffusion
+>  g++ -g -DYAKL_DEBUG -I../../src -I../../src/extensions -I../../external diffusion_bug_not_allocated.cpp -o diffusion
 >  ./diffusion
 INFORM: Automatically inserting fence() after every parallel_for
 YAKL FATAL ERROR:
