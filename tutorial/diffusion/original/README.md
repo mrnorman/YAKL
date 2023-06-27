@@ -439,7 +439,7 @@ Now, we get the output:
 ==30013==    by 0x11C00C: std::_Function_handler<void* (unsigned long, char const*), yakl::set_yakl_allocators_to_default()::{lambda(unsigned long, char const*)#3}>::_M_invoke(std::_Any_data const&, unsigne     d long&&, char const*&&) (std_function.h:290)
 ==30013==    by 0x1150A6: std::function<void* (unsigned long, char const*)>::operator()(unsigned long, char const*) const (std_function.h:590)
 ==30013==    by 0x111137: yakl::alloc_device(unsigned long, char const*) (YAKL_allocators.h:234)
-``
+```
 
 So, here we see the uninitialized data was created "by a heap allocation", which means "malloc" (the C equivalent of Fortran's `allocate()` statement). So this clues us in that this is a YAKL Array. We see it's created in line 12. In this case, we never really see the line it's allocated. It's buried quite throughly in a bunch of C++ gobbledygook. But at least from the line it occurred, we know it has to do with state_init, which we know came from state, and we can then trace the initializeation of state to see how and where it happened. It's worth persevering with getting valgrind to run clean on your code.
 
