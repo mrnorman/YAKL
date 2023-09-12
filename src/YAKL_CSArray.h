@@ -26,17 +26,17 @@ namespace yakl {
     * Creating these arrays is very cheap, but copying them does a deep copy every time and can be expensive.
     * yakl::SArray objects should be indexed with zero-based indices in row-major order (right-most index varies the fastest)
     */
-  template <class T, int rank, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1>
+  template <class T, int rank, index_t D0, index_t D1=1, index_t D2=1, index_t D3=1>
   class CSArray {
   protected:
     /** @private */
-    static unsigned constexpr OFF0 = D3*D2*D1;
+    static index_t constexpr OFF0 = D3*D2*D1;
     /** @private */
-    static unsigned constexpr OFF1 = D3*D2;
+    static index_t constexpr OFF1 = D3*D2;
     /** @private */
-    static unsigned constexpr OFF2 = D3;
+    static index_t constexpr OFF2 = D3;
     /** @private */
-    static unsigned constexpr OFF3 = 1;
+    static index_t constexpr OFF3 = 1;
     /** @private */
     T mutable myData[D0*D1*D2*D3];
 
@@ -128,15 +128,15 @@ namespace yakl {
     /** @brief Returns pointer to end of the data */
     YAKL_INLINE T *end() const { return begin() + size(); }
     /** @brief Get the total number of array elements */
-    static unsigned constexpr totElems      () { return D3*D2*D1*D0; }
+    static index_t constexpr totElems      () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
-    static unsigned constexpr get_totElems  () { return D3*D2*D1*D0; }
+    static index_t constexpr get_totElems  () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
-    static unsigned constexpr size          () { return D3*D2*D1*D0; }
+    static index_t constexpr size          () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
-    static unsigned constexpr get_elem_count() { return D3*D2*D1*D0; }
+    static index_t constexpr get_elem_count() { return D3*D2*D1*D0; }
     /** @brief Get the number of dimensions */
-    static unsigned constexpr get_rank      () { return rank; }
+    static index_t constexpr get_rank      () { return rank; }
     /** @brief Always true. All YAKL arrays are contiguous with no padding. */
     static bool     constexpr span_is_contiguous() { return true; }
     /** @brief Always true. yakl::SArray objects are by default always initialized / allocated. */
@@ -190,7 +190,7 @@ namespace yakl {
 
 
   /** @brief Most often, codes use the type define yakl::SArray rather than yakl::CSArray */
-  template <class T, int rank, unsigned D0, unsigned D1=1, unsigned D2=1, unsigned D3=1>
+  template <class T, int rank, index_t D0, index_t D1=1, index_t D2=1, index_t D3=1>
   using SArray = CSArray<T,rank,D0,D1,D2,D3>;
 
 }

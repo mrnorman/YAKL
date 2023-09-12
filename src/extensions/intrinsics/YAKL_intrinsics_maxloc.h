@@ -67,7 +67,7 @@ namespace yakl {
       return loc;
     }
 
-    template <class T, unsigned D0>
+    template <class T, index_t D0>
     YAKL_INLINE int maxloc( SArray<T,1,D0> const &arr ) {
       T m = arr.data()[0];
       int loc = 0;

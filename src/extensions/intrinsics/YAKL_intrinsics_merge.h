@@ -26,7 +26,7 @@ namespace yakl {
           yakl_throw("ERROR: calling merge with array shapes that do not match");
       #endif
       Array<decltype(T1()+T2()),rank,memHost,myStyle> ret = arr_true.createHostObject();
-      for (unsigned i=0; i < arr_true.totElems(); i++) {
+      for (index_t i=0; i < arr_true.totElems(); i++) {
         ret.data()[i] = mask.data()[i] ? arr_true.data()[i] : arr_false.data()[i];
       }
       return ret;
@@ -55,13 +55,13 @@ namespace yakl {
       return ret;
     }
 
-    template <class T1, class T2, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int rank, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()+T2()),rank,D0,D1,D2,D3>
     merge( SArray<T1  ,rank,D0,D1,D2,D3> const & arr_true  ,
            SArray<T2  ,rank,D0,D1,D2,D3> const & arr_false ,
            SArray<bool,rank,D0,D1,D2,D3> const & mask      ) {
       SArray<decltype(T1()+T2()),rank,D0,D1,D2,D3> ret;
-      for (unsigned i=0; i < arr_true.totElems(); i++) {
+      for (index_t i=0; i < arr_true.totElems(); i++) {
         ret.data()[i] = mask.data()[i] ? arr_true.data()[i] : arr_false.data()[i];
       }
       return ret;
@@ -73,7 +73,7 @@ namespace yakl {
            FSArray<T2  ,rank,B0,B1,B2,B3> const & arr_false ,
            FSArray<bool,rank,B0,B1,B2,B3> const & mask      ) {
       FSArray<decltype(T1()+T2()),rank,B0,B1,B2,B3> ret;
-      for (unsigned i=0; i < arr_true.totElems(); i++) {
+      for (index_t i=0; i < arr_true.totElems(); i++) {
         ret.data()[i] = mask.data()[i] ? arr_true.data()[i] : arr_false.data()[i];
       }
       return ret;

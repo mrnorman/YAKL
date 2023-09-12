@@ -47,7 +47,7 @@ namespace yakl {
    * ```
    * Unfortunately, periodic boundary conditions roughly double the amount of work in the tridiagonal solve
    */
-  template <class real, unsigned int n>
+  template <class real, index_t n>
   YAKL_INLINE void tridiagonal_periodic(SArray<real,1,n> const &a, SArray<real,1,n> &b, SArray<real,1,n> &c, SArray<real,1,n> &d) {
     SArray<real,1,n> tmp;
     // Save the original "b0" because it's needed later on to compute ( (v^T*y) / (1 + v^T*q) )
@@ -115,7 +115,7 @@ namespace yakl {
    * 
    * This uses the Thomas algorithm.
   */
-  template <class real, unsigned int n>
+  template <class real, index_t n>
   YAKL_INLINE void tridiagonal(SArray<real,1,n> const &a, SArray<real,1,n> const &b, SArray<real,1,n> &c, SArray<real,1,n> &d) {
     real tmp = static_cast<real>(1) / b(0);
     c(0) *= tmp;

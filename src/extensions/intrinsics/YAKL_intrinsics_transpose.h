@@ -58,7 +58,7 @@ namespace yakl {
       }
     }
 
-    template <unsigned int n1, unsigned int n2, class T>
+    template <index_t n1, index_t n2, class T>
     YAKL_INLINE SArray<T,2,n2,n1> transpose(SArray<T,2,n1,n2> const &a) {
       SArray<T,2,n2,n1> ret;
       for (int j=0; j < n1; j++) {

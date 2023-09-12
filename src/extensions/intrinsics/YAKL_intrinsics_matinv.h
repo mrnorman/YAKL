@@ -6,7 +6,7 @@ __YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   namespace intrinsics {
 
-    template <unsigned int n, class real>
+    template <index_t n, class real>
     YAKL_INLINE SArray<real,2,n,n> matinv_ge(SArray<real,2,n,n> const &a) {
       SArray<real,2,n,n> scratch;
       SArray<real,2,n,n> inv;
