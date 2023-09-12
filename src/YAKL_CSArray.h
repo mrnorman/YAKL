@@ -59,7 +59,7 @@ namespace yakl {
     /** @brief Returns a reference to the indexed element (1-D).
       * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
       * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
-    YAKL_INLINE T &operator()(uint const i0) const {
+    YAKL_INLINE T &operator()(index_t const i0) const {
       static_assert(rank==1,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
           if constexpr (rank >= 1) { if (i0>D0-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); ) } }
@@ -70,7 +70,7 @@ namespace yakl {
     /** @brief Returns a reference to the indexed element (2-D).
       * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
       * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
-    YAKL_INLINE T &operator()(uint const i0, uint const i1) const {
+    YAKL_INLINE T &operator()(index_t const i0, index_t const i1) const {
       static_assert(rank==2,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
         if constexpr (rank >= 1) { if (i0>D0-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); ) } }
@@ -83,7 +83,7 @@ namespace yakl {
     /** @brief Returns a reference to the indexed element (3-D).
       * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
       * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
-    YAKL_INLINE T &operator()(uint const i0, uint const i1, uint const i2) const {
+    YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2) const {
       static_assert(rank==3,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
         if constexpr (rank >= 1) { if (i0>D0-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); ) } }
@@ -98,7 +98,7 @@ namespace yakl {
     /** @brief Returns a reference to the indexed element (4-D).
       * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
       * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
-    YAKL_INLINE T &operator()(uint const i0, uint const i1, uint const i2, uint const i3) const {
+    YAKL_INLINE T &operator()(index_t const i0, index_t const i1, index_t const i2, index_t const i3) const {
       static_assert(rank==4,"ERROR: Improper number of dimensions specified in operator()");
       #ifdef YAKL_DEBUG
         if constexpr (rank >= 1) { if (i0>D0-1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("CSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d)\n",i0,0,D0-1); ) } }
@@ -145,7 +145,7 @@ namespace yakl {
 
     /** @brief Print out the contents of this array. This should be called only from the host */
     inline friend std::ostream &operator<<(std::ostream& os, CSArray<T,rank,D0,D1,D2,D3> const &v) {
-      for (uint i=0; i<totElems(); i++) { os << std::setw(12) << v.myData[i] << "\n"; }
+      for (index_t i=0; i<totElems(); i++) { os << std::setw(12) << v.myData[i] << "\n"; }
       os << "\n";
       return os;
     }
@@ -154,8 +154,8 @@ namespace yakl {
     /** @brief Returns the dimensions of this array as a yakl::SArray object.
       * 
       * You should use zero-based indexing on the returned SArray object. */
-    YAKL_INLINE CSArray<uint,1,rank> get_dimensions() const {
-      CSArray<uint,1,rank> ret;
+    YAKL_INLINE CSArray<index_t,1,rank> get_dimensions() const {
+      CSArray<index_t,1,rank> ret;
       if constexpr (rank >= 1) ret(0) = D0;
       if constexpr (rank >= 2) ret(1) = D1;
       if constexpr (rank >= 3) ret(2) = D2;
@@ -165,8 +165,8 @@ namespace yakl {
     /** @brief Returns the lower bound of each dimension of this array as a yakl::SArray object.
       * 
       * You should use zero-based indexing on the returned yakl::SArray object. */
-    YAKL_INLINE CSArray<uint,1,rank> get_lbounds() const {
-      CSArray<uint,1,rank> ret;
+    YAKL_INLINE CSArray<index_t,1,rank> get_lbounds() const {
+      CSArray<index_t,1,rank> ret;
       if constexpr (rank >= 1) ret(0) = 0;
       if constexpr (rank >= 2) ret(1) = 0;
       if constexpr (rank >= 3) ret(2) = 0;
@@ -176,8 +176,8 @@ namespace yakl {
     /** @brief Returns the upper bound of each dimension of this array as a yakl::SArray object.
       *
       * You should use zero-based indexing on the returned yakl::SArray object. */
-    YAKL_INLINE CSArray<uint,1,rank> get_ubounds() const {
-      CSArray<uint,1,rank> ret;
+    YAKL_INLINE CSArray<index_t,1,rank> get_ubounds() const {
+      CSArray<index_t,1,rank> ret;
       if constexpr (rank >= 1) ret(0) = D0-1;
       if constexpr (rank >= 2) ret(1) = D1-1;
       if constexpr (rank >= 3) ret(2) = D2-1;

@@ -9,7 +9,7 @@ namespace yakl {
     ///////////////////////////////////////////////////////////
     // Matrix multiplication routines for column-row format
     ///////////////////////////////////////////////////////////
-    template <class T, index_t COL_L, index_t ROW_L, index_t COL_R>
+    template <class T, unsigned COL_L, unsigned ROW_L, unsigned COL_R>
     YAKL_INLINE SArray<T,2,COL_R,ROW_L>
     matmul_cr ( SArray<T,2,COL_L,ROW_L> const &left ,
                 SArray<T,2,COL_R,COL_L> const &right ) {
@@ -26,7 +26,7 @@ namespace yakl {
       return ret;
     }
 
-    template<class T, index_t COL_L, index_t ROW_L>
+    template<class T, unsigned COL_L, unsigned ROW_L>
     YAKL_INLINE SArray<T,1,ROW_L>
     matmul_cr ( SArray<T,2,COL_L,ROW_L> const &left ,
                 SArray<T,1,COL_L>       const &right ) {
@@ -77,7 +77,7 @@ namespace yakl {
     ///////////////////////////////////////////////////////////
     // Matrix multiplication routines for row-column format
     ///////////////////////////////////////////////////////////
-    template <class T, index_t COL_L, index_t ROW_L, index_t COL_R>
+    template <class T, unsigned COL_L, unsigned ROW_L, unsigned COL_R>
     YAKL_INLINE SArray<T,2,ROW_L,COL_R>
     matmul_rc ( SArray<T,2,ROW_L,COL_L> const &left ,
                 SArray<T,2,COL_L,COL_R> const &right ) {
@@ -94,7 +94,7 @@ namespace yakl {
       return ret;
     }
 
-    template<class T, index_t COL_L, index_t ROW_L>
+    template<class T, unsigned COL_L, unsigned ROW_L>
     YAKL_INLINE SArray<T,1,ROW_L>
     matmul_rc ( SArray<T,2,ROW_L,COL_L> const &left ,
                 SArray<T,1,COL_L>       const &right ) {

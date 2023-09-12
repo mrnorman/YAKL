@@ -29,7 +29,6 @@ using namespace YAKL_NAMESPACE_WRAPPER_LABEL ;
 
 __YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
-  typedef unsigned int uint;
   using std::cos;
   using std::sin;
   using std::pow;
@@ -37,8 +36,8 @@ namespace yakl {
   using std::max;
   using std::abs;
 
-  // Type for indexing. Rarely if ever is size_t going to be needed
-  typedef unsigned int index_t;
+  // Type for indexing.
+  typedef size_t index_t;
   index_t constexpr INDEX_MAX = std::numeric_limits<index_t>::max();
 }
 __YAKL_NAMESPACE_WRAPPER_END__
