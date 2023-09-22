@@ -498,6 +498,14 @@ inline void parallel_inner_cpu_serial( Bounds<N,simple> const &bounds , F const 
 template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN , bool B4B=false>
 inline void parallel_for( char const * str , Bounds<N,simple> const &bounds , F const &f ,
                           LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
+  // exit early if there is no work to do
+  if (bounds.nIter == 0) {
+  #ifdef YAKL_VERBOSE
+    verbose_inform(std::string("Skipping launch of parallel_for labeled \"")+std::string(str)+std::string("\" with zero threads"),str);
+  #endif
+    return;
+  }
+
   #ifdef YAKL_VERBOSE
     verbose_inform(std::string("Launching parallel_for labeled \"")+std::string(str)+std::string("\" with ")+std::to_string(bounds.nIter)+" threads",str);
   #endif
@@ -587,6 +595,14 @@ inline void parallel_for( char const * str , LBnd bnd , F const &f ,
 template <class F, int N, bool simple, int VecLen=YAKL_DEFAULT_VECTOR_LEN, bool B4B=false>
 inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , F const &f ,
                             LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
+  // exit early if there is no work to do
+  if (bounds.nIter == 0) {
+  #ifdef YAKL_VERBOSE
+    verbose_inform(std::string("Skipping launch of parallel_outer labeled \"")+std::string(str)+std::string("\" with zero outer threads"),str);
+  #endif
+    return;
+  }
+
   #ifdef YAKL_VERBOSE
     verbose_inform(std::string("Launching parallel_outer labeled \"")+std::string(str)+std::string("\" with ")+std::to_string(bounds.nIter)+
                    std::string(" outer threads and ")+
