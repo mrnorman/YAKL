@@ -36,14 +36,14 @@ namespace simd {
     * Whenever different behavior is needed for different members of the Pack object (e.g., if-statement),
     * the user must iterate explicitly over the pack with yakl::iterate_over_pack.
     */
-  template <class T, int N>
+  template <class T, index_t N>
   class Pack {
   public:
     /** @private */
     T myData[N];
 
     /** @brief Returns a modifiable reference to the data at the requested index */
-    YAKL_INLINE T & operator() (int i) {
+    YAKL_INLINE T & operator() (index_t i) {
       #ifdef YAKL_DEBUG
         if (i >= N) { yakl_throw("Pack index out of bounds"); }
       #endif
@@ -51,7 +51,7 @@ namespace simd {
     }
 
     /** @brief Returns a non-modifiable value to the data at the requested index */
-    YAKL_INLINE T operator() (int i) const {
+    YAKL_INLINE T operator() (index_t i) const {
       #ifdef YAKL_DEBUG
         if (i >= N) { yakl_throw("Pack index out of bounds"); }
       #endif
@@ -59,7 +59,7 @@ namespace simd {
     }
 
     /** @brief Returns the number of elements in the Pack object */
-    YAKL_INLINE static int constexpr get_pack_size() { return N; }
+    YAKL_INLINE static index_t constexpr get_pack_size() { return N; }
 
     //////////////////////////////////////
     // SELF OPERATORS WITH SCALAR VALUES
@@ -67,35 +67,35 @@ namespace simd {
     template <class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
     YAKL_INLINE Pack<T,N> & operator= (TLOC rhs) {
       GET_SIMD_PRAGMA()
-      for (int i=0 ; i < N ; i++) { (*this)(i) = rhs; }
+      for (index_t i=0 ; i < N ; i++) { (*this)(i) = rhs; }
       return *this;
     }
 
     template <class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
     YAKL_INLINE Pack<T,N> & operator+= (TLOC rhs) {
       GET_SIMD_PRAGMA()
-      for (int i=0; i < N; i++) { (*this)(i) += rhs; }
+      for (index_t i=0; i < N; i++) { (*this)(i) += rhs; }
       return *this;
     }
 
     template <class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
     YAKL_INLINE Pack<T,N> & operator-= (TLOC rhs) {
       GET_SIMD_PRAGMA()
-      for (int i=0; i < N; i++) { (*this)(i) -= rhs; }
+      for (index_t i=0; i < N; i++) { (*this)(i) -= rhs; }
       return *this;
     }
 
     template <class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
     YAKL_INLINE Pack<T,N> & operator*= (TLOC rhs) {
       GET_SIMD_PRAGMA()
-      for (int i=0; i < N; i++) { (*this)(i) *= rhs; }
+      for (index_t i=0; i < N; i++) { (*this)(i) *= rhs; }
       return *this;
     }
 
     template <class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
     YAKL_INLINE Pack<T,N> & operator/= (TLOC rhs) {
       GET_SIMD_PRAGMA()
-      for (int i=0; i < N; i++) { (*this)(i) /= rhs; }
+      for (index_t i=0; i < N; i++) { (*this)(i) /= rhs; }
       return *this;
     }
 
@@ -105,35 +105,35 @@ namespace simd {
     template <class TLOC>
     YAKL_INLINE Pack<T,N> & operator+= (Pack<TLOC,N> rhs) {
       GET_SIMD_PRAGMA()
-      for (int i=0; i < N; i++) { (*this)(i) += rhs(i); }
+      for (index_t i=0; i < N; i++) { (*this)(i) += rhs(i); }
       return *this;
     }
 
     template <class TLOC>
     YAKL_INLINE Pack<T,N> & operator-= (Pack<TLOC,N> rhs) {
       GET_SIMD_PRAGMA()
-      for (int i=0; i < N; i++) { (*this)(i) -= rhs(i); }
+      for (index_t i=0; i < N; i++) { (*this)(i) -= rhs(i); }
       return *this;
     }
 
     template <class TLOC>
     YAKL_INLINE Pack<T,N> & operator*= (Pack<TLOC,N> rhs) {
       GET_SIMD_PRAGMA()
-      for (int i=0; i < N; i++) { (*this)(i) *= rhs(i); }
+      for (index_t i=0; i < N; i++) { (*this)(i) *= rhs(i); }
       return *this;
     }
 
     template <class TLOC>
     YAKL_INLINE Pack<T,N> & operator/= (Pack<TLOC,N> rhs) {
       GET_SIMD_PRAGMA()
-      for (int i=0; i < N; i++) { (*this)(i) /= rhs(i); }
+      for (index_t i=0; i < N; i++) { (*this)(i) /= rhs(i); }
       return *this;
     }
 
 
     /** @brief Print out the Pack object values to stdout. */
     inline friend std::ostream &operator<<(std::ostream& os, Pack<T,N> const &v) {
-      for (int i=0; i<N; i++) { os << std::setw(12) << v(i) << "  "; }
+      for (index_t i=0; i<N; i++) { os << std::setw(12) << v(i) << "  "; }
       os << "\n";
       return os;
     }
@@ -146,7 +146,7 @@ namespace simd {
    * @param N    Number of elements in the Pack(s) being used inside iterate_over_pack
    * @param SIMD Whether the functor passed to iterate_over_pack is parallelizeable or not
    */
-  template <int N, bool SIMD=false> struct PackIterConfig {};
+  template <index_t N, bool SIMD=false> struct PackIterConfig {};
 
 
 
@@ -160,13 +160,13 @@ namespace simd {
    *               to loop over; and (2) a bool SIMD parameter to tell this routine whether or not it should apply a
    *               SIMD pragma.
    */
-  template <class F, int N, bool SIMD=false>
+  template <class F, index_t N, bool SIMD=false>
   YAKL_INLINE void iterate_over_pack( F const &f , PackIterConfig<N,SIMD> config ) {
     if constexpr (SIMD) {
       GET_SIMD_PRAGMA()
-      for (int i=0 ; i < N ; i++) { f(i); }
+      for (index_t i=0 ; i < N ; i++) { f(i); }
     } else {
-      for (int i=0 ; i < N ; i++) { f(i); }
+      for (index_t i=0 ; i < N ; i++) { f(i); }
     }
   }
 
@@ -174,71 +174,71 @@ namespace simd {
   //////////////////////////////////////////////////////////////
   // OPERATIONS WITH SCALARS
   //////////////////////////////////////////////////////////////
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, index_t N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator+ (Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = lhs(i) + val; }
+    for (index_t i=0; i < N; i++) { ret(i) = lhs(i) + val; }
     return ret;
   }
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, index_t N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator+ (TLOC val , Pack<T,N> rhs) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = val + rhs(i); }
+    for (index_t i=0; i < N; i++) { ret(i) = val + rhs(i); }
     return ret;
   }
 
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, index_t N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator- (Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = lhs(i) - val; }
+    for (index_t i=0; i < N; i++) { ret(i) = lhs(i) - val; }
     return ret;
   }
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, index_t N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator- (TLOC val , Pack<T,N> rhs) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = val - rhs(i); }
+    for (index_t i=0; i < N; i++) { ret(i) = val - rhs(i); }
     return ret;
   }
 
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, index_t N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator* (Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = lhs(i) * val; }
+    for (index_t i=0; i < N; i++) { ret(i) = lhs(i) * val; }
     return ret;
   }
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, index_t N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator* (TLOC val , Pack<T,N> rhs) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = val * rhs(i); }
+    for (index_t i=0; i < N; i++) { ret(i) = val * rhs(i); }
     return ret;
   }
 
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, index_t N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator/ (Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = lhs(i) / val; }
+    for (index_t i=0; i < N; i++) { ret(i) = lhs(i) / val; }
     return ret;
   }
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, index_t N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> operator/ (TLOC val , Pack<T,N> rhs) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = val / rhs(i); }
+    for (index_t i=0; i < N; i++) { ret(i) = val / rhs(i); }
     return ret;
   }
 
-  template <class T, int N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
+  template <class T, index_t N, class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,bool>::type = false >
   YAKL_INLINE Pack<T,N> pow(Pack<T,N> lhs , TLOC val) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::pow( lhs(i) , val ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::pow( lhs(i) , val ); }
     return ret;
   }
 
@@ -246,123 +246,123 @@ namespace simd {
   //////////////////////////////////////////////////////////////
   // UNARY OPERATORS
   //////////////////////////////////////////////////////////////
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> operator- ( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = -( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = -( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> sqrt( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::sqrt( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::sqrt( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> abs( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::abs( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::abs( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> exp( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::exp( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::exp( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> log( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::log( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::log( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> log10( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::log10( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::log10( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> cos( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::cos( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::cos( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> sin( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::sin( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::sin( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> tan( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::tan( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::tan( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> acos( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::acos( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::acos( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> asin( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::asin( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::asin( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> atan( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::atan( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::atan( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> ceil( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::ceil( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::ceil( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> floor( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::floor( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::floor( a(i) ); }
     return ret;
   }
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> round( Pack<T,N> a ) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) { ret(i) = std::round( a(i) ); }
+    for (index_t i=0; i < N; i++) { ret(i) = std::round( a(i) ); }
     return ret;
   }
 
@@ -371,55 +371,55 @@ namespace simd {
   //////////////////////////////////////////////////////////////
   // BINARY OPERATORS
   //////////////////////////////////////////////////////////////
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> operator+( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) {
+    for (index_t i=0; i < N; i++) {
       ret(i) = a(i) + b(i);
     }
     return ret;
   }
 
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> operator-( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) {
+    for (index_t i=0; i < N; i++) {
       ret(i) = a(i) - b(i);
     }
     return ret;
   }
 
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> operator*( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) {
+    for (index_t i=0; i < N; i++) {
       ret(i) = a(i) * b(i);
     }
     return ret;
   }
 
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> operator/( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) {
+    for (index_t i=0; i < N; i++) {
       ret(i) = a(i) / b(i);
     }
     return ret;
   }
 
 
-  template <class T, int N>
+  template <class T, index_t N>
   YAKL_INLINE Pack<T,N> pow( Pack<T,N> a , Pack<T,N> b) {
     Pack<T,N> ret;
     GET_SIMD_PRAGMA()
-    for (int i=0; i < N; i++) {
+    for (index_t i=0; i < N; i++) {
       ret(i) = std::pow( a(i) , b(i) );
     }
     return ret;
