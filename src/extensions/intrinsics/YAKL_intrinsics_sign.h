@@ -44,7 +44,7 @@ namespace yakl {
       return ret;
     }
 
-    template <class T1, class T2, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int rank, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<T1,rank,D0,D1,D2,D3> sign( SArray<T1,rank,D0,D1,D2,D3> const & a ,
                                                   SArray<T2,rank,D0,D1,D2,D3> const & b ) {
       SArray<T1,rank,D0,D1,D2,D3> ret;

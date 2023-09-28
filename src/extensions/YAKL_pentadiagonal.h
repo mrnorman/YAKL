@@ -10,7 +10,7 @@ namespace yakl {
 
 
   /** @private */
-  template <unsigned int n, class real>
+  template <index_t n, class real>
   YAKL_INLINE real penta_sum(SArray<real,1,n> const &v, SArray<real,1,n> const &z) {
     real sum = 0;
     for (int k=0; k < n; k++) {
@@ -22,7 +22,7 @@ namespace yakl {
 
 
   /** @private */
-  template <unsigned int n, class real>
+  template <index_t n, class real>
   YAKL_INLINE void matrix_inverse_small(SArray<real,2,n,n> &a) {
     SArray<real,2,n,n> inv;
 
@@ -92,7 +92,7 @@ namespace yakl {
    * ```
    * input are the a, b, c, d, e, and f and they are not modified
    */
-  template <unsigned int n, class real>
+  template <index_t n, class real>
   YAKL_INLINE void pentadiagonal(SArray<real,1,n> const &a,
                                  SArray<real,1,n> const &b,
                                  SArray<real,1,n> const &c,
@@ -149,7 +149,7 @@ namespace yakl {
    * ```
    * input are the a, b, c, d, e, and f and they are not modified
    */
-  template <unsigned int n, class real>
+  template <index_t n, class real>
   YAKL_INLINE void pentadiagonal_periodic(SArray<real,1,n> const &a,
                                           SArray<real,1,n> const &b,
                                           SArray<real,1,n> const &c,

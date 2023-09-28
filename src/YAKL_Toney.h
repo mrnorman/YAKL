@@ -28,7 +28,7 @@ namespace yakl {
     struct Timer {
       std::string         label;
       size_t              label_hash;
-      unsigned int        hits;
+      size_t              hits;
       Duration            accumulated_duration;
       Duration            max_duration;
       Duration            min_duration;

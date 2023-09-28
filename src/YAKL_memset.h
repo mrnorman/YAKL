@@ -62,7 +62,7 @@ namespace yakl {
 
 
   /** @private */
-  template <class T, int rank, unsigned D0, unsigned D1, unsigned D2, unsigned D3, class I>
+  template <class T, int rank, index_t D0, index_t D1, index_t D2, index_t D3, class I>
   YAKL_INLINE void memset( SArray<T,rank,D0,D1,D2,D3> &arr , I val ) {
     for (index_t i = 0; i < arr.totElems(); i++) {
       arr.data()[i] = val;

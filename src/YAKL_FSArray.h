@@ -69,25 +69,25 @@ namespace yakl {
     /** @private */
     static int constexpr L3 = B3::lower();
     /** @private */
-    static unsigned constexpr D0 =             U0 - L0 + 1;
+    static index_t constexpr D0 =             U0 - L0 + 1;
     /** @private */
-    static unsigned constexpr D1 = rank >= 1 ? U1 - L1 + 1 : 1;
+    static index_t constexpr D1 = rank >= 1 ? U1 - L1 + 1 : 1;
     /** @private */
-    static unsigned constexpr D2 = rank >= 1 ? U2 - L2 + 1 : 1;
+    static index_t constexpr D2 = rank >= 1 ? U2 - L2 + 1 : 1;
     /** @private */
-    static unsigned constexpr D3 = rank >= 1 ? U3 - L3 + 1 : 1;
+    static index_t constexpr D3 = rank >= 1 ? U3 - L3 + 1 : 1;
     /** @private */
-    static unsigned constexpr OFF0 = 1;
+    static index_t constexpr OFF0 = 1;
     /** @private */
-    static unsigned constexpr OFF1 = D0;
+    static index_t constexpr OFF1 = D0;
     /** @private */
-    static unsigned constexpr OFF2 = D0*D1;
+    static index_t constexpr OFF2 = D0*D1;
     /** @private */
     /** @private */
     T mutable myData[D0*D1*D2*D3];
 
   public :
-    static unsigned constexpr OFF3 = D0*D1*D2;
+    static index_t constexpr OFF3 = D0*D1*D2;
 
     /** @brief This is the type `T` without `const` and `volatile` modifiers */
     typedef typename std::remove_cv<T>::type       type;
@@ -176,15 +176,15 @@ namespace yakl {
     /** @brief Returns pointer to end of the data */
     YAKL_INLINE T *end() const { return begin() + size(); }
     /** @brief Get the total number of array elements */
-    static unsigned constexpr totElems      () { return D3*D2*D1*D0; }
+    static index_t constexpr totElems      () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
-    static unsigned constexpr get_totElems  () { return D3*D2*D1*D0; }
+    static index_t constexpr get_totElems  () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
-    static unsigned constexpr get_elem_count() { return D3*D2*D1*D0; }
+    static index_t constexpr get_elem_count() { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
-    static unsigned constexpr size          () { return D3*D2*D1*D0; }
+    static index_t constexpr size          () { return D3*D2*D1*D0; }
     /** @brief Get the number of dimensions */
-    static unsigned constexpr get_rank      () { return rank; }
+    static index_t constexpr get_rank      () { return rank; }
     /** @brief Always true. All YAKL arrays are contiguous with no padding. */
     static bool     constexpr span_is_contiguous() { return true; }
     /** @brief Always true. yakl::SArray objects are by default always initialized / allocated. */

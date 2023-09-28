@@ -2,7 +2,7 @@
 
 source /usr/share/modules/init/bash
 module purge
-module load cmake-3.23.2-gcc-11.1.0-kvgnqc6 nvhpc-23.3-gcc-11.1.0-lyprlux
+module load cmake-3.23.2-gcc-11.1.0-kvgnqc6 nvhpc-23.3-gcc-11.1.0-lyprlux netcdf-c-4.9.2-nvhpc-23.3-l7riqnm
 
 ../../cmakeclean.sh
 

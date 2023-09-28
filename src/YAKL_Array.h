@@ -153,7 +153,7 @@ namespace yakl {
     }
 
     /** @brief This constructor allows converting a CSArray object to a yakl::Dims object. */
-    template <class INT, unsigned int RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    template <class INT, index_t RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
     Dims(CSArray<INT,1,RANK> const dims) {
       rank = RANK;
       for (int i=0; i < rank; i++) { data[i] = dims(i); }
@@ -309,7 +309,7 @@ namespace yakl {
 
     /** @brief Allows CSArray object to be converted to a yakl::Bnds object if default lower bounds of 1 are desired for
       *        all dimensions. */
-    template <class INT, unsigned int RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
+    template <class INT, index_t RANK, typename std::enable_if< std::is_integral<INT>::value , bool>::type = false>
     Bnds(CSArray<INT,1,RANK> const dims) {
       rank = RANK;
       for (int i=0; i < rank; i++) { l[i] = 1;   u[i] = dims(i); }

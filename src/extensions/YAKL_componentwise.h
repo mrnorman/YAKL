@@ -41,7 +41,7 @@ namespace yakl {
     operator+( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return add_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()+T2()),N,D0,D1,D2,D3>
     operator+( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -82,7 +82,7 @@ namespace yakl {
     operator-( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return sub_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()-T2()),N,D0,D1,D2,D3>
     operator-( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -123,7 +123,7 @@ namespace yakl {
     operator*( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return mult_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()*T2()),N,D0,D1,D2,D3>
     operator*( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -164,7 +164,7 @@ namespace yakl {
     operator/( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return div_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()/T2()),N,D0,D1,D2,D3>
     operator/( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -205,7 +205,7 @@ namespace yakl {
     operator>( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return gt_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()>T2()),N,D0,D1,D2,D3>
     operator>( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -246,7 +246,7 @@ namespace yakl {
     operator<( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return lt_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()<T2()),N,D0,D1,D2,D3>
     operator<( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -287,7 +287,7 @@ namespace yakl {
     operator>=( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return ge_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()>=T2()),N,D0,D1,D2,D3>
     operator>=( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -328,7 +328,7 @@ namespace yakl {
     operator<=( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return le_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()<=T2()),N,D0,D1,D2,D3>
     operator<=( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -369,7 +369,7 @@ namespace yakl {
     operator==( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return eq_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()==T2()),N,D0,D1,D2,D3>
     operator==( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -410,7 +410,7 @@ namespace yakl {
     operator!=( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return ne_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()!=T2()),N,D0,D1,D2,D3>
     operator!=( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -451,7 +451,7 @@ namespace yakl {
     operator&&( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return and_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()&&T2()),N,D0,D1,D2,D3>
     operator&&( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -492,7 +492,7 @@ namespace yakl {
     operator||( Array<T1,N,memDevice,STYLE> const &left , T2 const &right ) {
       return or_array_scalar( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T2>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()||T2()),N,D0,D1,D2,D3>
     operator||( SArray<T1,N,D0,D1,D2,D3> const &left , T2 const &right ) {
@@ -538,7 +538,7 @@ namespace yakl {
     operator+( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return add_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()+T2()),N,D0,D1,D2,D3>
     operator+( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -579,7 +579,7 @@ namespace yakl {
     operator-( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return sub_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()-T2()),N,D0,D1,D2,D3>
     operator-( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -620,7 +620,7 @@ namespace yakl {
     operator*( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return mult_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()*T2()),N,D0,D1,D2,D3>
     operator*( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -661,7 +661,7 @@ namespace yakl {
     operator/( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return div_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()/T2()),N,D0,D1,D2,D3>
     operator/( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -702,7 +702,7 @@ namespace yakl {
     operator>( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return gt_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()>T2()),N,D0,D1,D2,D3>
     operator>( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -743,7 +743,7 @@ namespace yakl {
     operator<( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return lt_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()<T2()),N,D0,D1,D2,D3>
     operator<( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -784,7 +784,7 @@ namespace yakl {
     operator>=( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return ge_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()>=T2()),N,D0,D1,D2,D3>
     operator>=( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -825,7 +825,7 @@ namespace yakl {
     operator<=( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return le_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()<=T2()),N,D0,D1,D2,D3>
     operator<=( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -866,7 +866,7 @@ namespace yakl {
     operator==( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return eq_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()==T2()),N,D0,D1,D2,D3>
     operator==( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -907,7 +907,7 @@ namespace yakl {
     operator!=( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return ne_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()!=T2()),N,D0,D1,D2,D3>
     operator!=( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -948,7 +948,7 @@ namespace yakl {
     operator&&( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return and_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()&&T2()),N,D0,D1,D2,D3>
     operator&&( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -989,7 +989,7 @@ namespace yakl {
     operator||( T1 const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return or_scalar_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3,
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3,
               typename std::enable_if<std::is_arithmetic<T1>::value,bool>::type = false>
     YAKL_INLINE SArray<decltype(T1()||T2()),N,D0,D1,D2,D3>
     operator||( T1 const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
@@ -1028,7 +1028,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()+T2()),N,D0,D1,D2,D3>
     operator+( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()+T2()),N,D0,D1,D2,D3> ret;
@@ -1060,7 +1060,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()-T2()),N,D0,D1,D2,D3>
     operator-( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()-T2()),N,D0,D1,D2,D3> ret;
@@ -1092,7 +1092,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()*T2()),N,D0,D1,D2,D3>
     operator*( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()*T2()),N,D0,D1,D2,D3> ret;
@@ -1124,7 +1124,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()/T2()),N,D0,D1,D2,D3>
     operator/( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()/T2()),N,D0,D1,D2,D3> ret;
@@ -1156,7 +1156,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()>T2()),N,D0,D1,D2,D3>
     operator>( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()>T2()),N,D0,D1,D2,D3> ret;
@@ -1193,7 +1193,7 @@ namespace yakl {
     operator<( Array<T1,N,memDevice,STYLE> const &left , Array<T2,N,memDevice,STYLE> const &right ) {
       return lt_array_array( left , right );
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()<T2()),N,D0,D1,D2,D3>
     operator<( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()<T2()),N,D0,D1,D2,D3> ret;
@@ -1225,7 +1225,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()>=T2()),N,D0,D1,D2,D3>
     operator>=( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()>=T2()),N,D0,D1,D2,D3> ret;
@@ -1257,7 +1257,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()<=T2()),N,D0,D1,D2,D3>
     operator<=( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()<=T2()),N,D0,D1,D2,D3> ret;
@@ -1289,7 +1289,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()==T2()),N,D0,D1,D2,D3>
     operator==( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()==T2()),N,D0,D1,D2,D3> ret;
@@ -1321,7 +1321,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()!=T2()),N,D0,D1,D2,D3>
     operator!=( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()!=T2()),N,D0,D1,D2,D3> ret;
@@ -1353,7 +1353,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()&&T2()),N,D0,D1,D2,D3>
     operator&&( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()&&T2()),N,D0,D1,D2,D3> ret;
@@ -1385,7 +1385,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, class T2, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, class T2, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()||T2()),N,D0,D1,D2,D3>
     operator||( SArray<T1,N,D0,D1,D2,D3> const &left , SArray<T2,N,D0,D1,D2,D3> const &right ) {
       SArray<decltype(T1()||T2()),N,D0,D1,D2,D3> ret;
@@ -1421,7 +1421,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(!T1()),N,D0,D1,D2,D3>
     operator!( SArray<T1,N,D0,D1,D2,D3> const &left ) {
       SArray<decltype(!T1()),N,D0,D1,D2,D3> ret;
@@ -1453,7 +1453,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()+1),N,D0,D1,D2,D3>
     operator++( SArray<T1,N,D0,D1,D2,D3> const &left ) {
       SArray<decltype(T1()+1),N,D0,D1,D2,D3> ret;
@@ -1485,7 +1485,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()+1),N,D0,D1,D2,D3>
     operator++( SArray<T1,N,D0,D1,D2,D3> const &left , int dummy) {
       SArray<decltype(T1()+1),N,D0,D1,D2,D3> ret;
@@ -1517,7 +1517,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()-1),N,D0,D1,D2,D3>
     operator--( SArray<T1,N,D0,D1,D2,D3> const &left ) {
       SArray<decltype(T1()-1),N,D0,D1,D2,D3> ret;
@@ -1549,7 +1549,7 @@ namespace yakl {
       if constexpr (streams_enabled) fence();
       return ret;
     }
-    template <class T1, int N, unsigned D0, unsigned D1, unsigned D2, unsigned D3>
+    template <class T1, int N, index_t D0, index_t D1, index_t D2, index_t D3>
     YAKL_INLINE SArray<decltype(T1()-1),N,D0,D1,D2,D3>
     operator--( SArray<T1,N,D0,D1,D2,D3> const &left , int dummy ) {
       SArray<decltype(T1()-1),N,D0,D1,D2,D3> ret;
