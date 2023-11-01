@@ -73,9 +73,7 @@ namespace yakl {
       this->myData   = nullptr;
       this->refCount = nullptr;
       for (int i=0; i < rank; i++) { this->dimension[i] = 0; }
-      #ifdef YAKL_DEBUG
-        this->myname="Uninitialized";
-      #endif
+      YAKL_EXECUTE_ON_HOST_ONLY( this->myname="Uninitialized"; )
     }
 
     /* CONSTRUCTORS
@@ -88,9 +86,7 @@ namespace yakl {
     /** @brief Create an empty, unallocated object with a label.*/
     YAKL_INLINE explicit Array(char const * label) {
       nullify();
-      #ifdef YAKL_DEBUG
-        this->myname = label;
-      #endif
+      this->myname = label;
     }
 
     // This exists to hold common documentation for all owned constructors.
@@ -191,9 +187,7 @@ namespace yakl {
         if (dims.size() != rank) yakl_throw("ERROR: Number of constructor dimensions does not match the Array rank");
       #endif
       YAKL_EXECUTE_ON_HOST_ONLY( this->deallocate(); )
-      #ifdef YAKL_DEBUG
-        this->myname = label;
-      #endif
+      this->myname = label;
       for (int i=0; i < rank; i++) { this->dimension[i] = dims[i]; }
       YAKL_EXECUTE_ON_HOST_ONLY( this->allocate(); )
     }
@@ -302,8 +296,8 @@ namespace yakl {
       #ifdef YAKL_DEBUG
         if ( dims.size() < rank ) yakl_throw("ERROR: dims < rank");
         if (data == nullptr) yakl_throw("ERROR: wrapping nullptr with a YAKL Array object");
-        this->myname = label;
       #endif
+      this->myname = label;
       for (int i=0; i < rank; i++) { this->dimension[i] = dims[i]; }
       this->myData = data;
       this->refCount = nullptr;
@@ -357,9 +351,7 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         this->dimension[i] = rhs.dimension[i];
       }
-      #ifdef YAKL_DEBUG
-        this->myname = rhs.myname;
-      #endif
+      this->myname = rhs.myname;
       this->myData   = rhs.myData;
       YAKL_EXECUTE_ON_HOST_ONLY( yakl_mtx_lock(); )
       this->refCount = rhs.refCount;
@@ -383,9 +375,7 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         this->dimension[i] = rhs.dimension[i];
       }
-      #ifdef YAKL_DEBUG
-        this->myname = rhs.myname;
-      #endif
+      this->myname = rhs.myname;
       this->myData   = rhs.myData;
       rhs.myData   = nullptr;
 
@@ -401,9 +391,7 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         this->dimension[i] = rhs.dimension[i];
       }
-      #ifdef YAKL_DEBUG
-        this->myname = rhs.myname;
-      #endif
+      this->myname = rhs.myname;
       this->myData   = rhs.myData;
       rhs.myData   = nullptr;
 
@@ -430,9 +418,7 @@ namespace yakl {
       if (myMem == memDevice && (! ir.data_valid_on_device())) yakl_throw("ERROR: wrapping non-device-valid ArrayIR with memDevice yakl::CArray");
       if (myMem == memHost   && (! ir.data_valid_on_host  ())) yakl_throw("ERROR: wrapping non-host-valid ArrayIR with memHost yakl::CArray");
       this->myData = ir.data();
-      #ifdef YAKL_DEBUG
-        this->myname = ir.label();
-      #endif
+      this->myname = ir.label();
       for (int i=0; i < rank; i++) { this->dimension[i] = ir.extent(i); }
     }
 
@@ -829,9 +815,7 @@ namespace yakl {
       for (int i=0; i < N; i++) {
         ret.dimension[i] = dims.data[i];
       }
-      #ifdef YAKL_DEBUG
-        ret.myname = this->myname;
-      #endif
+      ret.myname = this->myname;
       ret.myData = this->myData;
       YAKL_EXECUTE_ON_HOST_ONLY(
         yakl_mtx_lock();
@@ -887,9 +871,7 @@ namespace yakl {
       #endif
       Array<T,1,myMem,styleC> ret;
       ret.dimension[0] = this->totElems();
-      #ifdef YAKL_DEBUG
-        ret.myname = this->myname;
-      #endif
+      ret.myname = this->myname;
       ret.myData = this->myData;
       YAKL_EXECUTE_ON_HOST_ONLY(
         yakl_mtx_lock();
@@ -946,9 +928,7 @@ namespace yakl {
       // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
       Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleC> ret;
       for (int i=0; i<rank; i++) { ret.dimension[i] = this->dimension[i]; }
-      #ifdef YAKL_DEBUG
-        ret.myname = this->myname;
-      #endif
+      ret.myname = this->myname;
       ret.allocate();
       return ret;
     }
@@ -997,9 +977,7 @@ namespace yakl {
       // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
       Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleC> ret;
       for (int i=0; i<rank; i++) { ret.dimension[i] = this->dimension[i]; }
-      #ifdef YAKL_DEBUG
-        ret.myname = this->myname;
-      #endif
+      ret.myname = this->myname;
       ret.allocate();
       return ret;
     }

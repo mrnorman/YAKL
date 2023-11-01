@@ -76,9 +76,7 @@ namespace yakl {
       this->myData   = nullptr;
       this->refCount = nullptr;
       for (int i=0; i < rank; i++) { this->lbounds[i] = 1; this->dimension[i] = 0; }
-      #ifdef YAKL_DEBUG
-        this->myname="Uninitialized";
-      #endif
+      YAKL_EXECUTE_ON_HOST_ONLY( this->myname="Uninitialized"; )
     }
 
     /* CONSTRUCTORS
@@ -91,9 +89,7 @@ namespace yakl {
     /** @brief Create an empty, unallocated object with a label.*/
     YAKL_INLINE explicit Array(char const * label) {
       nullify();
-      #ifdef YAKL_DEBUG
-        this->myname = label;
-      #endif
+      this->myname = label;
     }
 
 
@@ -196,9 +192,7 @@ namespace yakl {
         if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
       #endif
       YAKL_EXECUTE_ON_HOST_ONLY( this->deallocate(); )
-      #ifdef YAKL_DEBUG
-        this->myname = label;
-      #endif
+      this->myname = label;
       for (int i=0; i < rank; i++) { this->lbounds[i] = bnds[i].l; this->dimension[i] = bnds[i].u - bnds[i].l + 1; }
       YAKL_EXECUTE_ON_HOST_ONLY( this->allocate(); )
     }
@@ -305,8 +299,8 @@ namespace yakl {
       #ifdef YAKL_DEBUG
         if ( bnds.size() < rank ) { yakl_throw("ERROR: Number of array bounds specified is < rank"); }
         if (data == nullptr) yakl_throw("ERROR: wrapping nullptr with a YAKL Array object");
-        this->myname = label;
       #endif
+      this->myname = label;
       for (int i=0; i < rank; i++) { this->lbounds[i] = bnds[i].l; this->dimension[i] = bnds[i].u - bnds[i].l + 1; }
       this->myData = data;
       this->refCount = nullptr;
@@ -360,9 +354,7 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         this->lbounds[i] = rhs.lbounds[i]; this->dimension[i] = rhs.dimension[i];
       }
-      #ifdef YAKL_DEBUG
-        this->myname = rhs.myname;
-      #endif
+      this->myname = rhs.myname;
       this->myData   = rhs.myData;
       YAKL_EXECUTE_ON_HOST_ONLY( yakl_mtx_lock(); )
       this->refCount = rhs.refCount;
@@ -386,9 +378,7 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         this->lbounds[i] = rhs.lbounds[i]; this->dimension[i] = rhs.dimension[i];
       }
-      #ifdef YAKL_DEBUG
-        this->myname = rhs.myname;
-      #endif
+      this->myname = rhs.myname;
       this->myData   = rhs.myData;
       rhs.myData   = nullptr;
 
@@ -404,9 +394,7 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         this->lbounds  [i] = rhs.lbounds  [i]; this->dimension[i] = rhs.dimension[i];
       }
-      #ifdef YAKL_DEBUG
-        this->myname = rhs.myname;
-      #endif
+      this->myname = rhs.myname;
       this->myData   = rhs.myData;
       rhs.myData   = nullptr;
 
@@ -436,9 +424,7 @@ namespace yakl {
       if (myMem == memDevice && (! ir.data_valid_on_device())) yakl_throw("ERROR: wrapping non-device-valid ArrayIR with memDevice yakl::FArray");
       if (myMem == memHost   && (! ir.data_valid_on_host  ())) yakl_throw("ERROR: wrapping non-host-valid ArrayIR with memHost yakl::FArray");
       this->myData = ir.data();
-      #ifdef YAKL_DEBUG
-        this->myname = ir.label();
-      #endif
+      this->myname = ir.label();
       for (int i=0; i < rank; i++) { this->dimension[i] = ir.extent(rank-1-i); }
       if ( (! lower_bounds.empty()) && ( lower_bounds.size() != rank ) ) yakl_throw("ERROR: Passed lower bounds of the wrong rank");
       for (int i=0; i < rank; i++) { this->lbounds[i] = lower_bounds[i]; }
@@ -847,9 +833,7 @@ namespace yakl {
       for (int i=0; i < N; i++) {
         ret.dimension[i] = bnds.u[i] - bnds.l[i] + 1;  ret.lbounds  [i] = bnds.l[i];
       }
-      #ifdef YAKL_DEBUG
-        ret.myname = this->myname;
-      #endif
+      ret.myname = this->myname;
       ret.myData = this->myData;
       YAKL_EXECUTE_ON_HOST_ONLY(
         yakl_mtx_lock();
@@ -905,9 +889,7 @@ namespace yakl {
       #endif
       Array<T,1,myMem,styleFortran> ret;
       ret.dimension[0] = this->totElems();  ret.lbounds  [0] = lbnd;
-      #ifdef YAKL_DEBUG
-        ret.myname = this->myname;
-      #endif
+      ret.myname = this->myname;
       ret.myData = this->myData;
       YAKL_EXECUTE_ON_HOST_ONLY(
         yakl_mtx_lock();
@@ -964,9 +946,7 @@ namespace yakl {
       // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
       Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleFortran> ret;  // nullified + owned == true
       for (int i=0; i<rank; i++) { ret.lbounds[i] = this->lbounds[i];  ret.dimension[i] = this->dimension[i]; }
-      #ifdef YAKL_DEBUG
-        ret.myname = this->myname;
-      #endif
+      ret.myname = this->myname;
       ret.allocate();
       return ret;
     }
@@ -1015,9 +995,7 @@ namespace yakl {
       // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
       Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleFortran> ret;  // nullified + owned == true
       for (int i=0; i<rank; i++) { ret.lbounds[i] = this->lbounds[i];  ret.dimension[i] = this->dimension[i]; }
-      #ifdef YAKL_DEBUG
-        ret.myname = this->myname;
-      #endif
+      ret.myname = this->myname;
       ret.allocate();
       return ret;
     }
