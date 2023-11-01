@@ -39,10 +39,8 @@ namespace yakl {
     index_t dimension[rank];  // Sizes of the 8 possible dimensions
     /** @private */
     int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
-    #ifdef YAKL_DEBUG
-      /** @private */
-      char const * myname;    // Label for debug printing. Only stored if debugging is turned on
-    #endif
+    /** @private */
+    char const * myname;    // Label for debug printing. Only stored if debugging is turned on
     #ifdef YAKL_ENABLE_STREAMS
       StreamList stream_dependencies;
     #else
@@ -215,13 +213,10 @@ namespace yakl {
     YAKL_INLINE bool initialized() const { return this->myData != nullptr; }
     /** @brief Returns this array object's string label if the `YAKL_DEBUG` CPP macro is defined. Otherwise, returns an empty string. */
     YAKL_INLINE int get_memory_space() const { return myMem == memHost ? memHost : memDevice; }
-    const char* label() const {
-      #ifdef YAKL_DEBUG
-        return this->myname;
-      #else
-        return "\"Unlabeled: YAKL_DEBUG CPP macro not defined\"";
-      #endif
-    }
+    /** @brief Returns the object's string label as char const (Host only) */
+    char const * label() const { return this->myname; }
+    /** @brief Set the object's string label (Host only) */
+    void set_label(std::string label) { this->myname = label.c_str(); }
     /** @brief Returns how many array objects share this pointer if owned; or `0` if unowned.
       * 
       * Returns the use count for this array object's data pointer. I.e., this is how many yakl::Array objects currently
