@@ -137,6 +137,7 @@ if ("${YAKL_ARCH}" STREQUAL "SYCL")
     find_library(MKL_SYCL NAMES mkl_sycl PATHS ${MKL_ROOT}/lib/intel64 ${MKL_ROOT}/lib REQUIRED)
     find_library(MKL_IPL64 NAMES mkl_intel_ilp64 PATHS ${MKL_ROOT}/lib/intel64 ${MKL_ROOT}/lib REQUIRED)
     target_link_libraries(${YAKL_TARGET} INTERFACE "${YAKL_COMPILER_FLAGS} ${MKL_SYCL} -Wl,-export-dynamic -Wl,--start-group ${MKL_SEQU} ${MKL_IPL64} ${MKL_CORE} -Wl,--end-group -lsycl -lOpenCL -lpthread -lm -ldl")
+  endif()
 endif()
 
 # Special treatment for SYCL
