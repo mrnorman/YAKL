@@ -140,8 +140,11 @@ namespace yakl {
       YAKL_INLINE void   inner_barrier        () const { YAKL_EXECUTE_ON_DEVICE_ONLY( __syncthreads() ); }
       template <class T>
       YAKL_INLINE T * get_inner_cache_pointer(size_t offset_bytes = 0) const {
-        extern __shared__ char smem[];
-        return static_cast<T *>( &(smem[offset_bytes]) );
+        YAKL_EXECUTE_ON_DEVICE_ONLY(
+          extern __shared__ char smem[];
+          return static_cast<T *>( static_cast<void *>( &(smem[offset_bytes]) ) );
+        )
+        YAKL_EXECUTE_ON_HOST_ONLY( return nullptr; )
       }
     };
   #else

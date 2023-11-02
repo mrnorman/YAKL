@@ -143,7 +143,10 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template <class F, int N, bool simple>
   YAKL_INLINE void parallel_inner_cuda( Bounds<N,simple> bounds , F const &f ) {
-    YAKL_EXECUTE_ON_DEVICE_ONLY( if (threadIdx.x < bounds.nIter) callFunctor( f , bounds , threadIdx.x ); )
+    YAKL_EXECUTE_ON_DEVICE_ONLY(
+      if (threadIdx.x < bounds.nIter) callFunctor( f , bounds , threadIdx.x );
+      // TODO: for (int id = threadIdx.x; id < bounds.nIter; id+= blockDim.x) { callFunctor(f,bounds,id); }
+    )
   }
 
 
@@ -201,6 +204,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template <class F, int N, bool simple>
   YAKL_INLINE void parallel_inner_hip( Bounds<N,simple> bounds , F const &f ) {
     YAKL_EXECUTE_ON_DEVICE_ONLY( if (threadIdx.x < bounds.nIter) callFunctor( f , bounds , threadIdx.x ); )
+      // TODO: for (int id = threadIdx.x; id < bounds.nIter; id+= blockDim.x) { callFunctor(f,bounds,id); }
   }
 
 
@@ -353,6 +357,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template<class F, int N, bool simple>
   void parallel_inner_sycl( Bounds<N,simple> const &bounds , F const &f , InnerHandler const &handler ) {
     YAKL_EXECUTE_ON_DEVICE_ONLY( if (handler.get_item()->get_local_id(0) < bounds.nIter) callFunctor( f , bounds , handler.get_item()->get_local_id(0) ); )
+      // TODO: for (int id = threadIdx.x; id < bounds.nIter; id+= blockDim.x) { callFunctor(f,bounds,id); }
   }
 
 
