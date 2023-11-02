@@ -227,6 +227,8 @@ namespace yakl {
       if (this->refCount != nullptr) { return *(this->refCount); }
       else                           { return 0;                 }
     }
+    /** @brief Returns data size in bytes (arr.size()*sizeof(T)) */
+    YAKL_INLINE size_t data_size_in_bytes() const { return this->size()*sizeof(T); }
 
 
     // Allocate the array and the reference counter (if owned)

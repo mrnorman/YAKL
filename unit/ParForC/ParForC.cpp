@@ -23,7 +23,7 @@ using yakl::COLON;
 using yakl::fence_inner;
 using yakl::intrinsics::sum;
 
-typedef double real;
+typedef float real;
 
 typedef Array<real,1,memDevice,styleC> real1d;
 typedef Array<real,2,memDevice,styleC> real2d;
@@ -39,6 +39,7 @@ void die(std::string msg) {
 int main() {
   yakl::init();
   {
+    using yakl::componentwise::operator-;
     int constexpr n1 = 128;
     int constexpr n2 = 16;
     int constexpr n3 = 4;
@@ -90,16 +91,9 @@ int main() {
     }
     #endif
 
-    int nz = 128;
-    int ny = 128;
-    int nx = 128;
-    real3d data("data",nz,ny,nx);
-    real4d limits_x("limits_x",2,nz,ny,nx+1);
-    limits_x = 0;
-    data = 0;
-    yakl::c::parallel_for( YAKL_AUTO_LABEL() , yakl::c::Bounds<3>(nz,ny,nx) , YAKL_LAMBDA (int k, int j, int i) {
-      if (i > nx/4 && i < 3*nx/4 && j > ny/4 && j < 3*ny/4 && k > nz/4 && k < 3*nz/4) data(k,j,i) = 1;
-    });
+    int constexpr nz = 256;
+    int constexpr ny = 256;
+    int constexpr nx = 256;
     int constexpr ord = 9;
     int constexpr hs = (ord-1)/2;
     yakl::SArray<real,2,ord,2> s2g = 1;
@@ -121,6 +115,13 @@ int main() {
     s2g(7,1)=0.021825396825396825396825396825396825397;
     s2g(8,0)=0.0015873015873015873015873015873015873016;
     s2g(8,1)=-0.0019841269841269841269841269841269841270;
+    real3d data("data",nz,ny,nx);
+    real4d limits_x("limits_x",2,nz,ny,nx+1);
+    limits_x = 0;
+    data = 0;
+    yakl::c::parallel_for( YAKL_AUTO_LABEL() , yakl::c::Bounds<3>(nz,ny,nx) , YAKL_LAMBDA (int k, int j, int i) {
+      if (i > nx/4 && i < 3*nx/4 && j > ny/4 && j < 3*ny/4 && k > nz/4 && k < 3*nz/4) data(k,j,i) = 1;
+    });
 
     parallel_for( YAKL_AUTO_LABEL() , Bounds<3>(nz,ny,nx) , YAKL_LAMBDA (int k, int j, int i) {
       yakl::SArray<real,1,ord> stencil;
@@ -140,8 +141,7 @@ int main() {
       limits_x(1,k,j,i  ) = gll(0);
       limits_x(0,k,j,i+1) = gll(1);
     });
-    real mn = yakl::intrinsics::minval(limits_x);
-    real mx = yakl::intrinsics::maxval(limits_x);
+    auto limits_save = limits_x.createDeviceCopy();
 
 
 
@@ -169,9 +169,8 @@ int main() {
         limits_x(1,k,j,i  ) = gll(0);
         limits_x(0,k,j,i+1) = gll(1);
       } , handler );
-    } , yakl::LaunchConfig<128>() );
-    if (std::abs(yakl::intrinsics::minval(limits_x) - mn) > 1.e-13) die("Incorrect mn");
-    if (std::abs(yakl::intrinsics::maxval(limits_x) - mx) > 1.e-13) die("Incorrect mx");
+    } , yakl::LaunchConfig<64>() );
+    if (yakl::intrinsics::sum(yakl::intrinsics::abs(limits_x - limits_save)) > 1.e-13) die("Incorrect sum without shared memory");
 
 
 
@@ -208,9 +207,8 @@ int main() {
         limits_x(1,k,j,i  ) = gll(0);
         limits_x(0,k,j,i+1) = gll(1);
       } , handler );
-    } , yakl::LaunchConfig<128>().set_inner_cache_bytes(s2g.size()*sizeof(real)) );
-    if (std::abs(yakl::intrinsics::minval(limits_x) - mn) > 1.e-13) die("Incorrect mn");
-    if (std::abs(yakl::intrinsics::maxval(limits_x) - mx) > 1.e-13) die("Incorrect mx");
+    } , yakl::LaunchConfig<64>().set_inner_cache_bytes(s2g.data_size_in_bytes()) );
+    if (yakl::intrinsics::sum(yakl::intrinsics::abs(limits_x - limits_save)) > 1.e-13) die("Incorrect sum without shared memory");
   }
   yakl::finalize();
   

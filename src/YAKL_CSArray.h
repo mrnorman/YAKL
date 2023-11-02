@@ -141,6 +141,8 @@ namespace yakl {
     static bool     constexpr span_is_contiguous() { return true; }
     /** @brief Always true. yakl::SArray objects are by default always initialized / allocated. */
     static bool     constexpr initialized() { return true; }
+    /** @brief Returns data size in bytes (arr.size()*sizeof(T)) */
+    YAKL_INLINE size_t data_size_in_bytes() const { return this->size()*sizeof(T); }
 
 
     /** @brief Print out the contents of this array. This should be called only from the host */
