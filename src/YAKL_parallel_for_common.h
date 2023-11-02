@@ -144,7 +144,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template <class F, int N, bool simple>
   YAKL_INLINE void parallel_inner_cuda( Bounds<N,simple> bounds , F const &f ) {
     YAKL_EXECUTE_ON_DEVICE_ONLY(
-      for (int id = threadIdx.x; id < bounds.nIter; id+= blockDim.x) { callFunctor(f,bounds,id); }
+      if (threadIdx.x < bounds.nIter) callFunctor(f,bounds,threadIdx.x);
     )
   }
 
@@ -203,7 +203,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template <class F, int N, bool simple>
   YAKL_INLINE void parallel_inner_hip( Bounds<N,simple> bounds , F const &f ) {
     YAKL_EXECUTE_ON_DEVICE_ONLY(
-      for (int id = threadIdx.x; id < bounds.nIter; id+= blockDim.x) { callFunctor(f,bounds,id); }
+      if (threadIdx.x < bounds.nIter) callFunctor(f,bounds,threadIdx.x);
     )
   }
 
@@ -467,28 +467,46 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
 }
 
 
+template <size_t BYTES> struct CpuOuterSize {};
+
+template <class F, bool simple, int N, int VecLen, bool B4B, size_t BYTES>
+inline void parallel_outer_cpu_serial_stack( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ,
+                                             CpuOuterSize<BYTES> dummy ) {
+  auto inner_size  = config.get_inner_size();
+  auto cache_bytes = config.get_inner_cache_bytes();
+  #ifdef YAKL_ARCH_OPENMP
+    #pragma omp parallel for
+  #endif
+  for (int iGlob = 0; iGlob < bounds.nIter; iGlob++) {
+    char cache[BYTES];
+    InnerHandler handler(inner_size,cache_bytes,static_cast<void *>(cache));
+    int ind[N];
+    bounds.unpackIndices( iGlob , ind );
+    if constexpr (N == 1) f(ind[0],handler);
+    if constexpr (N == 2) f(ind[0],ind[1],handler);
+    if constexpr (N == 3) f(ind[0],ind[1],ind[2],handler);
+    if constexpr (N == 4) f(ind[0],ind[1],ind[2],ind[3],handler);
+    if constexpr (N == 5) f(ind[0],ind[1],ind[2],ind[3],ind[4],handler);
+    if constexpr (N == 6) f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],handler);
+    if constexpr (N == 7) f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],handler);
+    if constexpr (N == 8) f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],ind[7],handler);
+  }
+}
+
+
 template <class F, bool simple, int N, int VecLen, bool B4B>
 inline void parallel_outer_cpu_serial( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
   auto inner_size  = config.get_inner_size();
   auto cache_bytes = config.get_inner_cache_bytes();
-  char * cache = static_cast<char *>( cache_bytes > 0 ? malloc(cache_bytes*bounds.nIter) : nullptr );
-  if ( cache != nullptr) {
-    #ifdef YAKL_ARCH_OPENMP
-      #pragma omp parallel for
-    #endif
-    for (int iGlob = 0; iGlob < bounds.nIter; iGlob++) {
-      InnerHandler handler(inner_size,cache_bytes,static_cast<void *>(&(cache[iGlob*cache_bytes])));
-      int ind[N];
-      bounds.unpackIndices( iGlob , ind );
-      if constexpr (N == 1) f(ind[0],handler);
-      if constexpr (N == 2) f(ind[0],ind[1],handler);
-      if constexpr (N == 3) f(ind[0],ind[1],ind[2],handler);
-      if constexpr (N == 4) f(ind[0],ind[1],ind[2],ind[3],handler);
-      if constexpr (N == 5) f(ind[0],ind[1],ind[2],ind[3],ind[4],handler);
-      if constexpr (N == 6) f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],handler);
-      if constexpr (N == 7) f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],handler);
-      if constexpr (N == 8) f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],ind[7],handler);
-    }
+  if ( cache_bytes > 0 ) {
+    if      (cache_bytes <=      128) { parallel_outer_cpu_serial_stack( bounds , f , config , CpuOuterSize<     128>() ); }
+    else if (cache_bytes <=      512) { parallel_outer_cpu_serial_stack( bounds , f , config , CpuOuterSize<     512>() ); }
+    else if (cache_bytes <= 1  *1024) { parallel_outer_cpu_serial_stack( bounds , f , config , CpuOuterSize<1  *1024>() ); }
+    else if (cache_bytes <= 16 *1024) { parallel_outer_cpu_serial_stack( bounds , f , config , CpuOuterSize<16 *1024>() ); }
+    else if (cache_bytes <= 64 *1024) { parallel_outer_cpu_serial_stack( bounds , f , config , CpuOuterSize<64 *1024>() ); }
+    else if (cache_bytes <= 128*1024) { parallel_outer_cpu_serial_stack( bounds , f , config , CpuOuterSize<128*1024>() ); }
+    else if (cache_bytes <= 512*1024) { parallel_outer_cpu_serial_stack( bounds , f , config , CpuOuterSize<512*1024>() ); }
+    else { yakl_throw("ERROR: Specified inner_cache_size is too large. Only up to 512 Kb is supported on the CPU"); }
   } else {
     InnerHandler handler(inner_size,0,nullptr);
     if constexpr (N == 1) {

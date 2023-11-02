@@ -15,7 +15,7 @@ unset CXXFLAGS
 unset FFLAGS
 
 cmake -DYAKL_ARCH="HIP"                                \
-      -DYAKL_HIP_FLAGS="-O3 -DYAKL_ENABLE_STREAMS -Wno-tautological-pointer-compare -Wno-unused-result -D__HIP_ROCclr__ -D__HIP_ARCH_GFX90A__=1 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a -x hip" \
+      -DYAKL_HIP_FLAGS="-O3 -DYAKL_ENABLE_STREAMS -DYAKL_AUTO_PROFILE -munsafe-fp-atomics -Rpass-analysis=kernel-resource-usage -Wno-tautological-pointer-compare -Wno-unused-result -D__HIP_ROCclr__ -D__HIP_ARCH_GFX90A__=1 --rocm-path=${ROCM_PATH} --offload-arch=gfx90a -x hip" \
       -DYAKL_F90_FLAGS="-O3"                            \
       -DYAKL_TARGET_SUFFIX="amd"                        \
       -DCMAKE_INSTALL_PREFIX="`pwd`"                    \

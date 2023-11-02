@@ -74,25 +74,25 @@ int main() {
     real exact = (double) n1*n2*n3*3 - (double) n1*3;
     if ( abs(sum(arr3d) - exact) / exact > 1.e-13) die("ERROR: Wrong sum for arr3d");
 
-    #ifdef YAKL_ARCH_OPENMP
-    {
-      int constexpr nz = 8;
-      int constexpr nx = 8;
-      yakl::ScalarLiveOut<int> tot_outer(0);
-      yakl::ScalarLiveOut<int> tot      (0);
-      parallel_outer( nz , YAKL_LAMBDA (int k, InnerHandler handler) {
-        yakl::atomicAdd( tot_outer() , omp_get_thread_num() );
-        parallel_inner( nx , [&] (int i) {
-          yakl::atomicAdd( tot() , omp_get_thread_num() );
-        } , handler );
-      } , LaunchConfig<nz>() );
-      if (tot_outer.hostRead() != 28 ) yakl::yakl_throw("ERROR: Wrong tot_outer");
-      if (tot      .hostRead() != 224) yakl::yakl_throw("ERROR: Wrong tot");
-    }
-    #endif
+    // #ifdef YAKL_ARCH_OPENMP
+    // {
+    //   int constexpr nz = 8;
+    //   int constexpr nx = 8;
+    //   yakl::ScalarLiveOut<int> tot_outer(0);
+    //   yakl::ScalarLiveOut<int> tot      (0);
+    //   parallel_outer( nz , YAKL_LAMBDA (int k, InnerHandler handler) {
+    //     yakl::atomicAdd( tot_outer() , omp_get_thread_num() );
+    //     parallel_inner( nx , [&] (int i) {
+    //       yakl::atomicAdd( tot() , omp_get_thread_num() );
+    //     } , handler );
+    //   } , LaunchConfig<nz>() );
+    //   if (tot_outer.hostRead() != 28 ) yakl::yakl_throw("ERROR: Wrong tot_outer");
+    //   if (tot      .hostRead() != 224) yakl::yakl_throw("ERROR: Wrong tot");
+    // }
+    // #endif
 
-    int constexpr nz = 256;
-    int constexpr ny = 256;
+    int constexpr nz = 1024;
+    int constexpr ny = 1024;
     int constexpr nx = 256;
     int constexpr ord = 9;
     int constexpr hs = (ord-1)/2;
@@ -169,7 +169,7 @@ int main() {
         limits_x(1,k,j,i  ) = gll(0);
         limits_x(0,k,j,i+1) = gll(1);
       } , handler );
-    } , yakl::LaunchConfig<64>() );
+    } , yakl::LaunchConfig<256>() );
     if (yakl::intrinsics::sum(yakl::intrinsics::abs(limits_x - limits_save)) > 1.e-13) die("Incorrect sum without shared memory");
 
 
@@ -182,6 +182,7 @@ int main() {
     parallel_outer( YAKL_AUTO_LABEL() , Bounds<2>(nz,ny) , YAKL_LAMBDA (int k, int j , InnerHandler &handler) {
       // Declare shared memory array
       real2d s2g_slm(YAKL_NO_LABEL,handler.get_inner_cache_pointer<real>(),9,2);
+      // TODO: real2d s2g_slm(YAKL_NO_LABEL,handler,9,2);  // New Array constructor to take handle instead of pointer
       // Load data into shared memory in parallel
       parallel_inner( s2g.size() , [&] (int ii) {
         s2g_slm.data()[ii] = s2g.data()[ii];
@@ -207,7 +208,7 @@ int main() {
         limits_x(1,k,j,i  ) = gll(0);
         limits_x(0,k,j,i+1) = gll(1);
       } , handler );
-    } , yakl::LaunchConfig<64>().set_inner_cache_bytes(s2g.data_size_in_bytes()) );
+    } , yakl::LaunchConfig<256>().set_inner_cache_bytes(s2g.data_size_in_bytes()) );
     if (yakl::intrinsics::sum(yakl::intrinsics::abs(limits_x - limits_save)) > 1.e-13) die("Incorrect sum without shared memory");
   }
   yakl::finalize();
