@@ -181,11 +181,15 @@ int main() {
       if (i > nx/4 && i < 3*nx/4 && j > ny/4 && j < 3*ny/4 && k > nz/4 && k < 3*nz/4) data(k,j,i) = 1;
     });
     parallel_outer( YAKL_AUTO_LABEL() , Bounds<2>(nz,ny) , YAKL_LAMBDA (int k, int j , InnerHandler &handler) {
-      real2d s2g_slm(nullptr,handler.get_inner_cache_pointer<real>(),9,2);
+      // Declare shared memory array
+      real2d s2g_slm(YAKL_NO_LABEL,handler.get_inner_cache_pointer<real>(),9,2);
+      // Load data into shared memory in parallel
       parallel_inner( s2g.size() , [&] (int ii) {
         s2g_slm.data()[ii] = s2g.data()[ii];
       } , handler );
+      // Synchronize so no thread advances before shared memory is fully loaded
       fence_inner( handler );
+      // User shared memory reconstruction matrix to perform reconstruction
       parallel_inner( nx , [&] (int i) {
         yakl::SArray<real,1,ord> stencil;
         // Load stencil with periodic boundary conditions

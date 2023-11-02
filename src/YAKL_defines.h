@@ -29,6 +29,8 @@
   #endif
 #endif
 
+#define YAKL_NO_LABEL nullptr
+
 #if defined(YAKL_AUTO_PROFILE) || defined(YAKL_VERBOSE)
   #define YAKL_AUTO_LABEL() (std::string(basename(__FILE__)) + std::string(":") + std::to_string(__LINE__)).c_str()
 #else
