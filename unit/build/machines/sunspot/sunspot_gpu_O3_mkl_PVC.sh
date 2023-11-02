@@ -1,10 +1,8 @@
 #!/bin/bash
 
 module purge
-module use /lus/gila/projects/CSC249ADSE15_CNDA/omarahmed/modules
 module load oneapi/eng-compiler/2023.10.15.002
 module load spack cmake
-module load bbfft/2023.10.15.002/develop-20230908
 
 unset GATOR_DISABLE
 
@@ -23,6 +21,4 @@ cmake -DYAKL_ARCH="SYCL" \
       -DCMAKE_CXX_FLAGS="-O3" \
       -DYAKL_F90_FLAGS="-O3" \
       -DYAKL_C_FLAGS="-O3"   \
-      -DYAKL_SYCL_BBFFT=1      \
-      -DYAKL_SYCL_BBFFT_AOT=0    \
       ${SCRIPT_DIR}/../../..
