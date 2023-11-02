@@ -23,7 +23,7 @@ using yakl::COLON;
 using yakl::fence_inner;
 using yakl::intrinsics::sum;
 
-typedef float real;
+typedef double real;
 
 typedef Array<real,1,memDevice,styleC> real1d;
 typedef Array<real,2,memDevice,styleC> real2d;
