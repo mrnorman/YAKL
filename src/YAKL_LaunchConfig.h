@@ -47,9 +47,11 @@ namespace yakl {
     int  inner_size;
     /** @private */
     Stream stream;
+    /** @private */
+    size_t inner_cache_bytes;
     /** @brief set_inner_size() defaults to YAKL_DEFAULT_VECTOR_LEN */
-    LaunchConfig() { inner_size = VL; }
-    ~LaunchConfig() { inner_size = VL; }
+    LaunchConfig () { inner_size = VL; inner_cache_bytes = 0; }
+    ~LaunchConfig() { inner_size = VL; inner_cache_bytes = 0; }
     /** @brief LaunchConfig objects may be copied or moved. */
     LaunchConfig            (LaunchConfig const &rhs) { copyfrom(rhs); }
     /** @brief LaunchConfig objects may be copied or moved. */
@@ -58,7 +60,11 @@ namespace yakl {
     LaunchConfig & operator=(LaunchConfig const &rhs) { copyfrom(rhs); return *this; }
     /** @brief LaunchConfig objects may be copied or moved. */
     LaunchConfig & operator=(LaunchConfig      &&rhs) { copyfrom(rhs); return *this; }
-    void copyfrom(LaunchConfig const &rhs) { this->inner_size = rhs.inner_size; this->stream = rhs.stream; }
+    void copyfrom(LaunchConfig const &rhs) {
+      this->inner_size = rhs.inner_size;
+      this->stream = rhs.stream;
+      this->inner_cache_bytes = rhs.inner_cache_bytes;
+    }
     /** @brief This sets the **actual** inner looping size whereas the template parameter `VL` sets the maximum
      *         inner looping size. */
     LaunchConfig set_inner_size(int num) { this->inner_size = num; return *this; }
@@ -68,6 +74,10 @@ namespace yakl {
     LaunchConfig set_stream(Stream stream) { this->stream = stream; return *this; }
     /** @brief Get the stream in which this launch will run. */
     Stream get_stream() const { return this->stream; }
+    /** @brief Set the stream in which this launch will run. */
+    LaunchConfig set_inner_cache_bytes(size_t bytes) { this->inner_cache_bytes = bytes; return *this; }
+    /** @brief Get the stream in which this launch will run. */
+    size_t get_inner_cache_bytes() const { return this->inner_cache_bytes; }
   };
 
 
@@ -102,13 +112,54 @@ namespace yakl {
     // This is necessary because SYCL unfortunately doesn't expose a constructor for nd_item<1>
     class InnerHandler {
     public:
-      sycl::nd_item<1> const *ptr;
-      YAKL_INLINE InnerHandler() { ptr = nullptr; }
-      YAKL_INLINE explicit InnerHandler(sycl::nd_item<1> const &item) { this->ptr = &item; }
-      YAKL_INLINE sycl::nd_item<1> get_item() const { return *ptr; }
+      sycl::nd_item<1> const * ptr;
+      size_t                   inner_cache_bytes;
+      void                   * slm;
+      YAKL_INLINE InnerHandler() { ptr = nullptr; inner_cache_bytes = 0; slm = nullptr; }
+      YAKL_INLINE explicit InnerHandler(sycl::nd_item<1> const &item, size_t inner_cache_bytes, void *slm) {
+        this->ptr               = &item;
+        this->inner_cache_bytes = inner_cache_bytes;
+        this->slm               = slm;
+      }
+      YAKL_INLINE sycl::nd_item<1> const * get_item() const { return ptr; }
+      template <class T>
+      YAKL_INLINE int    get_inner_size       () const { return item->get_local_range(0); }
+      YAKL_INLINE size_t get_inner_cache_bytes() const { return inner_cache_bytes; }
+      YAKL_INLINE void   inner_barrier        () const {
+        YAKL_EXECUTE_ON_DEVICE_ONLY( item->barrier(sycl::access::fence_space::local_space) );
+      }
+      YAKL_INLINE T * get_inner_cache_pointer() const { return static_cast<T *>(slm); }
+    };
+  #elif defined(YAKL_ARCH_CUDA) || defined(YAKL_ARCH_HIP)
+    struct InnerHandler {
+      size_t inner_cache_bytes;
+      YAKL_INLINE InnerHandler() { inner_cache_bytes = 0; }
+      YAKL_INLINE InnerHandler(size_t inner_cache_bytes) { this->inner_cache_bytes = inner_cache_bytes; }
+      YAKL_INLINE int    get_inner_size       () const { return blockDim.x; }
+      YAKL_INLINE size_t get_inner_cache_bytes() const { return inner_cache_bytes; }
+      YAKL_INLINE void   inner_barrier        () const { YAKL_EXECUTE_ON_DEVICE_ONLY( __syncthreads() ); }
+      template <class T>
+      YAKL_INLINE T * get_inner_cache_pointer(size_t offset_bytes = 0) const {
+        extern __shared__ char smem[];
+        return static_cast<T *>( &(smem[offset_bytes]) );
+      }
     };
   #else
-    typedef struct InnerHandlerEmpty {} InnerHandler;
+    struct InnerHandler {
+      void   * slm;
+      int      inner_size;
+      size_t   inner_cache_bytes;
+      YAKL_INLINE InnerHandler( int inner_size = 0 , size_t inner_cache_bytes = 0 , void * slm = nullptr ) {
+        this->inner_size        = inner_size       ;
+        this->inner_cache_bytes = inner_cache_bytes;
+        this->slm               = slm              ;
+      }
+      YAKL_INLINE int    get_inner_size       () const { return inner_size ; }
+      YAKL_INLINE size_t get_inner_cache_bytes() const { return inner_cache_bytes; }
+      YAKL_INLINE void   inner_barrier        () const { }
+      template <class T>
+      YAKL_INLINE T * get_inner_cache_pointer() const { return static_cast<T *>(slm); }
+    };
   #endif
 }
 __YAKL_NAMESPACE_WRAPPER_END__

@@ -70,15 +70,17 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   // If the functor is small enough, then launch it like normal
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_for_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    auto stream = config.get_stream();
+    auto         stream      = config.get_stream();
+    unsigned int nBlocks     = (bounds.nIter-1)/VecLen+1;
+    auto         real_stream = stream.get_real_stream();
     if constexpr (sizeof(F) <= 3800) {
-      cudaKernelVal <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , stream.get_real_stream() >>> ( bounds , f , config );
+      cudaKernelVal <<< nBlocks , VecLen , 0 , real_stream >>> ( bounds , f , config );
       check_last_error();
     } else {
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice,stream.get_real_stream());
+      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice,real_stream);
       check_last_error();
-      cudaKernelRef <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , stream.get_real_stream() >>> ( bounds , *fp , config );
+      cudaKernelRef <<< nBlocks , VecLen , 0 , real_stream >>> ( bounds , *fp , config );
       check_last_error();
       #ifdef YAKL_ENABLE_STREAMS
         if (use_pool() && get_yakl_instance().device_allocators_are_default) {
@@ -109,15 +111,20 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F , int N , bool simple, int VecLen, bool B4B>
   void parallel_outer_cuda( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    auto stream = config.get_stream();
+    auto         stream      = config.get_stream();
+    unsigned int nBlocks     = bounds.nIter;
+    auto         cache_bytes = config.get_inner_cache_bytes();
+    auto         real_stream = stream.get_real_stream();
+    auto         blockSize   = config.inner_size;
+    auto         handler     = InnerHandler(cache_bytes);
     if constexpr (sizeof(F) <= 3800) {
-      cudaKernelOuterVal <<< (unsigned int) bounds.nIter , config.inner_size , 0 , stream.get_real_stream() >>> ( bounds , f , config , InnerHandler() );
+      cudaKernelOuterVal <<< nBlocks , blockSize , cache_bytes , real_stream >>> ( bounds , f   , config , handler );
       check_last_error();
     } else {
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
-      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice,stream.get_real_stream());
+      cudaMemcpyAsync(fp,&f,sizeof(F),cudaMemcpyHostToDevice,real_stream);
       check_last_error();
-      cudaKernelOuterRef <<< (unsigned int) bounds.nIter , config.inner_size , 0 , stream.get_real_stream() >>> ( bounds , *fp , config , InnerHandler() );
+      cudaKernelOuterRef <<< nBlocks , blockSize , cache_bytes , real_stream >>> ( bounds , *fp , config , handler );
       check_last_error();
       #ifdef YAKL_ENABLE_STREAMS
         if (use_pool() && get_yakl_instance().device_allocators_are_default) {
@@ -165,7 +172,9 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_for_hip( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    hipKernel <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , config.get_stream().get_real_stream() >>> ( bounds , f , config );
+    unsigned int nBlocks     = (bounds.nIter-1)/VecLen+1;
+    auto         real_stream = config.get_stream().get_real_stream();
+    hipKernel <<< nBlocks , VecLen , 0 , real_stream >>> ( bounds , f , config );
     check_last_error();
   }
 
@@ -178,7 +187,12 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_outer_hip( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
-    hipOuterKernel <<< (unsigned int) bounds.nIter , config.inner_size , 0 , config.get_stream().get_real_stream() >>> ( bounds , f , config , InnerHandler() );
+    unsigned int nBlocks     = bounds.nIter;
+    auto         real_stream = config.get_stream().get_real_stream();
+    auto         blockSize   = config.inner_size;
+    auto         cache_bytes = config.get_inner_cache_bytes();
+    auto         handler     = InnerHandler(cache_bytes);
+    hipOuterKernel <<< nBlocks , blockSize , cache_bytes , real_stream >>> ( bounds , f , config , handler );
     check_last_error();
   }
 
@@ -258,19 +272,40 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template<class F, int N, bool simple, int VecLen, bool B4B>
   void parallel_outer_sycl( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
     auto stream = config.get_stream();
+    auto cache_bytes = config.get_inner_cache_bytes();
     #ifdef SYCL_DEVICE_COPYABLE
       if constexpr (sizeof(F) < 2048) {
         SYCL_Functor_Wrapper sycl_functor_wrapper(f);
-        stream.get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
-                                               [=] (sycl::nd_item<1> item) {
-          callFunctorOuter( sycl_functor_wrapper.get_functor() , bounds , item.get_group(0) , InnerHandler(item) );
+        stream.get_real_stream().submit( [&] (auto &h) {
+          char * cache = nullptr;
+          if (cache_bytes > 0) {
+            sycl::accessor<char,1,sycl::access::mode::read_write,sycl::access::target::local> slm(sycl::range(cache_bytes),h);
+            cache = &(slm[0]);
+          }
+          h.parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
+                          [=] (sycl::nd_item<1> item) {
+            callFunctorOuter( sycl_functor_wrapper.get_functor() ,
+                              bounds ,
+                              item.get_group(0) ,
+                              InnerHandler(item,cache_bytes,static_cast<void *>(cache)) );
+          });
         });
       } else {
         F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
         stream.get_real_stream().memcpy(fp, &f, sizeof(F));
-        stream.get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
-                                               [=] (sycl::nd_item<1> item) {
-          callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
+        stream.get_real_stream().submit( [&] (auto &h) {
+          char * cache = nullptr;
+          if (cache_bytes > 0) {
+            sycl::accessor<char,1,sycl::access::mode::read_write,sycl::access::target::local> slm(sycl::range(cache_bytes),h);
+            cache = &(slm[0]);
+          }
+          h.parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
+                                                 [=] (sycl::nd_item<1> item) {
+            callFunctorOuter( *fp ,
+                              bounds ,
+                              item.get_group(0) ,
+                              InnerHandler(item,cache_bytes,static_cast<void *>(cache)) );
+          });
         });
         #ifdef YAKL_ENABLE_STREAMS
           if (use_pool() && get_yakl_instance().device_allocators_are_default) {
@@ -285,9 +320,19 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
     #else
       F *fp = (F *) alloc_device(sizeof(F),"functor_buffer");
       stream.get_real_stream().memcpy(fp, &f, sizeof(F));
-      stream.get_real_stream().parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
-                                             [=] (sycl::nd_item<1> item) {
-        callFunctorOuter( *fp , bounds , item.get_group(0) , InnerHandler(item) );
+      stream.get_real_stream().submit( [&] (auto &h) {
+        char * cache = nullptr;
+        if (cache_bytes > 0) {
+          sycl::accessor<char,1,sycl::access::mode::read_write,sycl::access::target::local> slm(sycl::range(cache_bytes),h);
+          cache = &(slm[0]);
+        }
+        h.parallel_for( sycl::nd_range<1>(bounds.nIter*config.inner_size,config.inner_size) ,
+                                               [=] (sycl::nd_item<1> item) {
+          callFunctorOuter( *fp ,
+                            bounds ,
+                            item.get_group(0) ,
+                            InnerHandler(item,cache_bytes,static_cast<void *>(cache)) );
+        });
       });
       #ifdef YAKL_ENABLE_STREAMS
         if (use_pool() && get_yakl_instance().device_allocators_are_default) {
@@ -306,20 +351,17 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
 
 
   template<class F, int N, bool simple>
-  void parallel_inner_sycl( Bounds<N,simple> const &bounds , F const &f , InnerHandler handler ) {
-    YAKL_EXECUTE_ON_DEVICE_ONLY( if (handler.get_item().get_local_id(0) < bounds.nIter) callFunctor( f , bounds , handler.get_item().get_local_id(0) ); )
+  void parallel_inner_sycl( Bounds<N,simple> const &bounds , F const &f , InnerHandler const &handler ) {
+    YAKL_EXECUTE_ON_DEVICE_ONLY( if (handler.get_item()->get_local_id(0) < bounds.nIter) callFunctor( f , bounds , handler.get_item()->get_local_id(0) ); )
   }
 
 
 
   template<class F>
-  void single_inner_sycl( F const &f , InnerHandler handler ) {
-    YAKL_EXECUTE_ON_DEVICE_ONLY( if (handler.get_item().get_local_id(0) == 0) f(); )
+  void single_inner_sycl( F const &f , InnerHandler const &handler ) {
+    YAKL_EXECUTE_ON_DEVICE_ONLY( if (handler.get_item()->get_local_id(0) == 0) f(); )
   }
 #endif
-
-
-template <bool OUTER> struct DoOuter {};
 
 
 // These are the CPU routines for parallel_for without a device target. These rely on
@@ -327,15 +369,14 @@ template <bool OUTER> struct DoOuter {};
 // simple bounds.
 // For OMP target offload backend, target teams distribute parallel for simd is used.
 // For OMP CPU threading backend, parallel for is used
-template <class F, bool simple, int N, bool OUTER=false>
-inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f , DoOuter<OUTER> dummy = DoOuter<false>() ) {
+template <class F, bool simple, int N>
+inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f ) {
   if constexpr (N == 1) {
     #ifdef YAKL_ARCH_OPENMP
       #pragma omp parallel for
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
-      if constexpr (OUTER) { f(i0,InnerHandler() ); }
-      else                 { f(i0); }
+      f(i0);
     }
   } else if constexpr (N == 2) {
     #ifdef YAKL_ARCH_OPENMP
@@ -343,8 +384,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     #endif
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
-      if constexpr (OUTER) { f(i0,i1,InnerHandler() ); }
-      else                 { f(i0,i1); }
+      f(i0,i1);
     } }
   } else if constexpr (N == 3) {
     #ifdef YAKL_ARCH_OPENMP
@@ -353,8 +393,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
     for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
-      if constexpr (OUTER) { f(i0,i1,i2,InnerHandler() ); }
-      else                 { f(i0,i1,i2); }
+      f(i0,i1,i2);
     } } }
   } else if constexpr (N == 4) {
     #ifdef YAKL_ARCH_OPENMP
@@ -364,8 +403,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
     for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
     for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
-      if constexpr (OUTER) { f(i0,i1,i2,i3,InnerHandler() ); }
-      else                 { f(i0,i1,i2,i3); }
+      f(i0,i1,i2,i3);
     } } } }
   } else if constexpr (N == 5) {
     #ifdef YAKL_ARCH_OPENMP
@@ -376,8 +414,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
     for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
     for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
-      if constexpr (OUTER) { f(i0,i1,i2,i3,i4,InnerHandler() ); }
-      else                 { f(i0,i1,i2,i3,i4); }
+      f(i0,i1,i2,i3,i4);
     } } } } }
   } else if constexpr (N == 6) {
     #ifdef YAKL_ARCH_OPENMP
@@ -389,8 +426,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
     for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
     for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
-      if constexpr (OUTER) { f(i0,i1,i2,i3,i4,i5,InnerHandler() ); }
-      else                 { f(i0,i1,i2,i3,i4,i5); }
+      f(i0,i1,i2,i3,i4,i5);
     } } } } } }
   } else if constexpr (N == 7) {
     #ifdef YAKL_ARCH_OPENMP
@@ -403,8 +439,7 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
     for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
     for (int i6 = bounds.lbound(6); i6 < (int) (bounds.lbound(6)+bounds.dim(6)*bounds.stride(6)); i6+=bounds.stride(6)) {
-      if constexpr (OUTER) { f(i0,i1,i2,i3,i4,i5,i6,InnerHandler() ); }
-      else                 { f(i0,i1,i2,i3,i4,i5,i6); }
+      f(i0,i1,i2,i3,i4,i5,i6);
     } } } } } } }
   } else if constexpr (N == 8) {
     #ifdef YAKL_ARCH_OPENMP
@@ -418,9 +453,120 @@ inline void parallel_for_cpu_serial( Bounds<N,simple> const &bounds , F const &f
     for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
     for (int i6 = bounds.lbound(6); i6 < (int) (bounds.lbound(6)+bounds.dim(6)*bounds.stride(6)); i6+=bounds.stride(6)) {
     for (int i7 = bounds.lbound(7); i7 < (int) (bounds.lbound(7)+bounds.dim(7)*bounds.stride(7)); i7+=bounds.stride(7)) {
-      if constexpr (OUTER) { f(i0,i1,i2,i3,i4,i5,i6,i7,InnerHandler() ); }
-      else                 { f(i0,i1,i2,i3,i4,i5,i6,i7); }
+      f(i0,i1,i2,i3,i4,i5,i6,i7);
     } } } } } } } }
+  }
+}
+
+
+template <class F, bool simple, int N, int VecLen, bool B4B>
+inline void parallel_outer_cpu_serial( Bounds<N,simple> const &bounds , F const &f , LaunchConfig<VecLen,B4B> config ) {
+  auto inner_size  = config.get_inner_size();
+  auto cache_bytes = config.get_inner_cache_bytes();
+  char * cache = static_cast<char *>( cache_bytes > 0 ? malloc(cache_bytes*bounds.nIter) : nullptr );
+  if ( cache != nullptr) {
+    #ifdef YAKL_ARCH_OPENMP
+      #pragma omp parallel for
+    #endif
+    for (int iGlob = 0; iGlob < bounds.nIter; iGlob++) {
+      InnerHandler handler(inner_size,cache_bytes,static_cast<void *>(&(cache[iGlob*cache_bytes])));
+      int ind[N];
+      bounds.unpackIndices( iGlob , ind );
+      if constexpr (N == 1) f(ind[0],handler);
+      if constexpr (N == 2) f(ind[0],ind[1],handler);
+      if constexpr (N == 3) f(ind[0],ind[1],ind[2],handler);
+      if constexpr (N == 4) f(ind[0],ind[1],ind[2],ind[3],handler);
+      if constexpr (N == 5) f(ind[0],ind[1],ind[2],ind[3],ind[4],handler);
+      if constexpr (N == 6) f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],handler);
+      if constexpr (N == 7) f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],handler);
+      if constexpr (N == 8) f(ind[0],ind[1],ind[2],ind[3],ind[4],ind[5],ind[6],ind[7],handler);
+    }
+  } else {
+    if constexpr (N == 1) {
+      #ifdef YAKL_ARCH_OPENMP
+        #pragma omp parallel for
+      #endif
+      for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+        f(i0,InnerHandler(inner_size,0,nullptr));
+      }
+    } else if constexpr (N == 2) {
+      #ifdef YAKL_ARCH_OPENMP
+        #pragma omp parallel for collapse(2)
+      #endif
+      for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+      for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+        f(i0,i1,InnerHandler(inner_size,0,nullptr));
+      } }
+    } else if constexpr (N == 3) {
+      #ifdef YAKL_ARCH_OPENMP
+        #pragma omp parallel for collapse(3)
+      #endif
+      for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+      for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+      for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+        f(i0,i1,i2,InnerHandler(inner_size,0,nullptr));
+      } } }
+    } else if constexpr (N == 4) {
+      #ifdef YAKL_ARCH_OPENMP
+        #pragma omp parallel for collapse(4)
+      #endif
+      for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+      for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+      for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+      for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+        f(i0,i1,i2,i3,InnerHandler(inner_size,0,nullptr));
+      } } } }
+    } else if constexpr (N == 5) {
+      #ifdef YAKL_ARCH_OPENMP
+        #pragma omp parallel for collapse(5)
+      #endif
+      for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+      for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+      for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+      for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+      for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+        f(i0,i1,i2,i3,i4,InnerHandler(inner_size,0,nullptr));
+      } } } } }
+    } else if constexpr (N == 6) {
+      #ifdef YAKL_ARCH_OPENMP
+        #pragma omp parallel for collapse(6)
+      #endif
+      for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+      for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+      for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+      for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+      for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+      for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
+        f(i0,i1,i2,i3,i4,i5,InnerHandler(inner_size,0,nullptr));
+      } } } } } }
+    } else if constexpr (N == 7) {
+      #ifdef YAKL_ARCH_OPENMP
+        #pragma omp parallel for collapse(7)
+      #endif
+      for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+      for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+      for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+      for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+      for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+      for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
+      for (int i6 = bounds.lbound(6); i6 < (int) (bounds.lbound(6)+bounds.dim(6)*bounds.stride(6)); i6+=bounds.stride(6)) {
+        f(i0,i1,i2,i3,i4,i5,i6,InnerHandler(inner_size,0,nullptr));
+      } } } } } } }
+    } else if constexpr (N == 8) {
+      #ifdef YAKL_ARCH_OPENMP
+        #pragma omp parallel for collapse(8)
+      #endif
+      for (int i0 = bounds.lbound(0); i0 < (int) (bounds.lbound(0)+bounds.dim(0)*bounds.stride(0)); i0+=bounds.stride(0)) {
+      for (int i1 = bounds.lbound(1); i1 < (int) (bounds.lbound(1)+bounds.dim(1)*bounds.stride(1)); i1+=bounds.stride(1)) {
+      for (int i2 = bounds.lbound(2); i2 < (int) (bounds.lbound(2)+bounds.dim(2)*bounds.stride(2)); i2+=bounds.stride(2)) {
+      for (int i3 = bounds.lbound(3); i3 < (int) (bounds.lbound(3)+bounds.dim(3)*bounds.stride(3)); i3+=bounds.stride(3)) {
+      for (int i4 = bounds.lbound(4); i4 < (int) (bounds.lbound(4)+bounds.dim(4)*bounds.stride(4)); i4+=bounds.stride(4)) {
+      for (int i5 = bounds.lbound(5); i5 < (int) (bounds.lbound(5)+bounds.dim(5)*bounds.stride(5)); i5+=bounds.stride(5)) {
+      for (int i6 = bounds.lbound(6); i6 < (int) (bounds.lbound(6)+bounds.dim(6)*bounds.stride(6)); i6+=bounds.stride(6)) {
+      for (int i7 = bounds.lbound(7); i7 < (int) (bounds.lbound(7)+bounds.dim(7)*bounds.stride(7)); i7+=bounds.stride(7)) {
+        f(i0,i1,i2,i3,i4,i5,i6,i7,InnerHandler(inner_size,0,nullptr));
+      } } } } } } } }
+    }
   }
 }
 
@@ -630,7 +776,7 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
     // For instance, if the lambda is YAKL_DEVICE_LAMBDA, compiling this line will give an error because
     // it isn't available on the host.
     #ifdef YAKL_B4B
-      if constexpr (B4B) parallel_for_cpu_serial( bounds , f , DoOuter<true>() );
+      if constexpr (B4B) parallel_outer_cpu_serial( bounds , f , config );
     #endif
   } else {
     #ifdef YAKL_ARCH_CUDA
@@ -640,7 +786,7 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
     #elif defined(YAKL_ARCH_SYCL)
       parallel_outer_sycl( bounds , f , config );
     #else
-      parallel_for_cpu_serial( bounds , f , DoOuter<true>() );
+      parallel_outer_cpu_serial( bounds , f , config );
     #endif
   }
 

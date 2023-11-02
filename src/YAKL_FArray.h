@@ -225,29 +225,43 @@ namespace yakl {
       */
     /** @brief 1-D non-owned constructor
       * \copydetails doxhide_FArray_non_owned_constructors */
-    YAKL_INLINE Array( char const *label , T *data, Bnd b1 ) : Array(label,data,Bnds(b1)) {
+    YAKL_INLINE Array( char const *label , T *data, Bnd b1 ) {
       static_assert( rank == 1 , "ERROR: Calling constructor with 1 bound on non-rank-1 array" );
+      unowned_common(label,data);
+      lbounds[0] = b1.l;  this->dimension[0] = b1.u - b1.l + 1;
     }
     /** @brief 2-D non-owned constructor
       * \copydetails doxhide_FArray_non_owned_constructors */
     YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
-                                                    Bnd b2 ) : Array(label,data,Bnds(b1,b2)) {
+                                                    Bnd b2 ) {
       static_assert( rank == 2 , "ERROR: Calling constructor with 2 bound on non-rank-2 array" );
+      unowned_common(label,data);
+      lbounds[0] = b1.l;  this->dimension[0] = b1.u - b1.l + 1;
+      lbounds[1] = b2.l;  this->dimension[1] = b2.u - b2.l + 1;
     }
     /** @brief 3-D non-owned constructor
       * \copydetails doxhide_FArray_non_owned_constructors */
     YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
                                                     Bnd b2 ,
-                                                    Bnd b3 ) : Array(label,data,Bnds(b1,b2,b3)) {
+                                                    Bnd b3 ) {
       static_assert( rank == 3 , "ERROR: Calling constructor with 3 bound on non-rank-3 array" );
+      unowned_common(label,data);
+      lbounds[0] = b1.l;  this->dimension[0] = b1.u - b1.l + 1;
+      lbounds[1] = b2.l;  this->dimension[1] = b2.u - b2.l + 1;
+      lbounds[2] = b3.l;  this->dimension[2] = b3.u - b3.l + 1;
     }
     /** @brief 4-D non-owned constructor
       * \copydetails doxhide_FArray_non_owned_constructors */
     YAKL_INLINE Array( char const *label , T *data, Bnd b1 ,
                                                     Bnd b2 ,
                                                     Bnd b3 ,
-                                                    Bnd b4 ) : Array(label,data,Bnds(b1,b2,b3,b4)) {
+                                                    Bnd b4 ) {
       static_assert( rank == 4 , "ERROR: Calling constructor with 4 bound on non-rank-4 array" );
+      unowned_common(label,data);
+      lbounds[0] = b1.l;  this->dimension[0] = b1.u - b1.l + 1;
+      lbounds[1] = b2.l;  this->dimension[1] = b2.u - b2.l + 1;
+      lbounds[2] = b3.l;  this->dimension[2] = b3.u - b3.l + 1;
+      lbounds[3] = b4.l;  this->dimension[3] = b4.u - b4.l + 1;
     }
     /** @brief 5-D non-owned constructor
       * \copydetails doxhide_FArray_non_owned_constructors */
@@ -255,8 +269,14 @@ namespace yakl {
                                                     Bnd b2 ,
                                                     Bnd b3 ,
                                                     Bnd b4 ,
-                                                    Bnd b5 ) : Array(label,data,Bnds(b1,b2,b3,b4,b5)) {
+                                                    Bnd b5 ) {
       static_assert( rank == 5 , "ERROR: Calling constructor with 5 bound on non-rank-5 array" );
+      unowned_common(label,data);
+      lbounds[0] = b1.l;  this->dimension[0] = b1.u - b1.l + 1;
+      lbounds[1] = b2.l;  this->dimension[1] = b2.u - b2.l + 1;
+      lbounds[2] = b3.l;  this->dimension[2] = b3.u - b3.l + 1;
+      lbounds[3] = b4.l;  this->dimension[3] = b4.u - b4.l + 1;
+      lbounds[4] = b5.l;  this->dimension[4] = b5.u - b5.l + 1;
     }
     /** @brief 6-D non-owned constructor
       * \copydetails doxhide_FArray_non_owned_constructors */
@@ -265,8 +285,15 @@ namespace yakl {
                                                     Bnd b3 ,
                                                     Bnd b4 ,
                                                     Bnd b5 ,
-                                                    Bnd b6 ) : Array(label,data,Bnds(b1,b2,b3,b4,b5,b6)) {
+                                                    Bnd b6 ) {
       static_assert( rank == 6 , "ERROR: Calling constructor with 6 bound on non-rank-6 array" );
+      unowned_common(label,data);
+      lbounds[0] = b1.l;  this->dimension[0] = b1.u - b1.l + 1;
+      lbounds[1] = b2.l;  this->dimension[1] = b2.u - b2.l + 1;
+      lbounds[2] = b3.l;  this->dimension[2] = b3.u - b3.l + 1;
+      lbounds[3] = b4.l;  this->dimension[3] = b4.u - b4.l + 1;
+      lbounds[4] = b5.l;  this->dimension[4] = b5.u - b5.l + 1;
+      lbounds[5] = b6.l;  this->dimension[5] = b6.u - b6.l + 1;
     }
     /** @brief 7-D non-owned constructor
       * \copydetails doxhide_FArray_non_owned_constructors */
@@ -276,8 +303,16 @@ namespace yakl {
                                                     Bnd b4 ,
                                                     Bnd b5 ,
                                                     Bnd b6 ,
-                                                    Bnd b7 ) : Array(label,data,Bnds(b1,b2,b3,b4,b5,b6,b7)) {
+                                                    Bnd b7 ) {
       static_assert( rank == 7 , "ERROR: Calling constructor with 7 bound on non-rank-7 array" );
+      unowned_common(label,data);
+      lbounds[0] = b1.l;  this->dimension[0] = b1.u - b1.l + 1;
+      lbounds[1] = b2.l;  this->dimension[1] = b2.u - b2.l + 1;
+      lbounds[2] = b3.l;  this->dimension[2] = b3.u - b3.l + 1;
+      lbounds[3] = b4.l;  this->dimension[3] = b4.u - b4.l + 1;
+      lbounds[4] = b5.l;  this->dimension[4] = b5.u - b5.l + 1;
+      lbounds[5] = b6.l;  this->dimension[5] = b6.u - b6.l + 1;
+      lbounds[6] = b7.l;  this->dimension[6] = b7.u - b7.l + 1;
     }
     /** @brief 8-D non-owned constructor
       * \copydetails doxhide_FArray_non_owned_constructors */
@@ -288,8 +323,25 @@ namespace yakl {
                                                     Bnd b5 ,
                                                     Bnd b6 ,
                                                     Bnd b7 ,
-                                                    Bnd b8 ) : Array(label,data,Bnds(b1,b2,b3,b4,b5,b6,b7,b8)) {
+                                                    Bnd b8 ) {
       static_assert( rank == 8 , "ERROR: Calling constructor with 8 bound on non-rank-8 array" );
+      unowned_common(label,data);
+      lbounds[0] = b1.l;  this->dimension[0] = b1.u - b1.l + 1;
+      lbounds[1] = b2.l;  this->dimension[1] = b2.u - b2.l + 1;
+      lbounds[2] = b3.l;  this->dimension[2] = b3.u - b3.l + 1;
+      lbounds[3] = b4.l;  this->dimension[3] = b4.u - b4.l + 1;
+      lbounds[4] = b5.l;  this->dimension[4] = b5.u - b5.l + 1;
+      lbounds[5] = b6.l;  this->dimension[5] = b6.u - b6.l + 1;
+      lbounds[6] = b7.l;  this->dimension[6] = b7.u - b7.l + 1;
+      lbounds[7] = b8.l;  this->dimension[7] = b8.u - b8.l + 1;
+    }
+    YAKL_INLINE void unowned_common(char const *label, T *data) {
+      #ifdef YAKL_DEBUG
+        if (data == nullptr) yakl_throw("ERROR: wrapping nullptr with a YAKL Array object");
+      #endif
+      this->refCount = nullptr;
+      this->myname   = label;
+      this->myData   = data;
     }
     /** @brief Generic initializer-list or std::vector based owned constructor
       * \copydetails doxhide_FArray_non_owned_constructors */

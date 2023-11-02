@@ -31,17 +31,7 @@ namespace yakl {
    * until all inner threads have reached this point. In CUDA and HIP, this is __syncthreads(). 
    * @param handler The yakl::InnerHandler object create by yakl::parallel_outer
    */
-  YAKL_INLINE void fence_inner(InnerHandler &handler) {
-    #if   defined(YAKL_ARCH_CUDA)
-      YAKL_EXECUTE_ON_DEVICE_ONLY( __syncthreads(); )
-    #elif defined(YAKL_ARCH_HIP)
-      YAKL_EXECUTE_ON_DEVICE_ONLY( __syncthreads(); )
-    #elif defined(YAKL_ARCH_SYCL)
-      YAKL_EXECUTE_ON_DEVICE_ONLY( handler.get_item().barrier(sycl::access::fence_space::local_space); )
-    #elif defined(YAKL_ARCH_OPENMP)
-      // OpenMP doesn't do parallelism at the inner level, so nothing needed here
-    #endif
-  }
+  YAKL_INLINE void fence_inner(InnerHandler &handler) { handler.inner_barrier(); }
 
 }
 __YAKL_NAMESPACE_WRAPPER_END__
