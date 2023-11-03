@@ -91,8 +91,8 @@ int main() {
     // }
     // #endif
 
-    int constexpr nz = 1024;
-    int constexpr ny = 1024;
+    int constexpr nz = 256;
+    int constexpr ny = 256;
     int constexpr nx = 256;
     int constexpr ord = 9;
     int constexpr hs = (ord-1)/2;
@@ -181,8 +181,8 @@ int main() {
     });
     parallel_outer( YAKL_AUTO_LABEL() , Bounds<2>(nz,ny) , YAKL_LAMBDA (int k, int j , InnerHandler &handler) {
       // Declare shared memory array
-      real2d s2g_slm(YAKL_NO_LABEL,handler.get_inner_cache_pointer<real>(),9,2);
-      // TODO: real2d s2g_slm(YAKL_NO_LABEL,handler,9,2);  // New Array constructor to take handle instead of pointer
+      size_t offset = 0;
+      real2d s2g_slm(handler,9,2,offset);
       // Load data into shared memory in parallel
       parallel_inner( s2g.size() , [&] (int ii) {
         s2g_slm.data()[ii] = s2g.data()[ii];

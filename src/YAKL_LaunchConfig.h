@@ -67,7 +67,12 @@ namespace yakl {
     }
     /** @brief This sets the **actual** inner looping size whereas the template parameter `VL` sets the maximum
      *         inner looping size. */
-    LaunchConfig set_inner_size(int num) { this->inner_size = num; return *this; }
+    LaunchConfig set_inner_size(int num) {
+      if (num <= 0 ) { throw std::runtime_error("ERROR: set_inner_size(int) parameter was <= 0"); }
+      if (num >  VL) { throw std::runtime_error("ERROR: set_inner_size(int) parameter larger than templated VecLen"); }
+      this->inner_size = num;
+      return *this;
+    }
     /** @brief Get the inner loop size for hierarchical parallelism. */
     int get_inner_size() const { return this->inner_size; }
     /** @brief Set the stream in which this launch will run. */
@@ -114,54 +119,67 @@ namespace yakl {
     public:
       sycl::nd_item<1> const * ptr;
       size_t                   inner_cache_bytes;
-      void                   * slm;
-      YAKL_INLINE InnerHandler() { ptr = nullptr; inner_cache_bytes = 0; slm = nullptr; }
+      int                      inner_size;
+      char                   * slm;
+      YAKL_INLINE InnerHandler() { ptr = nullptr; inner_cache_bytes = 0; slm = nullptr; inner_size = 0; }
       YAKL_INLINE explicit InnerHandler(sycl::nd_item<1> const &item, size_t inner_cache_bytes, void *slm) {
         this->ptr               = &item;
         this->inner_cache_bytes = inner_cache_bytes;
-        this->slm               = slm;
+        this->slm               = static_cast<char *>(slm);
+        YAKL_EXECUTE_ON_DEVICE_ONLY( this->inner_size = item->get_local_range(0); )
       }
       YAKL_INLINE sycl::nd_item<1> const * get_item() const { return ptr; }
-      template <class T>
-      YAKL_INLINE int    get_inner_size       () const { return item->get_local_range(0); }
+      YAKL_INLINE int    get_inner_size       () const { return inner_size; }
       YAKL_INLINE size_t get_inner_cache_bytes() const { return inner_cache_bytes; }
       YAKL_INLINE void   inner_barrier        () const {
         YAKL_EXECUTE_ON_DEVICE_ONLY( item->barrier(sycl::access::fence_space::local_space) );
       }
-      YAKL_INLINE T * get_inner_cache_pointer() const { return static_cast<T *>(slm); }
+      template <class T>
+      YAKL_INLINE T * get_inner_cache_pointer(size_t offset_bytes = 0) const {
+        if (slm == nullptr) return nullptr;
+        return static_cast<T *>( static_cast<void *>( &(slm[offset_bytes]) ) );
+      }
     };
   #elif defined(YAKL_ARCH_CUDA) || defined(YAKL_ARCH_HIP)
     struct InnerHandler {
+      int    inner_size;
       size_t inner_cache_bytes;
-      YAKL_INLINE InnerHandler() { inner_cache_bytes = 0; }
-      YAKL_INLINE InnerHandler(size_t inner_cache_bytes) { this->inner_cache_bytes = inner_cache_bytes; }
-      YAKL_INLINE int    get_inner_size       () const { return blockDim.x; }
+      YAKL_INLINE InnerHandler() { inner_cache_bytes = 0; inner_size = 0; }
+      YAKL_INLINE InnerHandler(int inner_size, size_t inner_cache_bytes) {
+        this->inner_size        = inner_size;
+        this->inner_cache_bytes = inner_cache_bytes;
+      }
+      YAKL_INLINE int    get_inner_size       () const { return inner_size; }
       YAKL_INLINE size_t get_inner_cache_bytes() const { return inner_cache_bytes; }
       YAKL_INLINE void   inner_barrier        () const { YAKL_EXECUTE_ON_DEVICE_ONLY( __syncthreads() ); }
       template <class T>
       YAKL_INLINE T * get_inner_cache_pointer(size_t offset_bytes = 0) const {
         YAKL_EXECUTE_ON_DEVICE_ONLY(
-          extern __shared__ char smem[];
-          return static_cast<T *>( static_cast<void *>( &(smem[offset_bytes]) ) );
+          extern __shared__ char slm[];
+          if (slm == nullptr) return nullptr;
+          return static_cast<T *>( static_cast<void *>( &(slm[offset_bytes]) ) );
         )
         YAKL_EXECUTE_ON_HOST_ONLY( return nullptr; )
       }
     };
   #else
     struct InnerHandler {
-      void   * slm;
+      char   * slm;
       int      inner_size;
       size_t   inner_cache_bytes;
       YAKL_INLINE InnerHandler( int inner_size = 0 , size_t inner_cache_bytes = 0 , void * slm = nullptr ) {
         this->inner_size        = inner_size       ;
         this->inner_cache_bytes = inner_cache_bytes;
-        this->slm               = slm              ;
+        this->slm               = static_cast<char *>(slm);
       }
       YAKL_INLINE int    get_inner_size       () const { return inner_size ; }
       YAKL_INLINE size_t get_inner_cache_bytes() const { return inner_cache_bytes; }
       YAKL_INLINE void   inner_barrier        () const { }
       template <class T>
-      YAKL_INLINE T * get_inner_cache_pointer() const { return static_cast<T *>(slm); }
+      YAKL_INLINE T * get_inner_cache_pointer(size_t offset_bytes = 0) const {
+        if (slm == nullptr) return nullptr;
+        return static_cast<T *>( static_cast<void *>( &(slm[offset_bytes]) ) );
+      }
     };
   #endif
 }

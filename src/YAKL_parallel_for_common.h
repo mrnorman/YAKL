@@ -116,7 +116,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
     auto         cache_bytes = config.get_inner_cache_bytes();
     auto         real_stream = stream.get_real_stream();
     auto         blockSize   = config.inner_size;
-    auto         handler     = InnerHandler(cache_bytes);
+    auto         handler     = InnerHandler(blockSize,cache_bytes);
     if constexpr (sizeof(F) <= 3800) {
       cudaKernelOuterVal <<< nBlocks , blockSize , cache_bytes , real_stream >>> ( bounds , f   , config , handler );
       check_last_error();
@@ -193,7 +193,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
     auto         real_stream = config.get_stream().get_real_stream();
     auto         blockSize   = config.inner_size;
     auto         cache_bytes = config.get_inner_cache_bytes();
-    auto         handler     = InnerHandler(cache_bytes);
+    auto         handler     = InnerHandler(blockSize,cache_bytes);
     hipOuterKernel <<< nBlocks , blockSize , cache_bytes , real_stream >>> ( bounds , f , config , handler );
     check_last_error();
   }
@@ -357,9 +357,7 @@ YAKL_DEVICE_INLINE void callFunctorOuter(F const &f , Bounds<N,simple> const &bn
   template<class F, int N, bool simple>
   void parallel_inner_sycl( Bounds<N,simple> const &bounds , F const &f , InnerHandler const &handler ) {
     YAKL_EXECUTE_ON_DEVICE_ONLY(
-      for (int id = handler.get_item()->get_local_id(0); id < bounds.nIter; id+= handler.get_item()->get_local_range(0)) {
-        callFunctor(f,bounds,id);
-      }
+      if (handler.get_item()->get_local_id(0) < bounds.nIter) callFunctor(f,bounds,handler.get_item()->get_local_id(0));
     )
   }
 
@@ -770,9 +768,9 @@ inline void parallel_outer( char const * str , Bounds<N,simple> const &bounds , 
                             LaunchConfig<VecLen,B4B> config = LaunchConfig<>() ) {
   // exit early if there is no work to do
   if (bounds.nIter == 0) {
-  #ifdef YAKL_VERBOSE
-    verbose_inform(std::string("Skipping launch of parallel_outer labeled \"")+std::string(str)+std::string("\" with zero outer threads"),str);
-  #endif
+    #ifdef YAKL_VERBOSE
+      verbose_inform(std::string("Skipping launch of parallel_outer labeled \"")+std::string(str)+std::string("\" with zero outer threads"),str);
+    #endif
     return;
   }
 
@@ -865,6 +863,11 @@ inline void parallel_outer( char const * str , LBnd bnd , F const &f ,
 ////////////////////////////////////////////////////////////////////////////////////
 template <class F, int N, bool simple>
 YAKL_INLINE void parallel_inner( Bounds<N,simple> const &bounds , F const &f , InnerHandler handler ) {
+  #ifdef YAKL_DEBUG
+    if (bounds.nIter > handler.get_inner_size()) {
+      yakl_throw("ERROR: parallel_inner bounds have larger iteration count than parallel_outer launch allows for");
+    }
+  #endif
   YAKL_EXECUTE_ON_HOST_ONLY( parallel_inner_cpu_serial( bounds , f ); )
   #ifdef YAKL_ARCH_CUDA
     YAKL_EXECUTE_ON_DEVICE_ONLY( parallel_inner_cuda( bounds , f ); )

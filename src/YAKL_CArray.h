@@ -356,6 +356,133 @@ namespace yakl {
     }
 
 
+
+    /** @brief 1-D InnerHandler user programmable L1 cache Array constructor */
+    YAKL_INLINE Array(InnerHandler &handler, index_t const d1,
+                                             size_t offset   ) {
+      static_assert( rank == 1 , "ERROR: Calling constructor with 1 bound on non-rank-1 array" );
+      this->dimension[0] = d1;
+      cache_common(handler,offset);
+    }
+    /** @brief 1-D InnerHandler user programmable L1 cache Array constructor */
+    YAKL_INLINE Array(InnerHandler &handler, index_t const d1,
+                                             index_t const d2,
+                                             size_t offset   ) {
+      static_assert( rank == 2 , "ERROR: Calling constructor with 2 bound on non-rank-2 array" );
+      this->dimension[0] = d1;
+      this->dimension[1] = d2;
+      cache_common(handler,offset);
+    }
+    /** @brief 1-D InnerHandler user programmable L1 cache Array constructor */
+    YAKL_INLINE Array(InnerHandler &handler, index_t const d1,
+                                             index_t const d2,
+                                             index_t const d3,
+                                             size_t offset   ) {
+      static_assert( rank == 3 , "ERROR: Calling constructor with 3 bound on non-rank-3 array" );
+      this->dimension[0] = d1;
+      this->dimension[1] = d2;
+      this->dimension[2] = d3;
+      cache_common(handler,offset);
+    }
+    /** @brief 1-D InnerHandler user programmable L1 cache Array constructor */
+    YAKL_INLINE Array(InnerHandler &handler, index_t const d1,
+                                             index_t const d2,
+                                             index_t const d3,
+                                             index_t const d4,
+                                             size_t offset   ) {
+      static_assert( rank == 4 , "ERROR: Calling constructor with 4 bound on non-rank-4 array" );
+      this->dimension[0] = d1;
+      this->dimension[1] = d2;
+      this->dimension[2] = d3;
+      this->dimension[3] = d4;
+      cache_common(handler,offset);
+    }
+    /** @brief 1-D InnerHandler user programmable L1 cache Array constructor */
+    YAKL_INLINE Array(InnerHandler &handler, index_t const d1,
+                                             index_t const d2,
+                                             index_t const d3,
+                                             index_t const d4,
+                                             index_t const d5,
+                                             size_t offset   ) {
+      static_assert( rank == 5 , "ERROR: Calling constructor with 5 bound on non-rank-5 array" );
+      this->dimension[0] = d1;
+      this->dimension[1] = d2;
+      this->dimension[2] = d3;
+      this->dimension[3] = d4;
+      this->dimension[4] = d5;
+      cache_common(handler,offset);
+    }
+    /** @brief 1-D InnerHandler user programmable L1 cache Array constructor */
+    YAKL_INLINE Array(InnerHandler &handler, index_t const d1,
+                                             index_t const d2,
+                                             index_t const d3,
+                                             index_t const d4,
+                                             index_t const d5,
+                                             index_t const d6,
+                                             size_t offset   ) {
+      static_assert( rank == 6 , "ERROR: Calling constructor with 6 bound on non-rank-6 array" );
+      this->dimension[0] = d1;
+      this->dimension[1] = d2;
+      this->dimension[2] = d3;
+      this->dimension[3] = d4;
+      this->dimension[4] = d5;
+      this->dimension[5] = d6;
+      cache_common(handler,offset);
+    }
+    /** @brief 1-D InnerHandler user programmable L1 cache Array constructor */
+    YAKL_INLINE Array(InnerHandler &handler, index_t const d1,
+                                             index_t const d2,
+                                             index_t const d3,
+                                             index_t const d4,
+                                             index_t const d5,
+                                             index_t const d6,
+                                             index_t const d7,
+                                             size_t offset   ) {
+      static_assert( rank == 7 , "ERROR: Calling constructor with 7 bound on non-rank-7 array" );
+      this->dimension[0] = d1;
+      this->dimension[1] = d2;
+      this->dimension[2] = d3;
+      this->dimension[3] = d4;
+      this->dimension[4] = d5;
+      this->dimension[5] = d6;
+      this->dimension[6] = d7;
+      cache_common(handler,offset);
+    }
+    /** @brief 1-D InnerHandler user programmable L1 cache Array constructor */
+    YAKL_INLINE Array(InnerHandler &handler, index_t const d1,
+                                             index_t const d2,
+                                             index_t const d3,
+                                             index_t const d4,
+                                             index_t const d5,
+                                             index_t const d6,
+                                             index_t const d7,
+                                             index_t const d8,
+                                             size_t offset   ) {
+      static_assert( rank == 8 , "ERROR: Calling constructor with 8 bound on non-rank-8 array" );
+      this->dimension[0] = d1;
+      this->dimension[1] = d2;
+      this->dimension[2] = d3;
+      this->dimension[3] = d4;
+      this->dimension[4] = d5;
+      this->dimension[5] = d6;
+      this->dimension[6] = d7;
+      this->dimension[7] = d8;
+      cache_common(handler,offset);
+    }
+    YAKL_INLINE void cache_common(InnerHandler &handler, size_t offset) {
+      T * data = handler.get_inner_cache_pointer<T>(offset);
+      #ifdef YAKL_DEBUG
+        if (offset+this->data_size_in_bytes() > handler.get_inner_cache_bytes()) {
+          yakl_throw("ERROR: Requested inner cache space exceeds inner cache size set at launch");
+        }
+        if (data == nullptr) yakl_throw("ERROR: wrapping nullptr with a YAKL Array object");
+      #endif
+      this->refCount = nullptr;
+      this->myname   = nullptr;
+      this->myData   = data;
+    }
+
+
     /*
     COPY CONSTRUCTORS / FUNCTIONS
     This shares the pointers with another Array and increments the refCounter
