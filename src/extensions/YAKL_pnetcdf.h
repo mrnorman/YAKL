@@ -237,13 +237,9 @@ namespace yakl {
 
 
     /** @brief Create a file with an optional flag parameter */
-    void create(std::string fname , int flag = -1 ) {
+    void create(std::string fname , int flag = NC_CLOBBER , MPI_Info info = MPI_INFO_NULL ) {
       close();
-      if (flag >= 0) {
-        ncmpiwrap( ncmpi_create( MPI_COMM_WORLD , fname.c_str() , flag       , MPI_INFO_NULL , &ncid ) , __LINE__ );
-      } else {
-        ncmpiwrap( ncmpi_create( MPI_COMM_WORLD , fname.c_str() , NC_CLOBBER , MPI_INFO_NULL , &ncid ) , __LINE__ );
-      }
+      ncmpiwrap( ncmpi_create( MPI_COMM_WORLD , fname.c_str() , flag , info , &ncid ) , __LINE__ );
     }
 
 
