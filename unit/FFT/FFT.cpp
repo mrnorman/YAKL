@@ -33,9 +33,13 @@ int main() {
           data(k,j,i) = i+1;
         });
 
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_start("fft.forward_real");
+#endif
         fft.forward_real( data , trdim , n );
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_stop("fft.forward_real");
+#endif
 
         {
           auto data_host = data.createHostCopy();
@@ -50,9 +54,13 @@ int main() {
           }
         }
 
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_start("fft.inverse_real");
+#endif
         fft.inverse_real( data , trdim , n );
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_stop("fft.inverse_real");
+#endif
 
         {
           auto data_host = data.createHostCopy();
@@ -79,9 +87,13 @@ int main() {
           data(k,j,i) = j+1;
         });
 
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_start("fft.forward_real");
+#endif
         fft.forward_real( data , trdim , n );
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_stop("fft.forward_real");
+#endif
 
         {
           auto data_host = data.createHostCopy();
@@ -96,9 +108,13 @@ int main() {
           }
         }
 
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_start("fft.inverse_real");
+#endif
         fft.inverse_real( data , trdim , n );
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_stop("fft.inverse_real");
+#endif
 
         {
           auto data_host = data.createHostCopy();
@@ -127,10 +143,13 @@ int main() {
           data(k,j,i) = k+1;
         });
 
-        
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_start("fft.forward_real");
+#endif
         fft.forward_real( data );
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_stop("fft.forward_real");
+#endif
 
         {
           auto data_host = data.createHostCopy();
@@ -145,9 +164,13 @@ int main() {
           }
         }
 
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_start("fft.inverse_real");
+#endif
         fft.inverse_real( data );
+#ifdef YAKL_AUTO_PROFILE
         yakl::timer_stop("fft.inverse_real");
+#endif
 
         {
           auto data_host = data.createHostCopy();
