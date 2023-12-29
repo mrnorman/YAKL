@@ -496,6 +496,12 @@ namespace yakl {
 
 
     /** @brief End "define mode" */
+    void redef() {
+      ncmpiwrap( ncmpi_redef(ncid) , __LINE__ );
+    }
+
+
+    /** @brief End "define mode" */
     void enddef() {
       ncmpiwrap( ncmpi_enddef(ncid) , __LINE__ );
     }
