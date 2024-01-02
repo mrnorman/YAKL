@@ -1,5 +1,5 @@
 
-#pragma once 
+#pragma once
 // Included by YAKL.h
 
 
@@ -52,8 +52,17 @@
   #include "rocfft.h"
 #elif defined(YAKL_ARCH_SYCL)
   #include <sycl/sycl.hpp>
-  #include <oneapi/mkl/exceptions.hpp>
-  #include <oneapi/mkl/dfti.hpp>
+  #if defined(YAKL_SYCL_BBFFT)
+    #include "bbfft/configuration.hpp"
+    #include "bbfft/sycl/make_plan.hpp"
+    #if defined(YAKL_SYCL_BBFFT_AOT)
+      #include "bbfft/aot_cache.hpp"
+      #include "bbfft/sycl/online_compiler.hpp"
+    #endif
+  #else
+    #include <oneapi/mkl/exceptions.hpp>
+    #include <oneapi/mkl/dfti.hpp>
+  #endif
 #elif defined(YAKL_ARCH_OPENMP)
   #include <omp.h>
 #endif
@@ -61,4 +70,3 @@
 #ifdef YAKL_ARCH_CUDA
   #include <nvtx3/nvToolsExt.h>
 #endif
-
