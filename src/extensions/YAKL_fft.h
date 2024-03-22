@@ -88,7 +88,15 @@ namespace yakl {
 
     void nullify() {batch_size = -1;  transform_size = -1;  trdim = -1;}
 
-    RealFFT1D() { nullify(); }
+    RealFFT1D() {
+      #ifdef YAKL_ARCH_HIP
+        if (! get_yakl_instance().rocfft_is_initialized) {
+          rocfft_setup();
+          get_yakl_instance().rocfft_is_initialized = true;
+        }
+      #endif
+      nullify();
+    }
     ~RealFFT1D() { cleanup(); }
 
     /** @private */

@@ -120,7 +120,7 @@ namespace yakl {
         hipGetDevice(&id);
         hipDeviceProp_t props;
         hipGetDeviceProperties(&props,id);
-        rocfft_setup();
+        get_yakl_instance().rocfft_is_initialized = false;
         if (yakl_mainproc()) std::cout << props.name << std::endl;
       #endif
 
