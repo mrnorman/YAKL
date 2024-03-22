@@ -49,7 +49,11 @@
   #include "hip/hip_runtime.h"
   #include "hipcub/hipcub.hpp"
   #include "roctracer/roctx.h"
-  #include "rocfft.h"
+  #if (HIP_VERSION < 50500000)
+    #include "rocfft.h"
+  #else
+    #include "rocfft/rocfft.h"
+  #endif
 #elif defined(YAKL_ARCH_SYCL)
   #include <sycl/sycl.hpp>
   #if defined(YAKL_SYCL_BBFFT)
