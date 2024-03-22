@@ -42,6 +42,9 @@ namespace yakl {
       std::mutex yakl_mtx;       // Mutex for YAKL reference counting, allocation, and deallocation in threaded regions
       std::mutex yakl_final_mtx; // Mutex for YAKL reference counting, allocation, and deallocation in threaded regions
       bool yakl_is_initialized;  // Determine if YAKL has been initialized
+      #ifdef YAKL_ARCH_HIP
+        bool rocfft_is_initialized;
+      #endif
       std::function<void ()> timer_init_func;              // Function to init timers
       std::function<void ()> timer_finalize_func;          // Function to finalize timers
       std::function<void (char const *)> timer_start_func; // Function to start a single timer
