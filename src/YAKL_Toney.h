@@ -127,13 +127,63 @@ namespace yakl {
     }
 
 
-    void print_my_thread() {
-      print_thread( get_or_create_thread_index( std::this_thread::get_id() ) );
+    void print_my_thread( bool all_tasks = true ) {
+      #ifndef HAVE_MPI
+        print_thread( get_or_create_thread_index( std::this_thread::get_id() ) );
+        return;
+      #else
+        int myrank;
+        int nranks;
+        MPI_Comm_rank( MPI_COMM_WORLD , &myrank );
+        MPI_Comm_size( MPI_COMM_WORLD , &nranks );
+        if (all_tasks) {
+          for (int irank = 0; irank; irank++) {
+            MPI_Barrier(MPI_COMM_WORLD);
+            if (irank == myrank) {
+              std::cout << "\n***************************************************\n";
+              std::cout <<   "** FOR RANK " << myrank << "**\n";
+              std::cout <<   "***************************************************\n";
+              print_thread( get_or_create_thread_index( std::this_thread::get_id() ) );
+              std::cout << "\n" << std::endl;
+            }
+            MPI_Barrier(MPI_COMM_WORLD);
+          }
+        } else {
+          if (myrank == 0) {
+            print_thread( get_or_create_thread_index( std::this_thread::get_id() ) );
+          }
+        }
+      #endif
     }
 
 
-    void print_all_threads() {
-      for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread); }
+    void print_all_threads( bool all_tasks = true ) {
+      #ifndef HAVE_MPI
+        for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread); }
+        return;
+      #else
+        int myrank;
+        int nranks;
+        MPI_Comm_rank( MPI_COMM_WORLD , &myrank );
+        MPI_Comm_size( MPI_COMM_WORLD , &nranks );
+        if (all_tasks) {
+          for (int irank = 0; irank; irank++) {
+            MPI_Barrier(MPI_COMM_WORLD);
+            if (irank == myrank) {
+              std::cout << "\n***************************************************\n";
+              std::cout <<   "** FOR RANK " << myrank << "**\n";
+              std::cout <<   "***************************************************\n";
+              for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread); }
+              std::cout << "\n" << std::endl;
+            }
+            MPI_Barrier(MPI_COMM_WORLD);
+          }
+        } else {
+          if (myrank == 0) {
+            for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread); }
+          }
+        }
+      #endif
     }
 
 
