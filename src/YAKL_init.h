@@ -70,7 +70,7 @@ namespace yakl {
       get_yakl_instance().timer_init_func = [] () {};
       get_yakl_instance().timer_finalize_func = [] () {
         #if defined(YAKL_PROFILE)
-          if (yakl_mainproc()) { get_yakl_instance().timer.print_all_threads(); }
+          get_yakl_instance().timer.print_all_threads();
         #endif
       };
       get_yakl_instance().timer_start_func = [] (char const *label) {

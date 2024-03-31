@@ -137,7 +137,7 @@ namespace yakl {
         MPI_Comm_rank( MPI_COMM_WORLD , &myrank );
         MPI_Comm_size( MPI_COMM_WORLD , &nranks );
         if (all_tasks) {
-          for (int irank = 0; irank; irank++) {
+          for (int irank = 0; irank < nranks; irank++) {
             MPI_Barrier(MPI_COMM_WORLD);
             if (irank == myrank) {
               std::cout << "\n***************************************************\n";
@@ -167,7 +167,7 @@ namespace yakl {
         MPI_Comm_rank( MPI_COMM_WORLD , &myrank );
         MPI_Comm_size( MPI_COMM_WORLD , &nranks );
         if (all_tasks) {
-          for (int irank = 0; irank; irank++) {
+          for (int irank = 0; irank < nranks; irank++) {
             MPI_Barrier(MPI_COMM_WORLD);
             if (irank == myrank) {
               std::cout << "\n***************************************************\n";
