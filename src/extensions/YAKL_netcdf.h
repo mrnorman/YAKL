@@ -601,7 +601,7 @@ namespace yakl {
       else if ( std::is_same<typename std::remove_cv<T>::type,unsigned long long>::value ) { return NC_UINT64; }
       else if ( std::is_same<typename std::remove_cv<T>::type,             float>::value ) { return NC_FLOAT;  }
       else if ( std::is_same<typename std::remove_cv<T>::type,            double>::value ) { return NC_DOUBLE; }
-           if ( std::is_same<typename std::remove_cv<T>::type,              char>::value ) { return NC_CHAR;   }
+      else if ( std::is_same<typename std::remove_cv<T>::type,              char>::value ) { return NC_CHAR;   }
       else { yakl_throw("Invalid type"); }
       return -1;
     }
