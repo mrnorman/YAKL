@@ -127,7 +127,7 @@ namespace yakl {
     }
 
 
-    void print_my_thread( bool all_tasks = true ) {
+    void print_my_thread( bool all_tasks = false ) {
       #ifndef HAVE_MPI
         print_thread( get_or_create_thread_index( std::this_thread::get_id() ) );
         return;
@@ -157,7 +157,7 @@ namespace yakl {
     }
 
 
-    void print_all_threads( bool all_tasks = true ) {
+    void print_all_threads( bool all_tasks = false ) {
       #ifndef HAVE_MPI
         for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread); }
         return;
