@@ -48,33 +48,38 @@ namespace yakl {
     * and it can be converted to a yakl::Dims object.
     */
   class Dims {
+#ifndef YAKL_INT64_RESHAPE
+    using dims_index = int;
+#else
+    using dims_index = int64_t;
+#endif
   public:
     /** @private */
-    int data[8];
+    dims_index data[8];
     /** @private */
-    int rank;
+    dims_index rank;
 
     YAKL_INLINE Dims() {rank = 0;}
     /** @brief Construct a 1-D Dims object) */
-    YAKL_INLINE Dims(int i0) {
+    YAKL_INLINE Dims(dims_index i0) {
       data[0] = i0;
       rank = 1;
     }
     /** @brief Construct a 2-D Dims object) */
-    YAKL_INLINE Dims(int i0, int i1) {
+    YAKL_INLINE Dims(dims_index i0, dims_index i1) {
       data[0] = i0;
       data[1] = i1;
       rank = 2;
     }
     /** @brief Construct a 3-D Dims object) */
-    YAKL_INLINE Dims(int i0, int i1, int i2) {
+    YAKL_INLINE Dims(dims_index i0, dims_index i1, dims_index i2) {
       data[0] = i0;
       data[1] = i1;
       data[2] = i2;
       rank = 3;
     }
     /** @brief Construct a 4-D Dims object) */
-    YAKL_INLINE Dims(int i0, int i1, int i2, int i3) {
+    YAKL_INLINE Dims(dims_index i0, dims_index i1, dims_index i2, dims_index i3) {
       data[0] = i0;
       data[1] = i1;
       data[2] = i2;
@@ -82,7 +87,7 @@ namespace yakl {
       rank = 4;
     }
     /** @brief Construct a 5-D Dims object) */
-    YAKL_INLINE Dims(int i0, int i1, int i2, int i3, int i4) {
+    YAKL_INLINE Dims(dims_index i0, dims_index i1, dims_index i2, dims_index i3, dims_index i4) {
       data[0] = i0;
       data[1] = i1;
       data[2] = i2;
@@ -91,7 +96,7 @@ namespace yakl {
       rank = 5;
     }
     /** @brief Construct a 6-D Dims object) */
-    YAKL_INLINE Dims(int i0, int i1, int i2, int i3, int i4, int i5) {
+    YAKL_INLINE Dims(dims_index i0, dims_index i1, dims_index i2, dims_index i3, dims_index i4, dims_index i5) {
       data[0] = i0;
       data[1] = i1;
       data[2] = i2;
@@ -101,7 +106,7 @@ namespace yakl {
       rank = 6;
     }
     /** @brief Construct a 7-D Dims object) */
-    YAKL_INLINE Dims(int i0, int i1, int i2, int i3, int i4, int i5, int i6) {
+    YAKL_INLINE Dims(dims_index i0, dims_index i1, dims_index i2, dims_index i3, dims_index i4, dims_index i5, dims_index i6) {
       data[0] = i0;
       data[1] = i1;
       data[2] = i2;
@@ -112,7 +117,7 @@ namespace yakl {
       rank = 7;
     }
     /** @brief Construct an 8-D Dims object) */
-    YAKL_INLINE Dims(int i0, int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+    YAKL_INLINE Dims(dims_index i0, dims_index i1, dims_index i2, dims_index i3, dims_index i4, dims_index i5, dims_index i6, dims_index i7) {
       data[0] = i0;
       data[1] = i1;
       data[2] = i2;
@@ -175,17 +180,22 @@ namespace yakl {
     * or you can use a pair of values, e.g., `{lower,upper}`, which will assign these as lower and upper bounds.
     */
   struct Bnd {
+#ifndef YAKL_INT64_RESHAPE
+    using dims_index = int;
+#else
+    using dims_index = int64_t;
+#endif
   public:
     /** @private */
-    int l;
+    dims_index l;
     /** @private */
-    int u;
+    dims_index u;
     /** @brief Create a dimension bound with a lower limit of 1 and an upper limit of 1 */
     YAKL_INLINE Bnd(                  ) { l = 1   ; u = 1   ; }
     /** @brief Create a dimension bound with a lower limit of 1 and an upper limit of u_in */
-    YAKL_INLINE Bnd(          int u_in) { l = 1   ; u = u_in; }
+    YAKL_INLINE Bnd(          dims_index u_in) { l = 1   ; u = u_in; }
     /** @brief Create a dimension bound with a lower limit of l_in and an upper limit of u_in */
-    YAKL_INLINE Bnd(int l_in, int u_in) { l = l_in; u = u_in; }
+    YAKL_INLINE Bnd(dims_index l_in, dims_index u_in) { l = l_in; u = u_in; }
   };
 
 
@@ -198,13 +208,18 @@ namespace yakl {
     * to one) or a pair (`{lower,upper}`), since Fortran-style allows arbitrary lower bounds. 
     */
   class Bnds {
+#ifndef YAKL_INT64_RESHAPE
+    using dims_index = int;
+#else
+    using dims_index = int64_t;
+#endif
   public:
     /** @private */
-    int l[8];
+    dims_index l[8];
     /** @private */
-    int u[8];
+    dims_index u[8];
     /** @private */
-    int rank;
+    dims_index rank;
 
     YAKL_INLINE Bnds() {rank = 0;}
     /** @brief Construct an 1-D Dims object) */
