@@ -55,6 +55,9 @@ macro(yakl_set_definitions)
   if (YAKL_MEMORY_DEBUG)
     set(YAKL_DEFINITIONS "${YAKL_DEFINITIONS} -DYAKL_MEMORY_DEBUG")
   endif()
+  if (YAKL_INT64_RESHAPE)
+    set(YAKL_DEFINITIONS "${YAKL_DEFINITIONS} -DYAKL_INT64_RESHAPE")
+  endif()
 endmacro(yakl_set_definitions)
 
 
