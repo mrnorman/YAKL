@@ -30,6 +30,7 @@ namespace yakl {
       size_t              label_hash;
       size_t              hits;
       Duration            accumulated_duration;
+      Duration            last_duration;
       Duration            max_duration;
       Duration            min_duration;
       TimePoint           previous_time_point;
@@ -100,6 +101,7 @@ namespace yakl {
       timer.max_duration          = max( timer.max_duration , duration );
       timer.min_duration          = min( timer.min_duration , duration );
       timer.accumulated_duration += duration;
+      timer.last_duration         = duration;
       // Remove this timer from the active stack
       active_stack.pop_back();
     }
@@ -121,9 +123,65 @@ namespace yakl {
         if ( label_hash == timers[i].label_hash ) return i;
       }
       // If we get here, the timer wasn't found, and we need to create one
-      timers.push_back( { label , label_hash , 0 , Duration::zero() , Duration::zero() , Duration::max() ,
-                          TimePoint::min() , std::vector<size_t>() , parent_index_just_created , false } );
+      timers.push_back( { label , label_hash , 0 , Duration::zero() , Duration::zero() , Duration::zero() ,
+                          Duration::max() , TimePoint::min() , std::vector<size_t>() , parent_index_just_created ,
+                          false } );
       return timers.size()-1;
+    }
+
+
+    double get_last_duration(std::string label) {
+      if (label.empty()) die("ERROR: calling get_last_duration() with an empty label");
+      auto label_hash = hasher( label );
+      auto &timers = threads[get_or_create_thread_index( std::this_thread::get_id() )].timers;
+      int id = -1;
+      for (int i=0; i < timers.size(); i++) { if (label_hash == timers[i].label_hash) id = i; }
+      if (id == -1) die("ERROR: label not found in timers");
+      return timers[id].last_duration.count();
+    }
+
+
+    double get_accumulated_duration(std::string label) {
+      if (label.empty()) die("ERROR: calling get_last_duration() with an empty label");
+      auto label_hash = hasher( label );
+      auto &timers = threads[get_or_create_thread_index( std::this_thread::get_id() )].timers;
+      int id = -1;
+      for (int i=0; i < timers.size(); i++) { if (label_hash == timers[i].label_hash) id = i; }
+      if (id == -1) die("ERROR: label not found in timers");
+      return timers[id].accumulated_duration.count();
+    }
+
+
+    double get_min_duration(std::string label) {
+      if (label.empty()) die("ERROR: calling get_last_duration() with an empty label");
+      auto label_hash = hasher( label );
+      auto &timers = threads[get_or_create_thread_index( std::this_thread::get_id() )].timers;
+      int id = -1;
+      for (int i=0; i < timers.size(); i++) { if (label_hash == timers[i].label_hash) id = i; }
+      if (id == -1) die("ERROR: label not found in timers");
+      return timers[id].min_duration.count();
+    }
+
+
+    double get_max_duration(std::string label) {
+      if (label.empty()) die("ERROR: calling get_last_duration() with an empty label");
+      auto label_hash = hasher( label );
+      auto &timers = threads[get_or_create_thread_index( std::this_thread::get_id() )].timers;
+      int id = -1;
+      for (int i=0; i < timers.size(); i++) { if (label_hash == timers[i].label_hash) id = i; }
+      if (id == -1) die("ERROR: label not found in timers");
+      return timers[id].max_duration.count();
+    }
+
+
+    double get_count(std::string label) {
+      if (label.empty()) die("ERROR: calling get_last_duration() with an empty label");
+      auto label_hash = hasher( label );
+      auto &timers = threads[get_or_create_thread_index( std::this_thread::get_id() )].timers;
+      int id = -1;
+      for (int i=0; i < timers.size(); i++) { if (label_hash == timers[i].label_hash) id = i; }
+      if (id == -1) die("ERROR: label not found in timers");
+      return timers[id].hits;
     }
 
 
