@@ -545,7 +545,7 @@ namespace yakl {
       } else { yakl_throw("Variable does not exist"); }
 
       if (myMem == memDevice) {
-        auto arrHost = arr.createHostCopy();
+        auto arrHost = arr.createHostObject();
         if (std::is_same<T,bool>::value) {
           Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
           var.getVar(tmp.data());
