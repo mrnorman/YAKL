@@ -357,6 +357,9 @@ namespace yakl {
       this->myname = rhs.myname;
       this->myData   = rhs.myData;
       if (rhs.refCount != nullptr) {
+        #ifdef YAKL_VERBOSE
+          verbose_inform("Copying owned array (holds mutex)", this->label());
+        #endif
         YAKL_EXECUTE_ON_HOST_ONLY( yakl_mtx_lock(); )
         this->refCount = rhs.refCount;
         // YAKL_EXECUTE_ON_HOST_ONLY( (*(this->refCount))++; )  // This gives an nvc++ error
@@ -727,6 +730,9 @@ namespace yakl {
       ret.myData = &(this->myData[retOff]);
       YAKL_EXECUTE_ON_HOST_ONLY(
         if (this->refCount != nullptr) {
+          #ifdef YAKL_VERBOSE
+            verbose_inform("Slicing owned array (holds mutex)", this->label());
+          #endif
           yakl_mtx_lock();
           ret.refCount = this->refCount;
           if (this->refCount != nullptr) {
@@ -841,6 +847,9 @@ namespace yakl {
       ret.myData = this->myData;
       YAKL_EXECUTE_ON_HOST_ONLY(
         if (this->refCount != nullptr) {
+          #ifdef YAKL_VERBOSE
+            verbose_inform("Reshaping owned array (holds mutex)", this->label());
+          #endif
           yakl_mtx_lock();
           ret.refCount = this->refCount;
           if (this->refCount != nullptr) {
@@ -899,6 +908,9 @@ namespace yakl {
       ret.myData = this->myData;
       YAKL_EXECUTE_ON_HOST_ONLY(
         if (this->refCount != nullptr) {
+          #ifdef YAKL_VERBOSE
+            verbose_inform("Collapsing owned array (holds mutex)", this->label());
+          #endif
           yakl_mtx_lock();
           ret.refCount = this->refCount;
           if (this->refCount != nullptr) {
