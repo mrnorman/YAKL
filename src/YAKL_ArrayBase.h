@@ -12,8 +12,8 @@ namespace yakl {
 
   // This implements all functionality used by all dynamically allocated arrays
   /** @brief This class implements functionality common to both yakl::styleC and yakl::styleFortran `Array` objects.
-    * 
-    * @param T      Type of the array. For yakl::memHost array objects, this can generally be any type. For 
+    *
+    * @param T      Type of the array. For yakl::memHost array objects, this can generally be any type. For
     *               yakl::memDevice array objects, this needs to be a type without a constructor, preferrably
     *               an arithmetic type.
     * @param rank   The number of dimensions for this array object.
@@ -140,9 +140,9 @@ namespace yakl {
 
     // Deep copy this array's contents to another array that's on the host
     /** @brief [ASYNCHRONOUS] [DEEP_COPY] Copy this array's contents to a yakl::memHost array.
-      * 
+      *
       * Arrays must have the same type and total number
-      * of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated. 
+      * of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated.
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> const &lhs , Stream stream = Stream()) const {
@@ -163,9 +163,9 @@ namespace yakl {
 
     // Deep copy this array's contents to another array that's on the device
     /** @brief [ASYNCHRONOUS] [DEEP_COPY] Copy this array's contents to a yakl::memDevice array.
-      * 
+      *
       * Arrays must have the same type and total number
-      * of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated. 
+      * of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated.
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> const &lhs , Stream stream = Stream()) const {
@@ -218,7 +218,7 @@ namespace yakl {
     /** @brief Set the object's string label (Host only) */
     void set_label(std::string label) { this->myname = label.c_str(); }
     /** @brief Returns how many array objects share this pointer if owned; or `0` if unowned.
-      * 
+      *
       * Returns the use count for this array object's data pointer. I.e., this is how many yakl::Array objects currently
       * share this data pointer. If this returns a value of `0`, that means that this array object is **not** being reference
       * counted, meaning it performed no allocation upon creation, will perform no deallocation upon destruction, and has
@@ -233,7 +233,7 @@ namespace yakl {
     /** @private */
     template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
     inline void allocate() {
-      // static_assert( std::is_arithmetic<T>() || myMem == memHost , 
+      // static_assert( std::is_arithmetic<T>() || myMem == memHost ,
       //                "ERROR: You cannot use non-arithmetic types inside owned Arrays on the device" );
       yakl_mtx_lock();
       this->refCount = new int;
@@ -252,7 +252,7 @@ namespace yakl {
 
     // Decrement the reference counter (if owned), and if it's zero after decrement, then deallocate the data
     // For const types, the pointer must be const casted to a non-const type before deallocation
-    /** @brief If owned, decrement the reference counter; if ref counter reaches zero, deallocate memory; 
+    /** @brief If owned, decrement the reference counter; if ref counter reaches zero, deallocate memory;
       *        If non-owned, does nothing.
       *
       *        If the reference counter reaches zero, meaning no other array objects
@@ -261,10 +261,10 @@ namespace yakl {
       *        an empty array object. This is safe to call even if this array object is not yet allocated. */
     template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
     inline void deallocate() {
-      yakl_mtx_lock();
       typedef typename std::remove_cv<T>::type T_non_const;
       T_non_const *data = const_cast<T_non_const *>(this->myData);
       if (this->refCount != nullptr) {
+        yakl_mtx_lock();
         (*(this->refCount))--;
 
         if (*this->refCount == 0) {
@@ -290,9 +290,8 @@ namespace yakl {
             this->myData = nullptr;
           }
         }
-
+        yakl_mtx_unlock();
       }
-      yakl_mtx_unlock();
     }
 
 
@@ -300,8 +299,8 @@ namespace yakl {
     /** @copydoc yakl::ArrayBase::deallocate() */
     template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
     inline void deallocate() {
-      yakl_mtx_lock();
       if (this->refCount != nullptr) {
+        yakl_mtx_lock();
         (*(this->refCount))--;
 
         if (*this->refCount == 0) {
@@ -328,8 +327,8 @@ namespace yakl {
           }
         }
 
-      }
       yakl_mtx_unlock();
+      }
     }
 
 
