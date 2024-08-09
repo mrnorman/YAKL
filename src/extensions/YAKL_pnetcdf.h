@@ -388,33 +388,26 @@ namespace yakl {
   protected:
 
     /** @private */
-    int ncid;
+    int       ncid;
+    MPI_Comm  comm;
 
   public:
 
-    SimplePNetCDF() { ncid = -1; }
+    SimplePNetCDF(MPI_Comm comm = MPI_COMM_WORLD) { this->comm = comm;  this->ncid = -1; }
     ~SimplePNetCDF() { close(); }
-    /** @private */
-    SimplePNetCDF(SimplePNetCDF &&in) = delete;
-    /** @private */
-    SimplePNetCDF(SimplePNetCDF const &in) = delete;
-    /** @private */
-    SimplePNetCDF &operator=(SimplePNetCDF &&in) = delete;
-    /** @private */
-    SimplePNetCDF &operator=(SimplePNetCDF const &in) = delete;
 
 
     /** @brief Open a file */
     void open(std::string fname , int omode = NC_WRITE , MPI_Info info = MPI_INFO_NULL ) {
       close();
-      ncmpiwrap( ncmpi_open( MPI_COMM_WORLD , fname.c_str() , omode , info , &ncid ) , __LINE__ );
+      ncmpiwrap( ncmpi_open( comm , fname.c_str() , omode , info , &ncid ) , __LINE__ );
     }
 
 
     /** @brief Create a file with an optional flag parameter */
     void create(std::string fname , int flag = NC_CLOBBER , MPI_Info info = MPI_INFO_NULL ) {
       close();
-      ncmpiwrap( ncmpi_create( MPI_COMM_WORLD , fname.c_str() , flag , info , &ncid ) , __LINE__ );
+      ncmpiwrap( ncmpi_create( comm , fname.c_str() , flag , info , &ncid ) , __LINE__ );
     }
 
 
