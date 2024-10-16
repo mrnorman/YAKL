@@ -6,7 +6,7 @@ __YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /** @brief Class to handle scalars that exist before kernels, are written to by kernels, and read after the kernel terminates.
-    * 
+    *
     * Handles the case where a scalar value is written to in a kernel and must be read on the host after the kernel
     * completes.
     * Passing a value to the constructor will initialize the device pointer with that data from the host.
@@ -14,7 +14,7 @@ namespace yakl {
     * To access the value as a reference that is writable, use the operator() (e.g., in an atomic operation perhaps).
     * To read on the host afterward, using hostRead()
     * To write after construction, use hostWrite()
-    * 
+    *
     * ```
     * ScalarLiveOut<float> sum(0.);
     * // You'd use a reduction for this in reality. This is just for demonstration.
@@ -24,7 +24,7 @@ namespace yakl {
     * });
     * if (sum.hostRead() != ny*nx) yakl::yakl_throw("ERROR: Wrong sum");
     * ```
-    * 
+    *
     * ```
     * ScalarLiveOut<bool> data_is_bad(false);
     * parallel_for( Bounds<2>(ny,nx) , YAKL_LAMBDA (int j, int i) {
@@ -48,8 +48,9 @@ namespace yakl {
     }
     /** @brief [ASYNCHRONOUS] This constructor allocates room on the device for one scalar of type `T` and initializes it on device with the provided value. */
     explicit ScalarLiveOut(T val, Stream stream = Stream() ) {
-      data = Array<T,1,memDevice,styleC>("ScalarLiveOut_data",1);  // Create array
-      hostWrite(val,stream);                                // Copy to device
+      Array<T, 1, memHost, styleC> host_data("ScalarLiveOut_data", 1);
+      host_data(0) = val;
+      data = host_data.createDeviceCopy(stream);
     }
     /** @brief Deallocates the scalar value on the device. */
     YAKL_INLINE ~ScalarLiveOut() {
