@@ -43,11 +43,12 @@ typedef Array<bool,3,memDevice,styleFortran> bool_f_3d;
 
 
 void die(std::string msg) {
-  yakl::yakl_throw(msg.c_str());
+  Kokkos::abort(msg.c_str());
 }
 
 
 int main() {
+  Kokkos::initialize();
   yakl::init();
   {
     int constexpr n1 = 5;
@@ -170,8 +171,8 @@ int main() {
       if (sum(abs(sarr_c))/size(sarr_c) != 4) die("ERROR: Wrong value for sarr_c");
       if (sum(abs(sarr_f))/size(sarr_f) != 5) die("ERROR: Wrong value for sarr_f");
 
-      yakl::c::parallel_for( size(arr_c) , YAKL_LAMBDA (int i) { arr_c.data()[i] = i; });
-      yakl::c::parallel_for( size(arr_f) , YAKL_LAMBDA (int i) { arr_f.data()[i] = i; });
+      yakl::c::parallel_for( size(arr_c) , KOKKOS_LAMBDA (int i) { arr_c.data()[i] = i; });
+      yakl::c::parallel_for( size(arr_f) , KOKKOS_LAMBDA (int i) { arr_f.data()[i] = i; });
       for (int i=0; i < size(sarr_c); i++) { sarr_c.data()[i] = i; }
       for (int i=0; i < size(sarr_f); i++) { sarr_f.data()[i] = i; }
     }
@@ -360,7 +361,7 @@ int main() {
       SArray<real,1,5> sarr_c;
       FSArray<real,1,SB<5>> sarr_f;
 
-      parallel_for( 5 , YAKL_LAMBDA (int i) {
+      parallel_for( 5 , KOKKOS_LAMBDA (int i) {
         arr_c (i  ) = i-2;
         arr_f (i+1) = i-2;
       });
@@ -593,7 +594,7 @@ int main() {
       SArray<bool,1,10> sc;
       FSArray<bool,1,SB<10>> sf;
       
-      parallel_for( 10 , YAKL_LAMBDA( int i ) {
+      parallel_for( 10 , KOKKOS_LAMBDA( int i ) {
         c(i) = i%2 == 0;
         f(i+1) = i%2 == 0;
       });
@@ -661,15 +662,15 @@ int main() {
       FSArray<float ,1,SB<n>>            g;
       FSArray<double,1,SB<n>>            h;
       double                             i;
-      float  av = 1; memset( a , av );
-      double bv = 2; memset( b , bv );
-      float  cv = 3; memset( c , cv );
-      double dv = 4; memset( d , dv );
-      float  ev = 5; memset( e , ev );
-      double fv = 6; memset( f , fv );
-      float  gv = 7; memset( g , gv );
-      double hv = 8; memset( h , hv );
-      double iv = 9;         i = iv  ;
+      float  av = 1;         a = av;
+      double bv = 2;         b = bv;
+      float  cv = 3;         c = cv;
+      double dv = 4;         d = dv;
+      float  ev = 5;         e = ev;
+      double fv = 6;         f = fv;
+      float  gv = 7;         g = gv;
+      double hv = 8;         h = hv;
+      double iv = 9;         i = iv;
 
       if ( std::abs( sum(a+b) - n*(av+bv) ) / (n*(av+bv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a+b)");
       if ( std::abs( sum(a+i) - n*(av+iv) ) / (n*(av+iv)) > 1.e-7 ) die("ERROR: wrong sum: sum(a+i)");
@@ -826,6 +827,7 @@ int main() {
 
   }
   yakl::finalize();
+  Kokkos::finalize(); 
   
   return 0;
 }

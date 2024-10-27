@@ -19,46 +19,36 @@ typedef Array<real,1,memDevice,styleC> real1d;
 
 
 void die(std::string msg) {
-  yakl::yakl_throw(msg.c_str());
+  Kokkos::abort(msg.c_str());
 }
 
 
 int main() {
+  Kokkos::initialize();
   yakl::init();
   {
     int constexpr n = 1024*1024 + 1;
     real1d data("data",n);
-    parallel_for( "Initialize data" , n , YAKL_LAMBDA (int i) {
+    parallel_for( "Initialize data" , n , KOKKOS_LAMBDA (int i) {
       data(i) = i - (n-1)/2.;
     });
-    yakl::ParallelSum<real,memDevice> psum(data.totElems());
-    real sum = psum( data.data() );
-
-    yakl::ParallelMin<real,memDevice> pmin(data.totElems());
-    real min = pmin( data.data() );
-
-    yakl::ParallelMax<real,memDevice> pmax(data.totElems());
-    real max = pmax( data.data() );
-    
+    real sum = yakl::intrinsics::sum   ( data );
+    real min = yakl::intrinsics::minval( data );
+    real max = yakl::intrinsics::maxval( data );
     if ( abs(sum) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
     if ( abs(min + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
     if ( abs(max - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
 
     auto dataHost = data.createHostCopy();
-    yakl::ParallelSum<real,memHost> psumHost(dataHost.totElems());
-    sum = psumHost( dataHost.data() );
-
-    yakl::ParallelMin<real,memHost> pminHost(dataHost.totElems());
-    min = pminHost( dataHost.data() );
-
-    yakl::ParallelMax<real,memHost> pmaxHost(dataHost.totElems());
-    max = pmaxHost( dataHost.data() );
-    
+    sum = yakl::intrinsics::sum   ( dataHost );
+    min = yakl::intrinsics::minval( dataHost );
+    max = yakl::intrinsics::maxval( dataHost );
     if ( abs(sum) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
     if ( abs(min + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
     if ( abs(max - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
   }
   yakl::finalize();
+  Kokkos::finalize(); 
   
   return 0;
 }

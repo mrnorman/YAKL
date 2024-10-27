@@ -2,14 +2,13 @@
 #pragma once
 // Included by YAKL_intrinsics.h
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   namespace intrinsics {
 
     template <class T, int rank, int myStyle>
     inline T maxval( Array<T,rank,memHost,myStyle> const &arr ) {
-      #ifdef YAKL_DEBUG
-        if (!arr.initialized()) { yakl_throw("ERROR: calling maxval on an array that has not been initialized"); }
+      #ifdef KOKKOS_DEBUG
+        if (!arr.initialized()) { Kokkos::abort("ERROR: calling maxval on an array that has not been initialized"); }
       #endif
       typename std::remove_cv<T>::type m = arr.data()[0];
       for (int i=1; i<arr.totElems(); i++) {
@@ -19,17 +18,21 @@ namespace yakl {
     }
 
     template <class T, int rank, int myStyle>
-    inline T maxval( Array<T,rank,memDevice,myStyle> const &arr , Stream stream = Stream() ) {
-      #ifdef YAKL_DEBUG
-        if (!arr.initialized()) { yakl_throw("ERROR: calling maxval on an array that has not been initialized"); }
+    inline T maxval( Array<T,rank,memDevice,myStyle> const &arr ) {
+      #ifdef KOKKOS_DEBUG
+        if (!arr.initialized()) { Kokkos::abort("ERROR: calling maxval on an array that has not been initialized"); }
       #endif
       typedef typename std::remove_cv<T>::type TNC; // T Non-Const
-      ParallelMax<TNC,memDevice> pmax(arr.totElems(),stream);
-      return pmax( const_cast<TNC *>(arr.data()) );
+      TNC result;
+      Kokkos::parallel_reduce( YAKL_AUTO_LABEL() , arr.size() , KOKKOS_LAMBDA (int i, TNC & lmax) {
+        TNC val = arr.data()[i];
+        lmax = val > lmax ? val : lmax;
+      }, Kokkos::Max<TNC>(result) );
+      return result;
     }
 
     template <class T, int rank, class D0, class D1, class D2, class D3>
-    YAKL_INLINE T maxval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
+    KOKKOS_INLINE_FUNCTION T maxval( FSArray<T,rank,D0,D1,D2,D3> const &arr ) {
       typename std::remove_cv<T>::type m = arr.data()[0];
       for (int i=1; i<arr.totElems(); i++) {
         if (arr.data()[i] > m) { m = arr.data()[i]; }
@@ -37,8 +40,8 @@ namespace yakl {
       return m;
     }
 
-    template <class T, int rank, index_t D0, index_t D1, index_t D2, index_t D3>
-    YAKL_INLINE T maxval( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
+    template <class T, int rank, size_t D0, size_t D1, size_t D2, size_t D3>
+    KOKKOS_INLINE_FUNCTION T maxval( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
       typename std::remove_cv<T>::type m = arr.data()[0];
       for (int i=1; i<arr.totElems(); i++) {
         if (arr.data()[i] > m) { m = arr.data()[i]; }
@@ -48,5 +51,4 @@ namespace yakl {
 
   }
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 

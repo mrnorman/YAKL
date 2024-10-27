@@ -33,10 +33,8 @@ typedef Array<real,6,memDevice,styleC> real6d;
 typedef Array<real,7,memDevice,styleC> real7d;
 typedef Array<real,8,memDevice,styleC> real8d;
 
-real1d glob;
-
 void die(std::string msg) {
-  yakl::yakl_throw(msg.c_str());
+  Kokkos::abort(msg.c_str());
 }
 
 
@@ -51,6 +49,7 @@ Array<real const,1,memDevice,styleC> construct_const_array_device() {
 
 
 int main() {
+  Kokkos::initialize();
   yakl::init();
   {
     int constexpr d1 = 2;
@@ -77,37 +76,37 @@ int main() {
 
     std::cout << "Is CSArray trivially copyable? " << std::is_trivially_copyable<yakl::CSArray<real,1,1>>::value << std::endl;
 
-    yakl::memset(test1d,0.f);
-    yakl::memset(test2d,0.f);
-    yakl::memset(test3d,0.f);
-    yakl::memset(test4d,0.f);
-    yakl::memset(test5d,0.f);
-    yakl::memset(test6d,0.f);
-    yakl::memset(test7d,0.f);
-    yakl::memset(test8d,0.f);
+    test1d = 0.f;
+    test2d = 0.f;
+    test3d = 0.f;
+    test4d = 0.f;
+    test5d = 0.f;
+    test6d = 0.f;
+    test7d = 0.f;
+    test8d = 0.f;
 
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<1>(d1) , YAKL_LAMBDA (int i1) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<1>(d1) , KOKKOS_LAMBDA (int i1) {
       test1d(i1) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<2>(d1,d2) , KOKKOS_LAMBDA (int i1, int i2) {
       test2d(i1,i2) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,d2,d3) , KOKKOS_LAMBDA (int i1, int i2, int i3) {
       test3d(i1,i2,i3) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<4>(d1,d2,d3,d4) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4) {
       test4d(i1,i2,i3,i4) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<5>(d1,d2,d3,d4,d5) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
       test5d(i1,i2,i3,i4,i5) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<6>(d1,d2,d3,d4,d5,d6) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
       test6d(i1,i2,i3,i4,i5,i6) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<7>(d1,d2,d3,d4,d5,d6,d7) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
       test7d(i1,i2,i3,i4,i5,i6,i7) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
       test8d(i1,i2,i3,i4,i5,i6,i7,i8) = 1;
     });
 
@@ -168,37 +167,37 @@ int main() {
     real7d test7d_ptr("test7d",test7d.data(),d1,d2,d3,d4,d5,d6,d7);
     real8d test8d_ptr("test8d",test8d.data(),d1,d2,d3,d4,d5,d6,d7,d8);
 
-    yakl::memset(test1d_ptr,0.f);
-    yakl::memset(test2d_ptr,0.f);
-    yakl::memset(test3d_ptr,0.f);
-    yakl::memset(test4d_ptr,0.f);
-    yakl::memset(test5d_ptr,0.f);
-    yakl::memset(test6d_ptr,0.f);
-    yakl::memset(test7d_ptr,0.f);
-    yakl::memset(test8d_ptr,0.f);
+    test1d_ptr = 0.f;
+    test2d_ptr = 0.f;
+    test3d_ptr = 0.f;
+    test4d_ptr = 0.f;
+    test5d_ptr = 0.f;
+    test6d_ptr = 0.f;
+    test7d_ptr = 0.f;
+    test8d_ptr = 0.f;
 
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<1>(d1) , YAKL_LAMBDA (int i1) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<1>(d1) , KOKKOS_LAMBDA (int i1) {
       test1d_ptr(i1) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<2>(d1,d2) , KOKKOS_LAMBDA (int i1, int i2) {
       test2d_ptr(i1,i2) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,d2,d3) , KOKKOS_LAMBDA (int i1, int i2, int i3) {
       test3d_ptr(i1,i2,i3) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<4>(d1,d2,d3,d4) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4) {
       test4d_ptr(i1,i2,i3,i4) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<5>(d1,d2,d3,d4,d5) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
       test5d_ptr(i1,i2,i3,i4,i5) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<6>(d1,d2,d3,d4,d5,d6) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
       test6d_ptr(i1,i2,i3,i4,i5,i6) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<7>(d1,d2,d3,d4,d5,d6,d7) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
       test7d_ptr(i1,i2,i3,i4,i5,i6,i7) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
       test8d_ptr(i1,i2,i3,i4,i5,i6,i7,i8) = 1;
     });
 
@@ -235,27 +234,27 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test host memset
     ///////////////////////////////////////////////////////////
-    yakl::memset(testHost8d,0.f);
+    testHost8d = 0.f;
     if (yakl::intrinsics::sum(testHost8d) != 0) { die("memset: failed for testHost8d"); }
 
     ///////////////////////////////////////////////////////////
     // Test deep_copy_to device to host
     ///////////////////////////////////////////////////////////
     test8d.deep_copy_to(testHost8d);
-    yakl::fence();
+    Kokkos::fence();
     if (yakl::intrinsics::sum(testHost8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("deep_copy_to: wrong sum for testHost8d"); }
 
     ///////////////////////////////////////////////////////////
     // Test device memset
     ///////////////////////////////////////////////////////////
-    yakl::memset(test8d,0.f);
+    test8d = 0.f;
     if (yakl::intrinsics::sum(test8d) != 0) { die("memset: failed for test8d"); }
 
     ///////////////////////////////////////////////////////////
     // Test deep_copy_to host to device
     ///////////////////////////////////////////////////////////
     testHost8d.deep_copy_to(test8d);
-    yakl::fence();
+    Kokkos::fence();
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("deep_copy_to: wrong sum for test8d"); }
 
     ///////////////////////////////////////////////////////////
@@ -267,32 +266,32 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test deep_copy_to device to device
     ///////////////////////////////////////////////////////////
-    yakl::memset(test8d_dev2,0.f);
+    test8d_dev2 = 0.f;
     test8d.deep_copy_to(test8d_dev2);
-    yakl::fence();
+    Kokkos::fence();
     if (yakl::intrinsics::sum(test8d_dev2) != d1*d2*d3*d4*d5*d6*d7*d8) { die("deep_copy_to: wrong sum for test8d_dev2"); }
 
     ///////////////////////////////////////////////////////////
     // Test slice
     ///////////////////////////////////////////////////////////
-    yakl::memset(test8d,0.f);
+    test8d = 0.f;
     auto slice = test8d.slice<3>(1,2,3,4,5,COLON,COLON,COLON);
-    yakl::memset(slice,1.f);
+    slice = 1.f;
     if (yakl::intrinsics::sum(test8d) != d6*d7*d8) { die("slice: wrong sum for slice"); }
 
     ///////////////////////////////////////////////////////////
     // Test slice inside a kernel
     ///////////////////////////////////////////////////////////
-    yakl::memset(test8d,0.f);
-    parallel_for( YAKL_AUTO_LABEL() ,  1 , YAKL_LAMBDA (int dummy) {
+    test8d = 0.f;
+    parallel_for( YAKL_AUTO_LABEL() ,  1 , KOKKOS_LAMBDA (int dummy) {
       auto slice = test8d.slice<3>(1,2,3,4,5,COLON,COLON,COLON);
     });
 
     ///////////////////////////////////////////////////////////
     // Test non-standard loop bounds
     ///////////////////////////////////////////////////////////
-    yakl::memset(test3d,0.);
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,{-1,d2-3},{0,d3,2}) , YAKL_LAMBDA (int i, int j, int k) {
+    test3d = 0.;
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,{-1,d2-3},{0,d3,2}) , KOKKOS_LAMBDA (int i, int j, int k) {
       test3d(i,j+2,k) = 1;
     });
     if (yakl::intrinsics::sum(test3d) != 8) { die("non-standard loop: wrong sum for test3d");}
@@ -301,37 +300,37 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test SimpleBounds
     ///////////////////////////////////////////////////////////
-    yakl::memset(test1d,0.f);
-    yakl::memset(test2d,0.f);
-    yakl::memset(test3d,0.f);
-    yakl::memset(test4d,0.f);
-    yakl::memset(test5d,0.f);
-    yakl::memset(test6d,0.f);
-    yakl::memset(test7d,0.f);
-    yakl::memset(test8d,0.f);
+    test1d = 0.f;
+    test2d = 0.f;
+    test3d = 0.f;
+    test4d = 0.f;
+    test5d = 0.f;
+    test6d = 0.f;
+    test7d = 0.f;
+    test8d = 0.f;
 
-    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<1>(d1) , YAKL_LAMBDA (int i1) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<1>(d1) , KOKKOS_LAMBDA (int i1) {
       test1d(i1) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<2>(d1,d2) , YAKL_LAMBDA (int i1, int i2) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<2>(d1,d2) , KOKKOS_LAMBDA (int i1, int i2) {
       test2d(i1,i2) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<3>(d1,d2,d3) , YAKL_LAMBDA (int i1, int i2, int i3) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<3>(d1,d2,d3) , KOKKOS_LAMBDA (int i1, int i2, int i3) {
       test3d(i1,i2,i3) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<4>(d1,d2,d3,d4) , YAKL_LAMBDA (int i1, int i2, int i3, int i4) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<4>(d1,d2,d3,d4) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4) {
       test4d(i1,i2,i3,i4) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<5>(d1,d2,d3,d4,d5) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<5>(d1,d2,d3,d4,d5) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5) {
       test5d(i1,i2,i3,i4,i5) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<6>(d1,d2,d3,d4,d5,d6) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<6>(d1,d2,d3,d4,d5,d6) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6) {
       test6d(i1,i2,i3,i4,i5,i6) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<7>(d1,d2,d3,d4,d5,d6,d7) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<7>(d1,d2,d3,d4,d5,d6,d7) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
       test7d(i1,i2,i3,i4,i5,i6,i7) = 1;
     });
-    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , YAKL_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
+    parallel_for( YAKL_AUTO_LABEL() ,  SimpleBounds<8>(d1,d2,d3,d4,d5,d6,d7,d8) , KOKKOS_LAMBDA (int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8) {
       test8d(i1,i2,i3,i4,i5,i6,i7,i8) = 1;
     });
 
@@ -359,7 +358,7 @@ int main() {
     // Test reshape
     ///////////////////////////////////////////////////////////
     auto reshaped = test8d.reshape(20,16,1134);
-    memset(reshaped,2.f);
+    reshaped = 2.f;
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8*2) { die("SimpleBounds: wrong sum for reshaped test8d"); }
 
 
@@ -367,7 +366,7 @@ int main() {
     // Test collapse
     ///////////////////////////////////////////////////////////
     auto collapsed = test8d.collapse();
-    memset(collapsed,3.f);
+    collapsed = 3.f;
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8*3) { die("SimpleBounds: wrong sum for collapsed test8d"); }
 
     auto constHostArr = construct_const_array_host();
@@ -403,11 +402,9 @@ int main() {
       if (tot == 99) die("ERROR: Shuffle is not working on CArray");
     }
 
-    glob = real1d("glob",10000);
-    yakl::register_finalize_callback( [] () { glob.deallocate(); } );
-
   }
   yakl::finalize();
+  Kokkos::finalize(); 
   
   return 0;
 }

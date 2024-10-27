@@ -2,18 +2,16 @@
 #pragma once
 // Included by YAKL_intrinsics.h
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   namespace intrinsics {
 
-    template <class T> YAKL_INLINE auto shape(T const &arr) {
-      #ifdef YAKL_DEBUG
-        if (!allocated(arr)) yakl_throw("ERROR: Calling shape on an unallocated array");
+    template <class T> KOKKOS_INLINE_FUNCTION auto shape(T const &arr) {
+      #ifdef KOKKOS_DEBUG
+        if (!allocated(arr)) Kokkos::abort("ERROR: Calling shape on an unallocated array");
       #endif
       return arr.get_dimensions();
     }
 
   }
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 

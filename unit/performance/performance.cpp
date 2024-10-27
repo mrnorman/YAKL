@@ -62,7 +62,7 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
     //Compute fluxes in the x-direction for each cell
     // for (k=0; k<nz; k++) {
     //   for (i=0; i<nx+1; i++) {
-    parallel_for( YAKL_AUTO_LABEL() , SimpleBounds<2>(nz,nx+1) , YAKL_LAMBDA (int k, int i ) {
+    parallel_for( YAKL_AUTO_LABEL() , SimpleBounds<2>(nz,nx+1) , KOKKOS_LAMBDA (int k, int i ) {
       yakl::SArray<real,1,4> stencil;
       yakl::SArray<real,1,NUM_VARS> d3_vals;
       yakl::SArray<real,1,NUM_VARS> vals;
@@ -90,7 +90,7 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
     // for (ll=0; ll<NUM_VARS; ll++) {
     //   for (k=0; k<nz; k++) {
     //     for (i=0; i<nx; i++) {
-    parallel_for( YAKL_AUTO_LABEL() , SimpleBounds<3>(NUM_VARS,nz,nx) , YAKL_LAMBDA ( int ll, int k, int i ) {
+    parallel_for( YAKL_AUTO_LABEL() , SimpleBounds<3>(NUM_VARS,nz,nx) , KOKKOS_LAMBDA ( int ll, int k, int i ) {
       tend(ll,k,i) = -( flux(ll,k,i+1) - flux(ll,k,i) ) / dx;
     });
 
@@ -162,6 +162,7 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
 
 
 int main() {
+  Kokkos::initialize();
   yakl::init();
   {
     int nx = 2048;
@@ -175,6 +176,7 @@ int main() {
 
   }
   yakl::finalize();
+  Kokkos::finalize(); 
   
   return 0;
 }

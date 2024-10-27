@@ -2,7 +2,6 @@
 #pragma once
 // Included by YAKL_Array.h
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   /** @brief This implements the yakl:Array class with yakl::styleC behavior
@@ -69,22 +68,22 @@ namespace yakl {
 
     // Start off all constructors making sure the pointers are null
     /** @private */
-    YAKL_INLINE void nullify() {
+    KOKKOS_INLINE_FUNCTION void nullify() {
       this->myData   = nullptr;
       this->refCount = nullptr;
       for (int i=0; i < rank; i++) { this->dimension[i] = 0; }
-      YAKL_EXECUTE_ON_HOST_ONLY( this->myname="Uninitialized"; )
+      KOKKOS_IF_ON_HOST( this->myname="Uninitialized"; )
     }
 
     /* CONSTRUCTORS
     Always nullify before beginning so that myData == nullptr upon init.
     */
     /** @brief Create an empty, unallocated object */
-    YAKL_INLINE Array() {
+    KOKKOS_INLINE_FUNCTION Array() {
       nullify();
     }
     /** @brief Create an empty, unallocated object with a label.*/
-    YAKL_INLINE explicit Array(char const * label) {
+    KOKKOS_INLINE_FUNCTION explicit Array(char const * label) {
       nullify();
       this->myname = label;
     }
@@ -112,84 +111,84 @@ namespace yakl {
 
     /** @brief 1-D owned constructor
       * \copydetails doxhide_CArray_owned_constructors */
-    YAKL_INLINE Array( char const* label , index_t d1 ) : Array(label,Dims(d1)) {
+    KOKKOS_INLINE_FUNCTION Array( char const* label , size_t d1 ) : Array(label,Dims(d1)) {
       static_assert( rank == 1 , "ERROR: Calling constructor with 1 bound on non-rank-1 array" );
     }
     /** @brief 2-D owned constructor
       * \copydetails doxhide_CArray_owned_constructors */
-    YAKL_INLINE Array( char const* label , index_t d1 ,
-                                           index_t d2 ) : Array(label,Dims(d1,d2)) {
+    KOKKOS_INLINE_FUNCTION Array( char const* label , size_t d1 ,
+                                           size_t d2 ) : Array(label,Dims(d1,d2)) {
       static_assert( rank == 2 , "ERROR: Calling constructor with 2 bound on non-rank-2 array" );
     }
     /** @brief 3-D owned constructor
       * \copydetails doxhide_CArray_owned_constructors */
-    YAKL_INLINE Array( char const* label , index_t d1 ,
-                                           index_t d2 ,
-                                           index_t d3 ) : Array(label,Dims(d1,d2,d3)) {
+    KOKKOS_INLINE_FUNCTION Array( char const* label , size_t d1 ,
+                                           size_t d2 ,
+                                           size_t d3 ) : Array(label,Dims(d1,d2,d3)) {
       static_assert( rank == 3 , "ERROR: Calling constructor with 3 bound on non-rank-3 array" );
     }
     /** @brief 4-D owned constructor
       * \copydetails doxhide_CArray_owned_constructors */
-    YAKL_INLINE Array( char const* label , index_t d1 ,
-                                           index_t d2 ,
-                                           index_t d3 ,
-                                           index_t d4 ) : Array(label,Dims(d1,d2,d3,d4)) {
+    KOKKOS_INLINE_FUNCTION Array( char const* label , size_t d1 ,
+                                           size_t d2 ,
+                                           size_t d3 ,
+                                           size_t d4 ) : Array(label,Dims(d1,d2,d3,d4)) {
       static_assert( rank == 4 , "ERROR: Calling constructor with 4 bound on non-rank-4 array" );
     }
     /** @brief 5-D owned constructor
       * \copydetails doxhide_CArray_owned_constructors */
-    YAKL_INLINE Array( char const* label , index_t d1 ,
-                                           index_t d2 ,
-                                           index_t d3 ,
-                                           index_t d4 ,
-                                           index_t d5 ) : Array(label,Dims(d1,d2,d3,d4,d5)) {
+    KOKKOS_INLINE_FUNCTION Array( char const* label , size_t d1 ,
+                                           size_t d2 ,
+                                           size_t d3 ,
+                                           size_t d4 ,
+                                           size_t d5 ) : Array(label,Dims(d1,d2,d3,d4,d5)) {
       static_assert( rank == 5 , "ERROR: Calling constructor with 5 bound on non-rank-5 array" );
     }
     /** @brief 6-D owned constructor
       * \copydetails doxhide_CArray_owned_constructors */
-    YAKL_INLINE Array( char const* label , index_t d1 ,
-                                           index_t d2 ,
-                                           index_t d3 ,
-                                           index_t d4 ,
-                                           index_t d5 ,
-                                           index_t d6 ) : Array(label,Dims(d1,d2,d3,d4,d5,d6)) {
+    KOKKOS_INLINE_FUNCTION Array( char const* label , size_t d1 ,
+                                           size_t d2 ,
+                                           size_t d3 ,
+                                           size_t d4 ,
+                                           size_t d5 ,
+                                           size_t d6 ) : Array(label,Dims(d1,d2,d3,d4,d5,d6)) {
       static_assert( rank == 6 , "ERROR: Calling constructor with 6 bound on non-rank-6 array" );
     }
     /** @brief 7-D owned constructor
       * \copydetails doxhide_CArray_owned_constructors */
-    YAKL_INLINE Array( char const* label , index_t d1 ,
-                                           index_t d2 ,
-                                           index_t d3 ,
-                                           index_t d4 ,
-                                           index_t d5 ,
-                                           index_t d6 ,
-                                           index_t d7 ) : Array(label,Dims(d1,d2,d3,d4,d5,d6,d7)) {
+    KOKKOS_INLINE_FUNCTION Array( char const* label , size_t d1 ,
+                                           size_t d2 ,
+                                           size_t d3 ,
+                                           size_t d4 ,
+                                           size_t d5 ,
+                                           size_t d6 ,
+                                           size_t d7 ) : Array(label,Dims(d1,d2,d3,d4,d5,d6,d7)) {
       static_assert( rank == 7 , "ERROR: Calling constructor with 7 bound on non-rank-7 array" );
     }
     /** @brief 8-D owned constructor
       * \copydetails doxhide_CArray_owned_constructors */
-    YAKL_INLINE Array( char const* label , index_t d1 ,
-                                           index_t d2 ,
-                                           index_t d3 ,
-                                           index_t d4 ,
-                                           index_t d5 ,
-                                           index_t d6 ,
-                                           index_t d7 ,
-                                           index_t d8 ) : Array(label,Dims(d1,d2,d3,d4,d5,d6,d7,d8)) {
+    KOKKOS_INLINE_FUNCTION Array( char const* label , size_t d1 ,
+                                           size_t d2 ,
+                                           size_t d3 ,
+                                           size_t d4 ,
+                                           size_t d5 ,
+                                           size_t d6 ,
+                                           size_t d7 ,
+                                           size_t d8 ) : Array(label,Dims(d1,d2,d3,d4,d5,d6,d7,d8)) {
       static_assert( rank == 8 , "ERROR: Calling constructor with 8 bound on non-rank-8 array" );
     }
     /** @brief Generic initializer-list or std::vector based owned constructor
       * \copydetails doxhide_CArray_owned_constructors */
-    YAKL_INLINE Array(char const * label, Dims const dims) {
+    KOKKOS_INLINE_FUNCTION Array(char const * label, Dims const dims) {
       static_assert( rank >= 1 && rank <= 8 , "ERROR: Creating Array with a rank < 1 or > 8" );
       nullify();
-      #ifdef YAKL_DEBUG
-        if (dims.size() != rank) yakl_throw("ERROR: Number of constructor dimensions does not match the Array rank");
+      #ifdef KOKKOS_DEBUG
+        if (dims.size() != rank) Kokkos::abort("ERROR: Number of constructor dimensions does not match the Array rank");
       #endif
-      YAKL_EXECUTE_ON_HOST_ONLY( this->deallocate(); )
+      KOKKOS_IF_ON_HOST( this->deallocate(); )
       this->myname = label;
       for (int i=0; i < rank; i++) { this->dimension[i] = dims[i]; }
-      YAKL_EXECUTE_ON_HOST_ONLY( this->allocate(); )
+      KOKKOS_IF_ON_HOST( this->allocate(); )
     }
     
 
@@ -222,80 +221,80 @@ namespace yakl {
 
     /** @brief 1-D non-owned constructor
       * \copydetails doxhide_CArray_non_owned_constructors */
-    YAKL_INLINE Array(char const *label, T *data, index_t const d1) : Array(label,data,Dims(d1)) {
+    KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, size_t const d1) : Array(label,data,Dims(d1)) {
       static_assert( rank == 1 , "ERROR: Calling constructor with 1 bound on non-rank-1 array" );
     }
     /** @brief 2-D non-owned constructor
       * \copydetails doxhide_CArray_non_owned_constructors */
-    YAKL_INLINE Array(char const *label, T *data, index_t const d1,
-                                                  index_t const d2) : Array(label,data,Dims(d1,d2)) {
+    KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, size_t const d1,
+                                                  size_t const d2) : Array(label,data,Dims(d1,d2)) {
       static_assert( rank == 2 , "ERROR: Calling constructor with 2 bound on non-rank-2 array" );
     }
     /** @brief 3-D non-owned constructor
       * \copydetails doxhide_CArray_non_owned_constructors */
-    YAKL_INLINE Array(char const *label, T *data, index_t const d1,
-                                                  index_t const d2,
-                                                  index_t const d3) : Array(label,data,Dims(d1,d2,d3)) {
+    KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, size_t const d1,
+                                                  size_t const d2,
+                                                  size_t const d3) : Array(label,data,Dims(d1,d2,d3)) {
       static_assert( rank == 3 , "ERROR: Calling constructor with 3 bound on non-rank-3 array" );
     }
     /** @brief 4-D non-owned constructor
       * \copydetails doxhide_CArray_non_owned_constructors */
-    YAKL_INLINE Array(char const *label, T *data, index_t const d1,
-                                                  index_t const d2,
-                                                  index_t const d3,
-                                                  index_t const d4) : Array(label,data,Dims(d1,d2,d3,d4)) {
+    KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, size_t const d1,
+                                                  size_t const d2,
+                                                  size_t const d3,
+                                                  size_t const d4) : Array(label,data,Dims(d1,d2,d3,d4)) {
       static_assert( rank == 4 , "ERROR: Calling constructor with 4 bound on non-rank-4 array" );
     }
     /** @brief 5-D non-owned constructor
       * \copydetails doxhide_CArray_non_owned_constructors */
-    YAKL_INLINE Array(char const *label, T *data, index_t const d1,
-                                                  index_t const d2,
-                                                  index_t const d3,
-                                                  index_t const d4,
-                                                  index_t const d5) : Array(label,data,Dims(d1,d2,d3,d4,d5)) {
+    KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, size_t const d1,
+                                                  size_t const d2,
+                                                  size_t const d3,
+                                                  size_t const d4,
+                                                  size_t const d5) : Array(label,data,Dims(d1,d2,d3,d4,d5)) {
       static_assert( rank == 5 , "ERROR: Calling constructor with 5 bound on non-rank-5 array" );
     }
     /** @brief 6-D non-owned constructor
       * \copydetails doxhide_CArray_non_owned_constructors */
-    YAKL_INLINE Array(char const *label, T *data, index_t const d1,
-                                                  index_t const d2,
-                                                  index_t const d3,
-                                                  index_t const d4,
-                                                  index_t const d5,
-                                                  index_t const d6) : Array(label,data,Dims(d1,d2,d3,d4,d5,d6)) {
+    KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, size_t const d1,
+                                                  size_t const d2,
+                                                  size_t const d3,
+                                                  size_t const d4,
+                                                  size_t const d5,
+                                                  size_t const d6) : Array(label,data,Dims(d1,d2,d3,d4,d5,d6)) {
       static_assert( rank == 6 , "ERROR: Calling constructor with 6 bound on non-rank-6 array" );
     }
     /** @brief 7-D non-owned constructor
       * \copydetails doxhide_CArray_non_owned_constructors */
-    YAKL_INLINE Array(char const *label, T *data, index_t const d1,
-                                                  index_t const d2,
-                                                  index_t const d3,
-                                                  index_t const d4,
-                                                  index_t const d5,
-                                                  index_t const d6,
-                                                  index_t const d7) : Array(label,data,Dims(d1,d2,d3,d4,d5,d6,d7)) {
+    KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, size_t const d1,
+                                                  size_t const d2,
+                                                  size_t const d3,
+                                                  size_t const d4,
+                                                  size_t const d5,
+                                                  size_t const d6,
+                                                  size_t const d7) : Array(label,data,Dims(d1,d2,d3,d4,d5,d6,d7)) {
       static_assert( rank == 7 , "ERROR: Calling constructor with 7 bound on non-rank-7 array" );
     }
     /** @brief 8-D non-owned constructor
       * \copydetails doxhide_CArray_non_owned_constructors */
-    YAKL_INLINE Array(char const *label, T *data, index_t const d1,
-                                                  index_t const d2,
-                                                  index_t const d3,
-                                                  index_t const d4,
-                                                  index_t const d5,
-                                                  index_t const d6,
-                                                  index_t const d7,
-                                                  index_t const d8) : Array(label,data,Dims(d1,d2,d3,d4,d5,d6,d7,d8)) {
+    KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, size_t const d1,
+                                                  size_t const d2,
+                                                  size_t const d3,
+                                                  size_t const d4,
+                                                  size_t const d5,
+                                                  size_t const d6,
+                                                  size_t const d7,
+                                                  size_t const d8) : Array(label,data,Dims(d1,d2,d3,d4,d5,d6,d7,d8)) {
       static_assert( rank == 8 , "ERROR: Calling constructor with 8 bound on non-rank-8 array" );
     }
     /** @brief Generic initializer-list or std::vector based owned constructor
       * \copydetails doxhide_CArray_non_owned_constructors */
-    YAKL_INLINE Array(char const *label, T *data, Dims const dims) {
+    KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, Dims const dims) {
       static_assert( rank >= 1 && rank <= 8 , "ERROR: Creating Array with a rank < 1 or > 8" );
       nullify();
-      #ifdef YAKL_DEBUG
-        if ( dims.size() < rank ) yakl_throw("ERROR: dims < rank");
-        if (data == nullptr) yakl_throw("ERROR: wrapping nullptr with a YAKL Array object");
+      #ifdef KOKKOS_DEBUG
+        if ( dims.size() < rank ) Kokkos::abort("ERROR: dims < rank");
+        if (data == nullptr) Kokkos::abort("ERROR: wrapping nullptr with a YAKL Array object");
       #endif
       this->myname = label;
       for (int i=0; i < rank; i++) { this->dimension[i] = dims[i]; }
@@ -309,13 +308,13 @@ namespace yakl {
     This shares the pointers with another Array and increments the refCounter
     */
     /** @brief Copy metadata, share data pointer; if owned, increment reference counter. No deep copy. */
-    YAKL_INLINE Array(Array<non_const_value_type,rank,myMem,styleC> const &rhs) {
+    KOKKOS_INLINE_FUNCTION Array(Array<non_const_value_type,rank,myMem,styleC> const &rhs) {
       // constructor, so no need to deallocate
       nullify();
       copy_constructor_common(rhs);
     }
     /** @brief Copy metadata, share data pointer; if owned, increment reference counter. No deep copy. */
-    YAKL_INLINE Array(Array<const_value_type,rank,myMem,styleC> const &rhs) {
+    KOKKOS_INLINE_FUNCTION Array(Array<const_value_type,rank,myMem,styleC> const &rhs) {
       static_assert( std::is_const<T>::value , 
                      "ERROR: Cannot create non-const Array using const Array" );
       // constructor, so no need to deallocate
@@ -325,41 +324,41 @@ namespace yakl {
 
 
     /** @brief Copy metadata, share data pointer; if owned, increment reference counter. No deep copy. */
-    YAKL_INLINE Array & operator=(Array<non_const_value_type,rank,myMem,styleC> const &rhs) {
+    KOKKOS_INLINE_FUNCTION Array & operator=(Array<non_const_value_type,rank,myMem,styleC> const &rhs) {
       if constexpr (! std::is_const<T>::value) {
         if (this == &rhs) { return *this; }
       }
-      YAKL_EXECUTE_ON_HOST_ONLY( this->deallocate(); )
+      KOKKOS_IF_ON_HOST( this->deallocate(); )
       copy_constructor_common(rhs);
       return *this;
     }
     /** @brief Copy metadata, share data pointer; if owned, increment reference counter. No deep copy. */
-    YAKL_INLINE Array & operator=(Array<const_value_type,rank,myMem,styleC> const &rhs) {
+    KOKKOS_INLINE_FUNCTION Array & operator=(Array<const_value_type,rank,myMem,styleC> const &rhs) {
       static_assert( std::is_const<T>::value , 
                      "ERROR: Cannot create non-const Array using const Array" );
       if constexpr (std::is_const<T>::value) {
         if (this == &rhs) { return *this; }
       }
-      YAKL_EXECUTE_ON_HOST_ONLY( this->deallocate(); )
+      KOKKOS_IF_ON_HOST( this->deallocate(); )
       copy_constructor_common(rhs);
       return *this;
     }
 
     /** @private */
     template <class TLOC>
-    YAKL_INLINE void copy_constructor_common(Array<TLOC,rank,myMem,styleC> const &rhs) {
+    KOKKOS_INLINE_FUNCTION void copy_constructor_common(Array<TLOC,rank,myMem,styleC> const &rhs) {
       for (int i=0; i<rank; i++) {
         this->dimension[i] = rhs.dimension[i];
       }
       this->myname = rhs.myname;
       this->myData   = rhs.myData;
-      YAKL_EXECUTE_ON_HOST_ONLY( yakl_mtx_lock(); )
+      KOKKOS_IF_ON_HOST( yakl_mtx_lock(); )
       this->refCount = rhs.refCount;
       if (this->refCount != nullptr) {
-        // YAKL_EXECUTE_ON_HOST_ONLY( (*(this->refCount))++; )  // This gives an nvc++ error
-        YAKL_EXECUTE_ON_HOST_ONLY( { (*(this->refCount))++; } )  // This works around the nvc++ error
+        // KOKKOS_IF_ON_HOST( (*(this->refCount))++; )  // This gives an nvc++ error
+        KOKKOS_IF_ON_HOST( { (*(this->refCount))++; } )  // This works around the nvc++ error
       }
-      YAKL_EXECUTE_ON_HOST_ONLY( yakl_mtx_unlock(); )
+      KOKKOS_IF_ON_HOST( yakl_mtx_unlock(); )
     }
 
 
@@ -369,7 +368,7 @@ namespace yakl {
     Therefore, no need to increment refCout
     */
     /** @brief Move metadata and data pointer. No deep copy. */
-    YAKL_INLINE Array(Array &&rhs) {
+    KOKKOS_INLINE_FUNCTION Array(Array &&rhs) {
       // constructor, so no need to deallocate
       nullify();
       for (int i=0; i<rank; i++) {
@@ -385,9 +384,9 @@ namespace yakl {
 
 
     /** @brief Move metadata and data pointer. No deep copy. */
-    YAKL_INLINE Array& operator=(Array &&rhs) {
+    KOKKOS_INLINE_FUNCTION Array& operator=(Array &&rhs) {
       if (this == &rhs) { return *this; }
-      YAKL_EXECUTE_ON_HOST_ONLY( this->deallocate(); )
+      KOKKOS_IF_ON_HOST( this->deallocate(); )
       for (int i=0; i<rank; i++) {
         this->dimension[i] = rhs.dimension[i];
       }
@@ -407,16 +406,16 @@ namespace yakl {
     Decrement the refCounter, and if it's zero, deallocate and nullify.  
     */
     /** @brief If owned, decrement reference counter, and deallocate data when it reaches zero. If non-owned, does nothing */
-    YAKL_INLINE ~Array() {
-      YAKL_EXECUTE_ON_HOST_ONLY( this->deallocate(); )
+    KOKKOS_INLINE_FUNCTION ~Array() {
+      KOKKOS_IF_ON_HOST( this->deallocate(); )
     }
 
 
     /** @brief Construct this CArray object from an ArrayIR object for easy interoperability with other C++ portability libraries */
     Array( array_ir::ArrayIR<T,rank> const &ir ) {
       nullify();
-      if (myMem == memDevice && (! ir.data_valid_on_device())) yakl_throw("ERROR: wrapping non-device-valid ArrayIR with memDevice yakl::CArray");
-      if (myMem == memHost   && (! ir.data_valid_on_host  ())) yakl_throw("ERROR: wrapping non-host-valid ArrayIR with memHost yakl::CArray");
+      if (myMem == memDevice && (! ir.data_valid_on_device())) Kokkos::abort("ERROR: wrapping non-device-valid ArrayIR with memDevice yakl::CArray");
+      if (myMem == memHost   && (! ir.data_valid_on_host  ())) Kokkos::abort("ERROR: wrapping non-host-valid ArrayIR with memHost yakl::CArray");
       this->myData = ir.data();
       this->myname = ir.label();
       for (int i=0; i < rank; i++) { this->dimension[i] = ir.extent(i); }
@@ -445,7 +444,7 @@ namespace yakl {
       * @brief dummy
       * 
       * Return a reference to the element at the requested index. Number of indices must match the number of dimensions
-      * in this array, `N`. The array object must already be allocated. For index checking, please define the `YAKL_DEBUG`
+      * in this array, `N`. The array object must already be allocated. For index checking, please define the `KOKKOS_DEBUG`
       * CPP macro. Use zero-based indexing with the right-most value varying the fastest (row-major ordering).
       */
 
@@ -454,55 +453,55 @@ namespace yakl {
     */
     /** @brief Return reference to element at the requested index (1-D)
       * \copydetails doxhide_CArray_indexers */
-    YAKL_INLINE T &operator()(index_t i0) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(size_t i0) const {
       static_assert( rank == 1 , "ERROR: Indexing non-rank-1 array with 1 index" );
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         check(i0);
       #endif
-      index_t ind = i0;
+      size_t ind = i0;
       return this->myData[ind];
     }
     /** @brief Return reference to element at the requested indices (2-D)
       * \copydetails doxhide_CArray_indexers */
-    YAKL_INLINE T &operator()(index_t i0, index_t i1) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1) const {
       static_assert( rank == 2 , "ERROR: Indexing non-rank-2 array with 2 indices" );
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         check(i0,i1);
       #endif
-      index_t ind = i0*this->dimension[1] + i1;
+      size_t ind = i0*this->dimension[1] + i1;
       return this->myData[ind];
     }
     /** @brief Return reference to element at the requested indices (3-D)
       * \copydetails doxhide_CArray_indexers */
-    YAKL_INLINE T &operator()(index_t i0, index_t i1, index_t i2) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2) const {
       static_assert( rank == 3 , "ERROR: Indexing non-rank-3 array with 3 indices" );
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         check(i0,i1,i2);
       #endif
-      index_t ind = (i0*this->dimension[1] + i1)*
+      size_t ind = (i0*this->dimension[1] + i1)*
                         this->dimension[2] + i2;
       return this->myData[ind];
     }
     /** @brief Return reference to element at the requested indices (4-D)
       * \copydetails doxhide_CArray_indexers */
-    YAKL_INLINE T &operator()(index_t i0, index_t i1, index_t i2, index_t i3) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3) const {
       static_assert( rank == 4 , "ERROR: Indexing non-rank-4 array with 4 indices" );
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         check(i0,i1,i2,i3);
       #endif
-      index_t ind = ((i0*this->dimension[1] + i1)*
+      size_t ind = ((i0*this->dimension[1] + i1)*
                          this->dimension[2] + i2)*
                          this->dimension[3] + i3;
       return this->myData[ind];
     }
     /** @brief Return reference to element at the requested indices (5-D)
       * \copydetails doxhide_CArray_indexers */
-    YAKL_INLINE T &operator()(index_t i0, index_t i1, index_t i2, index_t i3, index_t i4) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4) const {
       static_assert( rank == 5 , "ERROR: Indexing non-rank-5 array with 5 indices" );
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         check(i0,i1,i2,i3,i4);
       #endif
-      index_t ind = (((i0*this->dimension[1] + i1)*
+      size_t ind = (((i0*this->dimension[1] + i1)*
                           this->dimension[2] + i2)*
                           this->dimension[3] + i3)*
                           this->dimension[4] + i4;
@@ -510,12 +509,12 @@ namespace yakl {
     }
     /** @brief Return reference to element at the requested indices (6-D)
       * \copydetails doxhide_CArray_indexers */
-    YAKL_INLINE T &operator()(index_t i0, index_t i1, index_t i2, index_t i3, index_t i4, index_t i5) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5) const {
       static_assert( rank == 6 , "ERROR: Indexing non-rank-6 array with 6 indices" );
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         check(i0,i1,i2,i3,i4,i5);
       #endif
-      index_t ind = ((((i0*this->dimension[1] + i1)*
+      size_t ind = ((((i0*this->dimension[1] + i1)*
                            this->dimension[2] + i2)*
                            this->dimension[3] + i3)*
                            this->dimension[4] + i4)*
@@ -524,12 +523,12 @@ namespace yakl {
     }
     /** @brief Return reference to element at the requested indices (7-D)
       * \copydetails doxhide_CArray_indexers */
-    YAKL_INLINE T &operator()(index_t i0, index_t i1, index_t i2, index_t i3, index_t i4, index_t i5, index_t i6) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5, size_t i6) const {
       static_assert( rank == 7 , "ERROR: Indexing non-rank-7 array with 7 indices" );
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         check(i0,i1,i2,i3,i4,i5,i6);
       #endif
-      index_t ind = (((((i0*this->dimension[1] + i1)*
+      size_t ind = (((((i0*this->dimension[1] + i1)*
                             this->dimension[2] + i2)*
                             this->dimension[3] + i3)*
                             this->dimension[4] + i4)*
@@ -539,13 +538,13 @@ namespace yakl {
     }
     /** @brief Return reference to element at the requested indices (8-D)
       * \copydetails doxhide_CArray_indexers */
-    YAKL_INLINE T &operator()(index_t i0, index_t i1, index_t i2, index_t i3, index_t i4, index_t i5, index_t i6,
-                              index_t i7) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5, size_t i6,
+                              size_t i7) const {
       static_assert( rank == 8 , "ERROR: Indexing non-rank-8 array with 8 indices" );
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         check(i0,i1,i2,i3,i4,i5,i6,i7);
       #endif
-      index_t ind = ((((((i0*this->dimension[1] + i1)*
+      size_t ind = ((((((i0*this->dimension[1] + i1)*
                              this->dimension[2] + i2)*
                              this->dimension[3] + i3)*
                              this->dimension[4] + i4)*
@@ -557,10 +556,10 @@ namespace yakl {
 
 
     /** @private */
-    YAKL_INLINE void check(index_t i0, index_t i1=0, index_t i2=0, index_t i3=0, index_t i4=0, index_t i5=0,
-                           index_t i6=0, index_t i7=0) const {
-      #ifdef YAKL_DEBUG
-        if (! this->initialized()) { yakl_throw("Error: Using operator() on an Array that isn't allocated"); }
+    KOKKOS_INLINE_FUNCTION void check(size_t i0, size_t i1=0, size_t i2=0, size_t i3=0, size_t i4=0, size_t i5=0,
+                           size_t i6=0, size_t i7=0) const {
+      #ifdef KOKKOS_DEBUG
+        if (! this->initialized()) { Kokkos::abort("Error: Using operator() on an Array that isn't allocated"); }
         if constexpr (rank >= 1) { if (i0 >= this->dimension[0]) ind_out_bounds<0>(i0); }
         if constexpr (rank >= 2) { if (i1 >= this->dimension[1]) ind_out_bounds<1>(i1); }
         if constexpr (rank >= 3) { if (i2 >= this->dimension[2]) ind_out_bounds<2>(i2); }
@@ -570,12 +569,12 @@ namespace yakl {
         if constexpr (rank >= 7) { if (i6 >= this->dimension[6]) ind_out_bounds<6>(i6); }
         if constexpr (rank >= 8) { if (i7 >= this->dimension[7]) ind_out_bounds<7>(i7); }
         #if defined(YAKL_SEPARATE_MEMORY_SPACE)
-          YAKL_EXECUTE_ON_DEVICE_ONLY( if constexpr (myMem == memHost) yakl_throw("ERROR: host array being accessed in a device kernel"); )
+          KOKKOS_IF_ON_DEVICE( if constexpr (myMem == memHost) Kokkos::abort("ERROR: host array being accessed in a device kernel"); )
           #if !defined(YAKL_MANAGED_MEMORY)
-            YAKL_EXECUTE_ON_HOST_ONLY(
+            KOKKOS_IF_ON_HOST(
               if constexpr (myMem == memDevice) {
                 std::cerr << "ERROR: For Array labeled: " << this->myname << ":" << std::endl;
-                yakl_throw("Device array being accessed on the host without managed memory turned on");
+                Kokkos::abort("Device array being accessed on the host without managed memory turned on");
               }
             )
           #endif
@@ -587,14 +586,14 @@ namespace yakl {
     // if this function gets called, then there was definitely an error
     /** @private */
     template <int I>
-    YAKL_INLINE void ind_out_bounds(index_t ind) const {
-      #ifdef YAKL_DEBUG
-        YAKL_EXECUTE_ON_HOST_ONLY(
+    KOKKOS_INLINE_FUNCTION void ind_out_bounds(size_t ind) const {
+      #ifdef KOKKOS_DEBUG
+        KOKKOS_IF_ON_HOST(
           std::cerr << "ERROR: For Array labeled: " << this->myname << ":" << std::endl;
           std::cerr << "Index " << I+1 << " of " << rank << " is out of bounds.  Provided index: " << ind
                     << ".  Upper Bound: " << this->dimension[I]-1 << std::endl;
         )
-        yakl_throw("ERROR: Index out of bounds.");
+        Kokkos::abort("ERROR: Index out of bounds.");
       #endif
     }
 
@@ -611,13 +610,8 @@ namespace yakl {
     template <class TLOC>
     void memset_loc(TLOC rhs) const {
       if (myMem == memDevice) {
-        #ifdef YAKL_ENABLE_STREAMS
-          fence();
-        #endif
-        memset(*this, rhs);
-        #ifdef YAKL_ENABLE_STREAMS
-          fence();
-        #endif
+        YAKL_SCOPE( myData , this->myData );
+        c::parallel_for( YAKL_AUTO_LABEL() , this->size() , KOKKOS_LAMBDA (int i) { myData[i] = rhs; });
       } else {
         for (int i=0; i < this->totElems(); i++) { this->myData[i] = rhs; }
       }
@@ -626,17 +620,17 @@ namespace yakl {
 
     /** @brief Return an array aliasing a contiguous subset of the slowest dimension. Retuns the same array with the slowest dimension truncated
                to [0,u-1]. */
-    YAKL_INLINE Array<T,rank,myMem,styleC> subset_slowest_dimension(int u) const { return subset_slowest_dimension(0,u-1); }
+    KOKKOS_INLINE_FUNCTION Array<T,rank,myMem,styleC> subset_slowest_dimension(int u) const { return subset_slowest_dimension(0,u-1); }
 
 
     /** @brief Return an array aliasing a contiguous subset of the slowest dimension */
-    YAKL_INLINE Array<T,rank,myMem,styleC> subset_slowest_dimension(int l, int u) const {
-      #ifdef YAKL_DEBUG
-        if (! this->initialized()) { yakl_throw("ERROR: Trying to subset_slowest_dimension an Array that hasn't been initialized"); }
-        if (l < 0) { yakl_throw("ERROR: subset_slowest_dimension lower bound < 0"); }
-        if (u < 0) { yakl_throw("ERROR: subset_slowest_dimension upper bound < 0"); }
-        if (l > u) { yakl_throw("ERROR: subset_slowest_dimension lower bound > upper bounds"); }
-        if (u > this->dimension[0]-1) { yakl_throw("ERROR: subset_slowest_dimension upper bound out of bounds"); }
+    KOKKOS_INLINE_FUNCTION Array<T,rank,myMem,styleC> subset_slowest_dimension(int l, int u) const {
+      #ifdef KOKKOS_DEBUG
+        if (! this->initialized()) { Kokkos::abort("ERROR: Trying to subset_slowest_dimension an Array that hasn't been initialized"); }
+        if (l < 0) { Kokkos::abort("ERROR: subset_slowest_dimension lower bound < 0"); }
+        if (u < 0) { Kokkos::abort("ERROR: subset_slowest_dimension upper bound < 0"); }
+        if (l > u) { Kokkos::abort("ERROR: subset_slowest_dimension lower bound > upper bounds"); }
+        if (u > this->dimension[0]-1) { Kokkos::abort("ERROR: subset_slowest_dimension upper bound out of bounds"); }
       #endif
       auto ret = *this;
       auto &d = this->dimension;
@@ -678,36 +672,36 @@ namespace yakl {
 
     /** @brief Array slice using initializer list or std::vector indices 
       * \copydetails doxhide_CArray_slicing */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( Dims const &dims ) const {
-      #ifdef YAKL_DEBUG
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( Dims const &dims ) const {
+      #ifdef KOKKOS_DEBUG
         if (rank != dims.size()) {
-          YAKL_EXECUTE_ON_HOST_ONLY( std::cerr << "For Array named " << this->myname << ":  "; )
-          yakl_throw("ERROR: slice rank must be equal to dims.size()");
+          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+          Kokkos::abort("ERROR: slice rank must be equal to dims.size()");
         }
         for (int i = rank-1-N; i >= 0; i--) {
           if (dims.data[i] >= this->dimension[i]) {
-            YAKL_EXECUTE_ON_HOST_ONLY( std::cerr << "For Array named " << this->myname << ":  "; )
-            yakl_throw("ERROR: One of the slicing dimension dimensions is out of bounds");
+            KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+            Kokkos::abort("ERROR: One of the slicing dimension dimensions is out of bounds");
           }
         }
         if (! this->initialized()) {
-          YAKL_EXECUTE_ON_HOST_ONLY( std::cerr << "For Array named " << this->myname << ":  "; )
-          yakl_throw("ERROR: calling slice() on an Array that hasn't been allocated");
+          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+          Kokkos::abort("ERROR: calling slice() on an Array that hasn't been allocated");
         }
       #endif
       Array<T,N,myMem,styleC> ret;
-      index_t offset = 1;
+      size_t offset = 1;
       for (int i = rank-1; i > rank-1-N; i--) {
         ret.dimension[i-(rank-N)] = this->dimension[i];
         offset *= this->dimension[i];
       }
-      index_t retOff = 0;
+      size_t retOff = 0;
       for (int i = rank-1-N; i >= 0; i--) {
         retOff += dims.data[i]*offset;
         offset *= this->dimension[i];
       }
       ret.myData = &(this->myData[retOff]);
-      YAKL_EXECUTE_ON_HOST_ONLY(
+      KOKKOS_IF_ON_HOST(
         yakl_mtx_lock();
         ret.refCount = this->refCount;
         if (this->refCount != nullptr) {
@@ -719,49 +713,49 @@ namespace yakl {
     }
     /** @brief Array slice of 1-D array 
       * \copydetails doxhide_CArray_slicing */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0 ) const {
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0 ) const {
       static_assert( rank == 1 , "ERROR: Calling slice() with 1 index on a non-rank-1 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0) );
     }
     /** @brief Array slice of 2-D array 
       * \copydetails doxhide_CArray_slicing */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1 ) const {
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1 ) const {
       static_assert( rank == 2 , "ERROR: Calling slice() with 2 index on a non-rank-2 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1) );
     }
     /** @brief Array slice of 3-D array 
       * \copydetails doxhide_CArray_slicing */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2 ) const {
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2 ) const {
       static_assert( rank == 3 , "ERROR: Calling slice() with 3 index on a non-rank-3 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2) );
     }
     /** @brief Array slice of 4-D array 
       * \copydetails doxhide_CArray_slicing */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3 ) const {
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3 ) const {
       static_assert( rank == 4 , "ERROR: Calling slice() with 4 index on a non-rank-4 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3) );
     }
     /** @brief Array slice of 5-D array 
       * \copydetails doxhide_CArray_slicing */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4 ) const {
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4 ) const {
       static_assert( rank == 5 , "ERROR: Calling slice() with 5 index on a non-rank-5 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3,i4) );
     }
     /** @brief Array slice of 6-D array 
       * \copydetails doxhide_CArray_slicing */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5 ) const {
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5 ) const {
       static_assert( rank == 6 , "ERROR: Calling slice() with 6 index on a non-rank-6 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3,i4,i5) );
     }
     /** @brief Array slice of 7-D array 
       * \copydetails doxhide_CArray_slicing */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5,
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5,
                                                                 int i6 ) const {
       static_assert( rank == 7 , "ERROR: Calling slice() with 7 index on a non-rank-7 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
@@ -769,7 +763,7 @@ namespace yakl {
     }
     /** @brief Array slice of 8-D array 
       * \copydetails doxhide_CArray_slicing */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6,
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6,
                                                                 int i7 ) const {
       static_assert( rank == 8 , "ERROR: Calling slice() with 8 index on a non-rank-8 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
@@ -803,13 +797,13 @@ namespace yakl {
 
     /** @brief Reshape array using initializer list or std::vector indices
       * \copydetails doxhide_CArray_reshape */
-    template <int N> YAKL_INLINE Array<T,N,myMem,styleC> reshape(Dims const &dims) const {
-      #ifdef YAKL_DEBUG
-        if (! this->initialized()) { yakl_throw("ERROR: Trying to reshape an Array that hasn't been initialized"); }
-        if (dims.size() != N) { yakl_throw("ERROR: new number of reshaped array dimensions does not match the templated rank"); }
-        index_t totelems = 1;
+    template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> reshape(Dims const &dims) const {
+      #ifdef KOKKOS_DEBUG
+        if (! this->initialized()) { Kokkos::abort("ERROR: Trying to reshape an Array that hasn't been initialized"); }
+        if (dims.size() != N) { Kokkos::abort("ERROR: new number of reshaped array dimensions does not match the templated rank"); }
+        size_t totelems = 1;
         for (int i=0; i < N; i++) { totelems *= dims.data[i]; }
-        if (totelems != this->totElems()) { yakl_throw("ERROR: Total number of reshaped array elements is not consistent with this array"); }
+        if (totelems != this->totElems()) { Kokkos::abort("ERROR: Total number of reshaped array elements is not consistent with this array"); }
       #endif
       Array<T,N,myMem,styleC> ret;
       for (int i=0; i < N; i++) {
@@ -817,7 +811,7 @@ namespace yakl {
       }
       ret.myname = this->myname;
       ret.myData = this->myData;
-      YAKL_EXECUTE_ON_HOST_ONLY(
+      KOKKOS_IF_ON_HOST(
         yakl_mtx_lock();
         ret.refCount = this->refCount;
         if (this->refCount != nullptr) {
@@ -829,28 +823,28 @@ namespace yakl {
     }
     /** @brief Reshape array into a 1-D array
       * \copydetails doxhide_CArray_reshape */
-    YAKL_INLINE Array<T,1,myMem,styleC> reshape(index_t i0                                                                                    ) const { return reshape<1>( Dims(i0) ); }
+    KOKKOS_INLINE_FUNCTION Array<T,1,myMem,styleC> reshape(size_t i0                                                                                    ) const { return reshape<1>( Dims(i0) ); }
     /** @brief Reshape array into a 2-D array
       * \copydetails doxhide_CArray_reshape */
-    YAKL_INLINE Array<T,2,myMem,styleC> reshape(index_t i0, index_t i1                                                                        ) const { return reshape<2>( Dims(i0,i1) ); }
+    KOKKOS_INLINE_FUNCTION Array<T,2,myMem,styleC> reshape(size_t i0, size_t i1                                                                        ) const { return reshape<2>( Dims(i0,i1) ); }
     /** @brief Reshape array into a 3-D array
       * \copydetails doxhide_CArray_reshape */
-    YAKL_INLINE Array<T,3,myMem,styleC> reshape(index_t i0, index_t i1, index_t i2                                                            ) const { return reshape<3>( Dims(i0,i1,i2) ); }
+    KOKKOS_INLINE_FUNCTION Array<T,3,myMem,styleC> reshape(size_t i0, size_t i1, size_t i2                                                            ) const { return reshape<3>( Dims(i0,i1,i2) ); }
     /** @brief Reshape array into a 4-D array
       * \copydetails doxhide_CArray_reshape */
-    YAKL_INLINE Array<T,4,myMem,styleC> reshape(index_t i0, index_t i1, index_t i2, index_t i3                                                ) const { return reshape<4>( Dims(i0,i1,i2,i3) ); }
+    KOKKOS_INLINE_FUNCTION Array<T,4,myMem,styleC> reshape(size_t i0, size_t i1, size_t i2, size_t i3                                                ) const { return reshape<4>( Dims(i0,i1,i2,i3) ); }
     /** @brief Reshape array into a 5-D array
       * \copydetails doxhide_CArray_reshape */
-    YAKL_INLINE Array<T,5,myMem,styleC> reshape(index_t i0, index_t i1, index_t i2, index_t i3, index_t i4                                    ) const { return reshape<5>( Dims(i0,i1,i2,i3,i4) ); }
+    KOKKOS_INLINE_FUNCTION Array<T,5,myMem,styleC> reshape(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4                                    ) const { return reshape<5>( Dims(i0,i1,i2,i3,i4) ); }
     /** @brief Reshape array into a 6-D array
       * \copydetails doxhide_CArray_reshape */
-    YAKL_INLINE Array<T,6,myMem,styleC> reshape(index_t i0, index_t i1, index_t i2, index_t i3, index_t i4, index_t i5                        ) const { return reshape<6>( Dims(i0,i1,i2,i3,i4,i5) ); }
+    KOKKOS_INLINE_FUNCTION Array<T,6,myMem,styleC> reshape(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5                        ) const { return reshape<6>( Dims(i0,i1,i2,i3,i4,i5) ); }
     /** @brief Reshape array into a 7-D array
       * \copydetails doxhide_CArray_reshape */
-    YAKL_INLINE Array<T,7,myMem,styleC> reshape(index_t i0, index_t i1, index_t i2, index_t i3, index_t i4, index_t i5, index_t i6            ) const { return reshape<7>( Dims(i0,i1,i2,i3,i4,i5,i6) ); }
+    KOKKOS_INLINE_FUNCTION Array<T,7,myMem,styleC> reshape(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5, size_t i6            ) const { return reshape<7>( Dims(i0,i1,i2,i3,i4,i5,i6) ); }
     /** @brief Reshape array into a 8-D array
       * \copydetails doxhide_CArray_reshape */
-    YAKL_INLINE Array<T,8,myMem,styleC> reshape(index_t i0, index_t i1, index_t i2, index_t i3, index_t i4, index_t i5, index_t i6, index_t i7) const { return reshape<8>( Dims(i0,i1,i2,i3,i4,i5,i6,i7) ); }
+    KOKKOS_INLINE_FUNCTION Array<T,8,myMem,styleC> reshape(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5, size_t i6, size_t i7) const { return reshape<8>( Dims(i0,i1,i2,i3,i4,i5,i6,i7) ); }
 
 
     /** @brief Collapse this array into a 1-D array
@@ -865,15 +859,15 @@ namespace yakl {
       * array metadata, and you may notice the extra cost. 
       * Example usage: `auto new_arr_1d = arr.collapse();`
       */
-    YAKL_INLINE Array<T,1,myMem,styleC> collapse() const {
-      #ifdef YAKL_DEBUG
-        if (! this->initialized()) { yakl_throw("ERROR: Trying to collapse an Array that hasn't been initialized"); }
+    KOKKOS_INLINE_FUNCTION Array<T,1,myMem,styleC> collapse() const {
+      #ifdef KOKKOS_DEBUG
+        if (! this->initialized()) { Kokkos::abort("ERROR: Trying to collapse an Array that hasn't been initialized"); }
       #endif
       Array<T,1,myMem,styleC> ret;
       ret.dimension[0] = this->totElems();
       ret.myname = this->myname;
       ret.myData = this->myData;
-      YAKL_EXECUTE_ON_HOST_ONLY(
+      KOKKOS_IF_ON_HOST(
         yakl_mtx_lock();
         ret.refCount = this->refCount;
         if (this->refCount != nullptr) {
@@ -899,13 +893,11 @@ namespace yakl {
       *          data copied from this array object.
       */
     template <class TLOC=T>
-    inline Array<TLOC,rank,memHost,styleC> createHostCopy(Stream stream = Stream()) const {
+    inline Array<TLOC,rank,memHost,styleC> createHostCopy() const {
       auto ret = createHostObject();
-      this->copy_inform(ret);
-      if (myMem == memHost) { memcpy_host_to_host  ( ret.myData , this->myData , this->totElems()          ); }
-      else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() , stream ); }
-      if (stream.is_default_stream()) { fence(); }
-      else                            { stream.fence(); }
+      if (myMem == memHost) { memcpy_host_to_host  ( ret.myData , this->myData , this->totElems() ); }
+      else                  { memcpy_device_to_host( ret.myData , this->myData , this->totElems() ); }
+      Kokkos::fence();
       return Array<TLOC,rank,memHost,styleC>(ret);
     }
 
@@ -919,10 +911,10 @@ namespace yakl {
       * NOTE: The returned array will have a **non-`const`** underlying type. */
     template <class TLOC=typename std::remove_cv<T>::type>
     inline Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleC> createHostObject() const {
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         if (! this->initialized()) {
-          YAKL_EXECUTE_ON_HOST_ONLY( std::cerr << "For Array named " << this->myname << ":  "; )
-          yakl_throw("Error: createHostObject() called on an Array that hasn't been allocated");
+          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+          Kokkos::abort("Error: createHostObject() called on an Array that hasn't been allocated");
         }
       #endif
       // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
@@ -948,13 +940,10 @@ namespace yakl {
       *          data copied from this array object.
       */
     template <class TLOC=T>
-    inline Array<TLOC,rank,memDevice,styleC> createDeviceCopy(Stream stream = Stream()) const {
+    inline Array<TLOC,rank,memDevice,styleC> createDeviceCopy() const {
       auto ret = createDeviceObject();
-      this->copy_inform(ret);
-      if (myMem == memHost) { memcpy_host_to_device  ( ret.myData , this->myData , this->totElems() , stream ); }
-      else                  { memcpy_device_to_device( ret.myData , this->myData , this->totElems() , stream ); }
-      if (stream.is_default_stream()) { fence(); }
-      else                            { stream.fence(); }
+      if (myMem == memHost) { memcpy_host_to_device  ( ret.myData , this->myData , this->totElems() ); }
+      else                  { memcpy_device_to_device( ret.myData , this->myData , this->totElems() ); }
       return Array<TLOC,rank,memDevice,styleC>(ret);
     }
 
@@ -968,10 +957,10 @@ namespace yakl {
       * NOTE: The returned array will have a **non-`const`** underlying type. */
     template <class TLOC=typename std::remove_cv<T>::type>
     inline Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleC> createDeviceObject() const {
-      #ifdef YAKL_DEBUG
+      #ifdef KOKKOS_DEBUG
         if (! this->initialized()) {
-          YAKL_EXECUTE_ON_HOST_ONLY( std::cerr << "For Array named " << this->myname << ":  "; )
-          yakl_throw("Error: createDeviceObject() called on an Array that hasn't been allocated.");
+          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+          Kokkos::abort("Error: createDeviceObject() called on an Array that hasn't been allocated.");
         }
       #endif
       // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
@@ -987,33 +976,33 @@ namespace yakl {
     /** @brief Returns the dimensions of this array as a yakl::SArray object.
       * 
       * You should use zero-based indexing on the returned SArray object. */
-    YAKL_INLINE SArray<index_t,1,rank> get_dimensions() const {
-      SArray<index_t,1,rank> ret;
+    KOKKOS_INLINE_FUNCTION SArray<size_t,1,rank> get_dimensions() const {
+      SArray<size_t,1,rank> ret;
       for (int i=0; i<rank; i++) { ret(i) = this->dimension[i]; }
       return ret;
     }
     /** @brief Returns the lower bound of each dimension of this array (which are always all zero) as a yakl::SArray object.
       * 
       * You should use zero-based indexing on the returned yakl::SArray object. */
-    YAKL_INLINE SArray<index_t,1,rank> get_lbounds() const {
-      SArray<index_t,1,rank> ret;
+    KOKKOS_INLINE_FUNCTION SArray<size_t,1,rank> get_lbounds() const {
+      SArray<size_t,1,rank> ret;
       for (int i=0; i<rank; i++) { ret(i) = 0; }
       return ret;
     }
     /** @brief Returns the upper bound of each dimension of this array as a yakl::SArray object.
       * 
       * You should use zero-based indexing on the returned yakl::SArray object. */
-    YAKL_INLINE SArray<index_t,1,rank> get_ubounds() const {
-      SArray<index_t,1,rank> ret;
+    KOKKOS_INLINE_FUNCTION SArray<size_t,1,rank> get_ubounds() const {
+      SArray<size_t,1,rank> ret;
       for (int i=0; i<rank; i++) { ret(i) = this->dimension[i]-1; }
       return ret;
     }
     /** @brief Returns the extent of the requested dimension of this array.
       *
       * The parameter `dim` is expected to be a zero-based index. */
-    YAKL_INLINE index_t extent( int dim ) const {
-      #ifdef YAKL_DEBUG
-        if (dim < 0 || dim > rank-1) yakl_throw("ERROR: calling extent() with an out of bounds index");
+    KOKKOS_INLINE_FUNCTION size_t extent( int dim ) const {
+      #ifdef KOKKOS_DEBUG
+        if (dim < 0 || dim > rank-1) Kokkos::abort("ERROR: calling extent() with an out of bounds index");
       #endif
       return this->dimension[dim];
     }
@@ -1021,6 +1010,5 @@ namespace yakl {
   };
 
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 
 

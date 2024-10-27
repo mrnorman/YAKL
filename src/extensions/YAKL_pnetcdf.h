@@ -7,7 +7,6 @@
 #include <pnetcdf.h>
 #include <stdexcept>
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   //Error reporting routine for the PNetCDF I/O
@@ -551,7 +550,7 @@ namespace yakl {
     /** @brief Collectively write an entire Array at once */
     template <class T, int rank, int myMem, int myStyle>
     void write_all(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<MPI_Offset> start ) {
-      if (rank != start   .size()) { yakl_throw("start.size() != Array's rank"); }
+      if (rank != start   .size()) { Kokkos::abort("start.size() != Array's rank"); }
       std::vector<MPI_Offset> count(rank);
       for (int i=0; i < rank; i++) { count[i] = arr.extent(i); }
       int varid = get_var_id(varName);
@@ -562,7 +561,7 @@ namespace yakl {
     /** @brief Collectively read an entire Array at once ... in pieces? */
     template <class T, int rank, int myMem, int myStyle>
     void read_all(Array<T,rank,myMem,myStyle> const &arr_in , std::string varName , std::vector<MPI_Offset> start ) {
-      if (rank != start   .size()) { yakl_throw("start.size() != Array's rank"); }
+      if (rank != start   .size()) { Kokkos::abort("start.size() != Array's rank"); }
       Array<T,rank,memHost,myStyle> arr;
       if constexpr (myMem == memDevice) { arr = arr_in.createHostObject(); }
       else                              { arr = arr_in;                    }
@@ -607,7 +606,7 @@ namespace yakl {
     template <class T, int rank, int myMem, int myStyle>
     void write1_all(Array<T,rank,myMem,myStyle> const &arr , std::string varName ,
                     int ind , std::vector<MPI_Offset> start_in , std::string ulDimName="unlim" ) {
-      if (rank != start_in.size()) { yakl_throw("start_in.size() != Array's rank"); }
+      if (rank != start_in.size()) { Kokkos::abort("start_in.size() != Array's rank"); }
       std::vector<MPI_Offset> start(rank+1);
       std::vector<MPI_Offset> count(rank+1);
       start[0] = ind;
@@ -636,13 +635,12 @@ namespace yakl {
       else if ( std::is_same<typename std::remove_cv<T>::type ,unsigned  long>::value ) { return NC_UINT64; }
       else if ( std::is_same<typename std::remove_cv<T>::type ,         float>::value ) { return NC_FLOAT;  }
       else if ( std::is_same<typename std::remove_cv<T>::type ,        double>::value ) { return NC_DOUBLE; }
-      else { yakl_throw("Invalid type"); }
+      else { Kokkos::abort("Invalid type"); }
       return -1;
     }
 
   };
 
 }
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 
 

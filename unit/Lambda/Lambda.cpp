@@ -21,11 +21,12 @@ namespace blah {
 
 
 void die(std::string msg) {
-  yakl::yakl_throw(msg.c_str());
+  Kokkos::abort(msg.c_str());
 }
 
 
 int main() {
+  Kokkos::initialize();
   yakl::init();
   {
     int constexpr n = 100;
@@ -34,15 +35,15 @@ int main() {
     blah::b = real1d("b",n);
     blah::c = real1d("c",n);
 
-    memset(blah::a,0.f);
-    memset(blah::b,2.f);
-    memset(blah::c,3.f);
+    blah::a = 0.f;
+    blah::b = 2.f;
+    blah::c = 3.f;
 
     YAKL_SCOPE(a,::blah::a);
     YAKL_SCOPE(b,::blah::b);
     YAKL_SCOPE(c,::blah::c);
 
-    parallel_for( Bounds<1>(n) , YAKL_LAMBDA (int i) {
+    parallel_for( Bounds<1>(n) , KOKKOS_LAMBDA (int i) {
       a(i) = b(i) + c(i);
     });
 
@@ -56,6 +57,7 @@ int main() {
     blah::c = real1d();
   }
   yakl::finalize();
+  Kokkos::finalize(); 
   
   return 0;
 }

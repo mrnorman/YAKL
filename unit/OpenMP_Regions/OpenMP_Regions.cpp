@@ -17,11 +17,12 @@ typedef Array<size_t,1,memHost,styleFortran> int1d_f;
 
 
 void die(std::string msg) {
-  yakl::yakl_throw(msg.c_str());
+  Kokkos::abort(msg.c_str());
 }
 
 
 int main() {
+  Kokkos::initialize();
   yakl::init();
   {
     int constexpr n1 = 100;
@@ -414,6 +415,7 @@ int main() {
     }
   }
   yakl::finalize();
+  Kokkos::finalize(); 
   
   return 0;
 }

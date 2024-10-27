@@ -4,7 +4,6 @@
 
 #include "YAKL_Bounds_c.h"
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   namespace c {
 
@@ -12,5 +11,4 @@ namespace yakl {
 
   }
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 

@@ -7,7 +7,6 @@
 #pragma once
 // Included by YAKL_Array.h
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // This implements all functionality used by all dynamically allocated arrays
@@ -36,106 +35,11 @@ namespace yakl {
     /** @private */
     T       * myData;         // Pointer to the flattened internal data
     /** @private */
-    index_t dimension[rank];  // Sizes of the 8 possible dimensions
+    size_t dimension[rank];  // Sizes of the 8 possible dimensions
     /** @private */
     int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
     /** @private */
     char const * myname;    // Label for debug printing. Only stored if debugging is turned on
-    #ifdef YAKL_ENABLE_STREAMS
-      StreamList stream_dependencies;
-    #else
-      // This only exists to void extra data in the Array classes
-      /** @private */
-      struct StreamListDummy {
-        static bool constexpr empty() { return true; }
-        void push_back( Stream stream ) { }
-        int  size() { return 0; }
-        Stream operator[] (int i) { return Stream(); }
-      };
-      StreamListDummy stream_dependencies;
-    #endif
-
-
-    /** @brief Declare a dependency on the passed stream.
-      * @details Upon deallocation, an event is placed in each stream this array depends on. The data pointer
-      *          is not released from the pool until all dependent events complete. This avoids potential
-      *          pointer aliasing of Arrays potentially being used simultaneous in different parallel streams.
-      *          The pool allocator is non-blocking, so erroneous aliasing can occur if the user uses multiple
-      *          streams, deallocates and allocates during runtime, and does not use this function. */
-    void add_stream_dependency(Stream stream) {
-      if constexpr (streams_enabled) {
-        if (use_pool()) stream_dependencies.push_back(stream);
-      }
-    }
-
-
-    /** @brief Declare a dependencies on the multiple streams at one time.
-      * \copydetails add_stream_dependency */
-    void add_stream_dependencies(std::vector<Stream> streams) {
-      if constexpr (streams_enabled) {
-        if (use_pool()) {
-          for (int i=0; i < streams.size(); i++) { stream_dependencies.push_back(streams[i]); }
-        }
-      }
-    }
-
-
-    /** @private */
-    void create_inform() {
-      #ifdef YAKL_VERBOSE
-        std::string msg = "Allocating ";
-        if constexpr (myMem == memHost) {
-          msg += std::string("host, ");
-        } else {
-          msg += std::string("device, ");
-        }
-        if constexpr (myStyle == styleC) {
-          msg += std::string("C-style, ");
-        } else {
-          msg += std::string("Fortran-style, ");
-        }
-        msg += std::string("rank ") + std::to_string(rank) + std::string(" Array");
-        msg += std::string(" of size ") + std::to_string(totElems()*sizeof(T)) + std::string(" bytes");
-        verbose_inform(msg,this->label());
-      #endif
-    }
-
-
-    /** @private */
-    void destroy_inform() {
-      #ifdef YAKL_VERBOSE
-        std::string msg = "Deallocating ";
-        if constexpr (myMem == memHost) {
-          msg += std::string("host, ");
-        } else {
-          msg += std::string("device, ");
-        }
-        if constexpr (myStyle == styleC) {
-          msg += std::string("C-style, ");
-        } else {
-          msg += std::string("Fortran-style, ");
-        }
-        msg += std::string("rank ") + std::to_string(rank) + std::string(" Array");
-        verbose_inform(msg,this->label());
-      #endif
-    }
-
-
-    /** @private */
-    template <class ARR>
-    void copy_inform(ARR const &dest) const {
-      #ifdef YAKL_VERBOSE
-        std::string msg = "Initiating ";
-        if (myMem == memHost  ) msg += std::string("host to ");
-        if (myMem == memDevice) msg += std::string("device to ");
-        if (dest.get_memory_space() == memHost  ) msg += std::string("host memcpy of ");
-        if (dest.get_memory_space() == memDevice) msg += std::string("device memcpy of ");
-        msg += std::to_string(totElems()*sizeof(T)) + std::string(" bytes");
-        if (label() != "") msg += " from Array labeled \"" + std::string(label()) + std::string("\"");
-        if (dest.label() != "") msg += " to Array labeled \"" + std::string(dest.label()) + std::string("\"");
-        verbose_inform(msg);
-      #endif
-    }
 
 
     // Deep copy this array's contents to another array that's on the host
@@ -145,18 +49,15 @@ namespace yakl {
       * of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated. 
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
-    inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> const &lhs , Stream stream = Stream()) const {
-      #ifdef YAKL_VERBOSE
-        copy_inform(lhs);
+    inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> const &lhs ) const {
+      #ifdef KOKKOS_DEBUG
+        if (this->totElems() != lhs.totElems()) { Kokkos::abort("ERROR: deep_copy_to with different number of elements"); }
+        if (this->myData == nullptr || lhs.myData == nullptr) { Kokkos::abort("ERROR: deep_copy_to with nullptr"); }
       #endif
-      #ifdef YAKL_DEBUG
-        if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
-        if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
-      #endif
-      if (myMem == memHost) { memcpy_host_to_host  ( lhs.myData , this->myData , this->totElems()          ); }
-      else                  { memcpy_device_to_host( lhs.myData , this->myData , this->totElems() , stream ); }
+      if (myMem == memHost) { memcpy_host_to_host  ( lhs.myData , this->myData , this->totElems() ); }
+      else                  { memcpy_device_to_host( lhs.myData , this->myData , this->totElems() ); }
       #ifdef YAKL_AUTO_FENCE
-        fence();
+        Kokkos::fence();
       #endif
     }
 
@@ -168,51 +69,48 @@ namespace yakl {
       * of elements. No checking of rank, style, or dimensionality is performed. Both arrays must be allocated. 
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
-    inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> const &lhs , Stream stream = Stream()) const {
-      #ifdef YAKL_VERBOSE
-        copy_inform(lhs);
+    inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> const &lhs ) const {
+      #ifdef KOKKOS_DEBUG
+        if (this->totElems() != lhs.totElems()) { Kokkos::abort("ERROR: deep_copy_to with different number of elements"); }
+        if (this->myData == nullptr || lhs.myData == nullptr) { Kokkos::abort("ERROR: deep_copy_to with nullptr"); }
       #endif
-      #ifdef YAKL_DEBUG
-        if (this->totElems() != lhs.totElems()) { yakl_throw("ERROR: deep_copy_to with different number of elements"); }
-        if (this->myData == nullptr || lhs.myData == nullptr) { yakl_throw("ERROR: deep_copy_to with nullptr"); }
-      #endif
-      if (myMem == memHost) { memcpy_host_to_device  ( lhs.myData , this->myData , this->totElems() , stream ); }
-      else                  { memcpy_device_to_device( lhs.myData , this->myData , this->totElems() , stream ); }
+      if (myMem == memHost) { memcpy_host_to_device  ( lhs.myData , this->myData , this->totElems() ); }
+      else                  { memcpy_device_to_device( lhs.myData , this->myData , this->totElems() ); }
       #ifdef YAKL_AUTO_FENCE
-        fence();
+        Kokkos::fence();
       #endif
     }
 
 
     /* ACCESSORS */
     /** @brief Returns the number of dimensions in this array object. */
-    YAKL_INLINE int get_rank() const { return rank; }
+    KOKKOS_INLINE_FUNCTION int get_rank() const { return rank; }
     /** @brief Returns the total number of elements in this array object. */
-    YAKL_INLINE index_t get_totElems() const {
-      index_t tot = this->dimension[0];
+    KOKKOS_INLINE_FUNCTION size_t get_totElems() const {
+      size_t tot = this->dimension[0];
       for (int i=1; i<rank; i++) { tot *= this->dimension[i]; }
       return tot;
     }
     /** @brief Returns the total number of elements in this array object. */
-    YAKL_INLINE index_t get_elem_count() const { return get_totElems(); }
+    KOKKOS_INLINE_FUNCTION size_t get_elem_count() const { return get_totElems(); }
     /** @brief Returns the total number of elements in this array object. */
-    YAKL_INLINE index_t totElems() const { return get_totElems(); }
+    KOKKOS_INLINE_FUNCTION size_t totElems() const { return get_totElems(); }
     /** @brief Returns the total number of elements in this array object. */
-    YAKL_INLINE index_t size() const { return get_totElems(); }
+    KOKKOS_INLINE_FUNCTION size_t size() const { return get_totElems(); }
     /** @brief Returns the raw data pointer of this array object. */
-    YAKL_INLINE T *data() const { return this->myData; }
+    KOKKOS_INLINE_FUNCTION T *data() const { return this->myData; }
     /** @brief Returns the raw data pointer of this array object. */
-    YAKL_INLINE T *get_data() const { return this->myData; }
+    KOKKOS_INLINE_FUNCTION T *get_data() const { return this->myData; }
     /** @brief Returns pointer to beginning of the data */
-    YAKL_INLINE T *begin() const { return this->myData; }
+    KOKKOS_INLINE_FUNCTION T *begin() const { return this->myData; }
     /** @brief Returns pointer to end of the data */
-    YAKL_INLINE T *end() const { return begin() + size(); }
+    KOKKOS_INLINE_FUNCTION T *end() const { return begin() + size(); }
     /** @brief Always true. yakl::Array objects are always contiguous in memory with no padding. */
-    YAKL_INLINE bool span_is_contiguous() const { return true; }
+    KOKKOS_INLINE_FUNCTION bool span_is_contiguous() const { return true; }
     /** @brief Returns whether this array object has is in an initialized / allocated state. */
-    YAKL_INLINE bool initialized() const { return this->myData != nullptr; }
-    /** @brief Returns this array object's string label if the `YAKL_DEBUG` CPP macro is defined. Otherwise, returns an empty string. */
-    YAKL_INLINE int get_memory_space() const { return myMem == memHost ? memHost : memDevice; }
+    KOKKOS_INLINE_FUNCTION bool initialized() const { return this->myData != nullptr; }
+    /** @brief Returns this array object's string label if the `KOKKOS_DEBUG` CPP macro is defined. Otherwise, returns an empty string. */
+    KOKKOS_INLINE_FUNCTION int get_memory_space() const { return myMem == memHost ? memHost : memDevice; }
     /** @brief Returns the object's string label as char const (Host only) */
     char const * label() const { return this->myname; }
     /** @brief Set the object's string label (Host only) */
@@ -243,9 +141,6 @@ namespace yakl {
       } else {
         this->myData = new T[this->totElems()];
       }
-      #ifdef YAKL_VERBOSE
-        this->create_inform();
-      #endif
       yakl_mtx_unlock();
     }
 
@@ -268,22 +163,11 @@ namespace yakl {
         (*(this->refCount))--;
 
         if (*this->refCount == 0) {
-          #ifdef YAKL_VERBOSE
-            destroy_inform();
-          #endif
           delete this->refCount;
           this->refCount = nullptr;
           if (this->totElems() > 0) {
             if (myMem == memDevice) {
-              if (streams_enabled && use_pool() && get_yakl_instance().device_allocators_are_default && (! stream_dependencies.empty()) ) {
-                std::vector<Event> event_dependencies;
-                for (int i=0; i < stream_dependencies.size(); i++) {
-                  event_dependencies.push_back( record_event(stream_dependencies[i]) );
-                }
-                get_yakl_instance().pool.free_with_event_dependencies( data , event_dependencies , this->label() );
-              } else {
-                free_device(data,this->label());
-              }
+              free_device(data,this->label());
             } else {
               delete[] data;
             }
@@ -305,22 +189,11 @@ namespace yakl {
         (*(this->refCount))--;
 
         if (*this->refCount == 0) {
-          #ifdef YAKL_VERBOSE
-            destroy_inform();
-          #endif
           delete this->refCount;
           this->refCount = nullptr;
           if (this->totElems() > 0) {
             if (myMem == memDevice) {
-              if (streams_enabled && use_pool() && get_yakl_instance().device_allocators_are_default && (! stream_dependencies.empty()) ) {
-                std::vector<Event> event_dependencies;
-                for (int i=0; i < stream_dependencies.size(); i++) {
-                  event_dependencies.push_back( record_event(stream_dependencies[i]) );
-                }
-                get_yakl_instance().pool.free_with_event_dependencies( this->myData , event_dependencies , this->label() );
-              } else {
-                free_device(this->myData,this->label());
-              }
+              free_device(this->myData,this->label());
             } else {
               delete[] this->myData;
             }
@@ -348,14 +221,11 @@ namespace yakl {
       non_const_value_type *from_dev;
       if (myMem == memDevice) {
         from_dev = new non_const_value_type[v.totElems()];
-        #ifdef YAKL_ENABLE_STREAMS
-          fence();
-        #endif
         memcpy_device_to_host( from_dev , v.myData , v.totElems() );
-        fence();
+        Kokkos::fence();
         local = from_dev;
       }
-      for (index_t i=0; i<v.totElems(); i++) {
+      for (size_t i=0; i<v.totElems(); i++) {
         os << local[i] << " ";
       }
       if (myMem == memDevice) {
@@ -369,6 +239,5 @@ namespace yakl {
   };
 
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 
 
