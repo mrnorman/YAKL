@@ -1,4 +1,4 @@
-# YAKL: Yet Another Kernel Launcher
+# YAKL: YAKL is A Kokkos Layer
 ## A Simple Kokkos-based C++ Framework for Performance Portability and Fortran Code Porting
 
 **IMPORTANT**: YAKL is now built entirely on Kokkos, and Streams, FFTs, and hierarchical parallelism have been removed. Please not the following modifications to YAKL documentation:
