@@ -31,8 +31,9 @@ namespace yakl {
     #ifdef YAKL_AUTO_PROFILE
       timer_start("YAKL_internal_memcpy_device_to_host");
     #endif
-    Kokkos::View<typename std::remove_cv<T1>::type *,Kokkos::LayoutRight,Kokkos::DefaultHostExecutionSpace::memory_space> dest(dst_p,elems);
-    Kokkos::View<typename std::remove_cv<T1>::type *,Kokkos::LayoutRight,Kokkos::DefaultExecutionSpace::memory_space    > src (src_p,elems);
+    typedef typename std::remove_cv<T1>::type TNC;
+    Kokkos::View<TNC *,Kokkos::LayoutRight,Kokkos::DefaultHostExecutionSpace::memory_space> dest(const_cast<TNC *>(dst_p),elems);
+    Kokkos::View<TNC *,Kokkos::LayoutRight,Kokkos::DefaultExecutionSpace::memory_space    > src (const_cast<TNC *>(src_p),elems);
     Kokkos::deep_copy( dest , src );
     #if defined(YAKL_AUTO_FENCE)
       Kokkos::fence();
@@ -48,8 +49,9 @@ namespace yakl {
     #ifdef YAKL_AUTO_PROFILE
       timer_start("YAKL_internal_memcpy_host_to_device");
     #endif
-    Kokkos::View<typename std::remove_cv<T1>::type *,Kokkos::LayoutRight,Kokkos::DefaultExecutionSpace::memory_space    > dest(dst_p,elems);
-    Kokkos::View<typename std::remove_cv<T1>::type *,Kokkos::LayoutRight,Kokkos::DefaultHostExecutionSpace::memory_space> src (src_p,elems);
+    typedef typename std::remove_cv<T1>::type TNC;
+    Kokkos::View<TNC *,Kokkos::LayoutRight,Kokkos::DefaultExecutionSpace::memory_space    > dest(const_cast<TNC *>(dst_p),elems);
+    Kokkos::View<TNC *,Kokkos::LayoutRight,Kokkos::DefaultHostExecutionSpace::memory_space> src (const_cast<TNC *>(src_p),elems);
     Kokkos::deep_copy( dest , src );
     #if defined(YAKL_AUTO_FENCE)
       Kokkos::fence();
@@ -65,8 +67,9 @@ namespace yakl {
     #ifdef YAKL_AUTO_PROFILE
       timer_start("YAKL_internal_memcpy_device_to_device");
     #endif
-    Kokkos::View<typename std::remove_cv<T1>::type *,Kokkos::LayoutRight,Kokkos::DefaultExecutionSpace::memory_space> dest(dst_p,elems);
-    Kokkos::View<typename std::remove_cv<T1>::type *,Kokkos::LayoutRight,Kokkos::DefaultExecutionSpace::memory_space> src (src_p,elems);
+    typedef typename std::remove_cv<T1>::type TNC;
+    Kokkos::View<TNC *,Kokkos::LayoutRight,Kokkos::DefaultExecutionSpace::memory_space> dest(const_cast<TNC *>(dst_p),elems);
+    Kokkos::View<TNC *,Kokkos::LayoutRight,Kokkos::DefaultExecutionSpace::memory_space> src (const_cast<TNC *>(src_p),elems);
     Kokkos::deep_copy( dest , src );
     #if defined(YAKL_AUTO_FENCE)
       Kokkos::fence();
