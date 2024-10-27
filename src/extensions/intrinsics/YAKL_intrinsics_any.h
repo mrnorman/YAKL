@@ -2,14 +2,13 @@
 #pragma once
 // Included by YAKL_intrinsics.h
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   namespace intrinsics {
 
     template <class T, int rank, int myStyle>
     inline bool any( Array<T,rank,memHost,myStyle> arr ) {
-      #ifdef YAKL_DEBUG
-        if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+      #ifdef KOKKOS_DEBUG
+        if (!arr.initialized()) { Kokkos::abort("ERROR: calling any on an array that has not been initialized"); }
       #endif
       bool any_true = false;
       for (int i=0; i < arr.totElems(); i++) { if (arr.data()[i]) any_true = true; }
@@ -17,17 +16,16 @@ namespace yakl {
     }
 
     template <class T, int rank, int myStyle>
-    inline bool any( Array<T,rank,memDevice,myStyle> arr , Stream stream = Stream() ) {
-      #ifdef YAKL_DEBUG
-        if (!arr.initialized()) { yakl_throw("ERROR: calling any on an array that has not been initialized"); }
+    inline bool any( Array<T,rank,memDevice,myStyle> arr ) {
+      #ifdef KOKKOS_DEBUG
+        if (!arr.initialized()) { Kokkos::abort("ERROR: calling any on an array that has not been initialized"); }
       #endif
-      ScalarLiveOut<bool> any_true(false,stream);
-      c::parallel_for( "YAKL_internal_any" , arr.totElems() , YAKL_LAMBDA (int i) { if (arr.data()[i]) any_true = true; },
-                       DefaultLaunchConfig().set_stream(stream) );
-      return any_true.hostRead(stream);
+      ScalarLiveOut<bool> any_true(false);
+      c::parallel_for( YAKL_AUTO_LABEL() , arr.totElems() , KOKKOS_LAMBDA (int i) { if (arr.data()[i]) any_true = true; });
+      return any_true.hostRead();
     }
 
-    template <class T, int rank, index_t D0, index_t D1, index_t D2, index_t D3>
+    template <class T, int rank, size_t D0, size_t D1, size_t D2, size_t D3>
     inline bool any( SArray<T,rank,D0,D1,D2,D3> const &arr ) {
       bool any_true = false;
       for (int i=0; i < arr.totElems(); i++) { if (arr.data()[i]) any_true = true; }
@@ -43,5 +41,4 @@ namespace yakl {
 
   }
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 

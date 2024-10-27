@@ -7,7 +7,6 @@
 #pragma once
 // Included by YAKL_parallel_for_fortran.h
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 namespace fortran {
 
@@ -22,42 +21,42 @@ namespace fortran {
     /** @brief stride */
     int s;
     /** @brief defines an invalid / uninitialized loop bound */
-    YAKL_INLINE LBnd() {
+    KOKKOS_INLINE_FUNCTION LBnd() {
       this->l = -1;
       this->u = -1;
       this->s = -1;
     }
     /** @brief Lower bound of one, stride of one */
-    YAKL_INLINE LBnd(int u) {
+    KOKKOS_INLINE_FUNCTION LBnd(int u) {
       this->l = 1;
       this->u = u;
       this->s = 1;
     }
     /** @brief Lower and upper bounds specified, stride of one */
-    YAKL_INLINE LBnd(int l, int u) {
+    KOKKOS_INLINE_FUNCTION LBnd(int l, int u) {
       this->l = l;
       this->u = u;
       this->s = 1;
-      #ifdef YAKL_DEBUG
-        if (u < l) yakl_throw("ERROR: cannot specify an upper bound < lower bound");
+      #ifdef KOKKOS_DEBUG
+        if (u < l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound");
       #endif
     }
     /** @brief Lower bound, upper bound, and stride all specified */
-    YAKL_INLINE LBnd(int l, int u, int s) {
+    KOKKOS_INLINE_FUNCTION LBnd(int l, int u, int s) {
       this->l = l;
       this->u = u;
       this->s = s;
-      #ifdef YAKL_DEBUG
-        if (u < l) yakl_throw("ERROR: cannot specify an upper bound < lower bound");
-        if (s < 1) yakl_throw("ERROR: negative strides not yet supported.");
+      #ifdef KOKKOS_DEBUG
+        if (u < l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound");
+        if (s < 1) Kokkos::abort("ERROR: negative strides not yet supported.");
       #endif
     }
     /** @private */
-    YAKL_INLINE index_t to_scalar() {
-      return (index_t) u;
+    KOKKOS_INLINE_FUNCTION size_t to_scalar() {
+      return (size_t) u;
     }
     /** @brief Returns whether this loop bound is valid / initialized */
-    YAKL_INLINE bool valid() const { return this->s > 0; }
+    KOKKOS_INLINE_FUNCTION bool valid() const { return this->s > 0; }
   };
 
 
@@ -92,15 +91,15 @@ namespace fortran {
   template<int N> class Bounds<N,true> {
   public:
     /** @private */
-    index_t nIter;
+    size_t nIter;
     /** @private */
-    index_t dims[N];
+    size_t dims[N];
     /** @brief Declares the total number of iterations for each loop for a set of `1` to `8` tightly-nested loops.
       * 
       * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
       * Number of loops passed to the constructor **must** match the number of loops, `N`.*/
-    YAKL_INLINE Bounds( index_t b0 , index_t b1=0 , index_t b2=0 , index_t b3=0 , index_t b4=0 , index_t b5=0 ,
-                                     index_t b6=0 , index_t b7=0 ) {
+    KOKKOS_INLINE_FUNCTION Bounds( size_t b0 , size_t b1=0 , size_t b2=0 , size_t b3=0 , size_t b4=0 , size_t b5=0 ,
+                                     size_t b6=0 , size_t b7=0 ) {
       if constexpr (N >= 1) dims[0] = b0;
       if constexpr (N >= 2) dims[1] = b1;
       if constexpr (N >= 3) dims[2] = b2;
@@ -109,14 +108,14 @@ namespace fortran {
       if constexpr (N >= 6) dims[5] = b5;
       if constexpr (N >= 7) dims[6] = b6;
       if constexpr (N >= 8) dims[7] = b7;
-      #ifdef YAKL_DEBUG
-        if (N >= 2) { if (b1 == 0) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 3) { if (b2 == 0) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 4) { if (b3 == 0) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 5) { if (b4 == 0) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 6) { if (b5 == 0) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 7) { if (b6 == 0) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 8) { if (b7 == 0) yakl_throw("ERROR: Too few bounds specified"); }
+      #ifdef KOKKOS_DEBUG
+        if (N >= 2) { if (b1 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 3) { if (b2 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 4) { if (b3 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 5) { if (b4 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 6) { if (b5 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 7) { if (b6 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 8) { if (b7 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
         int num_bounds = 1;
         if (b1 > 0) num_bounds++;
         if (b2 > 0) num_bounds++;
@@ -125,59 +124,59 @@ namespace fortran {
         if (b5 > 0) num_bounds++;
         if (b6 > 0) num_bounds++;
         if (b7 > 0) num_bounds++;
-        if (num_bounds != N) yakl_throw("ERROR: Number of bounds passed does not match templated number of bounds.");
+        if (num_bounds != N) Kokkos::abort("ERROR: Number of bounds passed does not match templated number of bounds.");
       #endif
       nIter = 1;
       for (int i=0; i<N; i++) { nIter *= dims[i]; }
     }
     /** @brief Get the lower loop bound for this loop index. */
-    YAKL_INLINE int lbound(int i) const {
-      #ifdef YAKL_DEBUG
-        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling lbound() on an out of bounds integer");
+    KOKKOS_INLINE_FUNCTION int lbound(int i) const {
+      #ifdef KOKKOS_DEBUG
+        if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling lbound() on an out of bounds integer");
       #endif
       return 1;
     }
     /** @brief Get the total number of iterations for this loop index. */
-    YAKL_INLINE int dim   (int i) const {
-      #ifdef YAKL_DEBUG
-        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling dim() on an out of bounds integer");
+    KOKKOS_INLINE_FUNCTION int dim   (int i) const {
+      #ifdef KOKKOS_DEBUG
+        if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling dim() on an out of bounds integer");
       #endif
       return dims[i];
     }
     /** @brief Get the stride for this loop index. */
-    YAKL_INLINE int stride(int i) const {
-      #ifdef YAKL_DEBUG
-        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling stride() on an out of bounds integer");
+    KOKKOS_INLINE_FUNCTION int stride(int i) const {
+      #ifdef KOKKOS_DEBUG
+        if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling stride() on an out of bounds integer");
       #endif
       return 1;
     }
     /** @brief Unpack a global index into `N` loop indices given bounds and strides. */
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[N] ) const {
+    KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , int indices[N] ) const {
       if constexpr        (N == 1) {
         indices[0] = iGlob;
       } else if constexpr (N == 2) {
         indices[0] = iGlob/dims[1]             ;
         indices[1] = iGlob - dims[1]*indices[0];
       } else if constexpr (N == 3) {
-        index_t fac, term;
+        size_t fac, term;
                                 fac = dims[1]*dims[2]; indices[0] =  iGlob         / fac;
         term  = indices[0]*fac; fac =         dims[2]; indices[1] = (iGlob - term) / fac;
         term += indices[1]*fac;                        indices[2] =  iGlob - term       ;
       } else if constexpr (N == 4) {
-        index_t fac, term;
+        size_t fac, term;
                                 fac = dims[1]*dims[2]*dims[3]; indices[0] =  iGlob         / fac;
         term  = indices[0]*fac; fac =         dims[2]*dims[3]; indices[1] = (iGlob - term) / fac;
         term += indices[1]*fac; fac =                 dims[3]; indices[2] = (iGlob - term) / fac;
         term += indices[2]*fac;                                indices[3] =  iGlob - term       ;
       } else if constexpr (N == 5) {
-        index_t fac, term;
+        size_t fac, term;
                                 fac = dims[1]*dims[2]*dims[3]*dims[4]; indices[0] =  iGlob         / fac;
         term  = indices[0]*fac; fac =         dims[2]*dims[3]*dims[4]; indices[1] = (iGlob - term) / fac;
         term += indices[1]*fac; fac =                 dims[3]*dims[4]; indices[2] = (iGlob - term) / fac;
         term += indices[2]*fac; fac =                         dims[4]; indices[3] = (iGlob - term) / fac;
         term += indices[3]*fac;                                        indices[4] =  iGlob - term       ;
       } else if constexpr (N == 6) {
-        index_t term, fac4=dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+        size_t term, fac4=dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
                                  indices[0] =  iGlob         / fac0;
         term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
         term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
@@ -185,7 +184,7 @@ namespace fortran {
         term += indices[3]*fac3; indices[4] = (iGlob - term) / fac4;
         term += indices[4]*fac4; indices[5] =  iGlob - term        ;
       } else if constexpr (N == 7) {
-        index_t term, fac5=dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+        size_t term, fac5=dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
                                  indices[0] =  iGlob         / fac0;
         term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
         term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
@@ -194,7 +193,7 @@ namespace fortran {
         term += indices[4]*fac4; indices[5] = (iGlob - term) / fac5;
         term += indices[5]*fac5; indices[6] =  iGlob - term        ;
       } else if constexpr (N == 8) {
-        index_t term, fac6=dims[7], fac5=fac6*dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+        size_t term, fac6=dims[7], fac5=fac6*dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
                                  indices[0] =  iGlob         / fac0;
         term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
         term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
@@ -229,13 +228,13 @@ namespace fortran {
   template<int N> class Bounds<N,false> {
   public:
     /** @private */
-    index_t nIter;
+    size_t nIter;
     /** @private */
     int     lbounds[N];
     /** @private */
-    index_t dims[N];
+    size_t dims[N];
     /** @private */
-    index_t strides[N];
+    size_t strides[N];
     /** @brief Declares the bounds for each loop for a set of `1` to `8` tightly-nested loops.
       * 
       * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
@@ -249,7 +248,7 @@ namespace fortran {
       *   * An initializer list with two entries: `{lower_bound,upper_bound}` (**inclusive**), and stride defaults to `1`
       *   * An initializer list with three entries: `{lower,upper,stride}`, where stride is positive
       */
-    YAKL_INLINE Bounds( LBnd const &b0 , LBnd const &b1 = LBnd() , LBnd const &b2 = LBnd() , LBnd const &b3 = LBnd() ,
+    KOKKOS_INLINE_FUNCTION Bounds( LBnd const &b0 , LBnd const &b1 = LBnd() , LBnd const &b2 = LBnd() , LBnd const &b3 = LBnd() ,
                                          LBnd const &b4 = LBnd() , LBnd const &b5 = LBnd() , LBnd const &b6 = LBnd() ,
                                          LBnd const &b7 = LBnd() ) {
       if constexpr (N >= 1) { lbounds[0] = b0.l;   strides[0] =  b0.s;   dims[0] = ( b0.u - b0.l + 1 ) / b0.s; }
@@ -260,14 +259,14 @@ namespace fortran {
       if constexpr (N >= 6) { lbounds[5] = b5.l;   strides[5] =  b5.s;   dims[5] = ( b5.u - b5.l + 1 ) / b5.s; }
       if constexpr (N >= 7) { lbounds[6] = b6.l;   strides[6] =  b6.s;   dims[6] = ( b6.u - b6.l + 1 ) / b6.s; }
       if constexpr (N >= 8) { lbounds[7] = b7.l;   strides[7] =  b7.s;   dims[7] = ( b7.u - b7.l + 1 ) / b7.s; }
-      #ifdef YAKL_DEBUG
-        if (N >= 2) { if (! b1.valid()) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 3) { if (! b2.valid()) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 4) { if (! b3.valid()) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 5) { if (! b4.valid()) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 6) { if (! b5.valid()) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 7) { if (! b6.valid()) yakl_throw("ERROR: Too few bounds specified"); }
-        if (N >= 8) { if (! b7.valid()) yakl_throw("ERROR: Too few bounds specified"); }
+      #ifdef KOKKOS_DEBUG
+        if (N >= 2) { if (! b1.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 3) { if (! b2.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 4) { if (! b3.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 5) { if (! b4.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 6) { if (! b5.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 7) { if (! b6.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
+        if (N >= 8) { if (! b7.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
         int num_bounds = 1;
         if (b1.valid()) num_bounds++;
         if (b2.valid()) num_bounds++;
@@ -276,34 +275,34 @@ namespace fortran {
         if (b5.valid()) num_bounds++;
         if (b6.valid()) num_bounds++;
         if (b7.valid()) num_bounds++;
-        if (num_bounds != N) yakl_throw("ERROR: Number of bounds passed does not match templated number of bounds.");
+        if (num_bounds != N) Kokkos::abort("ERROR: Number of bounds passed does not match templated number of bounds.");
       #endif
       nIter = 1;
       for (int i=0; i<N; i++) { nIter *= dims[i]; }
     }
     /** @brief Get the lower loop bound for this loop index. */
-    YAKL_INLINE int lbound(int i) const {
-      #ifdef YAKL_DEBUG
-        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling lbound() on an out of bounds integer");
+    KOKKOS_INLINE_FUNCTION int lbound(int i) const {
+      #ifdef KOKKOS_DEBUG
+        if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling lbound() on an out of bounds integer");
       #endif
       return lbounds[i];
     }
     /** @brief Get the total number of iterations for this loop index. */
-    YAKL_INLINE int dim   (int i) const {
-      #ifdef YAKL_DEBUG
-        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling dim() on an out of bounds integer");
+    KOKKOS_INLINE_FUNCTION int dim   (int i) const {
+      #ifdef KOKKOS_DEBUG
+        if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling dim() on an out of bounds integer");
       #endif
       return dims   [i];
     }
     /** @brief Get the stride for this loop index. */
-    YAKL_INLINE int stride(int i) const {
-      #ifdef YAKL_DEBUG
-        if (i < 0 || i > N-1) yakl_throw("ERROR: Calling stride() on an out of bounds integer");
+    KOKKOS_INLINE_FUNCTION int stride(int i) const {
+      #ifdef KOKKOS_DEBUG
+        if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling stride() on an out of bounds integer");
       #endif
       return strides[i];
     }
     /** @brief Unpack a global index into `N` loop indices given bounds and strides. */
-    YAKL_INLINE void unpackIndices( index_t iGlob , int indices[N] ) const {
+    KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , int indices[N] ) const {
       // Compute base indices
       if constexpr        (N == 1) {
         indices[0] = iGlob;
@@ -311,25 +310,25 @@ namespace fortran {
         indices[0] = iGlob/dims[1]             ;
         indices[1] = iGlob - dims[1]*indices[0];
       } else if constexpr (N == 3) {
-        index_t fac, term;
+        size_t fac, term;
                                 fac = dims[1]*dims[2]; indices[0] =  iGlob         / fac;
         term  = indices[0]*fac; fac =         dims[2]; indices[1] = (iGlob - term) / fac;
         term += indices[1]*fac;                        indices[2] =  iGlob - term       ;
       } else if constexpr (N == 4) {
-        index_t fac, term;
+        size_t fac, term;
                                 fac = dims[1]*dims[2]*dims[3]; indices[0] =  iGlob         / fac;
         term  = indices[0]*fac; fac =         dims[2]*dims[3]; indices[1] = (iGlob - term) / fac;
         term += indices[1]*fac; fac =                 dims[3]; indices[2] = (iGlob - term) / fac;
         term += indices[2]*fac;                                indices[3] =  iGlob - term       ;
       } else if constexpr (N == 5) {
-        index_t fac, term;
+        size_t fac, term;
                                 fac = dims[1]*dims[2]*dims[3]*dims[4]; indices[0] =  iGlob         / fac;
         term  = indices[0]*fac; fac =         dims[2]*dims[3]*dims[4]; indices[1] = (iGlob - term) / fac;
         term += indices[1]*fac; fac =                 dims[3]*dims[4]; indices[2] = (iGlob - term) / fac;
         term += indices[2]*fac; fac =                         dims[4]; indices[3] = (iGlob - term) / fac;
         term += indices[3]*fac;                                        indices[4] =  iGlob - term       ;
       } else if constexpr (N == 6) {
-        index_t term, fac4=dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+        size_t term, fac4=dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
                                  indices[0] =  iGlob         / fac0;
         term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
         term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
@@ -337,7 +336,7 @@ namespace fortran {
         term += indices[3]*fac3; indices[4] = (iGlob - term) / fac4;
         term += indices[4]*fac4; indices[5] =  iGlob - term        ;
       } else if constexpr (N == 7) {
-        index_t term, fac5=dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+        size_t term, fac5=dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
                                  indices[0] =  iGlob         / fac0;
         term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
         term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
@@ -346,7 +345,7 @@ namespace fortran {
         term += indices[4]*fac4; indices[5] = (iGlob - term) / fac5;
         term += indices[5]*fac5; indices[6] =  iGlob - term        ;
       } else if constexpr (N == 8) {
-        index_t term, fac6=dims[7], fac5=fac6*dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
+        size_t term, fac6=dims[7], fac5=fac6*dims[6], fac4=fac5*dims[5], fac3=fac4*dims[4], fac2=fac3*dims[3], fac1=fac2*dims[2], fac0=fac1*dims[1];
                                  indices[0] =  iGlob         / fac0;
         term  = indices[0]*fac0; indices[1] = (iGlob - term) / fac1;
         term += indices[1]*fac1; indices[2] = (iGlob - term) / fac2;
@@ -374,6 +373,5 @@ namespace fortran {
 
 }
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 
 

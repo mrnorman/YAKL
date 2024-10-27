@@ -18,18 +18,19 @@ typedef Array<real,2,memDevice,styleC> real2d;
 typedef Array<real,1,memHost  ,styleC> realHost1d;
 
 void die(std::string msg) {
-  yakl::yakl_throw(msg.c_str());
+  Kokkos::abort(msg.c_str());
 }
 
 
 int main() {
+  Kokkos::initialize();
   yakl::init();
   {
     yakl::timer_start("main");
     int constexpr n = 1024*1024;
     real1d arr("arr",n);
     auto clk = std::clock();
-    parallel_for( "Kernel 1" , n , YAKL_LAMBDA (int i) {
+    parallel_for( "Kernel 1" , n , KOKKOS_LAMBDA (int i) {
       yakl::Random rand(static_cast<unsigned long long>( clk ) + i);
       arr(i) = rand.genFP<real>( ) ;
     });
@@ -38,7 +39,7 @@ int main() {
 
     // Compute variance
     real1d varArr("varArr",n);
-    parallel_for( "Kernel 2" , n , YAKL_LAMBDA (int i) {
+    parallel_for( "Kernel 2" , n , KOKKOS_LAMBDA (int i) {
       real absdiff = abs(arr(i) - avg);
       varArr(i) = absdiff * absdiff;
     });
@@ -49,21 +50,21 @@ int main() {
 
     // Compute skewness
     real1d skArr("skArr",n);
-    parallel_for( "Kernel 3" , n , YAKL_LAMBDA (int i) {
+    parallel_for( "Kernel 3" , n , KOKKOS_LAMBDA (int i) {
       real tmp = ( arr(i) - avg )  / stddev;
       skArr(i) = tmp*tmp*tmp;
     });
     real skew = yakl::intrinsics::sum(skArr) / n;
 
     real1d absDiffArr("absDiffArr",n-1);
-    parallel_for( "Kernel 4" , n-1 , YAKL_LAMBDA (int i) {
+    parallel_for( "Kernel 4" , n-1 , KOKKOS_LAMBDA (int i) {
       absDiffArr(i) = abs( arr(i+1) - arr(i) );
     });
     real avgAbsDiff = yakl::intrinsics::sum(absDiffArr) / n;
 
     int constexpr nbins = 100;
     real2d bins("bins",nbins,n);
-    parallel_for( "Kernel 5" , Bounds<2>(nbins,n) , YAKL_LAMBDA (int b, int i) {
+    parallel_for( "Kernel 5" , Bounds<2>(nbins,n) , KOKKOS_LAMBDA (int b, int i) {
       real lo = (double) (b  ) / (double) nbins;
       real hi = (double) (b+1) / (double) nbins;
       bins(b,i) = (arr(i) >= lo && arr(i) <= hi) ? 1 : 0;
@@ -88,6 +89,7 @@ int main() {
     yakl::timer_stop("main");
   }
   yakl::finalize();
+  Kokkos::finalize(); 
   
   return 0;
 }

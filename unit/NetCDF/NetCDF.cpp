@@ -15,11 +15,12 @@ using yakl::COLON;
 
 
 void die(std::string msg) {
-  yakl::yakl_throw(msg.c_str());
+  Kokkos::abort(msg.c_str());
 }
 
 
 int main() {
+  Kokkos::initialize();
   yakl::init();
   {
     // Write so that d1 is always the fastest varying and ordered from there
@@ -61,17 +62,17 @@ int main() {
       int   s1 = 2;
 
       // Assign values
-      yakl::memset(a0,0);
-      yakl::memset(a1,1);
-      yakl::memset(a2,2);
-      yakl::memset(a3,3);
-      yakl::memset(a4,4);
-      yakl::memset(a5,5);
-      yakl::memset(a6,6);
-      yakl::memset(a7,7);
-      yakl::memset(a8,8);
-      yakl::memset(a9,9);
-      yakl::memset(bool8,0);
+      a0 = 0;
+      a1 = 1;
+      a2 = 2;
+      a3 = 3;
+      a4 = 4;
+      a5 = 5;
+      a6 = 6;
+      a7 = 7;
+      a8 = 8;
+      a9 = 9;
+      bool8 = 0;
       bool8(1) = 1;
       bool8(4) = 1;
       text(0,0)='I';
@@ -240,6 +241,7 @@ int main() {
 
   }
   yakl::finalize();
+  Kokkos::finalize(); 
   
   return 0;
 }

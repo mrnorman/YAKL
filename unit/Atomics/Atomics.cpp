@@ -12,11 +12,12 @@ using yakl::COLON;
 
 
 void die(std::string msg) {
-  yakl::yakl_throw(msg.c_str());
+  Kokkos::abort(msg.c_str());
 }
 
 
 int main() {
+  Kokkos::initialize();
   yakl::init();
   {
     int constexpr n = 1024 + 1;
@@ -24,23 +25,23 @@ int main() {
       typedef float T;
 
       Array<T,1,memDevice,styleC> data("data",n);
-      parallel_for( n , YAKL_LAMBDA (int i) {
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
         data(i) = i - (n-1)/2.;
       });
 
       yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , YAKL_LAMBDA (int i) {
-        yakl::atomicMin(min(),data(i));
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
+        Kokkos::atomic_min(&min(),data(i));
       });
 
       yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , YAKL_LAMBDA (int i) {
-        yakl::atomicAdd(sum(),data(i));
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
+        Kokkos::atomic_add(&sum(),data(i));
       });
 
       yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , YAKL_LAMBDA (int i) {
-        yakl::atomicMax(max(),data(i));
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
+        Kokkos::atomic_max(&max(),data(i));
       });
       
       if ( abs(sum.hostRead()) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
@@ -52,23 +53,23 @@ int main() {
       typedef double T;
 
       Array<T,1,memDevice,styleC> data("data",n);
-      parallel_for( n , YAKL_LAMBDA (int i) {
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
         data(i) = i - (n-1)/2.;
       });
 
       yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , YAKL_LAMBDA (int i) {
-        yakl::atomicMin(min(),data(i));
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
+        Kokkos::atomic_min(&min(),data(i));
       });
 
       yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , YAKL_LAMBDA (int i) {
-        yakl::atomicAdd(sum(),data(i));
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
+        Kokkos::atomic_add(&sum(),data(i));
       });
 
       yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , YAKL_LAMBDA (int i) {
-        yakl::atomicMax(max(),data(i));
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
+        Kokkos::atomic_max(&max(),data(i));
       });
       
       if ( abs(sum.hostRead()) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
@@ -80,23 +81,23 @@ int main() {
       typedef int T;
 
       Array<T,1,memDevice,styleC> data("data",n);
-      parallel_for( n , YAKL_LAMBDA (int i) {
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
         data(i) = i - (n-1)/2.;
       });
 
       yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , YAKL_LAMBDA (int i) {
-        yakl::atomicMin(min(),data(i));
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
+        Kokkos::atomic_min(&min(),data(i));
       });
 
       yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , YAKL_LAMBDA (int i) {
-        yakl::atomicAdd(sum(),data(i));
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
+        Kokkos::atomic_add(&sum(),data(i));
       });
 
       yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , YAKL_LAMBDA (int i) {
-        yakl::atomicMax(max(),data(i));
+      parallel_for( n , KOKKOS_LAMBDA (int i) {
+        Kokkos::atomic_max(&max(),data(i));
       });
       
       if ( abs(sum.hostRead()) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
@@ -114,17 +115,17 @@ int main() {
 
       int min = 99999;
       for (int i=0; i < n; i++) {
-        yakl::atomicMin(min,data(i));
+        Kokkos::atomic_min(&min,data(i));
       }
 
       int sum = 0;
       for (int i=0; i < n; i++) {
-        yakl::atomicAdd(sum,data(i));
+        Kokkos::atomic_add(&sum,data(i));
       }
 
       int max = -99999;
       for (int i=0; i < n; i++) {
-        yakl::atomicMax(max,data(i));
+        Kokkos::atomic_max(&max,data(i));
       }
       
       if ( abs(sum) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
@@ -136,17 +137,17 @@ int main() {
       typedef double real;
       int constexpr n = 1024*16;
       Array<real,1,yakl::memDevice,styleC> data("data",n);
-      parallel_for( n , YAKL_LAMBDA (int i) { data(i) = yakl::Random(i).genFP<real>(); });
+      parallel_for( n , KOKKOS_LAMBDA (int i) { data(i) = yakl::Random(i).genFP<real>(); });
       for (int k=0; k < 10; k++) {
         yakl::ScalarLiveOut<real> sum(0.);
-        parallel_for( n , YAKL_LAMBDA (int i) { yakl::atomicAdd( sum() , data(i) ); } , yakl::DefaultLaunchConfigB4b() );
+        parallel_for( n , KOKKOS_LAMBDA (int i) { Kokkos::atomic_add( &sum() , data(i) ); });
         std::cout << std::scientific << std::setprecision(18) << sum.hostRead() << "\n";
       }
     }
 
   }
   yakl::finalize();
-  
+  Kokkos::finalize(); 
   return 0;
 }
 

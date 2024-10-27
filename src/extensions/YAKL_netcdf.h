@@ -7,7 +7,6 @@
 
 
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   //Error reporting routine for the PNetCDF I/O
   /** @private */
@@ -15,7 +14,7 @@ namespace yakl {
     if (ierr != NC_NOERR) {
       printf("NetCDF Error at line: %d\n", line);
       printf("%s\n",nc_strerror(ierr));
-      yakl_throw(nc_strerror(ierr));
+      Kokkos::abort(nc_strerror(ierr));
     }
   }
 
@@ -175,7 +174,7 @@ namespace yakl {
       void putVar(unsigned long long const *data) { ncwrap( nc_put_var_ulonglong( ncid , id , data ) , __LINE__ ); }
       void putVar(unsigned short     const *data) { ncwrap( nc_put_var_ushort   ( ncid , id , data ) , __LINE__ ); }
       void putVar(char               const *data) { ncwrap( nc_put_var_text     ( ncid , id , data ) , __LINE__ ); }
-      void putVar(bool               const *data) { yakl_throw("ERROR: Cannot write bools to netCDF file"); }
+      void putVar(bool               const *data) { Kokkos::abort("ERROR: Cannot write bools to netCDF file"); }
 
       void putVar(std::vector<size_t> start , std::vector<size_t> count, double             const *data) { ncwrap( nc_put_vara_double   ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, float              const *data) { ncwrap( nc_put_vara_float    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
@@ -190,7 +189,7 @@ namespace yakl {
       void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned long long const *data) { ncwrap( nc_put_vara_ulonglong( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned short     const *data) { ncwrap( nc_put_vara_ushort   ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, char               const *data) { ncwrap( nc_put_vara_text     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, bool               const *data) { yakl_throw("ERROR: Cannot write bools to netCDF file"); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, bool               const *data) { Kokkos::abort("ERROR: Cannot write bools to netCDF file"); }
 
       void getVar(double             *data) const { ncwrap( nc_get_var_double   ( ncid , id , data ) , __LINE__ ); }
       void getVar(float              *data) const { ncwrap( nc_get_var_float    ( ncid , id , data ) , __LINE__ ); }
@@ -205,7 +204,7 @@ namespace yakl {
       void getVar(unsigned long long *data) const { ncwrap( nc_get_var_ulonglong( ncid , id , data ) , __LINE__ ); }
       void getVar(unsigned short     *data) const { ncwrap( nc_get_var_ushort   ( ncid , id , data ) , __LINE__ ); }
       void getVar(char               *data) const { ncwrap( nc_get_var_text     ( ncid , id , data ) , __LINE__ ); }
-      void getVar(bool               *data) const { yakl_throw("ERROR: Cannot read bools directly from netCDF file. This should've been intercepted and changed to int."); }
+      void getVar(bool               *data) const { Kokkos::abort("ERROR: Cannot read bools directly from netCDF file. This should've been intercepted and changed to int."); }
 
       void print() {
         std::cout << "Variable Name: " << name << "\n";
@@ -244,7 +243,7 @@ namespace yakl {
       void open( std::string fname , int mode ) {
         close();
         if (! (mode == NETCDF_MODE_READ || mode == NETCDF_MODE_WRITE) ) {
-          yakl_throw("ERROR: open mode can be NETCDF_MODE_READ or NETCDF_MODE_WRITE");
+          Kokkos::abort("ERROR: open mode can be NETCDF_MODE_READ or NETCDF_MODE_WRITE");
         }
         ncwrap( nc_open( fname.c_str() , mode , &ncid ) , __LINE__ );
       }
@@ -252,7 +251,7 @@ namespace yakl {
       void create( std::string fname , int mode ) {
         close();
         if (! (mode == NETCDF_MODE_NEW || mode == NETCDF_MODE_REPLACE) ) {
-          yakl_throw("ERROR: open mode can be NETCDF_MODE_NEW or NETCDF_MODE_REPLACE");
+          Kokkos::abort("ERROR: open mode can be NETCDF_MODE_NEW or NETCDF_MODE_REPLACE");
         }
         ncwrap( nc_create( fname.c_str() , mode | NC_NETCDF4 , &ncid ) , __LINE__ );
       }
@@ -374,7 +373,7 @@ namespace yakl {
     /** @brief Write an entire Array at once */
     template <class T, int rank, int myMem, int myStyle>
     void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
-      if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
+      if (rank != dimNames.size()) { Kokkos::abort("dimNames.size() != Array's rank"); }
       std::vector<NcDim> dims(rank); // List of dimensions for this variable
       // Make sure the dimensions are in there and are the right sizes
       for (int i=0; i<rank; i++) {
@@ -385,7 +384,7 @@ namespace yakl {
           tmp = file.addDim( dimNames[i] , arr.extent(i) );
         } else {
           if (dimLoc.getSize() != arr.extent(i)) {
-            yakl_throw("dimension size differs from the file");
+            Kokkos::abort("dimension size differs from the file");
           }
           tmp = dimLoc;
         }
@@ -400,17 +399,17 @@ namespace yakl {
       if ( var.isNull() ) {
         var = file.addVar( varName , getType<T>() , dims );
       } else {
-        if ( var.getType() != getType<T>() ) { yakl_throw("Existing variable's type != array's type"); }
+        if ( var.getType() != getType<T>() ) { Kokkos::abort("Existing variable's type != array's type"); }
         auto varDims = var.getDims();
-        if (varDims.size() != rank) { yakl_throw("Existing variable's rank != array's rank"); }
+        if (varDims.size() != rank) { Kokkos::abort("Existing variable's rank != array's rank"); }
         for (int i=0; i < varDims.size(); i++) {
           if (myStyle == styleC) {
             if (varDims[i].getSize() != arr.extent(i)) {
-              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+              Kokkos::abort("Existing variable's dimension sizes are not the same as the array's");
             }
           } else {
             if (varDims[rank-1-i].getSize() != arr.extent(i)) {
-              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+              Kokkos::abort("Existing variable's dimension sizes are not the same as the array's");
             }
           }
         }
@@ -451,7 +450,7 @@ namespace yakl {
     template <class T, int rank, int myMem, int myStyle>
     void write1(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames ,
                 int ind , std::string ulDimName="unlim" ) {
-      if (rank != dimNames.size()) { yakl_throw("dimNames.size() != Array's rank"); }
+      if (rank != dimNames.size()) { Kokkos::abort("dimNames.size() != Array's rank"); }
       std::vector<NcDim> dims(rank+1); // List of dimensions for this variable
       // Get the unlimited dimension or create it if it doesn't exist
       dims[0] = file.getDim( ulDimName );
@@ -467,7 +466,7 @@ namespace yakl {
           tmp = file.addDim( dimNames[i] , arr.extent(i) );
         } else {
           if (dimLoc.getSize() != arr.extent(i)) {
-            yakl_throw("dimension size differs from the file");
+            Kokkos::abort("dimension size differs from the file");
           }
           tmp = dimLoc;
         }
@@ -482,19 +481,19 @@ namespace yakl {
       if ( var.isNull() ) {
         var = file.addVar( varName , getType<T>() , dims );
       } else {
-        if ( var.getType() != getType<T>() ) { yakl_throw("Existing variable's type != array's type"); }
+        if ( var.getType() != getType<T>() ) { Kokkos::abort("Existing variable's type != array's type"); }
         auto varDims = var.getDims();
         if (varDims.size() != rank+1) {
-          yakl_throw("Existing variable's rank != array's rank");
+          Kokkos::abort("Existing variable's rank != array's rank");
         }
         for (int i=1; i < varDims.size(); i++) {
           if (myStyle == styleC) {
             if (varDims[i].getSize() != arr.extent(i-1)) {
-              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+              Kokkos::abort("Existing variable's dimension sizes are not the same as the array's");
             }
           } else {
             if (varDims[1+rank-i].getSize() != arr.extent(i-1)) {
-              yakl_throw("Existing variable's dimension sizes are not the same as the array's");
+              Kokkos::abort("Existing variable's dimension sizes are not the same as the array's");
             }
           }
         }
@@ -524,7 +523,7 @@ namespace yakl {
       std::vector<int> dimSizes(rank);
       if ( ! var.isNull() ) {
         auto varDims = var.getDims();
-        if (varDims.size() != rank) { yakl_throw("Existing variable's rank != array's rank"); }
+        if (varDims.size() != rank) { Kokkos::abort("Existing variable's rank != array's rank"); }
         if (myStyle == styleC) {
           for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[i].getSize(); }
         } else if (myStyle == styleFortran) {
@@ -534,7 +533,7 @@ namespace yakl {
         if (arr.initialized()) {
           for (int i=0; i < dimSizes.size(); i++) {
             if (dimSizes[i] != arr.extent(i)) {
-              #ifdef YAKL_DEBUG
+              #ifdef KOKKOS_DEBUG
                 std::cout << "WARNING: Array dims wrong size; deallocating previous array and allocating a new one\n";
               #endif
               createArr = true;
@@ -542,7 +541,7 @@ namespace yakl {
           }
         }
         if (createArr) { arr = Array<T,rank,myMem,myStyle>(varName.c_str(),dimSizes); }
-      } else { yakl_throw("Variable does not exist"); }
+      } else { Kokkos::abort("Variable does not exist"); }
 
       if (myMem == memDevice) {
         auto arrHost = arr.createHostObject();
@@ -554,7 +553,7 @@ namespace yakl {
           var.getVar(arrHost.data());
         }
         arrHost.deep_copy_to(arr);
-        fence();
+        Kokkos::fence();
       } else {
         if (std::is_same<T,bool>::value) {
           Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
@@ -571,7 +570,7 @@ namespace yakl {
     template <class T>
     void read(T &arr , std::string varName) {
       auto var = file.getVar(varName);
-      if ( var.isNull() ) { yakl_throw("Variable does not exist"); }
+      if ( var.isNull() ) { Kokkos::abort("Variable does not exist"); }
       var.getVar(&arr);
     }
 
@@ -602,7 +601,7 @@ namespace yakl {
       else if ( std::is_same<typename std::remove_cv<T>::type,             float>::value ) { return NC_FLOAT;  }
       else if ( std::is_same<typename std::remove_cv<T>::type,            double>::value ) { return NC_DOUBLE; }
       else if ( std::is_same<typename std::remove_cv<T>::type,              char>::value ) { return NC_CHAR;   }
-      else { yakl_throw("Invalid type"); }
+      else { Kokkos::abort("Invalid type"); }
       return -1;
     }
 
@@ -611,6 +610,5 @@ namespace yakl {
 
 
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 
 

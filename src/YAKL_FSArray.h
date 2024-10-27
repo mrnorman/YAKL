@@ -2,7 +2,6 @@
 #pragma once
 // Included by YAKL_Array.h
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // [S]tatic (compile-time) Array [B]ounds (templated)
@@ -36,7 +35,7 @@ namespace yakl {
     * An example of declaring a yakl:FSArray object is `yakl::FSArray<float,3,SB<n1>,SB<0,n2+1>,SB<n3>> arr;`
     * The syntax is a bit ugly, but it's necessary to allow lower bounds other than `1`. The array declared just
     * now will have lower bounds of 1, 0, and 1, respectively, and upper bounds of n1, n2+1, n3, respectively.
-    * For bounds checking, define the CPP macro `YAKL_DEBUG`. Dimensions sizes must be
+    * For bounds checking, define the CPP macro `KOKKOS_DEBUG`. Dimensions sizes must be
     * known at compile time, and data is placed on the stack of whatever context it is declared. When declared
     * in a device `parallel_for` kernel, it is a thread-private array, meaning every thread has a separate copy
     * of the array. 
@@ -69,25 +68,25 @@ namespace yakl {
     /** @private */
     static int constexpr L3 = B3::lower();
     /** @private */
-    static index_t constexpr D0 =             U0 - L0 + 1;
+    static size_t constexpr D0 =             U0 - L0 + 1;
     /** @private */
-    static index_t constexpr D1 = rank >= 1 ? U1 - L1 + 1 : 1;
+    static size_t constexpr D1 = rank >= 1 ? U1 - L1 + 1 : 1;
     /** @private */
-    static index_t constexpr D2 = rank >= 1 ? U2 - L2 + 1 : 1;
+    static size_t constexpr D2 = rank >= 1 ? U2 - L2 + 1 : 1;
     /** @private */
-    static index_t constexpr D3 = rank >= 1 ? U3 - L3 + 1 : 1;
+    static size_t constexpr D3 = rank >= 1 ? U3 - L3 + 1 : 1;
     /** @private */
-    static index_t constexpr OFF0 = 1;
+    static size_t constexpr OFF0 = 1;
     /** @private */
-    static index_t constexpr OFF1 = D0;
+    static size_t constexpr OFF1 = D0;
     /** @private */
-    static index_t constexpr OFF2 = D0*D1;
+    static size_t constexpr OFF2 = D0*D1;
     /** @private */
     /** @private */
     T mutable myData[D0*D1*D2*D3];
 
   public :
-    static index_t constexpr OFF3 = D0*D1*D2;
+    static size_t constexpr OFF3 = D0*D1*D2;
 
     /** @brief This is the type `T` without `const` and `volatile` modifiers */
     typedef typename std::remove_cv<T>::type       type;
@@ -100,63 +99,63 @@ namespace yakl {
 
     // All copies are deep, so be wary of copies. Use references where possible
     /** @brief No constructor arguments allowed */
-    YAKL_INLINE FSArray(T init_fill) { for (int i=0; i < size(); i++) { myData[i] = init_fill; } }
+    KOKKOS_INLINE_FUNCTION FSArray(T init_fill) { for (int i=0; i < size(); i++) { myData[i] = init_fill; } }
     FSArray()  = default;
     ~FSArray() = default;
 
     /** @brief Returns a reference to the indexed element (1-D).
-      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_DEBUG`.
       * Always use one-based indexing (unless the dimension has non-default bounds) with column-major ordering (left-most index varying the fastest). */
-    YAKL_INLINE T &operator()(int const i0) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(int const i0) const {
       static_assert(rank==1,"ERROR: Improper number of dimensions specified in operator()");
-      #ifdef YAKL_DEBUG
-        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); ) } }
-        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { yakl_throw("ERROR: FSArray index out of bounds"); } }
+      #ifdef KOKKOS_DEBUG
+        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { KOKKOS_IF_ON_HOST( printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); ) } }
+        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
       #endif
       return myData[i0-L0];
     }
     /** @brief Returns a reference to the indexed element (2-D).
-      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_DEBUG`.
       * Always use one-based indexing (unless the dimension has non-default bounds) with column-major ordering (left-most index varying the fastest). */
-    YAKL_INLINE T &operator()(int const i0, int const i1) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(int const i0, int const i1) const {
       static_assert(rank==2,"ERROR: Improper number of dimensions specified in operator()");
-      #ifdef YAKL_DEBUG
-        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); ) } }
-        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); ) } }
-        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { yakl_throw("ERROR: FSArray index out of bounds"); } }
-        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { yakl_throw("ERROR: FSArray index out of bounds"); } }
+      #ifdef KOKKOS_DEBUG
+        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { KOKKOS_IF_ON_HOST( printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); ) } }
+        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { KOKKOS_IF_ON_HOST( printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); ) } }
+        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
+        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
       #endif
       return myData[(i1-L1)*OFF1 + i0-L0];
     }
     /** @brief Returns a reference to the indexed element (3-D).
-      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_DEBUG`.
       * Always use one-based indexing (unless the dimension has non-default bounds) with column-major ordering (left-most index varying the fastest). */
-    YAKL_INLINE T &operator()(int const i0, int const i1, int const i2) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(int const i0, int const i1, int const i2) const {
       static_assert(rank==3,"ERROR: Improper number of dimensions specified in operator()");
-      #ifdef YAKL_DEBUG
-        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); ) } }
-        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); ) } }
-        if constexpr (rank >= 3) { if (i2<L2 || i2>U2) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); ) } }
-        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { yakl_throw("ERROR: FSArray index out of bounds"); } }
-        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { yakl_throw("ERROR: FSArray index out of bounds"); } }
-        if constexpr (rank >= 3) { if (i2<L2 || i2>U2) { yakl_throw("ERROR: FSArray index out of bounds"); } }
+      #ifdef KOKKOS_DEBUG
+        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { KOKKOS_IF_ON_HOST( printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); ) } }
+        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { KOKKOS_IF_ON_HOST( printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); ) } }
+        if constexpr (rank >= 3) { if (i2<L2 || i2>U2) { KOKKOS_IF_ON_HOST( printf("FSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); ) } }
+        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
+        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
+        if constexpr (rank >= 3) { if (i2<L2 || i2>U2) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
       #endif
       return myData[(i2-L2)*OFF2 + (i1-L1)*OFF1 + i0-L0];
     }
     /** @brief Returns a reference to the indexed element (4-D).
-      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `YAKL_DEBUG`.
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_DEBUG`.
       * Always use one-based indexing (unless the dimension has non-default bounds) with column-major ordering (left-most index varying the fastest). */
-    YAKL_INLINE T &operator()(int const i0, int const i1, int const i2, int const i3) const {
+    KOKKOS_INLINE_FUNCTION T &operator()(int const i0, int const i1, int const i2, int const i3) const {
       static_assert(rank==4,"ERROR: Improper number of dimensions specified in operator()");
-      #ifdef YAKL_DEBUG
-        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); ) } }
-        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); ) } }
-        if constexpr (rank >= 3) { if (i2<L2 || i2>U2) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); ) } }
-        if constexpr (rank >= 4) { if (i3<L3 || i3>U3) { YAKL_EXECUTE_ON_HOST_ONLY( printf("FSArray i3 out of bounds (i3: %d; lb3: %d; ub3: %d",i3,L3,U3); ) } }
-        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { yakl_throw("ERROR: FSArray index out of bounds"); } }
-        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { yakl_throw("ERROR: FSArray index out of bounds"); } }
-        if constexpr (rank >= 3) { if (i2<L2 || i2>U2) { yakl_throw("ERROR: FSArray index out of bounds"); } }
-        if constexpr (rank >= 4) { if (i3<L3 || i3>U3) { yakl_throw("ERROR: FSArray index out of bounds"); } }
+      #ifdef KOKKOS_DEBUG
+        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { KOKKOS_IF_ON_HOST( printf("FSArray i0 out of bounds (i0: %d; lb0: %d; ub0: %d",i0,L0,U0); ) } }
+        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { KOKKOS_IF_ON_HOST( printf("FSArray i1 out of bounds (i1: %d; lb1: %d; ub1: %d",i1,L1,U1); ) } }
+        if constexpr (rank >= 3) { if (i2<L2 || i2>U2) { KOKKOS_IF_ON_HOST( printf("FSArray i2 out of bounds (i2: %d; lb2: %d; ub2: %d",i2,L2,U2); ) } }
+        if constexpr (rank >= 4) { if (i3<L3 || i3>U3) { KOKKOS_IF_ON_HOST( printf("FSArray i3 out of bounds (i3: %d; lb3: %d; ub3: %d",i3,L3,U3); ) } }
+        if constexpr (rank >= 1) { if (i0<L0 || i0>U0) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
+        if constexpr (rank >= 2) { if (i1<L1 || i1>U1) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
+        if constexpr (rank >= 3) { if (i2<L2 || i2>U2) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
+        if constexpr (rank >= 4) { if (i3<L3 || i3>U3) { Kokkos::abort("ERROR: FSArray index out of bounds"); } }
       #endif
       return myData[(i3-L3)*OFF3 + (i2-L2)*OFF2 + (i1-L1)*OFF1 + i0-L0];
     }
@@ -164,27 +163,27 @@ namespace yakl {
 
     /** @brief Assign a single arithmetic value to the entire array. */
     template <class TLOC , typename std::enable_if<std::is_arithmetic<TLOC>::value,int>::type = 0 >
-    YAKL_INLINE void operator= (TLOC val) { for (int i=0 ; i < totElems() ; i++) { myData[i] = val; } }
+    KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (int i=0 ; i < totElems() ; i++) { myData[i] = val; } }
 
 
     /** @brief Get the underlying raw data pointer */
-    YAKL_INLINE T *data    () const { return myData; }
+    KOKKOS_INLINE_FUNCTION T *data    () const { return myData; }
     /** @brief Get the underlying raw data pointer */
-    YAKL_INLINE T *get_data() const { return myData; }
+    KOKKOS_INLINE_FUNCTION T *get_data() const { return myData; }
     /** @brief Returns pointer to beginning of the data */
-    YAKL_INLINE T *begin() const { return myData; }
+    KOKKOS_INLINE_FUNCTION T *begin() const { return myData; }
     /** @brief Returns pointer to end of the data */
-    YAKL_INLINE T *end() const { return begin() + size(); }
+    KOKKOS_INLINE_FUNCTION T *end() const { return begin() + size(); }
     /** @brief Get the total number of array elements */
-    static index_t constexpr totElems      () { return D3*D2*D1*D0; }
+    static size_t constexpr totElems      () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
-    static index_t constexpr get_totElems  () { return D3*D2*D1*D0; }
+    static size_t constexpr get_totElems  () { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
-    static index_t constexpr get_elem_count() { return D3*D2*D1*D0; }
+    static size_t constexpr get_elem_count() { return D3*D2*D1*D0; }
     /** @brief Get the total number of array elements */
-    static index_t constexpr size          () { return D3*D2*D1*D0; }
+    static size_t constexpr size          () { return D3*D2*D1*D0; }
     /** @brief Get the number of dimensions */
-    static index_t constexpr get_rank      () { return rank; }
+    static size_t constexpr get_rank      () { return rank; }
     /** @brief Always true. All YAKL arrays are contiguous with no padding. */
     static bool     constexpr span_is_contiguous() { return true; }
     /** @brief Always true. yakl::SArray objects are by default always initialized / allocated. */
@@ -202,7 +201,7 @@ namespace yakl {
     /** @brief Returns the dimensions of this array as a yakl::FSArray object.
       * 
       * You should use one-based indexing on the returned yakl::FSArray object. */
-    YAKL_INLINE FSArray<int,1,SB<rank>> get_dimensions() const {
+    KOKKOS_INLINE_FUNCTION FSArray<int,1,SB<rank>> get_dimensions() const {
       FSArray<int,1,SB<rank>> ret;
       if constexpr (rank >= 1) ret(1) = D0;
       if constexpr (rank >= 2) ret(2) = D1;
@@ -213,7 +212,7 @@ namespace yakl {
     /** @brief Returns the lower bound of each dimension of this array as a yakl::FSArray object.
       * 
       * You should use one-based indexing on the returned yakl::FSArray object. */
-    YAKL_INLINE FSArray<int,1,SB<rank>> get_lbounds() const {
+    KOKKOS_INLINE_FUNCTION FSArray<int,1,SB<rank>> get_lbounds() const {
       FSArray<int,1,SB<rank>> ret;
       if constexpr (rank >= 1) ret(1) = L0;
       if constexpr (rank >= 2) ret(2) = L1;
@@ -224,7 +223,7 @@ namespace yakl {
     /** @brief Returns the upper bound of each dimension of this array as a yakl::FSArray object.
       * 
       * You should use one-based indexing on the returned yakl::FSArray object. */
-    YAKL_INLINE FSArray<int,1,SB<rank>> get_ubounds() const {
+    KOKKOS_INLINE_FUNCTION FSArray<int,1,SB<rank>> get_ubounds() const {
       FSArray<int,1,SB<rank>> ret;
       if constexpr (rank >= 1) ret(1) = U0;
       if constexpr (rank >= 2) ret(2) = U1;
@@ -236,6 +235,5 @@ namespace yakl {
   };
 
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 
 

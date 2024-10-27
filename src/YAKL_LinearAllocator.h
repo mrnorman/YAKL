@@ -2,7 +2,6 @@
 #pragma once
 // Included by YAKL_Gator.h
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
 
@@ -51,17 +50,6 @@ namespace yakl {
                      std::string                           error_message_out_of_memory = "" ) {
       nullify();
 
-      #ifdef YAKL_VERBOSE
-        if (bytes >= 1024*1024*1024) {
-          verbose_inform(std::string("Creating pool of ")+std::to_string(bytes/1024./1024./1024.)+" GB" , pool_name);
-        } else if (bytes >= 1024*1024) {
-          verbose_inform(std::string("Creating pool of ")+std::to_string(bytes/1024./1024.      )+" MB" , pool_name);
-        } else if (bytes >= 1024) {
-          verbose_inform(std::string("Creating pool of ")+std::to_string(bytes/1024.            )+" KB" , pool_name);
-        } else {
-          verbose_inform(std::string("Creating pool of ")+std::to_string(bytes                  )+" B"  , pool_name);
-        }
-      #endif
       if (blockSize%(2*sizeof(size_t)) != 0) {
         std::cerr << "ERROR: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
         die("Error: LinearAllocator blockSize must be a multiple of 2*sizeof(size_t)");
@@ -132,9 +120,6 @@ namespace yakl {
 
 
     ~LinearAllocator() {
-      if (pool != nullptr) {
-        verbose_inform("Destroying pool" , pool_name);
-      }
       finalize();
     }
 
@@ -153,7 +138,7 @@ namespace yakl {
 
     void finalize() {
       if (allocs.size() != 0) {
-        #if defined(YAKL_DEBUG)
+        #if defined(KOKKOS_DEBUG)
           std::cerr << "WARNING: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
           std::cerr << "WARNING: Not all allocations were deallocated before destroying this pool.\n" << std::endl;
           printAllocsLeft();
@@ -215,8 +200,7 @@ namespace yakl {
         }
       }
 
-      // Return nullptr if there was no room for the allocation
-      // If the caller used "iGotRoom", then this should never actually happen
+      die( "The pool has run out of memory. Please initialize a larger pool." );
       return nullptr;
     };
 
@@ -292,6 +276,5 @@ namespace yakl {
   };
 
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 
 

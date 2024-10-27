@@ -9,7 +9,6 @@
 #include <iomanip>
 #include <vector>
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
 
   // Yes, this is Toney the Timer
@@ -297,5 +296,4 @@ namespace yakl {
   };
 
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 

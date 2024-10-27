@@ -2,12 +2,11 @@
 #pragma once
 // Included by YAKL_intrinsics.h
 
-__YAKL_NAMESPACE_WRAPPER_BEGIN__
 namespace yakl {
   namespace intrinsics {
 
-    template <index_t n, class real>
-    YAKL_INLINE SArray<real,2,n,n> matinv_ge(SArray<real,2,n,n> const &a) {
+    template <size_t n, class real>
+    KOKKOS_INLINE_FUNCTION SArray<real,2,n,n> matinv_ge(SArray<real,2,n,n> const &a) {
       SArray<real,2,n,n> scratch;
       SArray<real,2,n,n> inv;
 
@@ -62,7 +61,7 @@ namespace yakl {
 
 
     template <int n, class real>
-    YAKL_INLINE FSArray<real,2,SB<n>,SB<n>> matinv_ge(FSArray<real,2,SB<n>,SB<n>> const &a) {
+    KOKKOS_INLINE_FUNCTION FSArray<real,2,SB<n>,SB<n>> matinv_ge(FSArray<real,2,SB<n>,SB<n>> const &a) {
       FSArray<real,2,SB<n>,SB<n>> scratch;
       FSArray<real,2,SB<n>,SB<n>> inv;
 
@@ -117,5 +116,4 @@ namespace yakl {
 
   }
 }
-__YAKL_NAMESPACE_WRAPPER_END__
 

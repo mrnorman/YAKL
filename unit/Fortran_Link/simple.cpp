@@ -19,7 +19,7 @@ typedef Array<real,1,memDevice,styleC> real1d;
 
 
 void die(std::string msg) {
-  yakl::yakl_throw(msg.c_str());
+  Kokkos::abort(msg.c_str());
 }
 
 
@@ -32,18 +32,18 @@ extern "C" void add(real *a_p, real *b_p, real *c_p, int &n) {
   real1d b("b",n);
   real1d c("c",n);
   
-  parallel_for( n , YAKL_LAMBDA (int i) {
+  parallel_for( n , KOKKOS_LAMBDA (int i) {
     b(i) = 1;
     c(i) = 2;
   });
 
-  parallel_for( n , YAKL_LAMBDA (int i) {
+  parallel_for( n , KOKKOS_LAMBDA (int i) {
     a(i) = b(i) + c(i);
   });
 
   a.deep_copy_to(a_host);
   b.deep_copy_to(b_host);
   c.deep_copy_to(c_host);
-  yakl::fence();
+  Kokkos::fence();
 }
 
