@@ -1,14 +1,14 @@
 # YAKL: YAKL is A Kokkos Layer
 ## A Simple Kokkos-based C++ Framework for Performance Portability and Fortran Code Porting
 
-**IMPORTANT**: YAKL is now built entirely on Kokkos, and Streams, FFTs, and hierarchical parallelism have been removed. Please not the following modifications to YAKL documentation:
-* Streams and hierarchical parallelism are now gone. I never wanted them in YAKL anyway, so now that YAKL is Kokkos, just use Kokkos if you want those things.
+**IMPORTANT**: YAKL is now built entirely on Kokkos, and Streams, FFTs, and hierarchical parallelism have been removed. Please note the following modifications to YAKL documentation:
+* Streams and hierarchical parallelism are now gone. Now that YAKL is Kokkos, just use Kokkos if you want those things.
 * Array classes are still in play as well as the pool allocator and the Fortran-style Array classes.
 * The pool allocator no longer has multiple pools. This was meant to be a benefit, but it only seemed to cause confusion for users. So just one pool now. If it runs out of memory, simply make it bigger. It can be changed with `GATOR_DISABLE=1` and `GATOR_INITIAL_MB=...` just like before; as well as with parameters to `yakl::init()`;
-* YAKL FFTs, Tridiagonal, and Pentadiagonal solves are now gone. They require hardware specific logic, which YAKL no longer has. YAKL only uses Kokkos now.
-* All previous YAKL code is in the YAKL/deprecated directory now. I'm not sure when it will officially be removed.
+* YAKL FFTs, Tridiagonal, and Pentadiagonal solves are now gone. They require hardware specific logic, which YAKL no longer has.
+* All previous YAKL code is in the YAKL/deprecated directory now.
 * YAKL is now a header-only layer that extends Kokkos, meaning the build system will use typical Kokkos linking in CMake, and you can set YAKL flags the same way you set Kokkos flags (likely with generator expressions).
-* All parallel_for routines use Kokkos parallel_for and all memory allocations, copies, and frees use Kokkos supported API routines.
+* All `parallel_for` routines use Kokkos `parallel_for` and all memory allocations, copies, and frees use Kokkos supported API routines.
 * All reductions use Kokkos reductions, nothing backend specific anymore like cub, hipcub, or MKL.
 * Stack array / static array classes are still in here: `CSArray` (aka, `SArray`) and `FSArray`
 * Intrinsics are still in here.
