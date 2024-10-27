@@ -200,8 +200,7 @@ namespace yakl {
         }
       }
 
-      // Return nullptr if there was no room for the allocation
-      // If the caller used "iGotRoom", then this should never actually happen
+      die( "The pool has run out of memory. Please initialize a larger pool." );
       return nullptr;
     };
 

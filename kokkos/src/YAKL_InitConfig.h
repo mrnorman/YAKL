@@ -31,7 +31,7 @@ namespace yakl {
       *        variables, making it quite expensive to create. Please do not create a lot of these. */
     InitConfig() {
       pool_enabled     = true;
-      pool_size_mb     = 2*1024;
+      pool_size_mb     = 4*1024;
       pool_block_bytes = 4096;
 
       // Check if gator is disabled

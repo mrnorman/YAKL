@@ -32,8 +32,7 @@ add_subdirectory(Intrinsics)
 add_subdirectory(ParForC)
 add_subdirectory(ParForFortran)
 add_subdirectory(performance)
-
-if (DEFINED NETCDF_LINK_FLAGS)
+if (YAKL_TEST_NETCDF)
   add_subdirectory(NetCDF)
 endif()
 
