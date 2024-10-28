@@ -47,8 +47,9 @@ namespace yakl {
     }
     /** @brief [ASYNCHRONOUS] This constructor allocates room on the device for one scalar of type `T` and initializes it on device with the provided value. */
     explicit ScalarLiveOut(T val) {
-      data = Array<T,1,memDevice,styleC>("ScalarLiveOut_data",1);  // Create array
-      hostWrite(val);                                // Copy to device
+      Array<T,1,memHost,styleC> host_data("ScalarLiveOut_data",1);  // Create array
+      host_data(0) = val;
+      data = host_data.createDeviceCopy();
     }
     /** @brief Deallocates the scalar value on the device. */
     KOKKOS_INLINE_FUNCTION ~ScalarLiveOut() {
@@ -86,7 +87,7 @@ namespace yakl {
     /** @brief [ASYNCHRONOUS] Writes a value to the device-resident underlying data */
     inline void hostWrite(T val) {
       // Copy data to device
-      auto &myData = this->data;
+      YAKL_SCOPE( myData , this->data );
       c::parallel_for( YAKL_AUTO_LABEL() , c::Bounds<1>(1) , KOKKOS_LAMBDA (int dummy) {
         myData(0) = val;
       });
