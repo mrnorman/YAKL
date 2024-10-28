@@ -156,12 +156,11 @@ namespace yakl {
       *        an empty array object. This is safe to call even if this array object is not yet allocated. */
     template <class TLOC=T, typename std::enable_if< std::is_const<TLOC>::value , int >::type = 0>
     inline void deallocate() {
-      yakl_mtx_lock();
       typedef typename std::remove_cv<T>::type T_non_const;
       T_non_const *data = const_cast<T_non_const *>(this->myData);
       if (this->refCount != nullptr) {
+        yakl_mtx_lock();
         (*(this->refCount))--;
-
         if (*this->refCount == 0) {
           delete this->refCount;
           this->refCount = nullptr;
@@ -174,9 +173,8 @@ namespace yakl {
             this->myData = nullptr;
           }
         }
-
+        yakl_mtx_unlock();
       }
-      yakl_mtx_unlock();
     }
 
 
@@ -184,10 +182,9 @@ namespace yakl {
     /** @copydoc yakl::ArrayBase::deallocate() */
     template <class TLOC=T, typename std::enable_if< ! std::is_const<TLOC>::value , int >::type = 0>
     inline void deallocate() {
-      yakl_mtx_lock();
       if (this->refCount != nullptr) {
+        yakl_mtx_lock();
         (*(this->refCount))--;
-
         if (*this->refCount == 0) {
           delete this->refCount;
           this->refCount = nullptr;
@@ -200,9 +197,8 @@ namespace yakl {
             this->myData = nullptr;
           }
         }
-
+        yakl_mtx_unlock();
       }
-      yakl_mtx_unlock();
     }
 
 
