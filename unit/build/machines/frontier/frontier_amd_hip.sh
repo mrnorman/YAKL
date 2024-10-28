@@ -22,7 +22,7 @@ cmake -Wno-dev                        \
       -DKokkos_ARCH_AMD_GFX90A=ON     \
       -DYAKL_F90_FLAGS="-O3"          \
       -DCMAKE_INSTALL_PREFIX="`pwd`"  \
-      -DYAKL_UNIT_CXX_FLAGS="-DHAVE_MPI;-DPORTURB_GPU_AWARE_MPI;-munsafe-fp-atomics;-O3;-ffast-math;-I${ROCM_PATH}/include;-D__HIP_ROCclr__;-D__HIP_ARCH_GFX90A__=1;-Wno-unused-result;-Wno-macro-redefined" \
+      -DYAKL_UNIT_CXX_FLAGS="-DYAKL_EXPERIMENTAL_HIP_LAUNCHER;-DHAVE_MPI;-DPORTURB_GPU_AWARE_MPI;-munsafe-fp-atomics;-O3;-ffast-math;-I${ROCM_PATH}/include;-D__HIP_ROCclr__;-D__HIP_ARCH_GFX90A__=1;-Wno-unused-result;-Wno-macro-redefined" \
       -DYAKL_UNIT_CXX_LINK_FLAGS="--rocm-path=${ROCM_PATH};-L${ROCM_PATH}/lib;-lamdhip64" \
       -DYAKL_TEST_NETCDF=ON           \
       -DMPI_COMMAND=""                \
