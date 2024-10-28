@@ -23,6 +23,21 @@ KOKKOS_INLINE_FUNCTION void callFunctor(F const &f , Bounds<N,simple> const &bnd
 }
 
 
+#ifdef YAKL_EXPERIMENTAL_HIP_LAUNCHER
+  int constexpr VecLen = 256;
+  template <class F, int N, bool simple> __global__ __launch_bounds__(VecLen)
+  void hipKernel( Bounds<N,simple> bounds , F f) {
+    size_t i = blockIdx.x*blockDim.x + threadIdx.x;
+    if (i < bounds.nIter) { callFunctor( f , bounds , i ); }
+  }
+
+  template<class F, int N, bool simple>
+  inline void parallel_for_hip( Bounds<N,simple> const &bounds , F const &f ) {
+    hipKernel <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , 0 >>> ( bounds , f );
+  }
+#endif
+
+
 ////////////////////////////////////////////////////////////////////////////////////
 // parallel_for
 ////////////////////////////////////////////////////////////////////////////////////
@@ -35,7 +50,11 @@ inline void parallel_for( std::string str , Bounds<N,simple> const &bounds , F c
   #ifdef YAKL_AUTO_PROFILE
     timer_start(str);
   #endif
-  Kokkos::parallel_for( str , bounds.nIter , KOKKOS_LAMBDA (int i) { callFunctor(f,bounds,i); });
+  #ifdef YAKL_EXPERIMENTAL_HIP_LAUNCHER
+    parallel_for_hip( bounds , f );
+  #else
+    Kokkos::parallel_for( str , bounds.nIter , KOKKOS_LAMBDA (int i) { callFunctor(f,bounds,i); });
+  #endif
   #if defined(YAKL_AUTO_FENCE)
     Kokkos::fence();
   #endif
