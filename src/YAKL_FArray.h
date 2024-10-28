@@ -355,13 +355,14 @@ namespace yakl {
       }
       this->myname = rhs.myname;
       this->myData   = rhs.myData;
-      KOKKOS_IF_ON_HOST( yakl_mtx_lock(); )
       this->refCount = rhs.refCount;
       if (this->refCount != nullptr) {
-        // KOKKOS_IF_ON_HOST( (*(this->refCount))++; )  // This gives an nvc++ error
-        KOKKOS_IF_ON_HOST( { (*(this->refCount))++; } )  // This works around the nvc++ error
+        KOKKOS_IF_ON_HOST(
+          yakl_mtx_lock();
+          (*(this->refCount))++;
+          yakl_mtx_unlock();
+        )
       }
-      KOKKOS_IF_ON_HOST( yakl_mtx_unlock(); )
     }
 
 
@@ -717,14 +718,14 @@ namespace yakl {
         offset *= this->dimension[i];
       }
       ret.myData = &(this->myData[retOff]);
-      KOKKOS_IF_ON_HOST(
-        yakl_mtx_lock();
-        ret.refCount = this->refCount;
-        if (this->refCount != nullptr) {
+      ret.refCount = this->refCount;
+      if (this->refCount != nullptr) {
+        KOKKOS_IF_ON_HOST(
+          yakl_mtx_lock();
           (*(this->refCount))++;
-        }
-        yakl_mtx_unlock();
-      )
+          yakl_mtx_unlock();
+        )
+      }
       return ret;
     }
     /** @brief Array slice of 1-D array 
@@ -829,14 +830,14 @@ namespace yakl {
       }
       ret.myname = this->myname;
       ret.myData = this->myData;
-      KOKKOS_IF_ON_HOST(
-        yakl_mtx_lock();
-        ret.refCount = this->refCount;
-        if (this->refCount != nullptr) {
+      ret.refCount = this->refCount;
+      if (this->refCount != nullptr) {
+        KOKKOS_IF_ON_HOST(
+          yakl_mtx_lock();
           (*(this->refCount))++;
-        }
-        yakl_mtx_unlock();
-      )
+          yakl_mtx_unlock();
+        )
+      }
       return ret;
     }
     /** @brief Reshape array into a 1-D array
@@ -885,14 +886,14 @@ namespace yakl {
       ret.dimension[0] = this->totElems();  ret.lbounds  [0] = lbnd;
       ret.myname = this->myname;
       ret.myData = this->myData;
-      KOKKOS_IF_ON_HOST(
-        yakl_mtx_lock();
-        ret.refCount = this->refCount;
-        if (this->refCount != nullptr) {
+      ret.refCount = this->refCount;
+      if (this->refCount != nullptr) {
+        KOKKOS_IF_ON_HOST(
+          yakl_mtx_lock();
           (*(this->refCount))++;
-        }
-        yakl_mtx_unlock();
-      )
+          yakl_mtx_unlock();
+        )
+      }
       return ret;
     }
 
