@@ -43,7 +43,13 @@ namespace yakl {
         size_t initialSize = config.get_pool_size_mb()*1024*1024;
         size_t blockSize   = config.get_pool_block_bytes();
         // Set the allocation and deallocation functions
-        auto alloc   = [] (size_t bytes) -> void * { return Kokkos::kokkos_malloc( "Pool allocation" , bytes ); };
+        auto alloc   = [] (size_t bytes) -> void * {
+          #ifdef YAKL_MANAGED_MEMORY
+            return Kokkos::kokkos_malloc<Kokkos::SharedSpace>( "Pool allocation" , bytes );
+          #else
+            return Kokkos::kokkos_malloc( "Pool allocation" , bytes );
+          #endif
+        };
         auto dealloc = [] (void *ptr) { Kokkos::kokkos_free( ptr ); };
         auto zero    = [] (void *ptr, size_t bytes) {};
         std::string error_message_out_of_memory = "You have run out of pool memory. Please use a larger pool size\n";
