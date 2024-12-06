@@ -973,6 +973,23 @@ namespace yakl {
     }
 
 
+    template <class T2>
+    Array<T2,rank,myMem,styleC> as() const {
+      if constexpr (myMem == memHost) {
+        auto ret = createHostObject<T2>();
+        for (int i = 0; i < ret.size(); i++) { ret.data()[i] = this->myData[i]; }
+        return Array<T2,rank,myMem,styleC>(ret);
+      } else {
+        auto ret = createDeviceObject<T2>();
+        T *data = this->myData;
+        c::parallel_for( YAKL_AUTO_LABEL() , ret.size() , KOKKOS_LAMBDA (int i) {
+          ret.data()[i] = data[i];
+        });
+        return Array<T2,rank,myMem,styleC>(ret);
+      }
+    }
+
+
     /* ACCESSORS */
     /** @brief Returns the dimensions of this array as a yakl::SArray object.
       * 
