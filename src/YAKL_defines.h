@@ -8,6 +8,12 @@
   #endif
 #endif
 
+#ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
+  #ifndef KOKKOS_ENABLE_DEBUG
+    #define KOKKOS_ENABLE_DEBUG
+  #endif
+#endif
+
 #define YAKL_AUTO_LABEL() (std::string(basename(__FILE__)) + std::string(":") + std::to_string(__LINE__)).c_str()
 #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
 
