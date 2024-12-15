@@ -43,7 +43,7 @@ namespace c {
       this->l = l;
       this->u = u;
       this->s = 1;
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (u < l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound");
       #endif
     }
@@ -52,7 +52,7 @@ namespace c {
       this->l = l;
       this->u = u;
       this->s = s;
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (u < l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound");
         if (s < 1) Kokkos::abort("ERROR: negative strides not yet supported.");
       #endif
@@ -113,7 +113,7 @@ namespace c {
       if constexpr (N >= 6) dims[5] = b5;
       if constexpr (N >= 7) dims[6] = b6;
       if constexpr (N >= 8) dims[7] = b7;
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (N >= 2) { if (b1 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
         if (N >= 3) { if (b2 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
         if (N >= 4) { if (b3 == 0) Kokkos::abort("ERROR: Too few bounds specified"); }
@@ -136,21 +136,21 @@ namespace c {
     }
     /** @brief Get the lower loop bound for this loop index. */
     KOKKOS_INLINE_FUNCTION int lbound(int i) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling lbound() on an out of bounds integer");
       #endif
       return 0;
     }
     /** @brief Get the total number of iterations for this loop index. */
     KOKKOS_INLINE_FUNCTION int dim   (int i) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling dim() on an out of bounds integer");
       #endif
       return dims[i];
     }
     /** @brief Get the stride for this loop index. */
     KOKKOS_INLINE_FUNCTION int stride(int i) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling stride() on an out of bounds integer");
       #endif
       return 1;
@@ -256,7 +256,7 @@ namespace c {
       if constexpr (N >= 6) { lbounds[5] = b5.l;   strides[5] =  b5.s;   dims[5] = ( b5.u - b5.l + 1 ) / b5.s; }
       if constexpr (N >= 7) { lbounds[6] = b6.l;   strides[6] =  b6.s;   dims[6] = ( b6.u - b6.l + 1 ) / b6.s; }
       if constexpr (N >= 8) { lbounds[7] = b7.l;   strides[7] =  b7.s;   dims[7] = ( b7.u - b7.l + 1 ) / b7.s; }
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (N >= 2) { if (! b1.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
         if (N >= 3) { if (! b2.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
         if (N >= 4) { if (! b3.valid()) Kokkos::abort("ERROR: Too few bounds specified"); }
@@ -279,21 +279,21 @@ namespace c {
     }
     /** @brief Get the lower loop bound for this loop index. */
     KOKKOS_INLINE_FUNCTION int lbound(int i) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling lbound() on an out of bounds integer");
       #endif
       return lbounds[i];
     }
     /** @brief Get the total number of iterations for this loop index. */
     KOKKOS_INLINE_FUNCTION int dim   (int i) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling dim() on an out of bounds integer");
       #endif
       return dims   [i];
     }
     /** @brief Get the stride for this loop index. */
     KOKKOS_INLINE_FUNCTION int stride(int i) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (i < 0 || i > N-1) Kokkos::abort("ERROR: Calling stride() on an out of bounds integer");
       #endif
       return strides[i];

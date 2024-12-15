@@ -182,7 +182,7 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION Array(char const * label, Dims const dims) {
       static_assert( rank >= 1 && rank <= 8 , "ERROR: Creating Array with a rank < 1 or > 8" );
       nullify();
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (dims.size() != rank) Kokkos::abort("ERROR: Number of constructor dimensions does not match the Array rank");
       #endif
       KOKKOS_IF_ON_HOST( this->deallocate(); )
@@ -292,7 +292,7 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION Array(char const *label, T *data, Dims const dims) {
       static_assert( rank >= 1 && rank <= 8 , "ERROR: Creating Array with a rank < 1 or > 8" );
       nullify();
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if ( dims.size() < rank ) Kokkos::abort("ERROR: dims < rank");
         if (data == nullptr) Kokkos::abort("ERROR: wrapping nullptr with a YAKL Array object");
       #endif
@@ -445,7 +445,7 @@ namespace yakl {
       * @brief dummy
       * 
       * Return a reference to the element at the requested index. Number of indices must match the number of dimensions
-      * in this array, `N`. The array object must already be allocated. For index checking, please define the `KOKKOS_DEBUG`
+      * in this array, `N`. The array object must already be allocated. For index checking, please define the `KOKKOS_ENABLE_DEBUG`
       * CPP macro. Use zero-based indexing with the right-most value varying the fastest (row-major ordering).
       */
 
@@ -456,7 +456,7 @@ namespace yakl {
       * \copydetails doxhide_CArray_indexers */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t i0) const {
       static_assert( rank == 1 , "ERROR: Indexing non-rank-1 array with 1 index" );
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         check(i0);
       #endif
       size_t ind = i0;
@@ -466,7 +466,7 @@ namespace yakl {
       * \copydetails doxhide_CArray_indexers */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1) const {
       static_assert( rank == 2 , "ERROR: Indexing non-rank-2 array with 2 indices" );
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         check(i0,i1);
       #endif
       size_t ind = i0*this->dimension[1] + i1;
@@ -476,7 +476,7 @@ namespace yakl {
       * \copydetails doxhide_CArray_indexers */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2) const {
       static_assert( rank == 3 , "ERROR: Indexing non-rank-3 array with 3 indices" );
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         check(i0,i1,i2);
       #endif
       size_t ind = (i0*this->dimension[1] + i1)*
@@ -487,7 +487,7 @@ namespace yakl {
       * \copydetails doxhide_CArray_indexers */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3) const {
       static_assert( rank == 4 , "ERROR: Indexing non-rank-4 array with 4 indices" );
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         check(i0,i1,i2,i3);
       #endif
       size_t ind = ((i0*this->dimension[1] + i1)*
@@ -499,7 +499,7 @@ namespace yakl {
       * \copydetails doxhide_CArray_indexers */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4) const {
       static_assert( rank == 5 , "ERROR: Indexing non-rank-5 array with 5 indices" );
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         check(i0,i1,i2,i3,i4);
       #endif
       size_t ind = (((i0*this->dimension[1] + i1)*
@@ -512,7 +512,7 @@ namespace yakl {
       * \copydetails doxhide_CArray_indexers */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5) const {
       static_assert( rank == 6 , "ERROR: Indexing non-rank-6 array with 6 indices" );
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         check(i0,i1,i2,i3,i4,i5);
       #endif
       size_t ind = ((((i0*this->dimension[1] + i1)*
@@ -526,7 +526,7 @@ namespace yakl {
       * \copydetails doxhide_CArray_indexers */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5, size_t i6) const {
       static_assert( rank == 7 , "ERROR: Indexing non-rank-7 array with 7 indices" );
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         check(i0,i1,i2,i3,i4,i5,i6);
       #endif
       size_t ind = (((((i0*this->dimension[1] + i1)*
@@ -542,7 +542,7 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION T &operator()(size_t i0, size_t i1, size_t i2, size_t i3, size_t i4, size_t i5, size_t i6,
                               size_t i7) const {
       static_assert( rank == 8 , "ERROR: Indexing non-rank-8 array with 8 indices" );
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         check(i0,i1,i2,i3,i4,i5,i6,i7);
       #endif
       size_t ind = ((((((i0*this->dimension[1] + i1)*
@@ -559,7 +559,7 @@ namespace yakl {
     /** @private */
     KOKKOS_INLINE_FUNCTION void check(size_t i0, size_t i1=0, size_t i2=0, size_t i3=0, size_t i4=0, size_t i5=0,
                            size_t i6=0, size_t i7=0) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! this->initialized()) { Kokkos::abort("Error: Using operator() on an Array that isn't allocated"); }
         if constexpr (rank >= 1) { if (i0 >= this->dimension[0]) ind_out_bounds<0>(i0); }
         if constexpr (rank >= 2) { if (i1 >= this->dimension[1]) ind_out_bounds<1>(i1); }
@@ -588,7 +588,7 @@ namespace yakl {
     /** @private */
     template <int I>
     KOKKOS_INLINE_FUNCTION void ind_out_bounds(size_t ind) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         KOKKOS_IF_ON_HOST(
           std::cerr << "ERROR: For Array labeled: " << this->myname << ":" << std::endl;
           std::cerr << "Index " << I+1 << " of " << rank << " is out of bounds.  Provided index: " << ind
@@ -626,7 +626,7 @@ namespace yakl {
 
     /** @brief Return an array aliasing a contiguous subset of the slowest dimension */
     KOKKOS_INLINE_FUNCTION Array<T,rank,myMem,styleC> subset_slowest_dimension(int l, int u) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! this->initialized()) { Kokkos::abort("ERROR: Trying to subset_slowest_dimension an Array that hasn't been initialized"); }
         if (l < 0) { Kokkos::abort("ERROR: subset_slowest_dimension lower bound < 0"); }
         if (u < 0) { Kokkos::abort("ERROR: subset_slowest_dimension upper bound < 0"); }
@@ -674,7 +674,7 @@ namespace yakl {
     /** @brief Array slice using initializer list or std::vector indices 
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( Dims const &dims ) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (rank != dims.size()) {
           KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
           Kokkos::abort("ERROR: slice rank must be equal to dims.size()");
@@ -799,7 +799,7 @@ namespace yakl {
     /** @brief Reshape array using initializer list or std::vector indices
       * \copydetails doxhide_CArray_reshape */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> reshape(Dims const &dims) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! this->initialized()) { Kokkos::abort("ERROR: Trying to reshape an Array that hasn't been initialized"); }
         if (dims.size() != N) { Kokkos::abort("ERROR: new number of reshaped array dimensions does not match the templated rank"); }
         size_t totelems = 1;
@@ -861,7 +861,7 @@ namespace yakl {
       * Example usage: `auto new_arr_1d = arr.collapse();`
       */
     KOKKOS_INLINE_FUNCTION Array<T,1,myMem,styleC> collapse() const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! this->initialized()) { Kokkos::abort("ERROR: Trying to collapse an Array that hasn't been initialized"); }
       #endif
       Array<T,1,myMem,styleC> ret;
@@ -912,7 +912,7 @@ namespace yakl {
       * NOTE: The returned array will have a **non-`const`** underlying type. */
     template <class TLOC=typename std::remove_cv<T>::type>
     inline Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleC> createHostObject() const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! this->initialized()) {
           KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
           Kokkos::abort("Error: createHostObject() called on an Array that hasn't been allocated");
@@ -958,7 +958,7 @@ namespace yakl {
       * NOTE: The returned array will have a **non-`const`** underlying type. */
     template <class TLOC=typename std::remove_cv<T>::type>
     inline Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleC> createDeviceObject() const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! this->initialized()) {
           KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
           Kokkos::abort("Error: createDeviceObject() called on an Array that hasn't been allocated.");
@@ -1019,7 +1019,7 @@ namespace yakl {
       *
       * The parameter `dim` is expected to be a zero-based index. */
     KOKKOS_INLINE_FUNCTION size_t extent( int dim ) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (dim < 0 || dim > rank-1) Kokkos::abort("ERROR: calling extent() with an out of bounds index");
       #endif
       return this->dimension[dim];

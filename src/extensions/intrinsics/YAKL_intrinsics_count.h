@@ -7,7 +7,7 @@ namespace yakl {
 
     template <int rank, int myStyle>
     inline int count( Array<bool,rank,memHost,myStyle> const &mask ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!mask.initialized()) { Kokkos::abort("ERROR: calling count on an array that has not been initialized"); }
       #endif
       int numTrue = 0;
@@ -19,7 +19,7 @@ namespace yakl {
 
     template <int rank, int myStyle>
     inline int count( Array<bool,rank,memDevice,myStyle> const &mask ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!mask.initialized()) { Kokkos::abort("ERROR: calling count on an array that has not been initialized"); }
       #endif
       auto intarr = mask.template createDeviceObject<int>();

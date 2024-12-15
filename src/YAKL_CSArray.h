@@ -13,7 +13,7 @@ namespace yakl {
     * This creates a C-style "Stack Array" (CSArray) class, which is typedefined to yakl::SArray. It should
     * be thought of as very similar to a C-style multi-dimensional array, `float arr[n1][n2][n3];`. That array
     * as an `SArray` object would be created as `yakl::SArray<float,3,n1,n2,n3> arr;`, and it would be indexed
-    * as `arr(i1,i2,i3);`. For bounds checking, define the CPP macro `KOKKOS_DEBUG`. Dimensions sizes must be
+    * as `arr(i1,i2,i3);`. For bounds checking, define the CPP macro `KOKKOS_ENABLE_DEBUG`. Dimensions sizes must be
     * known at compile time, and data is placed on the stack of whatever context it is declared. When declared
     * in a device `parallel_for` kernel, it is a thread-private array, meaning every thread has a separate copy
     * of the array. 
@@ -56,22 +56,22 @@ namespace yakl {
     ~CSArray() = default;
 
     /** @brief Returns a reference to the indexed element (1-D).
-      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_DEBUG`.
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_ENABLE_DEBUG`.
       * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t const i0) const {
       static_assert(rank==1,"ERROR: Improper number of dimensions specified in operator()");
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
           if constexpr (rank >= 1) { if (i0>D0-1) { KOKKOS_IF_ON_HOST( printf("CSArray i0 out of bounds (i0: %zu; lb0: %d; ub0: %zu)\n",i0,0,D0-1); ) } }
           if constexpr (rank >= 1) { if (i0>D0-1) { Kokkos::abort("ERROR: CSArray index out of bounds"); } }
       #endif
       return myData[i0];
     }
     /** @brief Returns a reference to the indexed element (2-D).
-      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_DEBUG`.
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_ENABLE_DEBUG`.
       * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t const i0, size_t const i1) const {
       static_assert(rank==2,"ERROR: Improper number of dimensions specified in operator()");
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if constexpr (rank >= 1) { if (i0>D0-1) { KOKKOS_IF_ON_HOST( printf("CSArray i0 out of bounds (i0: %zu; lb0: %d; ub0: %zu)\n",i0,0,D0-1); ) } }
         if constexpr (rank >= 2) { if (i1>D1-1) { KOKKOS_IF_ON_HOST( printf("CSArray i1 out of bounds (i1: %zu; lb1: %d; ub1: %zu)\n",i1,0,D1-1); ) } }
         if constexpr (rank >= 1) { if (i0>D0-1) { Kokkos::abort("ERROR: CSArray index out of bounds"); } }
@@ -80,11 +80,11 @@ namespace yakl {
       return myData[i0*OFF0 + i1];
     }
     /** @brief Returns a reference to the indexed element (3-D).
-      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_DEBUG`.
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_ENABLE_DEBUG`.
       * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t const i0, size_t const i1, size_t const i2) const {
       static_assert(rank==3,"ERROR: Improper number of dimensions specified in operator()");
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if constexpr (rank >= 1) { if (i0>D0-1) { KOKKOS_IF_ON_HOST( printf("CSArray i0 out of bounds (i0: %zu; lb0: %d; ub0: %zu)\n",i0,0,D0-1); ) } }
         if constexpr (rank >= 2) { if (i1>D1-1) { KOKKOS_IF_ON_HOST( printf("CSArray i1 out of bounds (i1: %zu; lb1: %d; ub1: %zu)\n",i1,0,D1-1); ) } }
         if constexpr (rank >= 3) { if (i2>D2-1) { KOKKOS_IF_ON_HOST( printf("CSArray i2 out of bounds (i2: %zu; lb2: %d; ub2: %zu)\n",i2,0,D2-1); ) } }
@@ -95,11 +95,11 @@ namespace yakl {
       return myData[i0*OFF0 + i1*OFF1 + i2];
     }
     /** @brief Returns a reference to the indexed element (4-D).
-      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_DEBUG`.
+      * @details Number of indices must match the rank of the array object. For bounds checking, define the CPP macro `KOKKOS_ENABLE_DEBUG`.
       * Always use zero-based indexing with row-major ordering (right-most index varying the fastest). */
     KOKKOS_INLINE_FUNCTION T &operator()(size_t const i0, size_t const i1, size_t const i2, size_t const i3) const {
       static_assert(rank==4,"ERROR: Improper number of dimensions specified in operator()");
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if constexpr (rank >= 1) { if (i0>D0-1) { KOKKOS_IF_ON_HOST( printf("CSArray i0 out of bounds (i0: %zu; lb0: %d; ub0: %zu)\n",i0,0,D0-1); ) } }
         if constexpr (rank >= 2) { if (i1>D1-1) { KOKKOS_IF_ON_HOST( printf("CSArray i1 out of bounds (i1: %zu; lb1: %d; ub1: %zu)\n",i1,0,D1-1); ) } }
         if constexpr (rank >= 3) { if (i2>D2-1) { KOKKOS_IF_ON_HOST( printf("CSArray i2 out of bounds (i2: %zu; lb2: %d; ub2: %zu)\n",i2,0,D2-1); ) } }

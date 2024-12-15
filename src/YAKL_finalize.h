@@ -29,7 +29,7 @@ namespace yakl {
       #endif
       get_yakl_instance().pool_enabled = false;
     } else {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         std::cerr << "WARNING: Calling yakl::finalize() when YAKL is not initialized. ";
         std::cerr << "This might mean you've called yakl::finalize() more than once.\n";
       #endif

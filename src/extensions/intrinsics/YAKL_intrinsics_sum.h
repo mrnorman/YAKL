@@ -7,7 +7,7 @@ namespace yakl {
 
     template <class T, int rank, int myStyle>
     inline T sum( Array<T,rank,memHost,myStyle> const &arr ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!arr.initialized()) { Kokkos::abort("ERROR: calling sum on an array that has not been initialized"); }
       #endif
       typename std::remove_cv<T>::type m = arr.data()[0];
@@ -17,7 +17,7 @@ namespace yakl {
 
     template <class T, int rank, int myStyle>
     inline T sum( Array<T,rank,memDevice,myStyle> const &arr ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!arr.initialized()) { Kokkos::abort("ERROR: calling sum on an array that has not been initialized"); }
       #endif
       typedef typename std::remove_cv<T>::type TNC;  // T Non-Const
