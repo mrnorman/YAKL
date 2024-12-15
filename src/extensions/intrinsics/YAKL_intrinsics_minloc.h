@@ -7,7 +7,7 @@ namespace yakl {
 
     template <class T, int myStyle>
     inline int minloc( Array<T,1,memHost,myStyle> const &arr ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! allocated(arr)) Kokkos::abort("ERROR: calling minloc on an unallocated array");
       #endif
       T mv = minval(arr);
@@ -21,7 +21,7 @@ namespace yakl {
 
     template <class T>
     inline int minloc( Array<T,1,memDevice,styleC> const &arr ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! allocated(arr)) Kokkos::abort("ERROR: calling minloc on an unallocated array");
       #endif
       T mv = minval(arr);
@@ -37,7 +37,7 @@ namespace yakl {
 
     template <class T>
     inline int minloc( Array<T,1,memDevice,styleFortran> const &arr ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! allocated(arr)) Kokkos::abort("ERROR: calling minloc on an unallocated array");
       #endif
       T mv = minval(arr);

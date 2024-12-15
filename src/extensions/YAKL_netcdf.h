@@ -533,7 +533,7 @@ namespace yakl {
         if (arr.initialized()) {
           for (int i=0; i < dimSizes.size(); i++) {
             if (dimSizes[i] != arr.extent(i)) {
-              #ifdef KOKKOS_DEBUG
+              #ifdef KOKKOS_ENABLE_DEBUG
                 std::cout << "WARNING: Array dims wrong size; deallocating previous array and allocating a new one\n";
               #endif
               createArr = true;

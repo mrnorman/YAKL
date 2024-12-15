@@ -11,7 +11,7 @@ namespace yakl {
     template <class T1, class T2, int rank, int myStyle>
     inline Array<T1,rank,memHost,myStyle> sign( Array<T1,rank,memHost,myStyle> const & a ,
                                                 Array<T2,rank,memHost,myStyle> const & b ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         using yakl::componentwise::operator==;
         using yakl::componentwise::operator!;
         if (!allocated(a)) Kokkos::abort("ERROR: Calling sign with unallocated a");
@@ -28,7 +28,7 @@ namespace yakl {
     template <class T1, class T2, int rank, int myStyle>
     inline Array<T1,rank,memDevice,myStyle> sign( Array<T1,rank,memDevice,myStyle> const & a ,
                                                   Array<T2,rank,memDevice,myStyle> const & b ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         using yakl::componentwise::operator==;
         using yakl::componentwise::operator!;
         if (!allocated(a)) Kokkos::abort("ERROR: Calling sign with unallocated a");

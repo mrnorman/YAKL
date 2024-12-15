@@ -138,7 +138,7 @@ namespace yakl {
 
     void finalize() {
       if (allocs.size() != 0) {
-        #if defined(KOKKOS_DEBUG)
+        #if defined(KOKKOS_ENABLE_DEBUG)
           std::cerr << "WARNING: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
           std::cerr << "WARNING: Not all allocations were deallocated before destroying this pool.\n" << std::endl;
           printAllocsLeft();

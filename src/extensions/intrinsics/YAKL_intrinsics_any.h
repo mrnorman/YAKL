@@ -7,7 +7,7 @@ namespace yakl {
 
     template <class T, int rank, int myStyle>
     inline bool any( Array<T,rank,memHost,myStyle> arr ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!arr.initialized()) { Kokkos::abort("ERROR: calling any on an array that has not been initialized"); }
       #endif
       bool any_true = false;
@@ -17,7 +17,7 @@ namespace yakl {
 
     template <class T, int rank, int myStyle>
     inline bool any( Array<T,rank,memDevice,myStyle> arr ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!arr.initialized()) { Kokkos::abort("ERROR: calling any on an array that has not been initialized"); }
       #endif
       ScalarLiveOut<bool> any_true(false);

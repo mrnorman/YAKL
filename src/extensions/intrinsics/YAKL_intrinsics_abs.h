@@ -7,7 +7,7 @@ namespace yakl {
 
     template <class T, int rank, int myStyle>
     inline Array<T,rank,memHost,myStyle> abs( Array<T,rank,memHost,myStyle> const &arr ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!arr.initialized()) { Kokkos::abort("ERROR: calling abs on an array that has not been initialized"); }
       #endif
       auto ret = arr.createHostObject();
@@ -17,7 +17,7 @@ namespace yakl {
 
     template <class T, int rank, int myStyle>
     inline Array<T,rank,memDevice,myStyle> abs( Array<T,rank,memDevice,myStyle> const &arr ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!arr.initialized()) { Kokkos::abort("ERROR: calling abs on an array that has not been initialized"); }
       #endif
       auto ret = arr.createDeviceObject();

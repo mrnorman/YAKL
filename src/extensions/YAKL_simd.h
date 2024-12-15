@@ -43,7 +43,7 @@ namespace simd {
 
     /** @brief Returns a modifiable reference to the data at the requested index */
     KOKKOS_INLINE_FUNCTION T & operator() (size_t i) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (i >= N) { Kokkos::abort("Pack index out of bounds"); }
       #endif
       return myData[i];
@@ -51,7 +51,7 @@ namespace simd {
 
     /** @brief Returns a non-modifiable value to the data at the requested index */
     KOKKOS_INLINE_FUNCTION T operator() (size_t i) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (i >= N) { Kokkos::abort("Pack index out of bounds"); }
       #endif
       return myData[i];

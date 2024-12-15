@@ -7,7 +7,7 @@ namespace yakl {
 
     template <class T, int myMem>
     inline Array<T,2,myMem,styleC> transpose(Array<T,2,myMem,styleC> const &in ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!allocated(in)) Kokkos::abort("ERROR: Calling transpose on unallocated array");
       #endif
       auto d0 = size(in,0);
@@ -31,7 +31,7 @@ namespace yakl {
 
     template <class T, int myMem>
     inline Array<T,2,myMem,styleFortran> transpose(Array<T,2,myMem,styleFortran> const &in ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (!allocated(in)) Kokkos::abort("ERROR: Calling transpose on unallocated array");
       #endif
       auto l1 = lbound(in,1);

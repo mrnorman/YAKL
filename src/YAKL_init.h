@@ -63,7 +63,7 @@ namespace yakl {
                                        << std::endl;
       #endif
     } else {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         std::cerr << "WARNING: Calling yakl::initialize() when YAKL is already initialized. ";
       #endif
     }

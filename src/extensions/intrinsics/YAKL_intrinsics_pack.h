@@ -9,11 +9,11 @@ namespace yakl {
     inline Array<T,1,memHost,myStyle> pack( Array<T,rank,memHost,myStyle> const &arr ,
                                             Array<bool,rank,memHost,myStyle> const &mask =
                                                 Array<bool,rank,memHost,myStyle>() ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! allocated(arr)) Kokkos::abort("ERROR: Calling pack with unallocated array");
       #endif
       if (allocated(mask)) {
-        #ifdef KOKKOS_DEBUG
+        #ifdef KOKKOS_ENABLE_DEBUG
           using yakl::componentwise::operator==;
           using yakl::componentwise::operator&&;
           using yakl::componentwise::operator!;
@@ -47,11 +47,11 @@ namespace yakl {
     inline Array<T,1,memDevice,myStyle> pack( Array<T,rank,memDevice,myStyle> const &arr ,
                                               Array<bool,rank,memDevice,myStyle> const &mask =
                                                   Array<bool,rank,memDevice,myStyle>() ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (! allocated(arr)) Kokkos::abort("ERROR: Calling pack with unallocated array");
       #endif
       if (allocated(mask)) {
-        #ifdef KOKKOS_DEBUG
+        #ifdef KOKKOS_ENABLE_DEBUG
           using yakl::componentwise::operator==;
           using yakl::componentwise::operator&&;
           using yakl::componentwise::operator!;

@@ -50,7 +50,7 @@ namespace yakl {
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memHost,theirStyle> const &lhs ) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (this->totElems() != lhs.totElems()) { Kokkos::abort("ERROR: deep_copy_to with different number of elements"); }
         if (this->myData == nullptr || lhs.myData == nullptr) { Kokkos::abort("ERROR: deep_copy_to with nullptr"); }
       #endif
@@ -70,7 +70,7 @@ namespace yakl {
       * `this` array may be in yakl::memHost or yakl::memDevice space. */
     template <int theirRank, int theirStyle>
     inline void deep_copy_to(Array<typename std::remove_cv<T>::type,theirRank,memDevice,theirStyle> const &lhs ) const {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         if (this->totElems() != lhs.totElems()) { Kokkos::abort("ERROR: deep_copy_to with different number of elements"); }
         if (this->myData == nullptr || lhs.myData == nullptr) { Kokkos::abort("ERROR: deep_copy_to with nullptr"); }
       #endif
@@ -109,7 +109,7 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION bool span_is_contiguous() const { return true; }
     /** @brief Returns whether this array object has is in an initialized / allocated state. */
     KOKKOS_INLINE_FUNCTION bool initialized() const { return this->myData != nullptr; }
-    /** @brief Returns this array object's string label if the `KOKKOS_DEBUG` CPP macro is defined. Otherwise, returns an empty string. */
+    /** @brief Returns this array object's string label if the `KOKKOS_ENABLE_DEBUG` CPP macro is defined. Otherwise, returns an empty string. */
     KOKKOS_INLINE_FUNCTION int get_memory_space() const { return myMem == memHost ? memHost : memDevice; }
     /** @brief Returns the object's string label as char const (Host only) */
     char const * label() const { return this->myname; }

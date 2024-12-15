@@ -14,7 +14,7 @@ namespace yakl {
     merge( Array<T1  ,rank,memHost,myStyle> const & arr_true  ,
            Array<T2  ,rank,memHost,myStyle> const & arr_false ,
            Array<bool,rank,memHost,myStyle> const & mask      ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         using yakl::componentwise::operator==;
         using yakl::componentwise::operator&&;
         using yakl::componentwise::operator!;
@@ -36,7 +36,7 @@ namespace yakl {
     merge( Array<T1  ,rank,memDevice,myStyle> const & arr_true  ,
            Array<T2  ,rank,memDevice,myStyle> const & arr_false ,
            Array<bool,rank,memDevice,myStyle> const & mask      ) {
-      #ifdef KOKKOS_DEBUG
+      #ifdef KOKKOS_ENABLE_DEBUG
         using yakl::componentwise::operator==;
         using yakl::componentwise::operator&&;
         using yakl::componentwise::operator!;
