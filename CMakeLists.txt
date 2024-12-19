@@ -33,10 +33,10 @@ if (YAKL_HAVE_MPI)
   endif()
 endif()
 
-file(GLOB SRC_INSTALL_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
+file(GLOB SRC_INSTALL_FILES_BASE "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
+file(GLOB SRC_INSTALL_FILES_EXTERNAL "${CMAKE_CURRENT_SOURCE_DIR}/external/*.h")
 
 install(TARGETS yakl_fortran LIBRARY DESTINATION lib)
-install(FILES ${SRC_INSTALL_FILES} DESTINATION include)
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external 
-                  ${CMAKE_CURRENT_SOURCE_DIR}/src/extensions 
-                  DESTINATION include)
+install(FILES ${SRC_INSTALL_FILES_BASE} DESTINATION include)
+install(FILES ${SRC_INSTALL_FILES_EXTERNAL} DESTINATION include)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/extensions DESTINATION include)
