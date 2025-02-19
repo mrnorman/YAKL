@@ -18,6 +18,8 @@
 * `YAKL_LAMBDA` should now be `KOKKOS_LAMBDA`
 * `YAKL_EXECUTE_ON_HOST_ONLY(...)` should now be `KOKKOS_IF_ON_HOST(...)`
 * `YAKL_EXECUTE_ON_DEVICE_ONLY(...)` should now be `KOKKOS_IF_ON_DEVICE(...)`
+* `yakl::atomicAdd(var,rhs)` should now be `Kokkos::atomic_add(&var,rhs)`
+   * Don't forget the ampersand. Kokkos accepts a pointer where YAKL used to accept a reference
 
 ## Example compilation approach
 ```cmake
