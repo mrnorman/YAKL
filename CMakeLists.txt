@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.16)
 
 project(YAKL
         LANGUAGES C CXX Fortran
@@ -13,11 +13,14 @@ set(YAKL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/YAKL_fortran_interfaces.cpp
 # Ensure the Fortran file uses the desired flags
 set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
 
+# Require the Kokkos package
+find_package(Kokkos REQUIRED)
+
 # Add the header-only YAKL C++ library target as well as the YAKL Fortran interface library target
 add_library(yakl         INTERFACE               )
 add_library(yakl_fortran STATIC    ${YAKL_SOURCE})
-target_link_libraries(yakl         INTERFACE kokkos)
-target_link_libraries(yakl_fortran PUBLIC    kokkos)
+target_link_libraries(yakl         INTERFACE Kokkos::kokkos)
+target_link_libraries(yakl_fortran PUBLIC    Kokkos::kokkos)
 target_include_directories(yakl         INTERFACE src external src/extensions ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(yakl_fortran PUBLIC    src external src/extensions ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -30,3 +33,10 @@ if (YAKL_HAVE_MPI)
   endif()
 endif()
 
+file(GLOB SRC_INSTALL_FILES_BASE "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
+file(GLOB SRC_INSTALL_FILES_EXTERNAL "${CMAKE_CURRENT_SOURCE_DIR}/external/*.h")
+
+install(TARGETS yakl_fortran LIBRARY DESTINATION lib)
+install(FILES ${SRC_INSTALL_FILES_BASE} DESTINATION include)
+install(FILES ${SRC_INSTALL_FILES_EXTERNAL} DESTINATION include)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/extensions DESTINATION include)
