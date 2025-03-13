@@ -47,7 +47,7 @@
   #define YAKL_CLASS_LAMBDA [=, *this] __host__ __device__
   #define YAKL_INLINE __host__ __device__ __forceinline__
   #define YAKL_DEVICE_INLINE __forceinline__ __device__
-  #define YAKL_SCOPE(a,b) auto &a = b
+  #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
   #ifndef YAKL_SINGLE_MEMORY_SPACE
     #define YAKL_SEPARATE_MEMORY_SPACE
   #endif
