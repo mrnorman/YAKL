@@ -9,10 +9,11 @@
 // Calls the functor for the specified global index ID "i" using the specified loop bounds
 //////////////////////////////////////////////////////////////////////////////////////////////
 template <class F, bool simple, int N>
-KOKKOS_INLINE_FUNCTION void callFunctor(F const &f , Bounds<N,simple> const &bnd , int const i ) {
+KOKKOS_INLINE_FUNCTION void callFunctor(F const &f , Bounds<N,simple> const &bnd , int64_t const i ) {
   int ind[N];
   bnd.unpackIndices( i , ind );
-  if constexpr (N == 1) f(ind[0]);
+  if constexpr (N == 1 && simple) f(i);
+  if constexpr (N == 1 && !simple) f(ind[0]);
   if constexpr (N == 2) f(ind[0],ind[1]);
   if constexpr (N == 3) f(ind[0],ind[1],ind[2]);
   if constexpr (N == 4) f(ind[0],ind[1],ind[2],ind[3]);
@@ -33,7 +34,7 @@ KOKKOS_INLINE_FUNCTION void callFunctor(F const &f , Bounds<N,simple> const &bnd
 
   template<class F, int N, bool simple>
   inline void parallel_for_hip( Bounds<N,simple> const &bounds , F const &f ) {
-    hipKernel <<< (unsigned int) (bounds.nIter-1)/VecLen+1 , VecLen , 0 , 0 >>> ( bounds , f );
+    hipKernel <<< (unsigned int) ((bounds.nIter-1)/VecLen+1) , VecLen , 0 , 0 >>> ( bounds , f );
   }
 #endif
 
@@ -53,7 +54,7 @@ inline void parallel_for( std::string str , Bounds<N,simple> const &bounds , F c
   #ifdef YAKL_EXPERIMENTAL_HIP_LAUNCHER
     parallel_for_hip( bounds , f );
   #else
-    Kokkos::parallel_for( str , bounds.nIter , KOKKOS_LAMBDA (int i) { callFunctor(f,bounds,i); });
+    Kokkos::parallel_for( str , bounds.nIter , KOKKOS_LAMBDA (int64_t i) { callFunctor(f,bounds,i); });
   #endif
   #if defined(YAKL_AUTO_FENCE)
     Kokkos::fence();
