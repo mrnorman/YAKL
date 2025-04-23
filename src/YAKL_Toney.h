@@ -7,7 +7,9 @@
 #include <thread>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 #include <vector>
+#include <fstream>
 
 namespace yakl {
 
@@ -184,109 +186,114 @@ namespace yakl {
     }
 
 
-    void print_my_thread( bool all_tasks = false ) {
+    void print_my_thread( bool all_tasks = true ) {
       #ifndef HAVE_MPI
-        print_thread( get_or_create_thread_index( std::this_thread::get_id() ) );
+        print_thread( get_or_create_thread_index( std::this_thread::get_id() ) , std::cout );
         return;
       #else
         int myrank;
         int nranks;
         MPI_Comm_rank( MPI_COMM_WORLD , &myrank );
         MPI_Comm_size( MPI_COMM_WORLD , &nranks );
+        if (myrank == 0) {
+          print_thread( get_or_create_thread_index( std::this_thread::get_id() ) , std::cout );
+        }
         if (all_tasks) {
           for (int irank = 0; irank < nranks; irank++) {
-            MPI_Barrier(MPI_COMM_WORLD);
             if (irank == myrank) {
-              std::cout << "\n***************************************************\n";
-              std::cout <<   "** FOR RANK " << myrank << "**\n";
-              std::cout <<   "***************************************************\n";
-              print_thread( get_or_create_thread_index( std::this_thread::get_id() ) );
-              std::cout << "\n" << std::endl;
+              std::stringstream ss;
+              ss << "yakl_timer_output_rank" << std::setw(8) << std::setfill('0') << irank << ".txt";
+              std::ofstream os(ss.str());
+              os << "\n***************************************************\n";
+              os <<   "** FOR RANK " << myrank << "**\n";
+              os <<   "***************************************************\n";
+              print_thread( get_or_create_thread_index( std::this_thread::get_id() ) , os );
+              os << "\n" << std::endl;
+              os.close();
             }
-            MPI_Barrier(MPI_COMM_WORLD);
-          }
-        } else {
-          if (myrank == 0) {
-            print_thread( get_or_create_thread_index( std::this_thread::get_id() ) );
           }
         }
       #endif
     }
 
 
-    void print_all_threads( bool all_tasks = false ) {
+    void print_all_threads( bool all_tasks = true ) {
       #ifndef HAVE_MPI
-        for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread); }
+        for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread,std::cout); }
         return;
       #else
         int myrank;
         int nranks;
         MPI_Comm_rank( MPI_COMM_WORLD , &myrank );
         MPI_Comm_size( MPI_COMM_WORLD , &nranks );
+        if (myrank == 0) {
+          for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread,std::cout); }
+        }
         if (all_tasks) {
           for (int irank = 0; irank < nranks; irank++) {
-            MPI_Barrier(MPI_COMM_WORLD);
             if (irank == myrank) {
-              std::cout << "\n***************************************************\n";
-              std::cout <<   "** FOR RANK " << myrank << "**\n";
-              std::cout <<   "***************************************************\n";
-              for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread); }
-              std::cout << "\n" << std::endl;
+              std::stringstream ss;
+              ss << "yakl_timer_output_rank" << std::setw(8) << std::setfill('0') << irank << ".txt";
+              std::ofstream os(ss.str());
+              os << "\n***************************************************\n";
+              os <<   "** FOR RANK " << myrank << "**\n";
+              os <<   "***************************************************\n";
+              for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread,os); }
+              os << "\n" << std::endl;
+              os.close();
             }
-            MPI_Barrier(MPI_COMM_WORLD);
-          }
-        } else {
-          if (myrank == 0) {
-            for (int ithread = 0; ithread < threads.size(); ithread++) { print_thread(ithread); }
           }
         }
       #endif
     }
 
 
-    void print_thread( int ithread ) {
-      std::cout << "******* Timers for thread " << ithread << " *******" << "\n";
+    void print_thread( int ithread       ,
+                       std::ostream & os ) {
+      os << "******* Timers for thread " << ithread << " *******" << "\n";
       if (! threads[ithread].active_stack.empty())
-        std::cout << "WARNING: printing timers while some are still active. Results will be inaccurate\n";
+        os << "WARNING: printing timers while some are still active. Results will be inaccurate\n";
       auto &timers = threads[ithread].timers;
       std::vector<bool> printed ( timers.size() , false );
-      std::cout << "________________________________________________________________________________________________________\n";
-      std::cout << std::setw(label_print_length) << std::left << "Timer label"
+      os << "________________________________________________________________________________________________________\n";
+      os << std::setw(label_print_length) << std::left << "Timer label"
                 << std::setw(12) << std::left << "# calls"
                 << std::setw(15) << std::left << "Total time"
                 << std::setw(15) << std::left << "Min time"
                 << std::setw(15) << std::left << "Max time" << "\n";
-      std::cout << "________________________________________________________________________________________________________\n";
-      // TODO: Find a way to detect timers with multiple parents
+      os << "________________________________________________________________________________________________________\n";
       for (int itimer = 0; itimer < timers.size(); itimer++) {
         int level = 0;
-        if (! printed[itimer]) print_timer_and_children( ithread , itimer , printed , level );
+        if (! printed[itimer]) print_timer_and_children( ithread , itimer , printed , level , os );
       }
-      std::cout << "________________________________________________________________________________________________________\n"
+      os << "________________________________________________________________________________________________________\n"
                 << "The ~ character beginning a timer label indicates it has multiple parent timers.\n"
                 << "Thus, those timers will likely not accumulate like you expect them to.\n";
-      std::cout << std::endl << std::endl;
+      os << std::endl << std::endl;
     }
 
 
-    void print_timer_and_children( int thread_index , int timer_index , std::vector<bool> &printed  ,
-                                                                        int &level ) {
+    void print_timer_and_children( int thread_index            ,
+                                   int timer_index             ,
+                                   std::vector<bool> &printed  ,
+                                   int &level                  ,
+                                   std::ostream & os           ) {
       auto &timer = threads[thread_index].timers[timer_index];
       if (! printed[timer_index]) {
         std::string label = timer.label;
         if (timer.multiple_parents) label = std::string("~") + label;
         for (int i=0; i < level; i++) { label = std::string("  ")+label; }
         label.resize( std::min(label_print_length-2,(int)label.size()) );
-        std::cout << std::setw(label_print_length) << std::left << label
-                  << std::setw(12) << std::left << timer.hits
-                  << std::setw(15) << std::left << std::scientific << std::setprecision(6) << timer.accumulated_duration.count()
-                  << std::setw(15) << std::left << std::scientific << std::setprecision(6) << timer.min_duration.count()
-                  << std::setw(15) << std::left << std::scientific << std::setprecision(6) << timer.max_duration.count() << "\n";
+        os << std::setw(label_print_length) << std::left << label
+           << std::setw(12) << std::left << timer.hits
+           << std::setw(15) << std::left << std::scientific << std::setprecision(6) << timer.accumulated_duration.count()
+           << std::setw(15) << std::left << std::scientific << std::setprecision(6) << timer.min_duration.count()
+           << std::setw(15) << std::left << std::scientific << std::setprecision(6) << timer.max_duration.count() << "\n";
         printed[timer_index] = true;
         for (int ichild = 0; ichild < timer.child_hashes.size(); ichild++) {
           int child_timer_index = get_or_create_timer_index( thread_index , "" , timer.child_hashes[ichild] );
           int level_loc = level + 1;
-          print_timer_and_children( thread_index , child_timer_index , printed , level_loc );
+          print_timer_and_children( thread_index , child_timer_index , printed , level_loc , os );
         }
       }
     }
