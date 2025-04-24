@@ -627,7 +627,7 @@ namespace yakl {
     void memset_loc(TLOC rhs) const {
       if (myMem == memDevice) {
         YAKL_SCOPE( myData , this->myData );
-        c::parallel_for( YAKL_AUTO_LABEL() , this->size() , KOKKOS_LAMBDA (int i) { myData[i] = rhs; });
+        c::parallel_for( YAKL_AUTO_LABEL() , this->size() , KOKKOS_LAMBDA (int64_t i) { myData[i] = rhs; });
       } else {
         for (int i=0; i < this->totElems(); i++) { this->myData[i] = rhs; }
       }
@@ -1000,7 +1000,7 @@ namespace yakl {
       } else {
         auto ret = createDeviceObject<T2>();
         T *data = this->myData;
-        c::parallel_for( YAKL_AUTO_LABEL() , ret.size() , KOKKOS_LAMBDA (int i) {
+        c::parallel_for( YAKL_AUTO_LABEL() , ret.size() , KOKKOS_LAMBDA (int64_t i) {
           ret.data()[i] = data[i];
         });
         return Array<T2,rank,myMem,styleFortran>(ret);
