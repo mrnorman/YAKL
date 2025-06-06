@@ -75,7 +75,7 @@ namespace yakl {
       this->myData   = nullptr;
       this->refCount = nullptr;
       for (int i=0; i < rank; i++) { this->lbounds[i] = 1; this->dimension[i] = 0; }
-      KOKKOS_IF_ON_HOST( this->myname="Uninitialized"; )
+      KOKKOS_IF_ON_HOST( this->set_label("Uninitialized"); )
     }
 
     /* CONSTRUCTORS
@@ -88,7 +88,7 @@ namespace yakl {
     /** @brief Create an empty, unallocated object with a label.*/
     KOKKOS_INLINE_FUNCTION explicit Array(char const * label) {
       nullify();
-      this->myname = label;
+      KOKKOS_IF_ON_HOST( this->set_label(label); )
     }
 
 
@@ -191,7 +191,7 @@ namespace yakl {
         if ( bnds.size() < rank ) { Kokkos::abort("ERROR: Number of array bounds specified is < rank"); }
       #endif
       KOKKOS_IF_ON_HOST( this->deallocate(); )
-      this->myname = label;
+      KOKKOS_IF_ON_HOST( this->set_label(label); )
       for (int i=0; i < rank; i++) { this->lbounds[i] = bnds[i].l; this->dimension[i] = bnds[i].u - bnds[i].l + 1; }
       KOKKOS_IF_ON_HOST( this->allocate(); )
     }
@@ -299,7 +299,7 @@ namespace yakl {
         if ( bnds.size() < rank ) { Kokkos::abort("ERROR: Number of array bounds specified is < rank"); }
         if (data == nullptr) Kokkos::abort("ERROR: wrapping nullptr with a YAKL Array object");
       #endif
-      this->myname = label;
+      KOKKOS_IF_ON_HOST( this->set_label(label); )
       for (int i=0; i < rank; i++) { this->lbounds[i] = bnds[i].l; this->dimension[i] = bnds[i].u - bnds[i].l + 1; }
       this->myData = data;
       this->refCount = nullptr;
@@ -353,7 +353,7 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         this->lbounds[i] = rhs.lbounds[i]; this->dimension[i] = rhs.dimension[i];
       }
-      this->myname = rhs.myname;
+      for (int i=0; i < this->max_lab; i++) { this->myname[i] = rhs.myname[i]; }
       this->myData   = rhs.myData;
       this->refCount = rhs.refCount;
       if (this->refCount != nullptr) {
@@ -378,7 +378,7 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         this->lbounds[i] = rhs.lbounds[i]; this->dimension[i] = rhs.dimension[i];
       }
-      this->myname = rhs.myname;
+      for (int i=0; i < this->max_lab; i++) { this->myname[i] = rhs.myname[i]; }
       this->myData   = rhs.myData;
       rhs.myData   = nullptr;
 
@@ -394,7 +394,7 @@ namespace yakl {
       for (int i=0; i<rank; i++) {
         this->lbounds  [i] = rhs.lbounds  [i]; this->dimension[i] = rhs.dimension[i];
       }
-      this->myname = rhs.myname;
+      for (int i=0; i < this->max_lab; i++) { this->myname[i] = rhs.myname[i]; }
       this->myData   = rhs.myData;
       rhs.myData   = nullptr;
 
@@ -424,7 +424,7 @@ namespace yakl {
       if (myMem == memDevice && (! ir.data_valid_on_device())) Kokkos::abort("ERROR: wrapping non-device-valid ArrayIR with memDevice yakl::FArray");
       if (myMem == memHost   && (! ir.data_valid_on_host  ())) Kokkos::abort("ERROR: wrapping non-host-valid ArrayIR with memHost yakl::FArray");
       this->myData = ir.data();
-      this->myname = ir.label();
+      KOKKOS_IF_ON_HOST( this->set_label(ir.label()); )
       for (int i=0; i < rank; i++) { this->dimension[i] = ir.extent(rank-1-i); }
       if ( (! lower_bounds.empty()) && ( lower_bounds.size() != rank ) ) Kokkos::abort("ERROR: Passed lower bounds of the wrong rank");
       for (int i=0; i < rank; i++) { this->lbounds[i] = lower_bounds[i]; }
@@ -589,7 +589,7 @@ namespace yakl {
           #if !defined(YAKL_MANAGED_MEMORY)
             KOKKOS_IF_ON_HOST(
               if constexpr (myMem == memDevice) {
-                std::cerr << "ERROR: For Array labeled: " << this->myname << ":" << std::endl;
+                std::cerr << "ERROR: For Array labeled: " << this->label() << ":" << std::endl;
                 Kokkos::abort("Device array being accessed on the host without managed memory turned on");
               }
             )
@@ -605,7 +605,7 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION void ind_out_bounds(int ind) const {
       #ifdef KOKKOS_ENABLE_DEBUG
         KOKKOS_IF_ON_HOST(
-          std::cerr << "ERROR: For Array labeled: " << this->myname << ":" << std::endl;
+          std::cerr << "ERROR: For Array labeled: " << this->label() << ":" << std::endl;
           std::cerr << "Index " << I+1 << " of " << rank << " is out of bounds.  Provided index: " << ind
                     << ".  Lower Bound: " << this->lbounds[I] << ".  Upper Bound: " << this->dimension[I]-1 << std::endl;
         )
@@ -691,17 +691,17 @@ namespace yakl {
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleFortran> slice( Dims const &dims ) const {
       #ifdef KOKKOS_ENABLE_DEBUG
         if (rank != dims.size()) {
-          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->label() << ":  "; )
           Kokkos::abort("ERROR: rank must be equal to dims.size()");
         }
         for (int i=N; i<rank; i++) {
           if (dims.data[i] < this->lbounds[i] || dims.data[i] >= this->lbounds[i]+this->dimension[i] ) {
-            KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+            KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->label() << ":  "; )
             Kokkos::abort("ERROR: One of the slicing dimension dimensions is out of bounds");
           }
         }
         if (! this->initialized()) {
-          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->label() << ":  "; )
           Kokkos::abort("ERROR: calling slice() on an Array that hasn't been allocated");
         }
       #endif
@@ -828,7 +828,7 @@ namespace yakl {
       for (int i=0; i < N; i++) {
         ret.dimension[i] = bnds.u[i] - bnds.l[i] + 1;  ret.lbounds  [i] = bnds.l[i];
       }
-      ret.myname = this->myname;
+      for (int i=0; i < this->max_lab; i++) { ret.myname[i] = this->myname[i]; }
       ret.myData = this->myData;
       ret.refCount = this->refCount;
       if (this->refCount != nullptr) {
@@ -884,7 +884,7 @@ namespace yakl {
       #endif
       Array<T,1,myMem,styleFortran> ret;
       ret.dimension[0] = this->totElems();  ret.lbounds  [0] = lbnd;
-      ret.myname = this->myname;
+      for (int i=0; i < this->max_lab; i++) { ret.myname[i] = this->myname[i]; }
       ret.myData = this->myData;
       ret.refCount = this->refCount;
       if (this->refCount != nullptr) {
@@ -932,14 +932,14 @@ namespace yakl {
     inline Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleFortran> createHostObject() const {
       #ifdef KOKKOS_ENABLE_DEBUG
         if (! this->initialized()) {
-          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->label() << ":  "; )
           Kokkos::abort("Error: createHostCopy() called on an Array that hasn't been allocated.");
         }
       #endif
       // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
       Array<typename std::remove_cv<TLOC>::type,rank,memHost,styleFortran> ret;  // nullified + owned == true
       for (int i=0; i<rank; i++) { ret.lbounds[i] = this->lbounds[i];  ret.dimension[i] = this->dimension[i]; }
-      ret.myname = this->myname;
+      for (int i=0; i < this->max_lab; i++) { ret.myname[i] = this->myname[i]; }
       ret.allocate();
       return ret;
     }
@@ -978,14 +978,14 @@ namespace yakl {
     inline Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleFortran> createDeviceObject() const {
       #ifdef KOKKOS_ENABLE_DEBUG
         if (! this->initialized()) {
-          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->myname << ":  "; )
+          KOKKOS_IF_ON_HOST( std::cerr << "For Array named " << this->label() << ":  "; )
           Kokkos::abort("Error: createHostCopy() called on an Array that hasn't been allocated.");
         }
       #endif
       // If this Array is of const type, then we need to use non-const when allocating, then cast it to const aterward
       Array<typename std::remove_cv<TLOC>::type,rank,memDevice,styleFortran> ret;  // nullified + owned == true
       for (int i=0; i<rank; i++) { ret.lbounds[i] = this->lbounds[i];  ret.dimension[i] = this->dimension[i]; }
-      ret.myname = this->myname;
+      for (int i=0; i < this->max_lab; i++) { ret.myname[i] = this->myname[i]; }
       ret.allocate();
       return ret;
     }

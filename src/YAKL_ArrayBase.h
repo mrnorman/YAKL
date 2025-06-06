@@ -23,6 +23,8 @@ namespace yakl {
   class ArrayBase {
   public:
 
+    int static constexpr max_lab = 64;
+
     /** @brief This is the type `T` without `const` and `volatile` modifiers */
     typedef typename std::remove_cv<T>::type       type;
     /** @brief This is the type `T` exactly as it was defined upon array object creation. */
@@ -35,11 +37,11 @@ namespace yakl {
     /** @private */
     T       * myData;         // Pointer to the flattened internal data
     /** @private */
-    size_t dimension[rank];  // Sizes of the 8 possible dimensions
+    size_t dimension[rank];   // Sizes of the 8 possible dimensions
     /** @private */
     int     * refCount;       // Pointer shared by multiple copies of this Array to keep track of allcation / free
     /** @private */
-    char const * myname;    // Label for debug printing. Only stored if debugging is turned on
+    char myname[max_lab];     // Label for debug printing. Only stored if debugging is turned on
 
 
     // Deep copy this array's contents to another array that's on the host
@@ -114,7 +116,11 @@ namespace yakl {
     /** @brief Returns the object's string label as char const (Host only) */
     char const * label() const { return this->myname; }
     /** @brief Set the object's string label (Host only) */
-    void set_label(std::string label) { this->myname = label.c_str(); }
+    void set_label(std::string label) {
+      label.resize(max_lab-1);
+      for (int i=0; i < label.size(); i++) { myname[i] = label[i]; if (label[i]=='\0') break; }
+      this->myname[max_lab-1] = '\0';
+    }
     /** @brief Returns how many array objects share this pointer if owned; or `0` if unowned.
       * 
       * Returns the use count for this array object's data pointer. I.e., this is how many yakl::Array objects currently
