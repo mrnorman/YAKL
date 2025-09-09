@@ -72,7 +72,7 @@ int main() {
     real maxBinErr = 0;
     for (int i=0; i < nbins; i++) {
       real binFrac = yakl::intrinsics::sum( bins.slice<1>(i,yakl::COLON) ) / n;
-      maxBinErr = std::max( maxBinErr , abs( binFrac - 1./nbins ) );
+      maxBinErr = std::max( maxBinErr , std::abs( binFrac - 1./nbins ) );
     }
     
     std::cout << "Mean:          " << avg        << "\n";
