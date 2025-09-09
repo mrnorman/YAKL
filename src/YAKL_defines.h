@@ -14,7 +14,18 @@
   #endif
 #endif
 
-#define YAKL_AUTO_LABEL() (std::string(basename(__FILE__)) + std::string(":") + std::to_string(__LINE__)).c_str()
+namespace yakl {
+  inline std::string my_basename(const std::string& path) {
+      size_t last_slash = path.find_last_of("/\\");
+      if (std::string::npos == last_slash) {
+          return path;
+      }
+      return path.substr(last_slash + 1);
+  }
+}
+
+
+#define YAKL_AUTO_LABEL() (yakl::my_basename(__FILE__) + std::string(":") + std::to_string(__LINE__)).c_str()
 #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
 
 namespace yakl {

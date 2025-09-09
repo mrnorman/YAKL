@@ -6,9 +6,9 @@ enable_language(Fortran)
 enable_language(CXX)
 enable_language(C)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
-set(Kokkos_HOME /ccs/home/imn/kokkos)
+set(Kokkos_HOME $ENV{HOME}/kokkos)
 set(Kokkos_BIN  ${CMAKE_CURRENT_BINARY_DIR}/kokkos)
 add_subdirectory(${Kokkos_HOME} ${Kokkos_BIN})
 include_directories(${Kokkos_INCLUDE_DIRS_RET})
