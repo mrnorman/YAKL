@@ -26,7 +26,11 @@ namespace yakl {
 
 
 #define YAKL_AUTO_LABEL() (yakl::my_basename(__FILE__) + std::string(":") + std::to_string(__LINE__)).c_str()
+#if defined(KOKKOS_ENABLE_HIP)
+#define YAKL_SCOPE(a,b) auto &a = b
+#else
 #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
+#endif
 
 namespace yakl {
   #ifdef HAVE_MPI
