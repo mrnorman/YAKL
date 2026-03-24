@@ -22,9 +22,9 @@ inline typename ViewType::non_const_value_type sum(ViewType const & a) {
 
 
 template <class ViewType>
-inline decltype(Kokkos::create_mirror(Kokkos::DefaultExecutionSpace::memory_space{},ViewType()))
+inline decltype(Kokkos::create_mirror(yakl::PoolSpace{},ViewType()))
 create_device_object(ViewType const &in) {
-  return Kokkos::create_mirror(Kokkos::DefaultExecutionSpace::memory_space{},in);
+  return Kokkos::create_mirror(yakl::PoolSpace{},in);
 }
 
 
@@ -36,9 +36,9 @@ create_host_object(ViewType const &in) {
 
 
 template <class ViewType>
-inline decltype(Kokkos::create_mirror(Kokkos::DefaultExecutionSpace::memory_space{},ViewType()))
+inline decltype(Kokkos::create_mirror(yakl::PoolSpace{},ViewType()))
 create_device_copy(ViewType const &in) {
-  auto out = Kokkos::create_mirror(Kokkos::DefaultExecutionSpace::memory_space{},in);
+  auto out = Kokkos::create_mirror(yakl::PoolSpace{},in);
   Kokkos::deep_copy(out,in);
   return out;
 }
