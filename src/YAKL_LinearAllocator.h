@@ -168,6 +168,7 @@ namespace yakl {
     // If there isn't room or bytes == 0, then nullptr is returned.
     // Otherwise, the correct pointer is returned
     void * allocate(size_t bytes, char const * label="") {
+      std::cout << "Pool: [" << bytes << "], label: [" << label << "]" << std::endl;
       if (bytes == 0) {
         return nullptr;
       }

@@ -10,6 +10,7 @@
 #include "YAKL_LinearAllocator.h"
 #include "YAKL_Toney.h"
 #include "YAKL_Internal.h"
+#include "YAKL_KokkosPoolSpace.h"
 #include "YAKL_timers.h"
 #include "YAKL_mutex.h"
 #include "YAKL_allocators.h"
