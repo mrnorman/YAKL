@@ -6,6 +6,23 @@ void die(std::string msg) {
 }
 
 
+
+template <typename T, int N> struct KokkosType { using type = typename KokkosType<T*,N-1>::type; };
+template <typename T> struct KokkosType<T,0> { using type = T; };
+
+template <typename T> struct ViewArrayAnalysis {
+  using base_type  = T;
+  using value_type = T;
+  static constexpr int rank = 0;
+};
+template <typename T> struct ViewArrayAnalysis<T*> {
+  using base_type  = typename ViewArrayAnalysis<T>::base_type;
+  using value_type = T*;
+  static constexpr int rank = ViewArrayAnalysis<T>::rank + 1;
+};
+
+
+
 template <class ViewType>
 inline void constexpr assert_contiguous() {
   static_assert( std::is_same_v<typename ViewType::array_layout,Kokkos::LayoutLeft > || 
