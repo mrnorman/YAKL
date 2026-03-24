@@ -5,8 +5,18 @@ void die(std::string msg) {
   Kokkos::abort(msg.c_str());
 }
 
+
+template <class ViewType>
+inline void constexpr assert_contiguous() {
+  static_assert( std::is_same_v<typename ViewType::array_layout,Kokkos::LayoutLeft > || 
+                 std::is_same_v<typename ViewType::array_layout,Kokkos::LayoutRight> ,
+                 "ERROR: summation assumes contiguity, LayoutLeft or LayoutRight");
+}
+
+
 template <class ViewType>
 inline typename ViewType::non_const_value_type sum(ViewType const & a) {
+  assert_contiguous<ViewType>();
   using scalar_t = typename ViewType::non_const_value_type;
   scalar_t result;
   if constexpr (Kokkos::SpaceAccessibility<Kokkos::HostSpace,typename ViewType::memory_space>::accessible) {
@@ -65,6 +75,9 @@ int main() {
     std::cout << sum(arr  ) << std::endl;
     std::cout << sum(arr_h) << std::endl;
     std::cout << sum(arr_d) << std::endl;
+    Kokkos::View<float[10],Kokkos::LayoutRight,yakl::PoolSpace> arr_s("arr_s");
+    Kokkos::deep_copy(arr_s,1);
+    std::cout << sum(arr_s) << std::endl;
   }
   yakl::finalize();
   Kokkos::finalize(); 
