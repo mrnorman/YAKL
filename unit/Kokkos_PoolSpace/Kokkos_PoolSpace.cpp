@@ -19,34 +19,28 @@ inline typename ViewType::non_const_value_type sum(ViewType const & a) {
   assert_contiguous<ViewType>();
   using scalar_t = typename ViewType::non_const_value_type;
   scalar_t result;
-  if constexpr (Kokkos::SpaceAccessibility<Kokkos::HostSpace,typename ViewType::memory_space>::accessible) {
-    result = a.data()[0];
-    for (int i=1; i < a.size(); i++) { result += a.data()[i]; }
-  } else {
-    Kokkos::parallel_reduce( "parallel_reduce_sum" , a.size() , KOKKOS_LAMBDA (int i , scalar_t & lsum ) {
-      lsum += a.data()[i];
-    }, result);
-  }
+  Kokkos::parallel_reduce( "yakl_sum" ,
+                           Kokkos::RangePolicy<typename ViewType::execution_space>(0,a.size()) ,
+                           KOKKOS_LAMBDA (int i , scalar_t & lsum ) {
+    lsum += a.data()[i];
+  } , result );
   return result;
 }
 
 
-template <class ViewType>
-inline decltype(Kokkos::create_mirror(yakl::PoolSpace{},ViewType()))
+template <class ViewType> inline decltype(Kokkos::create_mirror(yakl::PoolSpace{},ViewType()))
 create_device_object(ViewType const &in) {
   return Kokkos::create_mirror(yakl::PoolSpace{},in);
 }
 
 
-template <class ViewType>
-inline decltype(Kokkos::create_mirror(Kokkos::HostSpace{},ViewType()))
+template <class ViewType> inline decltype(Kokkos::create_mirror(Kokkos::HostSpace{},ViewType()))
 create_host_object(ViewType const &in) {
   return Kokkos::create_mirror(Kokkos::HostSpace{},in);
 }
 
 
-template <class ViewType>
-inline decltype(Kokkos::create_mirror(yakl::PoolSpace{},ViewType()))
+template <class ViewType> inline decltype(Kokkos::create_mirror(yakl::PoolSpace{},ViewType()))
 create_device_copy(ViewType const &in) {
   auto out = Kokkos::create_mirror(yakl::PoolSpace{},in);
   Kokkos::deep_copy(out,in);
@@ -54,8 +48,7 @@ create_device_copy(ViewType const &in) {
 }
 
 
-template <class ViewType>
-inline decltype(Kokkos::create_mirror(Kokkos::HostSpace{},ViewType()))
+template <class ViewType> inline decltype(Kokkos::create_mirror(Kokkos::HostSpace{},ViewType()))
 create_host_copy(ViewType const &in) {
   auto out = Kokkos::create_mirror(Kokkos::HostSpace{},in);
   Kokkos::deep_copy(out,in);
