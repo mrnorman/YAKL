@@ -10,7 +10,7 @@ template <class ViewType>
 inline void constexpr assert_contiguous() {
   static_assert( std::is_same_v<typename ViewType::array_layout,Kokkos::LayoutLeft > || 
                  std::is_same_v<typename ViewType::array_layout,Kokkos::LayoutRight> ,
-                 "ERROR: summation assumes contiguity, LayoutLeft or LayoutRight");
+                 "ERROR: summation assumes contiguity, LayoutLeft or LayoutRight"    );
 }
 
 
