@@ -1,7 +1,7 @@
 
 set(MYSRC NetCDF.cpp)
 add_executable(NetCDF ${MYSRC})
-target_link_libraries(NetCDF yakl kokkos)
+target_link_libraries(NetCDF yakl)
 target_compile_options(NetCDF PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${YAKL_UNIT_CXX_FLAGS}>)
 if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
   target_link_libraries(NetCDF "${YAKL_UNIT_CXX_LINK_FLAGS}")

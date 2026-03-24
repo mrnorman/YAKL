@@ -1,7 +1,7 @@
 
 set(MYSRC Lambda.cpp)
 add_executable(Lambda ${MYSRC})
-target_link_libraries(Lambda yakl kokkos)
+target_link_libraries(Lambda yakl)
 target_compile_options(Lambda PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${YAKL_UNIT_CXX_FLAGS}>)
 if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
   target_link_libraries(Lambda "${YAKL_UNIT_CXX_LINK_FLAGS}")

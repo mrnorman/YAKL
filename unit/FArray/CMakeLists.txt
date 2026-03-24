@@ -1,7 +1,7 @@
 
 set(MYSRC FArray.cpp)
 add_executable(FArray ${MYSRC})
-target_link_libraries(FArray yakl kokkos)
+target_link_libraries(FArray yakl)
 target_compile_options(FArray PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${YAKL_UNIT_CXX_FLAGS}>)
 if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
   target_link_libraries(FArray "${YAKL_UNIT_CXX_LINK_FLAGS}")
