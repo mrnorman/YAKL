@@ -27,7 +27,7 @@ template <class KT, class MemSpace>
 class ViewY : public Kokkos::View<KT,Kokkos::LayoutRight,MemSpace> {
   public:
   using base_t = Kokkos::View<KT,Kokkos::LayoutRight,MemSpace>;
-  using base_t::base_t;
+  using base_t::base_t; 
   using base_t::operator=;
   base_t const & get_View() const { return static_cast<base_t const &>(*this); }
   base_t       & get_View()       { return static_cast<base_t       &>(*this); }
@@ -36,7 +36,7 @@ class ViewY : public Kokkos::View<KT,Kokkos::LayoutRight,MemSpace> {
   ViewY const & operator=(TLOC const & v) const { Kokkos::deep_copy(*this,v); return *this; }
 
   template <class MemSpaceLoc>
-  auto clone() const {
+  auto clone_object() const {
     auto func = [this] <std::size_t... Is> (std::index_sequence<Is...>) {
       return ViewY<typename base_t::non_const_data_type,MemSpaceLoc>( this->label() , this->extent(Is)... );
     };
@@ -78,9 +78,9 @@ class ViewY : public Kokkos::View<KT,Kokkos::LayoutRight,MemSpace> {
     if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) Kokkos::fence();
   }
 
-  auto createDeviceObject() const { return clone<yakl::PoolSpace>(); }
+  auto createDeviceObject() const { return clone_object<yakl::PoolSpace>(); }
 
-  auto createHostObject() const { return clone<Kokkos::HostSpace>(); }
+  auto createHostObject() const { return clone_object<Kokkos::HostSpace>(); }
 
   auto createDeviceCopy() const {
     auto ret = createDeviceObject();
@@ -92,6 +92,39 @@ class ViewY : public Kokkos::View<KT,Kokkos::LayoutRight,MemSpace> {
     auto ret = createHostObject();
     Kokkos::deep_copy( ret , *this );
     Kokkos::fence();
+    return ret;
+  }
+
+  template <class scalar_t> requires std::is_arithmetic_v<scalar_t>
+  auto as() {
+    auto func = [this] <std::size_t... Is> (std::index_sequence<Is...>) {
+      return ViewY<typename KokkosType<scalar_t,base_t::rank>::type,MemSpace>( this->label() , this->extent(Is)... );
+    };
+    auto ret = func(std::make_index_sequence<base_t::rank>{});
+    YAKL_SCOPE( me , *this );
+    Kokkos::parallel_for( "yakl_as_copy" ,
+                          Kokkos::RangePolicy<typename base_t::execution_space>(0,this->size()) ,
+                          KOKKOS_LAMBDA (int i) {
+      ret.data()[i] = me.data()[i];
+    });
+    return ret;
+  }
+
+  auto extents() const {
+    yakl::CSArray<size_t,1,base_t::rank> ret;
+    for (int i=0; i < base_t::rank; i++) { ret(i) = this->extent(i); }
+    return ret;
+  }
+
+  auto ubounds() const {
+    yakl::CSArray<size_t,1,base_t::rank> ret;
+    for (int i=0; i < base_t::rank; i++) { ret(i) = this->extent(i)-1; }
+    return ret;
+  }
+
+  auto lbounds() const {
+    yakl::CSArray<size_t,1,base_t::rank> ret;
+    for (int i=0; i < base_t::rank; i++) { ret(i) = 0; }
     return ret;
   }
 
@@ -191,11 +224,12 @@ int main() {
     std::cout << arr;
     std::cout << arr.reshape(5,2);
     std::cout << arr.reshape(5,2).collapse();
-    auto tmp1 = arr.reshape(5,2);
-    auto tmp2 = tmp1.slice(1);
-    auto tmp3 = tmp2.createHostCopy();
-    std::cout << tmp3;
+    std::cout << arr.reshape(5,2).slice(1);
     std::cout << "reshp use ct: " << arr.reshape(5,2).use_count() << std::endl;
+    std::cout << arr.as<double>();
+    std::cout << "arr.reshape(2,5) extents: " << arr.reshape(2,5).extents();
+    std::cout << "arr.reshape(2,5) lbounds: " << arr.reshape(2,5).lbounds();
+    std::cout << "arr.reshape(2,5) ubounds: " << arr.reshape(2,5).ubounds();
   }
   yakl::finalize();
   Kokkos::finalize(); 

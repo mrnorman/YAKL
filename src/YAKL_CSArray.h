@@ -144,8 +144,9 @@ namespace yakl {
 
     /** @brief Print out the contents of this array. This should be called only from the host */
     inline friend std::ostream &operator<<(std::ostream& os, CSArray<T,rank,D0,D1,D2,D3> const &v) {
-      for (size_t i=0; i<totElems(); i++) { os << std::setw(12) << v.myData[i] << "\n"; }
-      os << "\n";
+      os << "yakl::CSArray: ";
+      for (size_t i=0; i<totElems(); i++) { os << v.myData[i] << (i<size()-1 ? " , " : ""); }
+      os << std::endl;
       return os;
     }
 
