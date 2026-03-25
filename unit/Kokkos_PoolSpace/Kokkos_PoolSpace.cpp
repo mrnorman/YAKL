@@ -10,6 +10,8 @@ void die(std::string msg) {
 template <typename T, int N> struct KokkosType { using type = typename KokkosType<T*,N-1>::type; };
 template <typename T> struct KokkosType<T,0> { using type = T; };
 
+
+
 template <typename T> struct ViewArrayAnalysis {
   using base_type  = T;
   using value_type = T;
@@ -110,27 +112,26 @@ class ViewY : public Kokkos::View<KT,Kokkos::LayoutRight,MemSpace> {
     return ret;
   }
 
-  auto extents() const {
+  KOKKOS_INLINE_FUNCTION auto extents() const {
     yakl::CSArray<size_t,1,base_t::rank> ret;
     for (int i=0; i < base_t::rank; i++) { ret(i) = this->extent(i); }
     return ret;
   }
 
-  auto ubounds() const {
+  KOKKOS_INLINE_FUNCTION auto ubounds() const {
     yakl::CSArray<size_t,1,base_t::rank> ret;
     for (int i=0; i < base_t::rank; i++) { ret(i) = this->extent(i)-1; }
     return ret;
   }
 
-  auto lbounds() const {
+  KOKKOS_INLINE_FUNCTION auto lbounds() const {
     yakl::CSArray<size_t,1,base_t::rank> ret;
     for (int i=0; i < base_t::rank; i++) { ret(i) = 0; }
     return ret;
   }
 
   KOKKOS_INLINE_FUNCTION base_t::value_type * begin() const { return this->data(); }
-
-  KOKKOS_INLINE_FUNCTION base_t::value_type * end() const { return this->data()+this->size(); }
+  KOKKOS_INLINE_FUNCTION base_t::value_type * end  () const { return this->data()+this->size(); }
 
   inline friend std::ostream &operator<<( std::ostream& os , ViewY const & v ) {
     auto loc = v.createHostCopy(); // cout,cerr is expensive, so just create a host copy
@@ -145,54 +146,112 @@ class ViewY : public Kokkos::View<KT,Kokkos::LayoutRight,MemSpace> {
 
 
 
-template <class ViewType>
-inline void constexpr assert_contiguous() {
-  static_assert( std::is_same_v<typename ViewType::array_layout,Kokkos::LayoutLeft > || 
-                 std::is_same_v<typename ViewType::array_layout,Kokkos::LayoutRight> ,
-                 "ERROR: summation assumes contiguity, LayoutLeft or LayoutRight"    );
-}
+template <class T, std::size_t... DIMS> requires (sizeof...(DIMS) > 0)
+class CSArray {
+  public:
+  bool                    static constexpr is_CSArray    = true;
+  size_t                  static constexpr rank          = sizeof...(DIMS);
+  size_t                  static constexpr num_elements  = (DIMS * ... * 1);
+  size_t                  static constexpr dims[rank]    = {DIMS...};
+  std::array<size_t,rank> static constexpr offsets       = [] {
+    std::array<size_t,rank> result = {};
+    for (int i=0; i < rank; i++) {
+      result[i] = 1;
+      for (int j = i+1; j < rank; j++) result[i] *= dims[j];
+    }
+    return result;
+  }();
+  using value_type           = T;
+  using const_value_type     = typename std::add_const_t<T>;
+  using non_const_value_type = typename std::remove_cv_t<T>;
+
+  T mutable my_data[num_elements];
+
+  template <class TLOC> requires std::is_arithmetic_v<TLOC>
+  KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (int i=0 ; i < size() ; i++) { my_data[i] = val; } }
+
+  template <class... ILOC> requires (std::is_integral_v<ILOC> && ...)
+  KOKKOS_INLINE_FUNCTION T & operator()(ILOC... indices) const {
+    static_assert( sizeof...(ILOC) == rank , "ERROR: Indexing CSArray with the wrong number of indices" );
+    size_t offset = 0;
+    [&] <std::size_t... Is>(std::index_sequence<Is...>) {
+        ((offset += static_cast<size_t>(indices) * offsets[Is]), ...);
+    }(std::make_index_sequence<rank>{});
+    #ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
+      bool iob = false;
+      [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+          ((iob = iob || static_cast<std::ptrdiff_t>(indices) < 0 ||
+                         static_cast<size_t>(indices) >= dims[Is]), ...);
+      }(std::make_index_sequence<rank>{});
+      if (iob) Kokkos::abort("ERROR: CSArray index out of bounds");
+    #endif
+    return my_data[offset];
+  }
+
+  KOKKOS_INLINE_FUNCTION T * data () const { return my_data; }
+  KOKKOS_INLINE_FUNCTION T * begin() const { return my_data; }
+  KOKKOS_INLINE_FUNCTION T * end  () const { return my_data + size(); }
+  KOKKOS_INLINE_FUNCTION size_t static constexpr size() { return num_elements; }
+  KOKKOS_INLINE_FUNCTION bool   static constexpr span_is_contiguous() { return true; }
+  template <class ILOC> requires std::is_integral_v<ILOC>
+  KOKKOS_INLINE_FUNCTION size_t static constexpr extent(ILOC i) {
+    #ifdef KOKKOS_ENABLE_DEBUG
+      if (i < 0 || i > rank-1) Kokkos::abort("ERROR: calling CArray extent() with out of bounds index"); 
+    #endif
+    return dims[i];
+  }
+
+  inline friend std::ostream &operator<<( std::ostream& os , CSArray const & v ) {
+    os << "yakl::CSArray: ";
+    for (size_t i = 0; i < size(); i++) { os << v.my_data[i] << (i<size()-1 ? " , " : ""); }
+    os << std::endl;
+    return os;
+  }
+
+  KOKKOS_INLINE_FUNCTION auto extents() const {
+    CSArray<size_t,rank> ret;
+    for (int i=0; i < rank; i++) { ret(i) = dims[i]; }
+    return ret;
+  }
+
+  KOKKOS_INLINE_FUNCTION auto lbounds() const {
+    CSArray<size_t,rank> ret;
+    for (int i=0; i < rank; i++) { ret(i) = 0; }
+    return ret;
+  }
+
+  KOKKOS_INLINE_FUNCTION auto ubounds() const {
+    CSArray<size_t,rank> ret;
+    for (int i=0; i < rank; i++) { ret(i) = dims[i]-1; }
+    return ret;
+  }
+};
+
+
+
+template <class T> inline constexpr bool is_CSArray = requires { T::is_CSArray; };
+
 
 
 template <class ViewType>
 inline typename ViewType::non_const_value_type sum(ViewType const & a) {
-  assert_contiguous<ViewType>();
+  #ifdef KOKKOS_ENABLE_DEBUG
+    if (!ViewType.span_is_contiguous()) Kokkos::abort("ERROR: Computing sum on non-contiguous View");
+  #endif
   using scalar_t = typename ViewType::non_const_value_type;
-  scalar_t result;
-  Kokkos::parallel_reduce( "yakl_sum" ,
-                           Kokkos::RangePolicy<typename ViewType::execution_space>(0,a.size()) ,
-                           KOKKOS_LAMBDA (int i , scalar_t & lsum ) {
-    lsum += a.data()[i];
-  } , result );
+  scalar_t result = 0;
+  if constexpr (is_CSArray<ViewType>) {
+    for (int i=0; i < a.size(); i++) { result += a.data()[i]; }
+  } else {
+    Kokkos::parallel_reduce( "yakl_sum" ,
+                             Kokkos::RangePolicy<typename ViewType::execution_space>(0,a.size()) ,
+                             KOKKOS_LAMBDA (int i , scalar_t & lsum ) {
+      lsum += a.data()[i];
+    } , result );
+  }
   return result;
 }
 
-
-template <class ViewType> inline decltype(Kokkos::create_mirror(yakl::PoolSpace{},ViewType()))
-create_device_object(ViewType const &in) {
-  return Kokkos::create_mirror(yakl::PoolSpace{},in);
-}
-
-
-template <class ViewType> inline decltype(Kokkos::create_mirror(Kokkos::HostSpace{},ViewType()))
-create_host_object(ViewType const &in) {
-  return Kokkos::create_mirror(Kokkos::HostSpace{},in);
-}
-
-
-template <class ViewType> inline decltype(Kokkos::create_mirror(yakl::PoolSpace{},ViewType()))
-create_device_copy(ViewType const &in) {
-  auto out = Kokkos::create_mirror(yakl::PoolSpace{},in);
-  Kokkos::deep_copy(out,in);
-  return out;
-}
-
-
-template <class ViewType> inline decltype(Kokkos::create_mirror(Kokkos::HostSpace{},ViewType()))
-create_host_copy(ViewType const &in) {
-  auto out = Kokkos::create_mirror(Kokkos::HostSpace{},in);
-  Kokkos::deep_copy(out,in);
-  return out;
-}
 
 
 int main() {
@@ -205,7 +264,7 @@ int main() {
     });
     auto arr_h = arr.createHostObject();
     arr.deep_copy_to(arr_h);
-    auto arr_d = create_device_copy(arr_h);
+    auto arr_d = arr_h.createDeviceCopy();
     std::cout << sum(arr  ) << std::endl;
     std::cout << sum(arr_h) << std::endl;
     std::cout << sum(arr_d) << std::endl;
@@ -230,6 +289,13 @@ int main() {
     std::cout << "arr.reshape(2,5) extents: " << arr.reshape(2,5).extents();
     std::cout << "arr.reshape(2,5) lbounds: " << arr.reshape(2,5).lbounds();
     std::cout << "arr.reshape(2,5) ubounds: " << arr.reshape(2,5).ubounds();
+    CSArray<float,3,2> nsarray;
+    nsarray = 2;
+    std::cout << nsarray;
+    std::cout << nsarray.extents();
+    std::cout << nsarray.lbounds();
+    std::cout << nsarray.ubounds();
+    std::cout << sum(nsarray) << std::endl;
   }
   yakl::finalize();
   Kokkos::finalize(); 
