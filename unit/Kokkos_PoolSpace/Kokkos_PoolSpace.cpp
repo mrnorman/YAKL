@@ -1,9 +1,18 @@
 
 #include "YAKL.h"
 
-void die(std::string msg) {
-  Kokkos::abort(msg.c_str());
-}
+#ifdef KOKKOS_ENABLE_DEBUG
+    inline constexpr bool kokkos_debug = true;
+#else
+    inline constexpr bool kokkos_debug = false;
+#endif
+
+#ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
+    inline constexpr bool kokkos_bounds_debug = true;
+#else
+    inline constexpr bool kokkos_bounds_debug = false;
+#endif
+
 
 
 
@@ -177,14 +186,14 @@ class CSArray {
     [&] <std::size_t... Is>(std::index_sequence<Is...>) {
         ((offset += static_cast<size_t>(indices) * offsets[Is]), ...);
     }(std::make_index_sequence<rank>{});
-    #ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
+    if constexpr (kokkos_bounds_debug) {
       bool iob = false;
       [&]<std::size_t... Is>(std::index_sequence<Is...>) {
           ((iob = iob || static_cast<std::ptrdiff_t>(indices) < 0 ||
                          static_cast<size_t>(indices) >= dims[Is]), ...);
       }(std::make_index_sequence<rank>{});
       if (iob) Kokkos::abort("ERROR: CSArray index out of bounds");
-    #endif
+    }
     return my_data[offset];
   }
 
@@ -195,9 +204,9 @@ class CSArray {
   KOKKOS_INLINE_FUNCTION bool   static constexpr span_is_contiguous() { return true; }
   template <class ILOC> requires std::is_integral_v<ILOC>
   KOKKOS_INLINE_FUNCTION size_t static constexpr extent(ILOC i) {
-    #ifdef KOKKOS_ENABLE_DEBUG
+    if constexpr (kokkos_debug) {
       if (i < 0 || i > rank-1) Kokkos::abort("ERROR: calling CArray extent() with out of bounds index"); 
-    #endif
+    }
     return dims[i];
   }
 
@@ -235,9 +244,9 @@ template <class T> inline constexpr bool is_CSArray = requires { T::is_CSArray; 
 
 template <class ViewType>
 inline typename ViewType::non_const_value_type sum(ViewType const & a) {
-  #ifdef KOKKOS_ENABLE_DEBUG
-    if (!ViewType.span_is_contiguous()) Kokkos::abort("ERROR: Computing sum on non-contiguous View");
-  #endif
+  if constexpr (kokkos_debug) {
+    if (! a.span_is_contiguous()) Kokkos::abort("ERROR: Computing sum on non-contiguous View");
+  }
   using scalar_t = typename ViewType::non_const_value_type;
   scalar_t result = 0;
   if constexpr (is_CSArray<ViewType>) {
