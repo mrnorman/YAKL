@@ -155,44 +155,41 @@ class ViewY : public Kokkos::View<KT,Kokkos::LayoutRight,MemSpace> {
 
 
 
-template <class T, std::size_t... DIMS> requires (sizeof...(DIMS) > 0)
+template <class T, std::size_t... DIMS> requires (sizeof...(DIMS) > 0) && ((DIMS > 0) && ...)
 class CSArray {
   public:
   bool                    static constexpr is_CSArray    = true;
   size_t                  static constexpr rank          = sizeof...(DIMS);
-  size_t                  static constexpr num_elements  = (DIMS * ... * 1);
   size_t                  static constexpr dims[rank]    = {DIMS...};
+  size_t                  static constexpr num_elements  = (DIMS * ...);
   std::array<size_t,rank> static constexpr offsets       = [] {
     std::array<size_t,rank> result = {};
-    for (int i=0; i < rank; i++) {
+    for (int i=0; i < static_cast<int>(rank); i++) {
       result[i] = 1;
-      for (int j = i+1; j < rank; j++) result[i] *= dims[j];
+      for (int j = i+1; j < static_cast<int>(rank); j++) result[i] *= dims[j];
     }
     return result;
   }();
   using value_type           = T;
-  using const_value_type     = typename std::add_const_t<T>;
-  using non_const_value_type = typename std::remove_cv_t<T>;
+  using const_value_type     = std::add_const_t<T>;
+  using non_const_value_type = std::remove_cv_t<T>;
 
   T mutable my_data[num_elements];
 
   template <class TLOC> requires std::is_arithmetic_v<TLOC>
-  KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (int i=0 ; i < size() ; i++) { my_data[i] = val; } }
+  KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (size_t i=0; i < size(); i++) { my_data[i] = val; } }
 
   template <class... ILOC> requires (std::is_integral_v<ILOC> && ...)
   KOKKOS_INLINE_FUNCTION T & operator()(ILOC... indices) const {
     static_assert( sizeof...(ILOC) == rank , "ERROR: Indexing CSArray with the wrong number of indices" );
     size_t offset = 0;
     [&] <std::size_t... Is>(std::index_sequence<Is...>) {
-        ((offset += static_cast<size_t>(indices) * offsets[Is]), ...);
-    }(std::make_index_sequence<rank>{});
+      ((offset += static_cast<size_t>(indices) * offsets[Is]), ...);
+    } (std::make_index_sequence<rank>{});
     if constexpr (kokkos_bounds_debug) {
-      bool iob = false;
-      [&]<std::size_t... Is>(std::index_sequence<Is...>) {
-          ((iob = iob || static_cast<std::ptrdiff_t>(indices) < 0 ||
-                         static_cast<size_t>(indices) >= dims[Is]), ...);
-      }(std::make_index_sequence<rank>{});
-      if (iob) Kokkos::abort("ERROR: CSArray index out of bounds");
+      if ( ((std::is_signed_v<ILOC> && indices < 0) || ...) || ((indices >= DIMS) || ...) ) {
+        Kokkos::abort("ERROR: CSArray index out of bounds");
+      }
     }
     return my_data[offset];
   }
@@ -205,7 +202,9 @@ class CSArray {
   template <class ILOC> requires std::is_integral_v<ILOC>
   KOKKOS_INLINE_FUNCTION size_t static constexpr extent(ILOC i) {
     if constexpr (kokkos_debug) {
-      if (i < 0 || i > rank-1) Kokkos::abort("ERROR: calling CArray extent() with out of bounds index"); 
+      if ((std::is_signed_v<ILOC> && i < 0) || static_cast<size_t>(i) >= rank) {
+        Kokkos::abort("ERROR: calling CArray extent() with out of bounds index"); 
+      }
     }
     return dims[i];
   }
@@ -219,19 +218,112 @@ class CSArray {
 
   KOKKOS_INLINE_FUNCTION auto extents() const {
     CSArray<size_t,rank> ret;
-    for (int i=0; i < rank; i++) { ret(i) = dims[i]; }
+    for (size_t i=0; i < rank; i++) { ret(i) = dims[i]; }
     return ret;
   }
 
   KOKKOS_INLINE_FUNCTION auto lbounds() const {
     CSArray<size_t,rank> ret;
-    for (int i=0; i < rank; i++) { ret(i) = 0; }
+    for (size_t i=0; i < rank; i++) { ret(i) = 0; }
     return ret;
   }
 
   KOKKOS_INLINE_FUNCTION auto ubounds() const {
     CSArray<size_t,rank> ret;
-    for (int i=0; i < rank; i++) { ret(i) = dims[i]-1; }
+    for (size_t i=0; i < rank; i++) { ret(i) = dims[i]-1; }
+    return ret;
+  }
+};
+
+
+
+template <class I1, class I2> requires std::is_integral_v<I1> && std::is_integral_v<I2>
+struct FBounds {
+  I1 lower;
+  I2 upper;
+};
+
+
+
+template <class T, FBounds... DIMS> requires (sizeof...(DIMS) > 0) &&
+                                             ((static_cast<ptrdiff_t>(DIMS.lower) <= static_cast<ptrdiff_t>(DIMS.upper)) && ...)
+class FSArray {
+  public:
+  bool                    static constexpr is_FSArray   = true;
+  size_t                  static constexpr rank         = sizeof...(DIMS);
+  ptrdiff_t               static constexpr lb  [rank]   = {static_cast<ptrdiff_t>(DIMS.lower)...};
+  ptrdiff_t               static constexpr ub  [rank]   = {static_cast<ptrdiff_t>(DIMS.upper)...};
+  size_t                  static constexpr dims[rank]   = {(static_cast<size_t>(static_cast<ptrdiff_t>(DIMS.upper)-static_cast<ptrdiff_t>(DIMS.lower)+1))...};
+  size_t                  static constexpr num_elements = ((static_cast<size_t>(static_cast<ptrdiff_t>(DIMS.upper)-static_cast<ptrdiff_t>(DIMS.lower)+1)) * ...);
+  std::array<size_t,rank> static constexpr offsets      = [] {
+    std::array<size_t,rank> result = {};
+    for (int i=static_cast<int>(rank)-1; i >= 0; i--) {
+      result[i] = 1;
+      for (int j = i-1; j >= 0; j--) result[i] *= dims[j];
+    }
+    return result;
+  }();
+  using value_type           = T;
+  using const_value_type     = std::add_const_t<T>;
+  using non_const_value_type = std::remove_cv_t<T>;
+
+  T mutable my_data[num_elements];
+
+  template <class TLOC> requires std::is_arithmetic_v<TLOC>
+  KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (size_t i=0; i < size(); i++) { my_data[i] = val; } }
+
+  template <class... ILOC> requires (std::is_integral_v<ILOC> && ...)
+  KOKKOS_INLINE_FUNCTION T & operator()(ILOC... indices_in) const {
+    static_assert( sizeof...(ILOC) == rank , "ERROR: Indexing FSArray with the wrong number of indices" );
+    size_t offset = 0;
+    [&] <std::size_t... Is>(std::index_sequence<Is...>) {
+      ((offset += static_cast<size_t>(static_cast<ptrdiff_t>(indices_in)-static_cast<ptrdiff_t>(lb[Is])) * offsets[Is]), ...);
+    } (std::make_index_sequence<rank>{});
+    if constexpr (kokkos_bounds_debug) {
+      if ( ((indices_in < DIMS.lower) || ...) || ((indices_in > DIMS.upper) || ...) ) {
+        Kokkos::abort("ERROR: FSArray index out of bounds");
+      }
+    }
+    return my_data[offset];
+  }
+
+  KOKKOS_INLINE_FUNCTION T * data () const { return my_data; }
+  KOKKOS_INLINE_FUNCTION T * begin() const { return my_data; }
+  KOKKOS_INLINE_FUNCTION T * end  () const { return my_data + size(); }
+  KOKKOS_INLINE_FUNCTION size_t static constexpr size() { return num_elements; }
+  KOKKOS_INLINE_FUNCTION bool   static constexpr span_is_contiguous() { return true; }
+  template <class ILOC> requires std::is_integral_v<ILOC>
+  KOKKOS_INLINE_FUNCTION size_t static constexpr extent(ILOC i) {
+    if constexpr (kokkos_debug) {
+      if ((std::is_signed_v<ILOC> && i < 0) || static_cast<size_t>(i) >= rank) {
+        Kokkos::abort("ERROR: calling CArray extent() with out of bounds index"); 
+      }
+    }
+    return dims[i];
+  }
+
+  inline friend std::ostream &operator<<( std::ostream& os , FSArray const & v ) {
+    os << "yakl::FSArray: ";
+    for (size_t i = 0; i < size(); i++) { os << v.my_data[i] << (i<size()-1 ? " , " : ""); }
+    os << std::endl;
+    return os;
+  }
+
+  KOKKOS_INLINE_FUNCTION auto extents() const {
+    FSArray<size_t,{1,rank}> ret;
+    for (size_t i=1; i <= rank; i++) { ret(i) = dims[i-1]; }
+    return ret;
+  }
+
+  KOKKOS_INLINE_FUNCTION auto lbounds() const {
+    FSArray<ptrdiff_t,{1,rank}> ret;
+    for (size_t i=1; i <= rank; i++) { ret(i) = lb[i-1]; }
+    return ret;
+  }
+
+  KOKKOS_INLINE_FUNCTION auto ubounds() const {
+    FSArray<ptrdiff_t,{1,rank}> ret;
+    for (size_t i=1; i <= rank; i++) { ret(i) = ub[i-1]; }
     return ret;
   }
 };
@@ -239,6 +331,7 @@ class CSArray {
 
 
 template <class T> inline constexpr bool is_CSArray = requires { T::is_CSArray; };
+template <class T> inline constexpr bool is_FSArray = requires { T::is_FSArray; };
 
 
 
@@ -249,7 +342,7 @@ inline typename ViewType::non_const_value_type sum(ViewType const & a) {
   }
   using scalar_t = typename ViewType::non_const_value_type;
   scalar_t result = 0;
-  if constexpr (is_CSArray<ViewType>) {
+  if constexpr (is_CSArray<ViewType> || is_FSArray<ViewType>) {
     for (int i=0; i < a.size(); i++) { result += a.data()[i]; }
   } else {
     Kokkos::parallel_reduce( "yakl_sum" ,
@@ -298,13 +391,22 @@ int main() {
     std::cout << "arr.reshape(2,5) extents: " << arr.reshape(2,5).extents();
     std::cout << "arr.reshape(2,5) lbounds: " << arr.reshape(2,5).lbounds();
     std::cout << "arr.reshape(2,5) ubounds: " << arr.reshape(2,5).ubounds();
-    CSArray<float,3,2> nsarray;
-    nsarray = 2;
-    std::cout << nsarray;
-    std::cout << nsarray.extents();
-    std::cout << nsarray.lbounds();
-    std::cout << nsarray.ubounds();
-    std::cout << sum(nsarray) << std::endl;
+    CSArray<float,3,2> csarray;
+    csarray = 2;
+    csarray(2,1) = 1;
+    std::cout << csarray;
+    std::cout << csarray.extents();
+    std::cout << csarray.lbounds();
+    std::cout << csarray.ubounds();
+    std::cout << sum(csarray) << std::endl;
+    FSArray<float,{1,3},{1,2}> fsarray;
+    fsarray = 2;
+    fsarray(3,2) = 1;
+    std::cout << fsarray;
+    std::cout << fsarray.extents();
+    std::cout << fsarray.lbounds();
+    std::cout << fsarray.ubounds();
+    std::cout << sum(fsarray) << std::endl;
   }
   yakl::finalize();
   Kokkos::finalize(); 
