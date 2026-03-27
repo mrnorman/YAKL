@@ -13,12 +13,6 @@
     inline constexpr bool kokkos_bounds_debug = false;
 #endif
 
-
-
-
-
-
-
 // template <typename T> struct ViewArrayAnalysis {
 //   using base_type  = T;
 //   using value_type = T;
@@ -29,7 +23,6 @@
 //   using value_type = T*;
 //   static constexpr int rank = ViewArrayAnalysis<T>::rank + 1;
 // };
-
 
 
 template <class T, std::size_t... DIMS> requires (sizeof...(DIMS) > 0) && ((DIMS > 0) && ...)
@@ -111,24 +104,23 @@ class CSArray {
 
 
 
-template <class I1, class I2> requires std::is_integral_v<I1> && std::is_integral_v<I2>
 struct FBounds {
-  I1 lower;
-  I2 upper;
+  ptrdiff_t l;
+  ptrdiff_t u;
 };
 
 
 
 template <class T, FBounds... DIMS> requires (sizeof...(DIMS) > 0) &&
-                                             ((static_cast<ptrdiff_t>(DIMS.lower) <= static_cast<ptrdiff_t>(DIMS.upper)) && ...)
+                                             ((static_cast<ptrdiff_t>(DIMS.l) <= static_cast<ptrdiff_t>(DIMS.u)) && ...)
 class FSArray {
   public:
   bool                    static constexpr is_FSArray   = true;
   size_t                  static constexpr rank         = sizeof...(DIMS);
-  ptrdiff_t               static constexpr lb  [rank]   = {static_cast<ptrdiff_t>(DIMS.lower)...};
-  ptrdiff_t               static constexpr ub  [rank]   = {static_cast<ptrdiff_t>(DIMS.upper)...};
-  size_t                  static constexpr dims[rank]   = {(static_cast<size_t>(static_cast<ptrdiff_t>(DIMS.upper)-static_cast<ptrdiff_t>(DIMS.lower)+1))...};
-  size_t                  static constexpr num_elements = ((static_cast<size_t>(static_cast<ptrdiff_t>(DIMS.upper)-static_cast<ptrdiff_t>(DIMS.lower)+1)) * ...);
+  ptrdiff_t               static constexpr lb  [rank]   = {static_cast<ptrdiff_t>(DIMS.l)...};
+  ptrdiff_t               static constexpr ub  [rank]   = {static_cast<ptrdiff_t>(DIMS.u)...};
+  size_t                  static constexpr dims[rank]   = {(static_cast<size_t>(static_cast<ptrdiff_t>(DIMS.u)-static_cast<ptrdiff_t>(DIMS.l)+1))...};
+  size_t                  static constexpr num_elements = ((static_cast<size_t>(static_cast<ptrdiff_t>(DIMS.u)-static_cast<ptrdiff_t>(DIMS.l)+1)) * ...);
   std::array<size_t,rank> static constexpr offsets      = [] {
     std::array<size_t,rank> result = {};
     for (int i=static_cast<int>(rank)-1; i >= 0; i--) {
@@ -213,6 +205,8 @@ template <class Type> inline constexpr bool is_CStyle = requires { Type::is_csty
 template <class Type> inline constexpr bool is_FStyle = requires { Type::is_fstyle; };
 
 
+int COLON = 0;
+
 
 template <class KT, class MemSpace, class Style = CStyle>
 class Array : public Kokkos::View<KT,typename Style::layout,MemSpace> {
@@ -223,101 +217,97 @@ class Array : public Kokkos::View<KT,typename Style::layout,MemSpace> {
   public:
 
   using base_t = Kokkos::View<KT,typename Style::layout,MemSpace>;
+  using this_t = Array<KT,MemSpace,Style>;
   using base_t::base_t; 
   using base_t::operator=;
-  using this_t = Array<KT,MemSpace,Style>;
+  using base_t::operator();
 
   bool static constexpr is_fstyle = is_FStyle<Style>;
-
+  bool static constexpr is_cstyle = is_CStyle<Style>;
 
   // If this is FStyle, create a std::array that initializes statically to zero of size rank
   // If this is CStyle, create a zero-size array with no memory in the class and no compiler warnings
-  [[no_unique_address]] std::array< ptrdiff_t , is_FStyle<Style> ? base_t::rank : 0 > lb = {};
+  [[no_unique_address]] std::array< ptrdiff_t , is_fstyle ? base_t::rank : 0 > lb = {};
 
 
   // Fortran-style constructors
-  struct MyB {
-    ptrdiff_t l;
-    ptrdiff_t u;
-  };
-  Array(std::string const & label, MyB b1)
-      requires is_FStyle<Style> && (base_t::rank==1)
+  // This gets ugly when trying to use parameter packs, so I went with brute force here
+  Array(std::string const & label, FBounds b1)
+      requires is_fstyle && (base_t::rank==1)
       : base_t(label,b1.u-b1.l+1) ,
         lb({b1.l}) {}
-  Array(std::string const & label, MyB b1, MyB b2)
-      requires is_FStyle<Style> && (base_t::rank==2)
+  Array(std::string const & label, FBounds b1, FBounds b2)
+      requires is_fstyle && (base_t::rank==2)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1) ,
         lb({b1.l,b2.l}) {}
-  Array(std::string const & label, MyB b1, MyB b2, MyB b3)
-      requires is_FStyle<Style> && (base_t::rank==3)
+  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3)
+      requires is_fstyle && (base_t::rank==3)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1) ,
         lb({b1.l,b2.l,b3.l}) {}
-  Array(std::string const & label, MyB b1, MyB b2, MyB b3, MyB b4)
-      requires is_FStyle<Style> && (base_t::rank==4)
+  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4)
+      requires is_fstyle && (base_t::rank==4)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l}) {}
-  Array(std::string const & label, MyB b1, MyB b2, MyB b3, MyB b4, MyB b5)
-      requires is_FStyle<Style> && (base_t::rank==5)
+  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4, FBounds b5)
+      requires is_fstyle && (base_t::rank==5)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l,b5.l}) {}
-  Array(std::string const & label, MyB b1, MyB b2, MyB b3, MyB b4, MyB b5, MyB b6)
-      requires is_FStyle<Style> && (base_t::rank==6)
+  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4, FBounds b5, FBounds b6)
+      requires is_fstyle && (base_t::rank==6)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l}) {}
-  Array(std::string const & label, MyB b1, MyB b2, MyB b3, MyB b4, MyB b5, MyB b6, MyB b7)
-      requires is_FStyle<Style> && (base_t::rank==7)
+  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4, FBounds b5, FBounds b6, FBounds b7)
+      requires is_fstyle && (base_t::rank==7)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1,b7.u-b7.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l,b7.l}) {}
-  Array(std::string const & label, MyB b1, MyB b2, MyB b3, MyB b4, MyB b5, MyB b6, MyB b7, MyB b8)
-      requires is_FStyle<Style> && (base_t::rank==8)
+  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4, FBounds b5, FBounds b6, FBounds b7, FBounds b8)
+      requires is_fstyle && (base_t::rank==8)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1,b7.u-b7.l+1,b8.u-b8.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l,b7.l,b8.l}) {}
 
 
-  using base_t::operator();
 
 
   // Fortran-style operator()
-  template <std::integral I0>
-  KOKKOS_INLINE_FUNCTION auto & operator()(I0 i0) const
-        requires is_FStyle<Style> && (base_t::rank == 1) {
+  // I tried using parameter packs for this, but the compiler has trouble correctly overriding View operator()
+  //   functions when using them, so I'm specifying each of these individually
+  KOKKOS_INLINE_FUNCTION auto & operator()(std::integral auto i0) const
+        requires is_fstyle && (base_t::rank == 1) {
     return base_t::operator()(i0-lb[0]);
   }
-  template <std::integral I0, std::integral I1>
-  KOKKOS_INLINE_FUNCTION auto & operator()(I0 i0, I1 i1) const
-        requires is_FStyle<Style> && (base_t::rank == 2) {
+  KOKKOS_INLINE_FUNCTION auto & operator()(std::integral auto i0, std::integral auto i1) const
+        requires is_fstyle && (base_t::rank == 2) {
     return base_t::operator()(i0-lb[0],i1-lb[1]);
   }
-  template <std::integral I0, std::integral I1, std::integral I2>
-  KOKKOS_INLINE_FUNCTION auto & operator()(I0 i0, I1 i1, I2 i2) const
-        requires is_FStyle<Style> && (base_t::rank == 3) {
+  KOKKOS_INLINE_FUNCTION auto & operator()(std::integral auto i0, std::integral auto i1, std::integral auto i2) const
+        requires is_fstyle && (base_t::rank == 3) {
     return base_t::operator()(i0-lb[0],i1-lb[1],i2-lb[2]);
   }
-  template <std::integral I0, std::integral I1, std::integral I2, std::integral I3>
-  KOKKOS_INLINE_FUNCTION auto & operator()(I0 i0, I1 i1, I2 i2, I3 i3) const
-        requires is_FStyle<Style> && (base_t::rank == 4) {
+  KOKKOS_INLINE_FUNCTION auto & operator()(std::integral auto i0, std::integral auto i1, std::integral auto i2,
+                                           std::integral auto i3) const
+        requires is_fstyle && (base_t::rank == 4) {
     return base_t::operator()(i0-lb[0],i1-lb[1],i2-lb[2],i3-lb[3]);
   }
-  template <std::integral I0, std::integral I1, std::integral I2, std::integral I3, std::integral I4>
-  KOKKOS_INLINE_FUNCTION auto & operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4) const
-        requires is_FStyle<Style> && (base_t::rank == 5) {
+  KOKKOS_INLINE_FUNCTION auto & operator()(std::integral auto i0, std::integral auto i1, std::integral auto i2,
+                                           std::integral auto i3, std::integral auto i4) const
+        requires is_fstyle && (base_t::rank == 5) {
     return base_t::operator()(i0-lb[0],i1-lb[1],i2-lb[2],i3-lb[3],i4-lb[4]);
   }
-  template <std::integral I0, std::integral I1, std::integral I2, std::integral I3, std::integral I4, std::integral I5>
-  KOKKOS_INLINE_FUNCTION auto & operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5) const
-        requires is_FStyle<Style> && (base_t::rank == 6) {
+  KOKKOS_INLINE_FUNCTION auto & operator()(std::integral auto i0, std::integral auto i1, std::integral auto i2,
+                                           std::integral auto i3, std::integral auto i4, std::integral auto i5) const
+        requires is_fstyle && (base_t::rank == 6) {
     return base_t::operator()(i0-lb[0],i1-lb[1],i2-lb[2],i3-lb[3],i4-lb[4],i5-lb[5]);
   }
-  template <std::integral I0, std::integral I1, std::integral I2, std::integral I3, std::integral I4, std::integral I5,
-            std::integral I6>
-  KOKKOS_INLINE_FUNCTION auto & operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5, I6 i6) const
-        requires is_FStyle<Style> && (base_t::rank == 7) {
+  KOKKOS_INLINE_FUNCTION auto & operator()(std::integral auto i0, std::integral auto i1, std::integral auto i2,
+                                           std::integral auto i3, std::integral auto i4, std::integral auto i5,
+                                           std::integral auto i6) const
+        requires is_fstyle && (base_t::rank == 7) {
     return base_t::operator()(i0-lb[0],i1-lb[1],i2-lb[2],i3-lb[3],i4-lb[4],i5-lb[5],i6-lb[6]);
   }
-  template <std::integral I0, std::integral I1, std::integral I2, std::integral I3, std::integral I4, std::integral I5,
-            std::integral I6, std::integral I7>
-  KOKKOS_INLINE_FUNCTION auto & operator()(I0 i0, I1 i1, I2 i2, I3 i3, I4 i4, I5 i5, I6 i6, I7 i7) const
-        requires is_FStyle<Style> && (base_t::rank == 8) {
+  KOKKOS_INLINE_FUNCTION auto & operator()(std::integral auto i0, std::integral auto i1, std::integral auto i2,
+                                           std::integral auto i3, std::integral auto i4, std::integral auto i5,
+                                           std::integral auto i6, std::integral auto i7) const
+        requires is_fstyle && (base_t::rank == 8) {
     return base_t::operator()(i0-lb[0],i1-lb[1],i2-lb[2],i3-lb[3],i4-lb[4],i5-lb[5],i6-lb[6],i7-lb[7]);
   }
 
@@ -329,27 +319,38 @@ class Array : public Kokkos::View<KT,typename Style::layout,MemSpace> {
 
   template <class MemSpaceLoc>
   auto clone_object() const {
-    auto func = [this] <std::size_t... Is> (std::index_sequence<Is...>) {
+    auto func = [&] <std::size_t... Is> (std::index_sequence<Is...>) {
       auto loc = Array<typename base_t::non_const_data_type,MemSpaceLoc,Style>( this->label() , this->extent(Is)... );
-      if constexpr (is_FStyle<Style>) loc.lb = this->lb;
+      if constexpr (is_fstyle) loc.lb = this->lb;
       return loc;
     };
     return func(std::make_index_sequence<base_t::rank>{});
   }
 
 
-  KOKKOS_INLINE_FUNCTION auto slice(std::integral auto... slices) const requires is_CStyle<Style> {
-    int constexpr nslice = sizeof...(slices);
-    static_assert(nslice <= base_t::rank,"ERROR: too many indices in slice");
-    int constexpr remaining = base_t::rank - nslice;
+  template <std::integral auto new_rank> requires (new_rank <= base_t::rank) && (new_rank >= 0)
+  KOKKOS_INLINE_FUNCTION auto slice(std::integral auto... indices) requires (sizeof...(indices) == base_t::rank) {
+    int constexpr nslice    = base_t::rank - new_rank;
+    int constexpr remaining = new_rank;
     using new_kt = typename KokkosType<typename base_t::value_type,remaining>::type;
-    auto func = [&] < std::size_t... Is , std::size_t... Ir > ( std::index_sequence<Is...> , 
-                                                                std::index_sequence<Ir...> ) {
-      size_t offset = 0;
-      ((offset += static_cast<size_t>(slices) * this->stride(Is)), ...);
-      return Array<new_kt,MemSpace,Style>( this->data()+offset , this->extent(nslice + Ir)... );
-    };
-    return func(std::make_index_sequence<nslice>{},std::make_index_sequence<remaining>{});
+    size_t offset = 0;
+    if constexpr (is_cstyle) {
+      std::array<size_t,base_t::rank> slice_arr = { static_cast<size_t>(indices)... };
+      for (int i=0; i < nslice; i++) { offset += slice_arr[i] * this->stride(i); }
+      return [&] <std::size_t... Ir> ( std::index_sequence<Ir...> ) {
+        return Array<new_kt,MemSpace,Style>( this->data()+offset , this->extent(nslice + Ir)... );
+      } ( std::make_index_sequence<remaining>{} );
+    } else {
+      std::array<ptrdiff_t,base_t::rank> slice_arr = { static_cast<ptrdiff_t>(indices)... };
+      for (int i=0; i < nslice; i++) {
+        offset += (slice_arr[base_t::rank-1-i]-this->lb[base_t::rank-1-i]) * this->stride(base_t::rank-1-i);
+      }
+      return [&] <std::size_t... Ir> ( std::index_sequence<Ir...> ) {
+        auto loc = Array<new_kt,MemSpace,Style>( this->data()+offset , this->extent(Ir)... );
+        for (int i=0; i < remaining; i++) { loc.lb[i] = this->lb[i]; }
+        return loc;
+      } ( std::make_index_sequence<remaining>{} );
+    }
   }
 
 
@@ -360,14 +361,14 @@ class Array : public Kokkos::View<KT,typename Style::layout,MemSpace> {
       Kokkos::abort("ERROR: Resizing array with different total size");
     }
     auto loc = Array<new_kt,MemSpace,Style>(this->data(),newdims...);
-    if constexpr (is_FStyle<Style>) loc.lb.fill(1);
+    if constexpr (is_fstyle) loc.lb.fill(1);
     return loc;
   }
 
 
   KOKKOS_INLINE_FUNCTION auto collapse() const {
     auto loc = Array<typename KokkosType<typename base_t::value_type,1>::type,MemSpace,Style>(this->data(),this->size());
-    if constexpr (is_FStyle<Style>) loc.lb.fill(1);
+    if constexpr (is_fstyle) loc.lb.fill(1);
     return loc;
   }
 
@@ -404,7 +405,7 @@ class Array : public Kokkos::View<KT,typename Style::layout,MemSpace> {
 
   template <class scalar_t> requires std::is_arithmetic_v<scalar_t>
   auto as() {
-    auto func = [this] <std::size_t... Is> (std::index_sequence<Is...>) {
+    auto func = [&] <std::size_t... Is> (std::index_sequence<Is...>) {
       return Array<typename KokkosType<scalar_t,base_t::rank>::type,MemSpace,Style>( this->label() , this->extent(Is)... );
     };
     auto ret = func(std::make_index_sequence<base_t::rank>{});
@@ -414,12 +415,13 @@ class Array : public Kokkos::View<KT,typename Style::layout,MemSpace> {
                           KOKKOS_LAMBDA (int i) {
       ret.data()[i] = me.data()[i];
     });
+    if constexpr (is_fstyle) for (int i=0; i < base_t::rank; i++) { ret.lb[i] = this->lb[i]; }
     return ret;
   }
 
 
   KOKKOS_INLINE_FUNCTION auto extents() const {
-    if constexpr (is_CStyle<Style>) {
+    if constexpr (is_cstyle) {
       CSArray<size_t,base_t::rank> ret;
       for (int i=0; i < base_t::rank; i++) { ret(i) = this->extent(i); }
       return ret;
@@ -432,7 +434,7 @@ class Array : public Kokkos::View<KT,typename Style::layout,MemSpace> {
 
 
   KOKKOS_INLINE_FUNCTION auto ubounds() const {
-    if constexpr (is_CStyle<Style>) {
+    if constexpr (is_cstyle) {
       CSArray<size_t,base_t::rank> ret;
       for (int i=0; i < base_t::rank; i++) { ret(i) = this->extent(i)-1; }
       return ret;
@@ -445,7 +447,7 @@ class Array : public Kokkos::View<KT,typename Style::layout,MemSpace> {
 
 
   KOKKOS_INLINE_FUNCTION auto lbounds() const {
-    if constexpr (is_CStyle<Style>) {
+    if constexpr (is_cstyle) {
       CSArray<size_t,base_t::rank> ret;
       for (int i=0; i < base_t::rank; i++) { ret(i) = 0; }
       return ret;
@@ -528,7 +530,7 @@ int main() {
     std::cout << arr;
     std::cout << arr.reshape(5,2);
     std::cout << arr.reshape(5,2).collapse();
-    std::cout << arr.reshape(5,2).slice(1);
+    std::cout << arr.reshape(5,2).slice<1>(1,COLON);
     std::cout << "reshp use ct: " << arr.reshape(5,2).use_count() << std::endl;
     std::cout << arr.as<double>();
     std::cout << "arr.reshape(2,5) extents: " << arr.reshape(2,5).extents();
@@ -565,6 +567,12 @@ int main() {
     Kokkos::fence();
     std::cout << farr_re;
     std::cout << sum(farr_re) << std::endl;
+    Array<float *,yakl::PoolSpace,FStyle> farr2("farr2",{1,10});
+    Kokkos::parallel_for( "mykernel" , Kokkos::RangePolicy(1,11) , KOKKOS_LAMBDA (int i) {
+      farr2(i) = i;
+    });
+    std::cout << farr2;
+    std::cout << farr2.reshape(5,2).slice<1>(COLON,2);
   }
   yakl::finalize();
   Kokkos::finalize(); 
