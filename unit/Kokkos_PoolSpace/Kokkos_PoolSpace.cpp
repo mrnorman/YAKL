@@ -2,16 +2,23 @@
 #include "YAKL.h"
 
 #ifdef KOKKOS_ENABLE_DEBUG
-    inline constexpr bool kokkos_debug = true;
+  inline constexpr bool kokkos_debug = true;
 #else
-    inline constexpr bool kokkos_debug = false;
+  inline constexpr bool kokkos_debug = false;
 #endif
 
 #ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
-    inline constexpr bool kokkos_bounds_debug = true;
+  inline constexpr bool kokkos_bounds_debug = true;
 #else
-    inline constexpr bool kokkos_bounds_debug = false;
+  inline constexpr bool kokkos_bounds_debug = false;
 #endif
+
+#ifdef YAKL_AUTO_FENCE
+  inline constexpr bool yakl_auto_fence = true;
+#else
+  inline constexpr bool yakl_auto_fence = false;
+#endif
+
 
 
 template <class Type> inline constexpr bool is_CSArray = requires { Type::is_CSArray; };
@@ -25,7 +32,10 @@ template <class Type> inline constexpr bool is_FStyle = requires { Type::is_fsty
 
 inline int constexpr COLON = 0;
 
-struct FBounds { ptrdiff_t l, u; };
+struct Bnds { ptrdiff_t l, u; };
+
+struct BitDefault { using signed_t = int           ; using unsigned_t = unsigned int; };
+struct BitLong    { using signed_t = std::ptrdiff_t; using unsigned_t = size_t      ; };
 
 
 
@@ -42,37 +52,41 @@ struct FBounds { ptrdiff_t l, u; };
 
 
 
-template <class Style = CStyle> class LBnd {
+template <class Style = CStyle> class LoopSpec {
 public:
   bool      static constexpr is_cstyle = is_CStyle<Style>;
   bool      static constexpr is_fstyle = is_FStyle<Style>;
   ptrdiff_t static constexpr default_lbound = is_cstyle ? 0 : 1;
   ptrdiff_t l, u, s;
-  KOKKOS_INLINE_FUNCTION LBnd() : l(-1),u(-1),s(-1) { }
-  KOKKOS_INLINE_FUNCTION LBnd(std::integral auto u) : l(default_lbound),u(u-1+default_lbound),s(1) { }
-  KOKKOS_INLINE_FUNCTION LBnd(std::integral auto l, std::integral auto u) : l(l),u(u),s(1) {
+  KOKKOS_INLINE_FUNCTION LoopSpec() : l(-1),u(-1),s(-1) { }
+  KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto u) : l(default_lbound),u(u-1+default_lbound),s(1) { }
+  KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto l, std::integral auto u) : l(l),u(u),s(1) {
     if constexpr (kokkos_debug) { if (u < l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
   }
-  KOKKOS_INLINE_FUNCTION LBnd(std::integral auto l, std::integral auto u, std::integral auto s) : l(l),u(u),s(s) {
+  KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto l, std::integral auto u, std::integral auto s) : l(l),u(u),s(s) {
     if constexpr (kokkos_debug) { if (u < l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
     if constexpr (kokkos_debug) { if (s < 1) Kokkos::abort("ERROR: non-positive strides not supported."); }
   }
-  KOKKOS_INLINE_FUNCTION bool valid() const { return this->s > 0; }
+  KOKKOS_INLINE_FUNCTION bool   valid      () const { return this->s > 0; }
+  KOKKOS_INLINE_FUNCTION size_t index_range() const { return this->u-this->l+1; }
 };
 
 
 
-template <int N, class Style = CStyle, bool Simple = false> class Bounds;
+template <int N, class Style=CStyle, bool Simple=false, class Bit=BitDefault> class Bounds;
 
-template<int N, class Style> class Bounds<N,Style,true> {
+
+template<int N, class Style, class Bit> class Bounds<N,Style,true,Bit> {
   public:
-  bool   static constexpr is_cstyle = is_CStyle<Style>;
-  bool   static constexpr is_fstyle = is_FStyle<Style>;
-  size_t static constexpr default_lbound = is_cstyle ? 0 : 1;
-  size_t nIter;
-  std::array<size_t,N> offs;
+  using unsigned_t = typename Bit::unsigned_t;
+  using signed_t   = typename Bit::signed_t;
+  bool            static constexpr is_cstyle = is_CStyle<Style>;
+  bool            static constexpr is_fstyle = is_FStyle<Style>;
+  unsigned_t static constexpr default_lbound = is_cstyle ? 0 : 1;
+  unsigned_t nIter;
+  std::array<unsigned_t,N> offs;
   KOKKOS_INLINE_FUNCTION Bounds( std::integral auto... sizes ) requires (sizeof...(sizes) == N) {
-    std::array<size_t,N> dims = { static_cast<size_t>(sizes)... };
+    std::array<unsigned_t,N> dims = { static_cast<unsigned_t>(sizes)... };
     nIter = 1;
     for (int i=0; i < N; i++) {
       nIter *= dims[i];
@@ -80,75 +94,106 @@ template<int N, class Style> class Bounds<N,Style,true> {
       for (int j=i+1; j < N; j++) { offs[i] *= dims[j]; }
     }
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , size_t & i0 ) const requires (N==1) {
-    i0 = iGlob        ;                        i0 += default_lbound;
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ) const requires (N==1) {
+    i0 = iglob        ;                        i0 += default_lbound;
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , size_t & i0 , size_t & i1 ) const requires (N==2) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 += default_lbound;
-    i1 = iGlob        ;                        i1 += default_lbound;
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ,
+                                                         unsigned_t & i1 ) const requires (N==2) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
+    i1 = iglob        ;                        i1 += default_lbound;
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , size_t & i0 , size_t & i1 , size_t & i2 ) const requires (N==3) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 += default_lbound;
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 += default_lbound;
-    i2 = iGlob        ;                        i2 += default_lbound;
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ,
+                                                         unsigned_t & i1 ,
+                                                         unsigned_t & i2 ) const requires (N==3) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
+    i2 = iglob        ;                        i2 += default_lbound;
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , size_t & i0 , size_t & i1 , size_t & i2 , size_t & i3 ) const requires (N==4) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 += default_lbound;
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 += default_lbound;
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 += default_lbound;
-    i3 = iGlob        ;                        i3 += default_lbound;
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ,
+                                                         unsigned_t & i1 ,
+                                                         unsigned_t & i2 ,
+                                                         unsigned_t & i3 ) const requires (N==4) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
+    i3 = iglob        ;                        i3 += default_lbound;
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , size_t & i0 , size_t & i1 , size_t & i2 , size_t & i3 , size_t & i4) const requires (N==5) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 += default_lbound;
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 += default_lbound;
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 += default_lbound;
-    i3 = iGlob/offs[3];  iGlob -= offs[3]*i3;  i3 += default_lbound;
-    i4 = iGlob        ;                        i4 += default_lbound;
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ,
+                                                         unsigned_t & i1 ,
+                                                         unsigned_t & i2 ,
+                                                         unsigned_t & i3 ,
+                                                         unsigned_t & i4) const requires (N==5) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
+    i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 += default_lbound;
+    i4 = iglob        ;                        i4 += default_lbound;
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , size_t & i0 , size_t & i1 , size_t & i2 , size_t & i3 , size_t & i4 , size_t & i5) const requires (N==6) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 += default_lbound;
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 += default_lbound;
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 += default_lbound;
-    i3 = iGlob/offs[3];  iGlob -= offs[3]*i3;  i3 += default_lbound;
-    i4 = iGlob/offs[4];  iGlob -= offs[4]*i4;  i4 += default_lbound;
-    i5 = iGlob        ;                        i5 += default_lbound;
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ,
+                                                         unsigned_t & i1 ,
+                                                         unsigned_t & i2 ,
+                                                         unsigned_t & i3 ,
+                                                         unsigned_t & i4 ,
+                                                         unsigned_t & i5) const requires (N==6) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
+    i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 += default_lbound;
+    i4 = iglob/offs[4];  iglob -= offs[4]*i4;  i4 += default_lbound;
+    i5 = iglob        ;                        i5 += default_lbound;
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , size_t & i0 , size_t & i1 , size_t & i2 , size_t & i3 , size_t & i4 , size_t & i5 , size_t & i6) const requires (N==7) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 += default_lbound;
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 += default_lbound;
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 += default_lbound;
-    i3 = iGlob/offs[3];  iGlob -= offs[3]*i3;  i3 += default_lbound;
-    i4 = iGlob/offs[4];  iGlob -= offs[4]*i4;  i4 += default_lbound;
-    i5 = iGlob/offs[5];  iGlob -= offs[5]*i5;  i5 += default_lbound;
-    i6 = iGlob        ;                        i6 += default_lbound;
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ,
+                                                         unsigned_t & i1 ,
+                                                         unsigned_t & i2 ,
+                                                         unsigned_t & i3 ,
+                                                         unsigned_t & i4 ,
+                                                         unsigned_t & i5 ,
+                                                         unsigned_t & i6) const requires (N==7) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
+    i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 += default_lbound;
+    i4 = iglob/offs[4];  iglob -= offs[4]*i4;  i4 += default_lbound;
+    i5 = iglob/offs[5];  iglob -= offs[5]*i5;  i5 += default_lbound;
+    i6 = iglob        ;                        i6 += default_lbound;
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , size_t & i0 , size_t & i1 , size_t & i2 , size_t & i3 , size_t & i4 , size_t & i5 , size_t & i6 , size_t & i7) const requires (N==8) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 += default_lbound;
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 += default_lbound;
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 += default_lbound;
-    i3 = iGlob/offs[3];  iGlob -= offs[3]*i3;  i3 += default_lbound;
-    i4 = iGlob/offs[4];  iGlob -= offs[4]*i4;  i4 += default_lbound;
-    i5 = iGlob/offs[5];  iGlob -= offs[5]*i5;  i5 += default_lbound;
-    i6 = iGlob/offs[6];  iGlob -= offs[6]*i6;  i6 += default_lbound;
-    i7 = iGlob        ;                        i7 += default_lbound;
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ,
+                                                         unsigned_t & i1 ,
+                                                         unsigned_t & i2 ,
+                                                         unsigned_t & i3 ,
+                                                         unsigned_t & i4 ,
+                                                         unsigned_t & i5 ,
+                                                         unsigned_t & i6 ,
+                                                         unsigned_t & i7) const requires (N==8) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
+    i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 += default_lbound;
+    i4 = iglob/offs[4];  iglob -= offs[4]*i4;  i4 += default_lbound;
+    i5 = iglob/offs[5];  iglob -= offs[5]*i5;  i5 += default_lbound;
+    i6 = iglob/offs[6];  iglob -= offs[6]*i6;  i6 += default_lbound;
+    i7 = iglob        ;                        i7 += default_lbound;
   }
 };
 
-template<int N, class Style> class Bounds<N,Style,false> {
+
+template<int N, class Style, class Bit> class Bounds<N,Style,false,Bit> {
   public:
+  using unsigned_t = typename Bit::unsigned_t;
+  using signed_t   = typename Bit::signed_t;
   bool   static constexpr is_cstyle = is_CStyle<Style>;
   bool   static constexpr is_fstyle = is_FStyle<Style>;
-  size_t nIter;
+  unsigned_t nIter;
 
-  std::array<size_t   ,N> offs;
-  std::array<ptrdiff_t,N> lbounds;
-  std::array<size_t   ,N> strides;
+  std::array<unsigned_t,N> offs;
+  std::array<signed_t  ,N> lbounds;
+  std::array<unsigned_t,N> strides;
 
-  template <class... BNDS> requires (std::is_same_v<BNDS,LBnd<Style>> && ...)
+  template <class... BNDS> requires (std::is_same_v<BNDS,LoopSpec<Style>> && ...)
   KOKKOS_INLINE_FUNCTION void init( BNDS... bnds ) requires (sizeof...(bnds) == N) {
-    std::array<size_t,N> dims = { static_cast<size_t   >((bnds.u-bnds.l+1)/bnds.s)... };
-    lbounds                   = { static_cast<ptrdiff_t>(bnds.l)... };
-    strides                   = { static_cast<size_t   >(bnds.s)... };
+    std::array<unsigned_t,N> dims = { static_cast<unsigned_t>((bnds.u-bnds.l+1)/bnds.s)... };
+    lbounds                       = { static_cast<signed_t  >(bnds.l)... };
+    strides                       = { static_cast<unsigned_t>(bnds.s)... };
     nIter = 1;
     for (int i=0; i < N; i++) {
       nIter *= dims[i];
@@ -157,69 +202,193 @@ template<int N, class Style> class Bounds<N,Style,false> {
     }
   }
 
-  using LB = LBnd<Style>;
-  KOKKOS_INLINE_FUNCTION Bounds(LB b0)                                           requires (N==1) { init(b0); }
-  KOKKOS_INLINE_FUNCTION Bounds(LB b0,LB b1)                                     requires (N==2) { init(b0,b1); }
-  KOKKOS_INLINE_FUNCTION Bounds(LB b0,LB b1,LB b2)                               requires (N==3) { init(b0,b1,b2); }
-  KOKKOS_INLINE_FUNCTION Bounds(LB b0,LB b1,LB b2,LB b3)                         requires (N==4) { init(b0,b1,b2,b3); }
-  KOKKOS_INLINE_FUNCTION Bounds(LB b0,LB b1,LB b2,LB b3,LB b4)                   requires (N==5) { init(b0,b1,b2,b3,b4); }
-  KOKKOS_INLINE_FUNCTION Bounds(LB b0,LB b1,LB b2,LB b3,LB b4,LB b5)             requires (N==6) { init(b0,b1,b2,b3,b4,b5); }
-  KOKKOS_INLINE_FUNCTION Bounds(LB b0,LB b1,LB b2,LB b3,LB b4,LB b5,LB b6)       requires (N==7) { init(b0,b1,b2,b3,b4,b5,b6); }
-  KOKKOS_INLINE_FUNCTION Bounds(LB b0,LB b1,LB b2,LB b3,LB b4,LB b5,LB b6,LB b7) requires (N==8) { init(b0,b1,b2,b3,b4,b5,b6,b7); }
+  using LS = LoopSpec<Style>;
+  KOKKOS_INLINE_FUNCTION Bounds(LS s0)                                           requires (N==1) { init(s0); }
+  KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1)                                     requires (N==2) { init(s0,s1); }
+  KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2)                               requires (N==3) { init(s0,s1,s2); }
+  KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3)                         requires (N==4) { init(s0,s1,s2,s3); }
+  KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4)                   requires (N==5) { init(s0,s1,s2,s3,s4); }
+  KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4,LS s5)             requires (N==6) { init(s0,s1,s2,s3,s4,s5); }
+  KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4,LS s5,LS s6)       requires (N==7) { init(s0,s1,s2,s3,s4,s5,s6); }
+  KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4,LS s5,LS s6,LS s7) requires (N==8) { init(s0,s1,s2,s3,s4,s5,s6,s7); }
 
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , ptrdiff_t & i0 ) const requires (N==1) {
-    i0 = iGlob        ;                        i0 = i0*strides[0]+lbounds[0];
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ) const requires (N==1) {
+    i0 = iglob        ;                        i0 = i0*strides[0]+lbounds[0];
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , ptrdiff_t & i0 , ptrdiff_t & i1 ) const requires (N==2) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-    i1 = iGlob        ;                        i1 = i1*strides[1]+lbounds[1];
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
+                                                         signed_t & i1 ) const requires (N==2) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
+    i1 = iglob        ;                        i1 = i1*strides[1]+lbounds[1];
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , ptrdiff_t & i0 , ptrdiff_t & i1 , ptrdiff_t & i2 ) const requires (N==3) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-    i2 = iGlob        ;                        i2 = i2*strides[2]+lbounds[2];
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
+                                                         signed_t & i1 ,
+                                                         signed_t & i2 ) const requires (N==3) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
+    i2 = iglob        ;                        i2 = i2*strides[2]+lbounds[2];
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , ptrdiff_t & i0 , ptrdiff_t & i1 , ptrdiff_t & i2 , ptrdiff_t & i3 ) const requires (N==4) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-    i3 = iGlob        ;                        i3 = i3*strides[3]+lbounds[3];
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
+                                                         signed_t & i1 ,
+                                                         signed_t & i2 ,
+                                                         signed_t & i3 ) const requires (N==4) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
+    i3 = iglob        ;                        i3 = i3*strides[3]+lbounds[3];
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , ptrdiff_t & i0 , ptrdiff_t & i1 , ptrdiff_t & i2 , ptrdiff_t & i3 , ptrdiff_t & i4) const requires (N==5) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-    i3 = iGlob/offs[3];  iGlob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
-    i4 = iGlob        ;                        i4 = i4*strides[4]+lbounds[4];
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
+                                                         signed_t & i1 ,
+                                                         signed_t & i2 ,
+                                                         signed_t & i3 ,
+                                                         signed_t & i4) const requires (N==5) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
+    i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
+    i4 = iglob        ;                        i4 = i4*strides[4]+lbounds[4];
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , ptrdiff_t & i0 , ptrdiff_t & i1 , ptrdiff_t & i2 , ptrdiff_t & i3 , ptrdiff_t & i4 , ptrdiff_t & i5) const requires (N==6) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-    i3 = iGlob/offs[3];  iGlob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
-    i4 = iGlob/offs[4];  iGlob -= offs[4]*i4;  i4 = i4*strides[4]+lbounds[4];
-    i5 = iGlob        ;                        i5 = i5*strides[5]+lbounds[5];
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
+                                                         signed_t & i1 ,
+                                                         signed_t & i2 ,
+                                                         signed_t & i3 ,
+                                                         signed_t & i4 ,
+                                                         signed_t & i5) const requires (N==6) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
+    i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
+    i4 = iglob/offs[4];  iglob -= offs[4]*i4;  i4 = i4*strides[4]+lbounds[4];
+    i5 = iglob        ;                        i5 = i5*strides[5]+lbounds[5];
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , ptrdiff_t & i0 , ptrdiff_t & i1 , ptrdiff_t & i2 , ptrdiff_t & i3 , ptrdiff_t & i4 , ptrdiff_t & i5 , ptrdiff_t & i6) const requires (N==7) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-    i3 = iGlob/offs[3];  iGlob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
-    i4 = iGlob/offs[4];  iGlob -= offs[4]*i4;  i4 = i4*strides[4]+lbounds[4];
-    i5 = iGlob/offs[5];  iGlob -= offs[5]*i5;  i5 = i5*strides[5]+lbounds[5];
-    i6 = iGlob        ;                        i6 = i6*strides[6]+lbounds[6];
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
+                                                         signed_t & i1 ,
+                                                         signed_t & i2 ,
+                                                         signed_t & i3 ,
+                                                         signed_t & i4 ,
+                                                         signed_t & i5 ,
+                                                         signed_t & i6) const requires (N==7) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
+    i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
+    i4 = iglob/offs[4];  iglob -= offs[4]*i4;  i4 = i4*strides[4]+lbounds[4];
+    i5 = iglob/offs[5];  iglob -= offs[5]*i5;  i5 = i5*strides[5]+lbounds[5];
+    i6 = iglob        ;                        i6 = i6*strides[6]+lbounds[6];
   }
-  KOKKOS_INLINE_FUNCTION void unpackIndices( size_t iGlob , ptrdiff_t & i0 , ptrdiff_t & i1 , ptrdiff_t & i2 , ptrdiff_t & i3 , ptrdiff_t & i4 , ptrdiff_t & i5 , ptrdiff_t & i6 , ptrdiff_t & i7) const requires (N==8) {
-    i0 = iGlob/offs[0];  iGlob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-    i1 = iGlob/offs[1];  iGlob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-    i2 = iGlob/offs[2];  iGlob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-    i3 = iGlob/offs[3];  iGlob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
-    i4 = iGlob/offs[4];  iGlob -= offs[4]*i4;  i4 = i4*strides[4]+lbounds[4];
-    i5 = iGlob/offs[5];  iGlob -= offs[5]*i5;  i5 = i5*strides[5]+lbounds[5];
-    i6 = iGlob/offs[6];  iGlob -= offs[6]*i6;  i6 = i6*strides[6]+lbounds[6];
-    i7 = iGlob        ;                        i7 = i7*strides[7]+lbounds[7];
+  KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
+                                                         signed_t & i1 ,
+                                                         signed_t & i2 ,
+                                                         signed_t & i3 ,
+                                                         signed_t & i4 ,
+                                                         signed_t & i5 ,
+                                                         signed_t & i6 ,
+                                                         signed_t & i7) const requires (N==8) {
+    i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
+    i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
+    i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
+    i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
+    i4 = iglob/offs[4];  iglob -= offs[4]*i4;  i4 = i4*strides[4]+lbounds[4];
+    i5 = iglob/offs[5];  iglob -= offs[5]*i5;  i5 = i5*strides[5]+lbounds[5];
+    i6 = iglob/offs[6];  iglob -= offs[6]*i6;  i6 = i6*strides[6]+lbounds[6];
+    i7 = iglob        ;                        i7 = i7*strides[7]+lbounds[7];
   }
 };
+
+
+
+template <int N> using SimpleBounds     = Bounds<N,CStyle,true ,BitDefault>;
+template <int N> using SimpleBounds64   = Bounds<N,CStyle,true ,BitLong   >;
+template <int N> using SimpleBounds_F   = Bounds<N,FStyle,true ,BitDefault>;
+template <int N> using SimpleBounds64_F = Bounds<N,FStyle,true ,BitLong   >;
+template <int N> using Bounds64         = Bounds<N,CStyle,false,BitLong   >;
+template <int N> using Bounds_F         = Bounds<N,FStyle,false,BitDefault>;
+template <int N> using Bounds64_F       = Bounds<N,FStyle,false,BitLong   >;
+
+
+
+template <class F, int N, bool simple, class Bit, class Style = CStyle>
+inline void parallel_for( std::string str , Bounds<N,Style,simple,Bit> const & bounds , F const & f ) {
+  using unsigned_t = typename Bit::unsigned_t;
+  using signed_t   = typename Bit::signed_t;
+  if (bounds.nIter == 0) return;  // exit early if there is no work to do
+  Kokkos::parallel_for( str , bounds.nIter , KOKKOS_LAMBDA (int iglob) {
+    if constexpr (simple) {
+      if constexpr (N==1) {
+        unsigned_t i0; bounds.unpack(iglob,i0); f(i0);
+      } else if constexpr (N==2) {
+        unsigned_t i0,i1; bounds.unpack(iglob,i0,i1); f(i0,i1);
+      } else if constexpr (N==3) {
+        unsigned_t i0,i1,i2; bounds.unpack(iglob,i0,i1,i2); f(i0,i1,i2);
+      } else if constexpr (N==4) {
+        unsigned_t i0,i1,i2,i3; bounds.unpack(iglob,i0,i1,i2,i3); f(i0,i1,i2,i3);
+      } else if constexpr (N==5) {
+        unsigned_t i0,i1,i2,i3,i4; bounds.unpack(iglob,i0,i1,i2,i3,i4); f(i0,i1,i2,i3,i4);
+      } else if constexpr (N==6) {
+        unsigned_t i0,i1,i2,i3,i4,i5; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5); f(i0,i1,i2,i3,i4,i5);
+      } else if constexpr (N==7) {
+        unsigned_t i0,i1,i2,i3,i4,i5,i6; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); f(i0,i1,i2,i3,i4,i5,i6);
+      } else if constexpr (N==8) {
+        unsigned_t i0,i1,i2,i3,i4,i5,i6,i7; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); f(i0,i1,i2,i3,i4,i5,i6,i7);
+      }
+    } else {
+      if constexpr (N==1) {
+        signed_t i0; bounds.unpack(iglob,i0); f(i0);
+      } else if constexpr (N==2) {
+        signed_t i0,i1; bounds.unpack(iglob,i0,i1); f(i0,i1);
+      } else if constexpr (N==3) {
+        signed_t i0,i1,i2; bounds.unpack(iglob,i0,i1,i2); f(i0,i1,i2);
+      } else if constexpr (N==4) {
+        signed_t i0,i1,i2,i3; bounds.unpack(iglob,i0,i1,i2,i3); f(i0,i1,i2,i3);
+      } else if constexpr (N==5) {
+        signed_t i0,i1,i2,i3,i4; bounds.unpack(iglob,i0,i1,i2,i3,i4); f(i0,i1,i2,i3,i4);
+      } else if constexpr (N==6) {
+        signed_t i0,i1,i2,i3,i4,i5; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5); f(i0,i1,i2,i3,i4,i5);
+      } else if constexpr (N==7) {
+        signed_t i0,i1,i2,i3,i4,i5,i6; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); f(i0,i1,i2,i3,i4,i5,i6);
+      } else if constexpr (N==8) {
+        signed_t i0,i1,i2,i3,i4,i5,i6,i7; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); f(i0,i1,i2,i3,i4,i5,i6,i7);
+      }
+    }
+  });
+  if constexpr (yakl_auto_fence) Kokkos::fence();
+}
+
+template <class F, int N, bool simple, class Bit, class Style = CStyle>
+inline void parallel_for( Bounds<N,Style,simple,Bit> const & bounds , F const & f ) {
+  parallel_for( YAKL_AUTO_LABEL() , bounds , f );
+}
+
+template <class F>
+inline void parallel_for( std::integral auto bnd , F const & f ) {
+  parallel_for( YAKL_AUTO_LABEL() , Bounds<1,CStyle,true,BitDefault>(bnd) , f );
+}
+
+template <class F>
+inline void parallel_for( std::string str , std::integral auto bnd , F const & f ) {
+  parallel_for( str , Bounds<1,CStyle,true,BitDefault>(bnd) , f );
+}
+
+
+
+template <class F, int N, bool simple, class Bit>
+inline void parallel_for_F( std::string str , Bounds<N,FStyle,simple,Bit> const & bounds , F const & f ) {
+  parallel_for<F,N,simple,Bit,FStyle>( str , bounds , f );
+}
+
+template <class F, int N, bool simple, class Bit>
+inline void parallel_for_F( Bounds<N,FStyle,simple,Bit> const & bounds , F const & f ) {
+  parallel_for<F,N,simple,Bit,FStyle>( YAKL_AUTO_LABEL() , bounds , f );
+}
+
+template <class F>
+inline void parallel_for_F( std::integral auto bnd , F const & f ) {
+  parallel_for<F,1,true,BitDefault,FStyle>( YAKL_AUTO_LABEL() , Bounds<1,FStyle,true,BitDefault>(bnd) ,f );
+}
+
+template <class F>
+inline void parallel_for_F( std::string str , std::integral auto bnd , F const & f ) {
+  parallel_for<F,1,true,BitDefault,FStyle>( str , Bounds<1,FStyle,true,BitDefault>(bnd) , f );
+}
 
 
 
@@ -302,8 +471,8 @@ class CSArray {
 
 
 
-template <class T, FBounds... DIMS> requires (sizeof...(DIMS) > 0) &&
-                                             ((static_cast<ptrdiff_t>(DIMS.l) <= static_cast<ptrdiff_t>(DIMS.u)) && ...)
+template <class T, Bnds... DIMS> requires (sizeof...(DIMS) > 0) &&
+                                          ((static_cast<ptrdiff_t>(DIMS.l) <= static_cast<ptrdiff_t>(DIMS.u)) && ...)
 class FSArray {
   public:
   bool                    static constexpr is_FSArray   = true;
@@ -408,35 +577,35 @@ class Array : public Kokkos::View<KT,typename Style::layout,MemSpace> {
 
   // Fortran-style constructors
   // This gets ugly when trying to use parameter packs, so I went with brute force here
-  Array(std::string const & label, FBounds b1)
+  Array(std::string const & label, Bnds b1)
       requires is_fstyle && (base_t::rank==1)
       : base_t(label,b1.u-b1.l+1) ,
         lb({b1.l}) {}
-  Array(std::string const & label, FBounds b1, FBounds b2)
+  Array(std::string const & label, Bnds b1, Bnds b2)
       requires is_fstyle && (base_t::rank==2)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1) ,
         lb({b1.l,b2.l}) {}
-  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3)
+  Array(std::string const & label, Bnds b1, Bnds b2, Bnds b3)
       requires is_fstyle && (base_t::rank==3)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1) ,
         lb({b1.l,b2.l,b3.l}) {}
-  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4)
+  Array(std::string const & label, Bnds b1, Bnds b2, Bnds b3, Bnds b4)
       requires is_fstyle && (base_t::rank==4)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l}) {}
-  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4, FBounds b5)
+  Array(std::string const & label, Bnds b1, Bnds b2, Bnds b3, Bnds b4, Bnds b5)
       requires is_fstyle && (base_t::rank==5)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l,b5.l}) {}
-  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4, FBounds b5, FBounds b6)
+  Array(std::string const & label, Bnds b1, Bnds b2, Bnds b3, Bnds b4, Bnds b5, Bnds b6)
       requires is_fstyle && (base_t::rank==6)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l}) {}
-  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4, FBounds b5, FBounds b6, FBounds b7)
+  Array(std::string const & label, Bnds b1, Bnds b2, Bnds b3, Bnds b4, Bnds b5, Bnds b6, Bnds b7)
       requires is_fstyle && (base_t::rank==7)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1,b7.u-b7.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l,b7.l}) {}
-  Array(std::string const & label, FBounds b1, FBounds b2, FBounds b3, FBounds b4, FBounds b5, FBounds b6, FBounds b7, FBounds b8)
+  Array(std::string const & label, Bnds b1, Bnds b2, Bnds b3, Bnds b4, Bnds b5, Bnds b6, Bnds b7, Bnds b8)
       requires is_fstyle && (base_t::rank==8)
       : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1,b7.u-b7.l+1,b8.u-b8.l+1) ,
         lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l,b7.l,b8.l}) {}
@@ -679,7 +848,7 @@ int main() {
   yakl::init();
   {
     Array<float *,yakl::PoolSpace> arr("arr",10);
-    Kokkos::parallel_for( "mykernel" , 10 , KOKKOS_LAMBDA (int i) {
+    parallel_for( "mykernel" , 10 , KOKKOS_LAMBDA (int i) {
       arr(i) = i+1;
     });
     auto arr_h = arr.createHostObject();
@@ -727,8 +896,7 @@ int main() {
     std::cout << sum(fsarray) << std::endl;
     Array<float ***,yakl::PoolSpace,FStyle> farr("arr",{1,3},{1,3},{1,3});
     farr = 3;
-    Kokkos::parallel_for( "" , 1 , KOKKOS_LAMBDA (int i) { farr(1,1,1) = 1; });
-    Kokkos::fence();
+    parallel_for_F( YAKL_AUTO_LABEL() , 1 , KOKKOS_LAMBDA (int i) { farr(1,1,1) = 1; });
     std::cout << farr.lbounds();
     std::cout << farr.ubounds();
     auto farr_re = farr.reshape(27);
@@ -736,12 +904,12 @@ int main() {
     std::cout << farr_re.lbounds();
     std::cout << farr_re.ubounds();
     std::cout << sum(farr) << std::endl;
-    Kokkos::parallel_for( "" , 1 , KOKKOS_LAMBDA (int i) { farr_re.Array::operator()(27) = 1; });
+    parallel_for_F( YAKL_AUTO_LABEL() , 1 , KOKKOS_LAMBDA (int i) { farr_re(27) = 1; });
     Kokkos::fence();
     std::cout << farr_re;
     std::cout << sum(farr_re) << std::endl;
     Array<float *,yakl::PoolSpace,FStyle> farr2("farr2",{1,10});
-    Kokkos::parallel_for( "mykernel" , Kokkos::RangePolicy(1,11) , KOKKOS_LAMBDA (int i) {
+    parallel_for_F( YAKL_AUTO_LABEL() , 11 , KOKKOS_LAMBDA (int i) {
       farr2(i) = i;
     });
     std::cout << farr2;

@@ -16,22 +16,22 @@ namespace yakl {
     ~PoolSpace()                = default; // destructible
     static const char * name() { return "yakl::PoolSpace"; }
     template <class Ex> void * allocate(Ex const & /*ex*/ , size_t const sz) const {
-      return get_yakl_instance().pool.allocate(sz,"[Unlabeled]");
+      return alloc_device(sz,"[Unlabeled]");
     }
     template <class Ex> void * allocate(Ex const & /*ex*/ , char const * label , size_t const sz , size_t const /*logical_sz*/=0) const {
-      return get_yakl_instance().pool.allocate(sz,label);
+      return alloc_device(sz,label);
     }
     void * allocate(size_t const sz) const {
-      return get_yakl_instance().pool.allocate(sz,"[Unlabeled]");
+      return alloc_device(sz,"[Unlabeled]");
     }
     void * allocate(char const * label , size_t const sz , size_t const /*logical_sz*/=0) const {
-      return get_yakl_instance().pool.allocate(sz,label);
+      return alloc_device(sz,label);
     }
     void deallocate(void * const ptr , size_t sz) const {
-      get_yakl_instance().pool.free(ptr,"[Unlabeled]");
+      free_device(ptr,"[Unlabeled]");
     }
     void deallocate(char const * label, void * const ptr , size_t const sz , size_t const /*logical_sz*/=0 ) const {
-      get_yakl_instance().pool.free(ptr,label);
+      free_device(ptr,label);
     }
   };
 }
