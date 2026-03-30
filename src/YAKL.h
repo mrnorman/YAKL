@@ -8,7 +8,6 @@
 #include "YAKL_defines.h"
 #include "YAKL_LinearAllocator.h"
 #include "YAKL_Internal.h"
-#include "YAKL_mutex.h"
 #include "YAKL_allocators.h"
 #include "YAKL_Kokkos_DeviceSpace.h"
 #include "YAKL_InitConfig.h"
@@ -21,6 +20,6 @@
 #include "YAKL_Array.h"
 #include "YAKL_Array_F.h"
 #include "YAKL_ScalarLiveOut.h"
-#include "extensions/YAKL_componentwise.h"
-#include "extensions/YAKL_intrinsics.h"
+#include "YAKL_componentwise.h"
+#include "YAKL_intrinsics.h"
 
