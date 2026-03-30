@@ -4,14 +4,7 @@
 #include "YAKL_netcdf.h"
 
 using yakl::Array;
-using yakl::styleC;
-using yakl::styleFortran;
-using yakl::memHost;
-using yakl::memDevice;
-using yakl::c::parallel_for;
-using yakl::c::Bounds;
-using yakl::c::SimpleBounds;
-using yakl::COLON;
+using yakl::Array_F;
 
 
 void die(std::string msg) {
@@ -46,18 +39,18 @@ int main() {
       nc.create( file_name ); // Default mode is overwrite when creating
 
       // Create the varaibles
-      Array<signed        char,1,memDevice,styleC      > a0("a0",d1);
-      Array<unsigned      char,2,memDevice,styleFortran> a1("a1",d1,d2);
-      Array<             short,3,memDevice,styleC      > a2("a2",d3,d2,d1);
-      Array<unsigned     short,4,memDevice,styleFortran> a3("a3",d1,d2,d3,d4);
-      Array<               int,5,memDevice,styleC      > a4("a4",d5,d4,d3,d2,d1);
-      Array<unsigned       int,6,memHost  ,styleFortran> a5("a5",d1,d2,d3,d4,d5,d6);
-      Array<         long long,7,memHost  ,styleC      > a6("a6",d7,d6,d5,d4,d3,d2,d1);
-      Array<unsigned long long,8,memHost  ,styleFortran> a7("a7",d1,d2,d3,d4,d5,d6,d7,d8);
-      Array<             float,3,memHost  ,styleC      > a8("a8",d3,d2,d1);
-      Array<            double,3,memHost  ,styleFortran> a9("a9",d1,d2,d3);
-      Array<              char,2,memHost  ,styleC      > text("text",4,10);
-      Array<               int,1,memHost  ,styleC      > bool8("bool8",d8);
+      Array  <signed        char *       ,yakl::DeviceSpace> a0   ("a0"   ,d1);
+      Array_F<unsigned      char **      ,yakl::DeviceSpace> a1   ("a1"   ,d1,d2);
+      Array  <             short ***     ,yakl::DeviceSpace> a2   ("a2"   ,d3,d2,d1);
+      Array_F<unsigned     short ****    ,yakl::DeviceSpace> a3   ("a3"   ,d1,d2,d3,d4);
+      Array  <               int *****   ,yakl::DeviceSpace> a4   ("a4"   ,d5,d4,d3,d2,d1);
+      Array_F<unsigned       int ******  ,Kokkos::HostSpace> a5   ("a5"   ,d1,d2,d3,d4,d5,d6);
+      Array  <         long long ******* ,Kokkos::HostSpace> a6   ("a6"   ,d7,d6,d5,d4,d3,d2,d1);
+      Array_F<unsigned long long ********,Kokkos::HostSpace> a7   ("a7"   ,d1,d2,d3,d4,d5,d6,d7,d8);
+      Array  <             float ***     ,Kokkos::HostSpace> a8   ("a8"   ,d3,d2,d1);
+      Array_F<            double ***     ,Kokkos::HostSpace> a9   ("a9"   ,d1,d2,d3);
+      Array  <              char **      ,Kokkos::HostSpace> text ("text" ,4,10);
+      Array  <               int *       ,Kokkos::HostSpace> bool8("bool8",d8);
       float s0 = 1;
       int   s1 = 2;
 

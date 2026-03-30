@@ -38,22 +38,22 @@ namespace yakl {
   template <class T> class ScalarLiveOut {
   protected:
     /** @private */
-    Array<T,1,memDevice,styleC> data;
+    Array<T *,yakl::DeviceSpace> data;
 
   public:
     /** @brief Default constructor allocates room on the device for one scalar of type `T` */
     KOKKOS_INLINE_FUNCTION ScalarLiveOut() {
-      data = Array<T,1,memDevice,styleC>("ScalarLiveOut_data",1);  // Create array
+      data = Array<T *,yakl::DeviceSpace>("ScalarLiveOut_data",1);  // Create array
     }
     /** @brief [ASYNCHRONOUS] This constructor allocates room on the device for one scalar of type `T` and initializes it on device with the provided value. */
     explicit ScalarLiveOut(T val) {
-      Array<T,1,memHost,styleC> host_data("ScalarLiveOut_data",1);  // Create array
+      Array<T *,Kokkos::HostSpace> host_data("ScalarLiveOut_data",1);  // Create array
       host_data(0) = val;
       data = host_data.createDeviceCopy();
     }
     /** @brief Deallocates the scalar value on the device. */
     KOKKOS_INLINE_FUNCTION ~ScalarLiveOut() {
-      data = Array<T,1,memDevice,styleC>();
+      data = Array<T *,yakl::DeviceSpace>();
     }
 
     /** @brief Copies and moves are shallow, not deep copy. */
@@ -66,7 +66,7 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION ScalarLiveOut & operator=( ScalarLiveOut      &&rhs) { this->data = rhs.data; return *this; }
 
     /** @brief Assign a value to the ScalarLiveOut object on the device. */
-    template <class TLOC , typename std::enable_if< std::is_arithmetic<TLOC>::value , int >::type = 0>
+    template <class TLOC> requires std::is_arithmetic_v<TLOC>
     KOKKOS_INLINE_FUNCTION T &operator= (TLOC rhs) const { data(0) = rhs; return data(0); }
 
     /** @brief Returns a modifiable reference to the underlying data on the device. */
@@ -88,7 +88,7 @@ namespace yakl {
     inline void hostWrite(T val) {
       // Copy data to device
       YAKL_SCOPE( myData , this->data );
-      c::parallel_for( YAKL_AUTO_LABEL() , c::Bounds<1>(1) , KOKKOS_LAMBDA (int dummy) {
+      parallel_for( YAKL_AUTO_LABEL() , 1 , KOKKOS_LAMBDA (int dummy) {
         myData(0) = val;
       });
     }

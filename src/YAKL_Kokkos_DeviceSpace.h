@@ -5,16 +5,16 @@
 #include <impl/Kokkos_SharedAlloc.hpp>
 
 namespace yakl {
-  class PoolSpace {
+  class DeviceSpace {
     public:
-    using memory_space    = yakl::PoolSpace;
+    using memory_space    = yakl::DeviceSpace;
     using execution_space = Kokkos::DefaultExecutionSpace;
     using device_type     = Kokkos::Device<execution_space,memory_space>;
     using size_type       = Kokkos::DefaultExecutionSpace::memory_space::size_type;
-    PoolSpace()                 = default; // default constructible
-    PoolSpace(const PoolSpace&) = default; // copy constructible
-    ~PoolSpace()                = default; // destructible
-    static const char * name() { return "yakl::PoolSpace"; }
+    DeviceSpace()                    = default; // default constructible
+    DeviceSpace(const DeviceSpace &) = default; // copy constructible
+    ~DeviceSpace()                   = default; // destructible
+    static const char * name() { return "yakl::DeviceSpace"; }
     template <class Ex> void * allocate(Ex const & /*ex*/ , size_t const sz) const {
       return alloc_device(sz,"[Unlabeled]");
     }
@@ -38,9 +38,9 @@ namespace yakl {
 
 
 #ifdef KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SERIAL
-KOKKOS_IMPL_SHARED_ALLOCATION_SPECIALIZATION(yakl::PoolSpace);
+KOKKOS_IMPL_SHARED_ALLOCATION_SPECIALIZATION(yakl::DeviceSpace);
 #else
-KOKKOS_IMPL_HOST_INACCESSIBLE_SHARED_ALLOCATION_SPECIALIZATION(yakl::PoolSpace);
+KOKKOS_IMPL_HOST_INACCESSIBLE_SHARED_ALLOCATION_SPECIALIZATION(yakl::DeviceSpace);
 #endif
 
 
@@ -50,13 +50,13 @@ namespace Kokkos {
 
     #ifdef KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SERIAL
 
-    template <> struct MemorySpaceAccess<HostSpace,yakl::PoolSpace> {
+    template <> struct MemorySpaceAccess<HostSpace,yakl::DeviceSpace> {
       enum : bool { assignable = true };
       enum : bool { accessible = true };
       enum : bool { deepcopy   = true };
     };
 
-    template <> struct MemorySpaceAccess<yakl::PoolSpace,HostSpace> {
+    template <> struct MemorySpaceAccess<yakl::DeviceSpace,HostSpace> {
       enum : bool { assignable = true };
       enum : bool { accessible = true };
       enum : bool { deepcopy   = true };
@@ -64,25 +64,25 @@ namespace Kokkos {
 
     #else
 
-    template <> struct MemorySpaceAccess<HostSpace,yakl::PoolSpace> {
+    template <> struct MemorySpaceAccess<HostSpace,yakl::DeviceSpace> {
       enum : bool { assignable = false };
       enum : bool { accessible = false };
       enum : bool { deepcopy   = true  };
     };
 
-    template <> struct MemorySpaceAccess<yakl::PoolSpace,HostSpace> {
+    template <> struct MemorySpaceAccess<yakl::DeviceSpace,HostSpace> {
       enum : bool { assignable = false };
       enum : bool { accessible = false };
       enum : bool { deepcopy   = true  };
     };
 
-    template <> struct MemorySpaceAccess<Kokkos::DefaultExecutionSpace::memory_space,yakl::PoolSpace> {
+    template <> struct MemorySpaceAccess<Kokkos::DefaultExecutionSpace::memory_space,yakl::DeviceSpace> {
       enum : bool { assignable = true  };
       enum : bool { accessible = true  };
       enum : bool { deepcopy   = true  };
     };
 
-    template <> struct MemorySpaceAccess<yakl::PoolSpace,Kokkos::DefaultExecutionSpace::memory_space> {
+    template <> struct MemorySpaceAccess<yakl::DeviceSpace,Kokkos::DefaultExecutionSpace::memory_space> {
       enum : bool { assignable = true  };
       enum : bool { accessible = true  };
       enum : bool { deepcopy   = true  };
@@ -90,7 +90,7 @@ namespace Kokkos {
     #endif
 
     template <typename ExecSpace>
-    struct DeepCopy<Kokkos::HostSpace,yakl::PoolSpace,ExecSpace> {
+    struct DeepCopy<Kokkos::HostSpace,yakl::DeviceSpace,ExecSpace> {
       DeepCopy(void * dst , void const * src , size_t n) {
         DeepCopy<Kokkos::HostSpace,Kokkos::DefaultExecutionSpace::memory_space,ExecSpace>(dst,src,n);
       }
@@ -100,7 +100,7 @@ namespace Kokkos {
     };
 
     template <typename ExecSpace>
-    struct DeepCopy<yakl::PoolSpace,Kokkos::HostSpace,ExecSpace> {
+    struct DeepCopy<yakl::DeviceSpace,Kokkos::HostSpace,ExecSpace> {
       DeepCopy(void * dst , void const * src , size_t n) {
         DeepCopy<Kokkos::DefaultExecutionSpace::memory_space,Kokkos::HostSpace,ExecSpace>(dst,src,n);
       }
@@ -110,7 +110,7 @@ namespace Kokkos {
     };
 
     template <typename ExecSpace>
-    struct DeepCopy<yakl::PoolSpace,yakl::PoolSpace,ExecSpace> {
+    struct DeepCopy<yakl::DeviceSpace,yakl::DeviceSpace,ExecSpace> {
       DeepCopy(void * dst , void const * src , size_t n) {
         DeepCopy<Kokkos::DefaultExecutionSpace::memory_space,Kokkos::DefaultExecutionSpace::memory_space,ExecSpace>(dst,src,n);
       }
@@ -121,7 +121,7 @@ namespace Kokkos {
 
     #ifndef KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SERIAL
     template <typename ExecSpace>
-    struct DeepCopy<yakl::PoolSpace,Kokkos::DefaultExecutionSpace::memory_space,ExecSpace> {
+    struct DeepCopy<yakl::DeviceSpace,Kokkos::DefaultExecutionSpace::memory_space,ExecSpace> {
       DeepCopy(void * dst , void const * src , size_t n) {
         DeepCopy<Kokkos::DefaultExecutionSpace::memory_space,Kokkos::DefaultExecutionSpace::memory_space,ExecSpace>(dst,src,n);
       }
@@ -131,7 +131,7 @@ namespace Kokkos {
     };
 
     template <typename ExecSpace>
-    struct DeepCopy<Kokkos::DefaultExecutionSpace::memory_space,yakl::PoolSpace,ExecSpace> {
+    struct DeepCopy<Kokkos::DefaultExecutionSpace::memory_space,yakl::DeviceSpace,ExecSpace> {
       DeepCopy(void * dst , void const * src , size_t n) {
         DeepCopy<Kokkos::DefaultExecutionSpace::memory_space,Kokkos::DefaultExecutionSpace::memory_space,ExecSpace>(dst,src,n);
       }

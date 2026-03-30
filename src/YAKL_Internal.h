@@ -17,7 +17,6 @@ namespace yakl {
       YAKL_Internal& operator = (const YAKL_Internal&) = delete;
 
       LinearAllocator pool;                 // Pool allocator. Constructor and destructor do not depend on ordering
-      Toney           timer;                // Constructor and destructor do not depend on ordering
       std::mutex      yakl_mtx;             // Mutex for YAKL reference counting, allocation, and deallocation in threaded regions
       std::mutex      yakl_final_mtx;       // Mutex for YAKL reference counting, allocation, and deallocation in threaded regions
       bool            yakl_is_initialized;  // Determine if YAKL has been initialized

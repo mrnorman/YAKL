@@ -1,30 +1,46 @@
 
 #pragma once
 
+namespace yakl {
+#ifdef KOKKOS_ENABLE_DEBUG
+  inline constexpr bool kokkos_debug = true;
+#else
+  inline constexpr bool kokkos_debug = false;
+#endif
+
+#ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
+  inline constexpr bool kokkos_bounds_debug = true;
+#else
+  inline constexpr bool kokkos_bounds_debug = false;
+#endif
+
+#ifdef YAKL_AUTO_FENCE
+  inline constexpr bool yakl_auto_fence = true;
+#else
+  inline constexpr bool yakl_auto_fence = false;
+#endif
+}
+
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Profiling_ProfileSection.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
 #include "YAKL_header.h"
 #include "YAKL_defines.h"
-#include "ArrayIR.h"
 #include "YAKL_LinearAllocator.h"
-#include "YAKL_Toney.h"
 #include "YAKL_Internal.h"
-#include "YAKL_timers.h"
 #include "YAKL_mutex.h"
 #include "YAKL_allocators.h"
-#include "YAKL_KokkosPoolSpace.h"
+#include "YAKL_Kokkos_DeviceSpace.h"
 #include "YAKL_InitConfig.h"
 #include "YAKL_init.h"
 #include "YAKL_finalize.h"
-#include "YAKL_parallel_for_c.h"
-#include "YAKL_parallel_for_fortran.h"
-#include "YAKL_memory_spaces.h"
-#include "YAKL_memcpy.h"
-#include "YAKL_random.h"
+#include "YAKL_Style.h"
+#include "YAKL_parallel_for.h"
+#include "YAKL_SArray.h"
+#include "YAKL_SArray_F.h"
 #include "YAKL_Array.h"
+#include "YAKL_Array_F.h"
 #include "YAKL_ScalarLiveOut.h"
-#include "extensions/YAKL_simd.h"
-#include "extensions/YAKL_componentwise.h"
+// #include "extensions/YAKL_componentwise.h"
 #include "extensions/YAKL_intrinsics.h"
 

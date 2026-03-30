@@ -3,43 +3,36 @@
 #include "YAKL.h"
 
 using yakl::Array;
-using yakl::styleC;
-using yakl::styleFortran;
-using yakl::memHost;
-using yakl::memDevice;
-using yakl::c::parallel_for;
-using yakl::c::Bounds;
-using yakl::c::SimpleBounds;
-using yakl::COLON;
+using yakl::Array_F;
+using yakl::parallel_for;
 using yakl::SArray;
-using yakl::FSArray;
-using yakl::SB;
+using yakl::SArray_F;
 
 typedef double real;
 
-typedef Array<real,1,memDevice,styleC> real_c_1d;
-typedef Array<real,2,memDevice,styleC> real_c_2d;
-typedef Array<real,3,memDevice,styleC> real_c_3d;
+typedef Array  <real *  ,yakl::DeviceSpace> real_c_1d;
+typedef Array  <real ** ,yakl::DeviceSpace> real_c_2d;
+typedef Array  <real ***,yakl::DeviceSpace> real_c_3d;
 
-typedef Array<real,1,memDevice,styleFortran> real_f_1d;
-typedef Array<real,2,memDevice,styleFortran> real_f_2d;
-typedef Array<real,3,memDevice,styleFortran> real_f_3d;
+typedef Array_F<real *  ,yakl::DeviceSpace> real_f_1d;
+typedef Array_F<real ** ,yakl::DeviceSpace> real_f_2d;
+typedef Array_F<real ***,yakl::DeviceSpace> real_f_3d;
 
-typedef Array<int,1,memDevice,styleC> int_c_1d;
-typedef Array<int,2,memDevice,styleC> int_c_2d;
-typedef Array<int,3,memDevice,styleC> int_c_3d;
+typedef Array  <int  *  ,yakl::DeviceSpace> int_c_1d;
+typedef Array  <int  ** ,yakl::DeviceSpace> int_c_2d;
+typedef Array  <int  ***,yakl::DeviceSpace> int_c_3d;
 
-typedef Array<int,1,memDevice,styleFortran> int_f_1d;
-typedef Array<int,2,memDevice,styleFortran> int_f_2d;
-typedef Array<int,3,memDevice,styleFortran> int_f_3d;
+typedef Array_F<int  *  ,yakl::DeviceSpace> int_f_1d;
+typedef Array_F<int  ** ,yakl::DeviceSpace> int_f_2d;
+typedef Array_F<int  ***,yakl::DeviceSpace> int_f_3d;
 
-typedef Array<bool,1,memDevice,styleC> bool_c_1d;
-typedef Array<bool,2,memDevice,styleC> bool_c_2d;
-typedef Array<bool,3,memDevice,styleC> bool_c_3d;
+typedef Array  <bool *  ,yakl::DeviceSpace> bool_c_1d;
+typedef Array  <bool ** ,yakl::DeviceSpace> bool_c_2d;
+typedef Array  <bool ***,yakl::DeviceSpace> bool_c_3d;
 
-typedef Array<bool,1,memDevice,styleFortran> bool_f_1d;
-typedef Array<bool,2,memDevice,styleFortran> bool_f_2d;
-typedef Array<bool,3,memDevice,styleFortran> bool_f_3d;
+typedef Array_F<bool *  ,yakl::DeviceSpace> bool_f_1d;
+typedef Array_F<bool ** ,yakl::DeviceSpace> bool_f_2d;
+typedef Array_F<bool ***,yakl::DeviceSpace> bool_f_3d;
 
 
 void die(std::string msg) {
@@ -60,8 +53,8 @@ int main() {
       using yakl::intrinsics::size;
       real_c_2d arr_c("arr_c",n1,n2);
       real_f_2d arr_f("arr_c",{-1,n1-2},n2);
-      SArray<real,2,n1,n2> sarr_c;
-      FSArray<real,2,SB<-1,n1-2>,SB<n2>> sarr_f;
+      SArray  <real,n1,n2> sarr_c;
+      SArray_F<real,{-1,n1-2},{1,n2}> sarr_f;
       real scalar = 1;
 
       if (size(arr_c ) != n1*n2) die("arr_c wrong size tot");
@@ -171,8 +164,8 @@ int main() {
       if (sum(abs(sarr_c))/size(sarr_c) != 4) die("ERROR: Wrong value for sarr_c");
       if (sum(abs(sarr_f))/size(sarr_f) != 5) die("ERROR: Wrong value for sarr_f");
 
-      yakl::c::parallel_for( size(arr_c) , KOKKOS_LAMBDA (int i) { arr_c.data()[i] = i; });
-      yakl::c::parallel_for( size(arr_f) , KOKKOS_LAMBDA (int i) { arr_f.data()[i] = i; });
+      parallel_for( size(arr_c) , KOKKOS_LAMBDA (int i) { arr_c.data()[i] = i; });
+      parallel_for( size(arr_f) , KOKKOS_LAMBDA (int i) { arr_f.data()[i] = i; });
       for (int i=0; i < size(sarr_c); i++) { sarr_c.data()[i] = i; }
       for (int i=0; i < size(sarr_f); i++) { sarr_f.data()[i] = i; }
     }
@@ -183,15 +176,15 @@ int main() {
       using yakl::intrinsics::sum;
       using yakl::intrinsics::merge;
       int constexpr n = 1024;
-      Array<double,1,memHost,styleC> h_a1  ("h_a1"  ,n);
-      Array<double,1,memHost,styleC> h_a2  ("h_a2"  ,n);
-      Array<bool ,1,memHost,styleC> h_mask("h_mask",n);
-      SArray<double,1,n> sarr_a1  ;
-      SArray<double,1,n> sarr_a2  ;
-      SArray<bool ,1,n> sarr_mask;
-      FSArray<double,1,SB<n>> fsarr_a1  ;
-      FSArray<double,1,SB<n>> fsarr_a2  ;
-      FSArray<bool ,1,SB<n>> fsarr_mask;
+      Array<double *,Kokkos::HostSpace> h_a1  ("h_a1"  ,n);
+      Array<double *,Kokkos::HostSpace> h_a2  ("h_a2"  ,n);
+      Array<bool   *,Kokkos::HostSpace> h_mask("h_mask",n);
+      SArray  <double,n> sarr_a1  ;
+      SArray  <double,n> sarr_a2  ;
+      SArray  <bool  ,n> sarr_mask;
+      SArray_F<double,{1,n}> fsarr_a1  ;
+      SArray_F<double,{1,n}> fsarr_a2  ;
+      SArray_F<bool  ,{1,n}> fsarr_mask;
       for (int i=0; i < n; i++) {
         h_a1.data()[i] = 2;
         h_a2.data()[i] = 3;
@@ -214,8 +207,8 @@ int main() {
 
       using yakl::intrinsics::minval;
       using yakl::intrinsics::maxval;
-      Array<double,1,memDevice,styleFortran> d_a1_f("d_a1_f",n);
-      Array<double,1,memHost  ,styleFortran> h_a1_f("h_a1_f",n);
+      Array_F<double *,yakl::DeviceSpace> d_a1_f("d_a1_f",n);
+      Array_F<double *,Kokkos::HostSpace> h_a1_f("h_a1_f",n);
       for (int i=0; i < n; i++) {
         h_a1    .data()[i] = n-i;
         sarr_a1 .data()[i] = n-i;
@@ -258,8 +251,8 @@ int main() {
       using yakl::intrinsics::associated;
       real_c_2d arr_c("arr_c",n1,n2);
       real_f_2d arr_f("arr_c",{-1,n1-2},n2);
-      SArray<real,2,n1,n2> sarr_c;
-      FSArray<real,2,SB<-1,n1-2>,SB<n2>> sarr_f;
+      SArray  <real,n1,n2> sarr_c;
+      SArray_F<real,{-1,n1-2},{1,n2}> sarr_f;
       real_c_2d arr_c_no;
       real_f_2d arr_f_no;
       if (!allocated(arr_c )) die("arr_c error allocated");
@@ -287,8 +280,8 @@ int main() {
       using yakl::intrinsics::maxval;
       using yakl::intrinsics::sum;
       using yakl::intrinsics::product;
-      SArray<real,1,n1> sarr_c;
-      FSArray<real,1,SB<n1>> sarr_f;
+      SArray  <real,n1> sarr_c;
+      SArray_F<real,{1,n1}> sarr_f;
       sarr_c(0) = -1;
       sarr_c(1) = -2;
       sarr_c(2) = 4;
@@ -325,10 +318,10 @@ int main() {
       using yakl::intrinsics::maxval;
       using yakl::intrinsics::sum;
       using yakl::intrinsics::product;
-      Array  <double,1,memDevice,styleC> d_arr("d_arr",n);
-      Array  <double,1,memHost  ,styleC> h_arr("h_arr",n);
-      SArray <double,1,n>                cs_arr;
-      FSArray<double,1,SB<n>>            fs_arr;
+      Array  <double *,yakl::DeviceSpace> d_arr("d_arr",n);
+      Array  <double *,Kokkos::HostSpace> h_arr("h_arr",n);
+      SArray  <double,n>                cs_arr;
+      SArray_F<double,{1,n}>            fs_arr;
       for (int i=0; i < n; i++) {
         h_arr .data()[i] = 1 + i / 100000.;
         cs_arr.data()[i] = 1 + i / 100000.;
@@ -358,8 +351,8 @@ int main() {
 
       real_c_1d arr_c("arr_c",5);
       real_f_1d arr_f("arr_f",5);
-      SArray<real,1,5> sarr_c;
-      FSArray<real,1,SB<5>> sarr_f;
+      SArray  <real,5> sarr_c;
+      SArray_F<real,{1,5}> sarr_f;
 
       parallel_for( 5 , KOKKOS_LAMBDA (int i) {
         arr_c (i  ) = i-2;
@@ -391,15 +384,15 @@ int main() {
       using yakl::intrinsics::matmul_cr;
       using yakl::intrinsics::matinv_ge;
       using yakl::intrinsics::transpose;
-      SArray<real,2,3,3> A1_c;
-      SArray<real,2,3,3> A2_c;
-      SArray<real,1,3> b_c;
-      FSArray<real,2,SB<3>,SB<3>> A1_f;
-      FSArray<real,2,SB<3>,SB<3>> A2_f;
-      FSArray<real,1,SB<3>> b_f;
+      SArray  <real,3,3> A1_c;
+      SArray  <real,3,3> A2_c;
+      SArray  <real,3> b_c;
+      SArray_F<real,{1,3},{1,3}> A1_f;
+      SArray_F<real,{1,3},{1,3}> A2_f;
+      SArray_F<real,{1,3}> b_f;
 
-      SArray<real,1,3> A1_b_ref;
-      SArray<real,2,3,3> A1_A2_ref;
+      SArray<real,3> A1_b_ref;
+      SArray<real,3,3> A1_A2_ref;
       
       A1_c(0,0) = 1;
       A1_c(0,1) = 2;
@@ -556,10 +549,10 @@ int main() {
     {
       using yakl::intrinsics::transpose;
       using yakl::intrinsics::size;
-      Array<int,2,memHost  ,styleC      > h_c("h_c",3,4);
-      Array<int,2,memDevice,styleC      > d_c("d_c",3,4);
-      Array<int,2,memHost  ,styleFortran> h_f("h_f",3,4);
-      Array<int,2,memDevice,styleFortran> d_f("d_f",3,4);
+      Array  <int **,Kokkos::HostSpace> h_c("h_c",3,4);
+      Array  <int **,yakl::DeviceSpace> d_c("d_c",3,4);
+      Array_F<int **,Kokkos::HostSpace> h_f("h_f",3,4);
+      Array_F<int **,yakl::DeviceSpace> d_f("d_f",3,4);
       for (int i=0; i < h_c.totElems(); i++) {
         h_c.data()[i] = i+1;
         h_f.data()[i] = i+1;
@@ -591,8 +584,8 @@ int main() {
       using yakl::intrinsics::pack;
       bool_c_1d c("c",10);
       bool_f_1d f("f",10);
-      SArray<bool,1,10> sc;
-      FSArray<bool,1,SB<10>> sf;
+      SArray  <bool,10> sc;
+      SArray_F<bool,{1,10}> sf;
       
       parallel_for( 10 , KOKKOS_LAMBDA( int i ) {
         c(i) = i%2 == 0;
@@ -653,14 +646,14 @@ int main() {
       using yakl::intrinsics::sum;
       using yakl::intrinsics::count;
       int constexpr n = 1024;
-      Array  <float ,1,memDevice,styleC> a("a",n);
-      Array  <double,1,memDevice,styleC> b("b",n);
-      Array  <float ,1,memHost  ,styleC> c("c",n);
-      Array  <double,1,memHost  ,styleC> d("d",n);
-      SArray <float ,1,n>                e;
-      SArray <double,1,n>                f;
-      FSArray<float ,1,SB<n>>            g;
-      FSArray<double,1,SB<n>>            h;
+      Array<float  *,yakl::DeviceSpace> a("a",n);
+      Array<double *,yakl::DeviceSpace> b("b",n);
+      Array<float  *,Kokkos::HostSpace> c("c",n);
+      Array<double *,Kokkos::HostSpace> d("d",n);
+      SArray  <float ,n>                e;
+      SArray  <double,n>                f;
+      SArray_F<float ,{1,n}>            g;
+      SArray_F<double,{1,n}>            h;
       double                             i;
       float  av = 1;         a = av;
       double bv = 2;         b = bv;

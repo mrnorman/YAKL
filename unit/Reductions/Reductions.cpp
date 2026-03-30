@@ -3,19 +3,15 @@
 #include "YAKL.h"
 
 using yakl::Array;
-using yakl::styleC;
-using yakl::memHost;
-using yakl::memDevice;
-using yakl::c::parallel_for;
-using yakl::c::Bounds;
-using yakl::c::SimpleBounds;
+using yakl::parallel_for;
+using yakl::Bounds;
+using yakl::SimpleBounds;
 using yakl::COLON;
 
 typedef double real;
 
-typedef Array<real,1,memHost,styleC> realHost1d;
-
-typedef Array<real,1,memDevice,styleC> real1d;
+typedef Array<real *,Kokkos::HostSpace> realHost1d;
+typedef Array<real *,yakl::DeviceSpace> real1d;
 
 
 void die(std::string msg) {

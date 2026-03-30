@@ -3,17 +3,14 @@
 #include "YAKL.h"
 
 using yakl::Array;
-using yakl::styleC;
-using yakl::styleFortran;
-using yakl::memHost;
-using yakl::memDevice;
-using yakl::c::parallel_for;
-using yakl::c::Bounds;
-using yakl::c::SimpleBounds;
+using yakl::Array_F;
+using yakl::parallel_for;
+using yakl::Bounds;
+using yakl::SimpleBounds;
 using yakl::COLON;
 
-typedef Array<size_t,1,memHost,styleC> int1d;
-typedef Array<size_t,1,memHost,styleFortran> int1d_f;
+typedef Array  <size_t *,Kokkos::HostSpace> int1d;
+typedef Array_F<size_t *,Kokkos::HostSpace> int1d_f;
 
 
 void die(std::string msg) {

@@ -8,19 +8,16 @@
 /////////////////////////////////////////////////////////////////////
 
 using yakl::Array;
-using yakl::styleC;
-using yakl::memHost;
-using yakl::memDevice;
-using yakl::c::parallel_for;
-using yakl::c::Bounds;
-using yakl::c::SimpleBounds;
+using yakl::parallel_for;
+using yakl::Bounds;
+using yakl::SimpleBounds;
 using yakl::COLON;
 using yakl::intrinsics::sum;
 
 typedef double real;
 
-typedef Array<real,1,memDevice,styleC> real1d;
-typedef Array<real,3,memDevice,styleC> real3d;
+typedef Array<real *  ,yakl::DeviceSpace> real1d;
+typedef Array<real ***,yakl::DeviceSpace> real3d;
 
 
 void die(std::string msg) {
