@@ -34,6 +34,7 @@ namespace yakl {
                             KOKKOS_LAMBDA (int i) {
         ret.data()[i] = f(l.data()[i],r);
       } );
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
     template <class V1, class V2, class F> requires std::is_arithmetic_v<V1> && yakl::is_Array<V2>
@@ -44,6 +45,7 @@ namespace yakl {
                             KOKKOS_LAMBDA (int i) {
         ret.data()[i] = f(l,r.data()[i]);
       } );
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
     template <class V1, class V2, class F> requires yakl::is_Array<V1> && yakl::is_Array<V2>
@@ -54,6 +56,7 @@ namespace yakl {
                             KOKKOS_LAMBDA (int i) {
         ret.data()[i] = f(l.data()[i],r.data()[i]);
       } );
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
 
@@ -127,6 +130,7 @@ namespace yakl {
                             KOKKOS_LAMBDA (int i) {
         ret.data()[i] = f(v.data()[i]);
       } );
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
 

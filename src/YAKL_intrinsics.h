@@ -24,6 +24,7 @@ namespace yakl {
                               KOKKOS_LAMBDA (int i) {
           ret.data()[i] = std::abs(in.data()[i]);
         } );
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return ret;
       }
     }
@@ -47,6 +48,7 @@ namespace yakl {
                               KOKKOS_LAMBDA (int i) {
           ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
         });
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return ret;
       }
     }
@@ -70,6 +72,7 @@ namespace yakl {
                               KOKKOS_LAMBDA (int i) {
           ret.data()[i] = cond.data()[i] ? t.data()[i] : f.data()[i];
         });
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return ret;
       }
     }
@@ -152,6 +155,7 @@ namespace yakl {
                               KOKKOS_LAMBDA (int i) {
           if (in.data()[i]) any_true = true;
         });
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return any_true.hostRead();
       }
     }
@@ -173,6 +177,7 @@ namespace yakl {
                               KOKKOS_LAMBDA (int i) {
           if (!in.data()[i]) all_true = false;
         });
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return all_true.hostRead();
       }
     }
@@ -195,6 +200,7 @@ namespace yakl {
                                  KOKKOS_LAMBDA (int i , scalar_t & lsum ) {
           lsum += in.data()[i];
         } , Kokkos::Sum<scalar_t>(result) );
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return result;
       }
     }
@@ -216,6 +222,7 @@ namespace yakl {
                               KOKKOS_LAMBDA (int i) {
           num1d(i) = in.data()[i] ? 1 : 0;
         });
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return sum(num1d);
       }
     }
@@ -238,6 +245,7 @@ namespace yakl {
                                  KOKKOS_LAMBDA (int i , scalar_t & lprod ) {
           lprod *= in.data()[i];
         } , Kokkos::Prod<scalar_t>(result) );
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return result;
       }
     }
@@ -260,6 +268,7 @@ namespace yakl {
                                  KOKKOS_LAMBDA (int i , scalar_t & lmin ) {
           lmin = std::min(lmin,in.data()[i]);
         } , Kokkos::Min<scalar_t>(result) );
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return result;
       }
     }
@@ -282,6 +291,7 @@ namespace yakl {
                                  KOKKOS_LAMBDA (int i , scalar_t & lmax ) {
           lmax = std::max(lmax,in.data()[i]);
         } , Kokkos::Max<scalar_t>(result) );
+        if constexpr (yakl_auto_fence) Kokkos::fence();
         return result;
       }
     }
@@ -307,6 +317,7 @@ namespace yakl {
                                 KOKKOS_LAMBDA (int i) {
             if (in.data()[i] == mn) iglob_slo = i;
           });
+          if constexpr (yakl_auto_fence) Kokkos::fence();
           iglob = iglob_slo.hostRead();
         }
       }
@@ -334,6 +345,7 @@ namespace yakl {
                                 KOKKOS_LAMBDA (int i) {
             if (in.data()[i] == mx) iglob_slo = i;
           });
+          if constexpr (yakl_auto_fence) Kokkos::fence();
           iglob =  iglob_slo.hostRead();
         }
       }

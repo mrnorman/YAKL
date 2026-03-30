@@ -9,7 +9,7 @@ namespace yakl {
     if ( ! get_yakl_instance().is_initialized() ) {
       bool   pool_enabled     = true;
       size_t pool_bytes       = 4294967296;
-      size_t pool_block_bytes = 2*sizeof(size_t);
+      size_t pool_block_bytes = 4096;
       if (config.get_pool_size_mb()==0) {
         // Check if gator is disabled
         char * env = std::getenv("GATOR_DISABLE");
@@ -44,7 +44,7 @@ namespace yakl {
         pool_enabled     = config.get_pool_enabled();
         pool_bytes       = config.get_pool_size_mb()*1024*1024;
         pool_block_bytes = config.get_pool_block_bytes();
-        if (pool_block_bytes == 0 || pool_block_bytes%(2*sizeof(size_t)) != 0) pool_block_bytes = 2*sizeof(size_t);
+        if (pool_block_bytes == 0 || pool_block_bytes%(2*sizeof(size_t)) != 0) pool_block_bytes = 4096;
       }
 
       get_yakl_instance().yakl_is_initialized = true;

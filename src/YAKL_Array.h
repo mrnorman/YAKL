@@ -33,7 +33,11 @@ namespace yakl {
 
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
-    Array const & operator=(TLOC const & v) const { Kokkos::deep_copy(*this,v); return *this; }
+    Array const & operator=(TLOC const & v) const {
+      Kokkos::deep_copy(*this,v);
+      if constexpr (yakl_auto_fence) Kokkos::fence();
+      return *this;
+    }
 
 
     template <class MemSpaceLoc = MemSpace, class ValTypeLoc = typename base_t::non_const_value_type>
@@ -93,6 +97,7 @@ namespace yakl {
     void deep_copy_to(ViewType const & them) const {
       if (them.size() != this->size()) Kokkos::abort("ERROR: calling deep_copy_to between differently sized arrays");
       Kokkos::deep_copy(them,*this);
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) Kokkos::fence();
     }
 
@@ -106,6 +111,7 @@ namespace yakl {
     auto createDeviceCopy() const {
       auto ret = createDeviceObject();
       Kokkos::deep_copy( ret , *this );
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
 
@@ -113,6 +119,7 @@ namespace yakl {
     auto createHostCopy() const {
       auto ret = createHostObject();
       Kokkos::deep_copy( ret , *this );
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       Kokkos::fence();
       return ret;
     }
@@ -130,6 +137,7 @@ namespace yakl {
                             KOKKOS_LAMBDA (int i) {
         ret.data()[i] = me.data()[i];
       });
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
 
