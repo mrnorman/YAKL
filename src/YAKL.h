@@ -1,26 +1,6 @@
 
 #pragma once
 
-namespace yakl {
-#ifdef KOKKOS_ENABLE_DEBUG
-  inline constexpr bool kokkos_debug = true;
-#else
-  inline constexpr bool kokkos_debug = false;
-#endif
-
-#ifdef KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK
-  inline constexpr bool kokkos_bounds_debug = true;
-#else
-  inline constexpr bool kokkos_bounds_debug = false;
-#endif
-
-#ifdef YAKL_AUTO_FENCE
-  inline constexpr bool yakl_auto_fence = true;
-#else
-  inline constexpr bool yakl_auto_fence = false;
-#endif
-}
-
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Profiling_ProfileSection.hpp>
 #include <Kokkos_StdAlgorithms.hpp>
@@ -41,6 +21,6 @@ namespace yakl {
 #include "YAKL_Array.h"
 #include "YAKL_Array_F.h"
 #include "YAKL_ScalarLiveOut.h"
-// #include "extensions/YAKL_componentwise.h"
+#include "extensions/YAKL_componentwise.h"
 #include "extensions/YAKL_intrinsics.h"
 

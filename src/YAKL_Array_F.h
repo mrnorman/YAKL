@@ -11,6 +11,7 @@ namespace yakl {
     using base_t = Kokkos::View<KT,Kokkos::LayoutLeft,MemSpace>;
     using this_t = Array_F<KT,MemSpace>;
 
+    bool static constexpr is_Array  = true ;
     bool static constexpr is_fstyle = true ;
     bool static constexpr is_cstyle = false;
 
@@ -209,10 +210,11 @@ namespace yakl {
     Array_F const & operator=(TLOC const & v) const { Kokkos::deep_copy(*this,v); return *this; }
 
 
-    template <class MemSpaceLoc = MemSpace>
+    template <class MemSpaceLoc = MemSpace, class ValTypeLoc = typename base_t::non_const_value_type>
     auto clone_object() const {
       return [&] <std::size_t... Is> (std::index_sequence<Is...>) {
-        return Array_F<typename base_t::non_const_data_type,MemSpaceLoc>( this->label() , {lb[Is],lb[Is]+this->extent(Is)-1}... );
+        using vtype = typename std::remove_cv_t<typename KokkosType<ValTypeLoc,base_t::rank()>::type>;
+        return Array_F<vtype,MemSpaceLoc>( this->label() , {lb[Is],lb[Is]+this->extent(Is)-1}... );
       } (std::make_index_sequence<this_t::rank()>{});
     }
 

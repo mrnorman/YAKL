@@ -24,15 +24,12 @@ namespace yakl {
       Kokkos::fence();  // Make sure all device work is done before we start freeing pool memory
       get_yakl_instance().pool.finalize();
       get_yakl_instance().yakl_is_initialized = false;
-      #if defined(YAKL_PROFILE)
-        timer_finalize();
-      #endif
       get_yakl_instance().pool_enabled = false;
     } else {
-      #ifdef KOKKOS_ENABLE_DEBUG
+      if constexpr (kokkos_debug) {
         std::cerr << "WARNING: Calling yakl::finalize() when YAKL is not initialized. ";
         std::cerr << "This might mean you've called yakl::finalize() more than once.\n";
-      #endif
+      }
     }
     get_yakl_instance().yakl_is_initialized = false;
     // We don't know what happens in finalize_callbacks, so to be safe, let's use a unique mutex here.

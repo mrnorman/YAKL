@@ -8,6 +8,9 @@ namespace yakl {
   inline int constexpr COLON = 0;
 
 
+  template <class Type> inline constexpr bool is_Array = requires { Type::is_Array; };
+
+
 
   template <typename T, int N> struct KokkosType { using type = typename KokkosType<T*,N-1>::type; };
   template <typename T> struct KokkosType<T,0> { using type = T; };
@@ -24,6 +27,7 @@ namespace yakl {
     using base_t::operator=;
     using base_t::operator();
 
+    bool static constexpr is_Array  = true ;
     bool static constexpr is_fstyle = false;
     bool static constexpr is_cstyle = true ;
 
@@ -32,10 +36,11 @@ namespace yakl {
     Array const & operator=(TLOC const & v) const { Kokkos::deep_copy(*this,v); return *this; }
 
 
-    template <class MemSpaceLoc = MemSpace>
+    template <class MemSpaceLoc = MemSpace, class ValTypeLoc = typename base_t::non_const_value_type>
     auto clone_object() const {
       return [&] <std::size_t... Is> (std::index_sequence<Is...>) {
-        return Array<typename base_t::non_const_data_type,MemSpaceLoc>( this->label() , this->extent(Is)... );
+        using vtype = typename std::remove_cv_t<typename KokkosType<ValTypeLoc,base_t::rank()>::type>;
+        return Array<vtype,MemSpaceLoc>( this->label() , this->extent(Is)... );
       } (std::make_index_sequence<this_t::rank()>{});
     }
 

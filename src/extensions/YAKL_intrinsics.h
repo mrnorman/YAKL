@@ -9,6 +9,7 @@ namespace yakl {
     // COMPONENTWISE
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // ABS
     template <class ViewType> inline auto abs(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: abs on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: abs on unallocated View");
@@ -28,6 +29,53 @@ namespace yakl {
     }
 
 
+    // SIGN
+    template <class ViewType>
+    KOKKOS_INLINE_FUNCTION auto sign( ViewType const & a , ViewType const & b ) {
+      if constexpr (std::is_arithmetic_v<ViewType>) {
+        return b >= 0 ? std::abs(a) : -std::abs(a);
+      } else if constexpr (is_SArray<ViewType>) {
+        ViewType ret;
+        for (int i=0; i < a.size(); i++) {
+          ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
+        }
+        return ret;
+      } else {
+        auto ret = a.clone_object();
+        Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
+                              Kokkos::RangePolicy<typename ViewType::execution_space>(0,a.size()) ,
+                              KOKKOS_LAMBDA (int i) {
+          ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
+        });
+        return ret;
+      }
+    }
+
+
+    // MERGE
+    template <class V1, class V2>
+    KOKKOS_INLINE_FUNCTION auto merge(V1 const & t, V1 const & f, V2 const & cond) {
+      if constexpr (std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2>) {
+        return cond ? t : f;
+      } else if constexpr (is_SArray<V1> && is_SArray<V2>) {
+        V1 ret;
+        for (int i=0; i < cond.size(); i++) {
+          ret.data()[i] = cond.data()[i] ? t.data()[i] : f.data()[i];
+        }
+        return ret;
+      } else {
+        auto ret = t.clone_object();
+        Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
+                              Kokkos::RangePolicy<typename V1::execution_space>(0,cond.size()) ,
+                              KOKKOS_LAMBDA (int i) {
+          ret.data()[i] = cond.data()[i] ? t.data()[i] : f.data()[i];
+        });
+        return ret;
+      }
+    }
+
+
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     // INTRINSICS
     //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,24 +87,45 @@ namespace yakl {
       return in.is_allocated();
     }
     template <class ViewType> KOKKOS_INLINE_FUNCTION auto constexpr epsilon   (ViewType const & in) {
-      static_assert(std::is_floating_point_v<typename ViewType::value_type>,"ERROR: epsilon on non-floating-point type");
-      return std::numeric_limits<typename ViewType::value_type>::epsilon();
+      if constexpr (std::is_floating_point_v<ViewType>) { 
+        return std::numeric_limits<ViewType>::epsilon();
+      } else {
+        static_assert(std::is_floating_point_v<typename ViewType::value_type>,"ERROR: epsilon on non-floating-point type");
+        return std::numeric_limits<typename ViewType::value_type>::epsilon();
+      }
     }
     template <class ViewType> KOKKOS_INLINE_FUNCTION auto constexpr huge      (ViewType const & in) {
-      return std::numeric_limits<typename ViewType::value_type>::max();
+      if constexpr (std::is_arithmetic_v<ViewType>) {
+        return std::numeric_limits<ViewType>::max();
+      } else {
+        return std::numeric_limits<typename ViewType::value_type>::max();
+      }
     }
     template <class ViewType> KOKKOS_INLINE_FUNCTION auto constexpr tiny      (ViewType const & in) {
-      static_assert(std::is_floating_point_v<typename ViewType::value_type>,"ERROR: tiny on non-floating-point type");
-      return std::numeric_limits<typename ViewType::value_type>::min();
+      if constexpr (std::is_floating_point_v<ViewType>) {
+        return std::numeric_limits<ViewType>::min();
+      } else {
+        static_assert(std::is_floating_point_v<typename ViewType::value_type>,"ERROR: tiny on non-floating-point type");
+        return std::numeric_limits<typename ViewType::value_type>::min();
+      }
     }
     template <class ViewType> KOKKOS_INLINE_FUNCTION auto           size      (ViewType const & in) {
       return in.size();
     }
+    template <class ViewType> KOKKOS_INLINE_FUNCTION auto           size      (ViewType const & in, std::integral auto i) {
+      return in.extents()(i);
+    }
     template <class ViewType> KOKKOS_INLINE_FUNCTION auto           ubound    (ViewType const & in) {
       return in.ubounds();
     }
+    template <class ViewType> KOKKOS_INLINE_FUNCTION auto           ubound    (ViewType const & in, std::integral auto i) {
+      return in.ubounds()(i);
+    }
     template <class ViewType> KOKKOS_INLINE_FUNCTION auto           lbound    (ViewType const & in) {
       return in.lbounds();
+    }
+    template <class ViewType> KOKKOS_INLINE_FUNCTION auto           lbound    (ViewType const & in, std::integral auto i) {
+      return in.lbounds()(i);
     }
     template <class ViewType> KOKKOS_INLINE_FUNCTION auto           shape     (ViewType const & in) {
       return in.extents();
@@ -141,7 +210,7 @@ namespace yakl {
         for (int i=0; i < in.size(); i++) { if (in.data()[i]) result++; }
         return result;
       } else {
-        yakl::Array<unsigned char *,typename ViewType::memory_space> num1d("num1d",in.size());
+        yakl::Array<size_t *,typename ViewType::memory_space> num1d("num1d",in.size());
         Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                               Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
                               KOKKOS_LAMBDA (int i) {
@@ -229,13 +298,17 @@ namespace yakl {
       if constexpr (is_SArray<ViewType>) {
         for (int i=0; i < in.size(); i++) { if (in.data()[i] == mn) iglob = i; }
       } else {
-        ScalarLiveOut<size_t> iglob_slo(0);
-        Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                              Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                              KOKKOS_LAMBDA (int i) {
-          if (in.data()[i] == mn) iglob_slo = i;
-        });
-        iglob = iglob_slo.hostRead();
+        if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) {
+          for (int i=0; i < in.size(); i++) { if (in.data()[i] == mn) iglob = i; }
+        } else {
+          ScalarLiveOut<size_t> iglob_slo(0);
+          Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
+                                Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
+                                KOKKOS_LAMBDA (int i) {
+            if (in.data()[i] == mn) iglob_slo = i;
+          });
+          iglob = iglob_slo.hostRead();
+        }
       }
       return in.unpack_global_index(iglob);
     }
@@ -252,13 +325,17 @@ namespace yakl {
       if constexpr (is_SArray<ViewType>) {
         for (int i=0; i < in.size(); i++) { if (in.data()[i] == mx) iglob = i; }
       } else {
-        ScalarLiveOut<size_t> iglob_slo(0);
-        Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                              Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                              KOKKOS_LAMBDA (int i) {
-          if (in.data()[i] == mx) iglob_slo = i;
-        });
-        iglob =  iglob_slo.hostRead();
+        if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) {
+          for (int i=0; i < in.size(); i++) { if (in.data()[i] == mx) iglob = i; }
+        } else {
+          ScalarLiveOut<size_t> iglob_slo(0);
+          Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
+                                Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
+                                KOKKOS_LAMBDA (int i) {
+            if (in.data()[i] == mx) iglob_slo = i;
+          });
+          iglob =  iglob_slo.hostRead();
+        }
       }
       return in.unpack_global_index(iglob);
     }

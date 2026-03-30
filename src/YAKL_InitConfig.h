@@ -12,7 +12,7 @@ namespace yakl {
   /** @brief An object of this class can optionally be passed to yakl::init() to configure the initialization.
     *        **IMPORTANT**: Creating an InitConfig object pings environment
     *        variables, making it quite expensive to create. Please do not create a lot of these.
-    * @details This allows the user to override timer, allocation, and deallocation routines.
+    * @details This allows the user to override allocation, and deallocation routines.
     *
     * All `set_` functions return the InitConfig object they were called on. Therefore, the user can code, e.g.,
     * `yakl::init(yakl::InitConfig().set_device_allocator(myalloc).set_device_deallocator(myfree));` */
@@ -26,7 +26,7 @@ namespace yakl {
     size_t pool_block_bytes;
 
   public:
-    /** @brief Creating an InitConfig() controls the memory pool parameters, timer function overrides, and device
+    /** @brief Creating an InitConfig() controls the memory pool parameters, and device
       *        allocation and deallocation overrides. **IMPORTANT**: Creating an InitConfig object pings environment
       *        variables, making it quite expensive to create. Please do not create a lot of these. */
     InitConfig() {

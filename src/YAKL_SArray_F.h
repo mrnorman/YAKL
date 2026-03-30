@@ -92,6 +92,8 @@ namespace yakl {
       for (int i=1; i <= rank; i++) { ret(i) = iglob / offsets[i-1] + lb[i-1]; }
       return ret;
     }
+
+    template <class NEW> using TypeAs = SArray_F<NEW,DIMS...>;
   };
 
 }

@@ -91,9 +91,11 @@ namespace yakl {
 
     KOKKOS_INLINE_FUNCTION auto unpack_global_index(std::integral auto iglob) const {
       SArray<unsigned int,rank> ret;
-      for (int i=0; i < rank; i++) { ret(i) = iglob / offsets(i); }
+      for (int i=0; i < rank; i++) { ret(i) = iglob / offsets[i]; }
       return ret;
     }
+
+    template <class NEW> using TypeAs = SArray<NEW,DIMS...>;
   };
 
 }

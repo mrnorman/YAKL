@@ -151,8 +151,6 @@ int main() {
 
       if (yakl::intrinsics::sign(13.1 , -0.1 ) != -13.1) die("ERROR: sign does not work");
 
-      if (yakl::intrinsics::mod(12,5) != 2) die("ERROR: mod doesn't work");
-
       using yakl::intrinsics::sum;
       using yakl::intrinsics::abs;
       arr_c = -2;
@@ -228,19 +226,19 @@ int main() {
 
       using yakl::intrinsics::minloc;
       using yakl::intrinsics::maxloc;
-      if ( minloc(h_a1    ) != n-1 ) die("ERROR: wrong minloc h_a1    ");
-      if ( minloc(d_a1    ) != n-1 ) die("ERROR: wrong minloc d_a1    ");
-      if ( minloc(sarr_a1 ) != n-1 ) die("ERROR: wrong minloc sarr_a1 ");
-      if ( minloc(fsarr_a1) != n   ) die("ERROR: wrong minloc fsarr_a1");
-      if ( minloc(h_a1_f  ) != n   ) die("ERROR: wrong minloc h_a1_f  ");
-      if ( minloc(d_a1_f  ) != n   ) die("ERROR: wrong minloc d_a1_f  ");
+      if ( minloc(h_a1    )(0) != n-1 ) die("ERROR: wrong minloc h_a1    ");
+      if ( minloc(d_a1    )(0) != n-1 ) die("ERROR: wrong minloc d_a1    ");
+      if ( minloc(sarr_a1 )(0) != n-1 ) die("ERROR: wrong minloc sarr_a1 ");
+      if ( minloc(fsarr_a1)(1) != n   ) die("ERROR: wrong minloc fsarr_a1");
+      if ( minloc(h_a1_f  )(1) != n   ) die("ERROR: wrong minloc h_a1_f  ");
+      if ( minloc(d_a1_f  )(1) != n   ) die("ERROR: wrong minloc d_a1_f  ");
 
-      if ( maxloc(h_a1    ) != 0 ) die("ERROR: maxloc(h_a1    ) != 0");
-      if ( maxloc(d_a1    ) != 0 ) die("ERROR: maxloc(d_a1    ) != 0");
-      if ( maxloc(sarr_a1 ) != 0 ) die("ERROR: maxloc(sarr_a1 ) != 0");
-      if ( maxloc(fsarr_a1) != 1 ) die("ERROR: maxloc(fsarr_a1) != 1");
-      if ( maxloc(h_a1_f  ) != 1 ) die("ERROR: maxloc(h_a1_f  ) != 1");
-      if ( maxloc(d_a1_f  ) != 1 ) die("ERROR: maxloc(d_a1_f  ) != 1");
+      if ( maxloc(h_a1    )(0) != 0 ) die("ERROR: maxloc(h_a1    ) != 0");
+      if ( maxloc(d_a1    )(0) != 0 ) die("ERROR: maxloc(d_a1    ) != 0");
+      if ( maxloc(sarr_a1 )(0) != 0 ) die("ERROR: maxloc(sarr_a1 ) != 0");
+      if ( maxloc(fsarr_a1)(1) != 1 ) die("ERROR: maxloc(fsarr_a1) != 1");
+      if ( maxloc(h_a1_f  )(1) != 1 ) die("ERROR: maxloc(h_a1_f  ) != 1");
+      if ( maxloc(d_a1_f  )(1) != 1 ) die("ERROR: maxloc(d_a1_f  ) != 1");
     }
 
     ///////////////////////////////////////
@@ -292,10 +290,10 @@ int main() {
       sarr_f(3) = 4;
       sarr_f(4) = 5;
       sarr_f(5) = 1;
-      if (minloc(sarr_c) != 1) die("sarr_c error minloc");
-      if (maxloc(sarr_c) != 3) die("sarr_c error maxloc");
-      if (minloc(sarr_f) != 2) die("sarr_f error minloc");
-      if (maxloc(sarr_f) != 4) die("sarr_f error maxloc");
+      if (minloc(sarr_c)(0) != 1) die("sarr_c error minloc");
+      if (maxloc(sarr_c)(0) != 3) die("sarr_c error maxloc");
+      if (minloc(sarr_f)(1) != 2) die("sarr_f error minloc");
+      if (maxloc(sarr_f)(1) != 4) die("sarr_f error maxloc");
       if (minval(sarr_c) != -2) die("sarr_c error minval");
       if (maxval(sarr_c) !=  5) die("sarr_c error maxval");
       if (minval(sarr_f) != -2) die("sarr_f error minval");
@@ -377,211 +375,10 @@ int main() {
 
 
     //////////////////////////////////////////////////////////
-    // matmul_cr, matmul_rc, matinv, transpose
-    //////////////////////////////////////////////////////////
-    {
-      using yakl::intrinsics::matmul_rc;
-      using yakl::intrinsics::matmul_cr;
-      using yakl::intrinsics::matinv_ge;
-      using yakl::intrinsics::transpose;
-      SArray  <real,3,3> A1_c;
-      SArray  <real,3,3> A2_c;
-      SArray  <real,3> b_c;
-      SArray_F<real,{1,3},{1,3}> A1_f;
-      SArray_F<real,{1,3},{1,3}> A2_f;
-      SArray_F<real,{1,3}> b_f;
-
-      SArray<real,3> A1_b_ref;
-      SArray<real,3,3> A1_A2_ref;
-      
-      A1_c(0,0) = 1;
-      A1_c(0,1) = 2;
-      A1_c(0,2) = 3;
-      A1_c(1,0) = 1.5;
-      A1_c(1,1) = 2.5;
-      A1_c(1,2) = 3.5;
-      A1_c(2,0) = 1.2;
-      A1_c(2,1) = 2.2;
-      A1_c(2,2) = 3.2;
-
-      A2_c(0,0) = 1.9;
-      A2_c(0,1) = 2.9;
-      A2_c(0,2) = 3.9;
-      A2_c(1,0) = 1.1;
-      A2_c(1,1) = 2.1;
-      A2_c(1,2) = 3.1;
-      A2_c(2,0) = 1.4;
-      A2_c(2,1) = 2.4;
-      A2_c(2,2) = 3.4;
-
-      b_c(0) = 0.3;
-      b_c(1) = 4.2;
-      b_c(2) = 1.9;
-
-      for (int j=0; j < 3; j++) {
-        for (int i=0; i < 3; i++) {
-          A1_f(j+1,i+1) = A1_c(j,i);
-          A2_f(j+1,i+1) = A2_c(j,i);
-          if (j == 0) b_f(i+1) = b_c(i);
-        }
-      }
-
-      A1_b_ref(0) = 14.4;
-      A1_b_ref(1) = 17.6;
-      A1_b_ref(2) = 15.68;
-
-      A1_A2_ref(0,0) = 8.3;
-      A1_A2_ref(0,1) = 14.3;
-      A1_A2_ref(0,2) = 20.3;
-      A1_A2_ref(1,0) = 10.5;
-      A1_A2_ref(1,1) = 18.0;
-      A1_A2_ref(1,2) = 25.5;
-      A1_A2_ref(2,0) = 9.18;
-      A1_A2_ref(2,1) = 15.78;
-      A1_A2_ref(2,2) = 22.38;
-
-      auto A1_b_c  = matmul_rc( A1_c , b_c  );
-      auto A1_A2_c = matmul_rc( A1_c , A2_c );
-      auto A1_b_f  = matmul_rc( A1_f , b_f  );
-      auto A1_A2_f = matmul_rc( A1_f , A2_f );
-
-      real adiff_A1_b_c  = 0;
-      real adiff_A1_A2_c = 0;
-      real adiff_A1_b_f  = 0;
-      real adiff_A1_A2_f = 0;
-      for (int i=0; i < 3; i++) {
-        adiff_A1_b_c += abs( A1_b_c(i  ) - A1_b_ref(i) );
-        adiff_A1_b_f += abs( A1_b_f(i+1) - A1_b_ref(i) );
-      }
-      for (int j=0; j < 3; j++) {
-        for (int i=0; i < 3; i++) {
-          adiff_A1_A2_c += abs( A1_A2_c(j  ,i  ) - A1_A2_ref(j  ,i) );
-          adiff_A1_A2_f += abs( A1_A2_f(j+1,i+1) - A1_A2_ref(j  ,i) );
-        }
-      }
-
-      if (adiff_A1_b_c  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_c  rc");
-      if (adiff_A1_A2_c >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_c rc");
-      if (adiff_A1_b_f  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_f  rc");
-      if (adiff_A1_A2_f >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_f rc");
-
-      auto trans_A1_c = transpose( A1_c );
-      auto trans_A2_c = transpose( A2_c );
-      auto trans_A1_f = transpose( A1_f );
-      auto trans_A2_f = transpose( A2_f );
-
-      A1_b_c  = matmul_cr( trans_A1_c , b_c  );
-      A1_A2_c = matmul_cr( trans_A1_c , trans_A2_c );
-      A1_b_f  = matmul_cr( trans_A1_f , b_f  );
-      A1_A2_f = matmul_cr( trans_A1_f , trans_A2_f );
-
-      A1_A2_c = transpose( A1_A2_c );
-      A1_A2_f = transpose( A1_A2_f );
-
-      adiff_A1_b_c  = 0;
-      adiff_A1_A2_c = 0;
-      adiff_A1_b_f  = 0;
-      adiff_A1_A2_f = 0;
-      for (int i=0; i < 3; i++) {
-        adiff_A1_b_c += abs( A1_b_c(i  ) - A1_b_ref(i) );
-        adiff_A1_b_f += abs( A1_b_f(i+1) - A1_b_ref(i) );
-      }
-      for (int j=0; j < 3; j++) {
-        for (int i=0; i < 3; i++) {
-          adiff_A1_A2_c += abs( A1_A2_c(j  ,i  ) - A1_A2_ref(j  ,i) );
-          adiff_A1_A2_f += abs( A1_A2_f(j+1,i+1) - A1_A2_ref(j  ,i) );
-        }
-      }
-
-      if (adiff_A1_b_c  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_c  cr");
-      if (adiff_A1_A2_c >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_c cr");
-      if (adiff_A1_b_f  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_f  cr");
-      if (adiff_A1_A2_f >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_f cr");
-
-
-      A1_c(0,0) = 1;
-      A1_c(0,1) = 0;
-      A1_c(0,2) = 0;
-      A1_c(1,0) = 1;
-      A1_c(1,1) = 0.5;
-      A1_c(1,2) = 0.25;
-      A1_c(2,0) = 1;
-      A1_c(2,1) = 1;
-      A1_c(2,2) = 1;
-
-      A1_f(1,1) = 1;
-      A1_f(1,2) = 0;
-      A1_f(1,3) = 0;
-      A1_f(2,1) = 1;
-      A1_f(2,2) = 0.5;
-      A1_f(2,3) = 0.25;
-      A1_f(3,1) = 1;
-      A1_f(3,2) = 1;
-      A1_f(3,3) = 1;
-
-      auto A1_inv_c = matinv_ge( A1_c );
-      auto identity_c = matmul_rc( A1_inv_c , A1_c );
-      auto A1_inv_f = matinv_ge( A1_f );
-      auto identity_f = matmul_rc( A1_inv_f , A1_f );
-
-      real adiff_inv_c = 0;
-      real adiff_inv_f = 0;
-      for (int j=0; j < 3; j++) {
-        for (int i=0; i < 3; i++) {
-          if (i == j) {
-            adiff_inv_c += abs( identity_c(j  ,i  ) - 1 );
-            adiff_inv_f += abs( identity_f(j+1,i+1) - 1 );
-          } else {
-            adiff_inv_c += abs( identity_c(j  ,i  )     );
-            adiff_inv_f += abs( identity_f(j+1,i+1)     );
-          }
-        }
-      }
-      if (adiff_inv_c >= 1.e-13) die("ERROR: incorrect adiff_inv_c");
-      if (adiff_inv_f >= 1.e-13) die("ERROR: incorrect adiff_inv_f");
-    }
-
-
-
-    //////////////////////////////////////////////////////////
-    // transpose (dyn arrays)
-    //////////////////////////////////////////////////////////
-    {
-      using yakl::intrinsics::transpose;
-      using yakl::intrinsics::size;
-      Array  <int **,Kokkos::HostSpace> h_c("h_c",3,4);
-      Array  <int **,yakl::DeviceSpace> d_c("d_c",3,4);
-      Array_F<int **,Kokkos::HostSpace> h_f("h_f",3,4);
-      Array_F<int **,yakl::DeviceSpace> d_f("d_f",3,4);
-      for (int i=0; i < h_c.totElems(); i++) {
-        h_c.data()[i] = i+1;
-        h_f.data()[i] = i+1;
-      }
-      h_c.deep_copy_to(d_c);
-      h_f.deep_copy_to(d_f);
-
-      auto h_f_t = transpose( h_f );
-      auto h_c_t = transpose( h_c );
-      auto d_f_t = transpose( d_f ).createHostCopy();
-      auto d_c_t = transpose( d_c ).createHostCopy();
-      if ( size(h_c_t,0) != 4 ) die("ERROR: transpose: size(h_c_t,0) != 4");
-      if ( size(h_f_t,1) != 4 ) die("ERROR: transpose: size(h_f_t,1) != 4");
-      if ( size(d_c_t,0) != 4 ) die("ERROR: transpose: size(d_c_t,0) != 4");
-      if ( size(d_f_t,1) != 4 ) die("ERROR: transpose: size(d_f_t,1) != 4");
-      if ( h_c_t(3,0) != h_c(0,3) ) die("ERROR: transpose: h_c_t(3,0) != h_c(0,3)");
-      if ( d_c_t(3,0) != d_c.createHostCopy()(0,3) ) die("ERROR: transpose: d_c_t(3,0) != d_c(0,3)");
-      if ( h_f_t(4,1) != h_f(1,4) ) die("ERROR: transpose: h_f_t(4,1) != h_f(1,4)");
-      if ( d_f_t(4,1) != d_f.createHostCopy()(1,4) ) die("ERROR: transpose: d_f_t(4,1) != d_f(1,4)");
-    }
-
-
-
-    //////////////////////////////////////////////////////////
-    // count, pack
+    // count
     //////////////////////////////////////////////////////////
     {
       using yakl::intrinsics::count;
-      using yakl::intrinsics::pack;
       bool_c_1d c("c",10);
       bool_f_1d f("f",10);
       SArray  <bool,10> sc;
@@ -600,44 +397,6 @@ int main() {
       if (count(sc) != 5) die("ERROR: incorrect count sc");
       if (count(f)  != 5) die("ERROR: incorrect count f");
       if (count(sf) != 5) die("ERROR: incorrect count sf");
-
-      {
-        real_c_1d vals("vals",10);
-        auto vals_host = vals.createHostCopy();
-        for (int i=0; i < 10; i++) { vals_host(i) = i; }
-        vals_host.deep_copy_to(vals);
-
-        auto packed        = pack(vals_host);
-        auto packed_masked = pack(vals_host,c.createHostCopy());
-
-        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: host packed c");
-        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: host packed masked c");
-
-        packed        = pack(vals).createHostCopy();
-        packed_masked = pack(vals,c).createHostCopy();
-
-        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: device packed c");
-        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: device packed masked c");
-      }
-
-      {
-        real_f_1d vals("vals",10);
-        auto vals_host = vals.createHostCopy();
-        for (int i=0; i < 10; i++) { vals_host(i+1) = i; }
-        vals_host.deep_copy_to(vals);
-
-        auto packed        = pack(vals_host);
-        auto packed_masked = pack(vals_host,f.createHostCopy());
-
-        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: host packed f");
-        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: host packed masked f");
-
-        packed        = pack(vals).createHostCopy();
-        packed_masked = pack(vals,f).createHostCopy();
-
-        if ( yakl::intrinsics::sum(packed       ) != 45 ) die("ERROR: device packed f");
-        if ( yakl::intrinsics::sum(packed_masked) != 20 ) die("ERROR: device packed masked f");
-      }
     }
 
 
@@ -654,7 +413,7 @@ int main() {
       SArray  <double,n>                f;
       SArray_F<float ,{1,n}>            g;
       SArray_F<double,{1,n}>            h;
-      double                             i;
+      double                            i;
       float  av = 1;         a = av;
       double bv = 2;         b = bv;
       float  cv = 3;         c = cv;
@@ -806,14 +565,8 @@ int main() {
       if ( count( false || ( ( (e > 0) || (f < 0) ) || false ) ) != n ) die("ERROR: wrong count: false || ( ( (e > 0) || (f < 0) ) || false )");
       if ( count( false || ( ( (g > 0) || (h < 0) ) || false ) ) != n ) die("ERROR: wrong count: false || ( ( (g > 0) || (h < 0) ) || false )");
 
-      if ( std::abs( sum(a++) - n*(av+1) ) / (n*(av+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(a++)");
-      if ( std::abs( sum(++b) - n*(bv+1) ) / (n*(bv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(++b)");
-      if ( std::abs( sum(c++) - n*(cv+1) ) / (n*(cv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(c++)");
-      if ( std::abs( sum(++d) - n*(dv+1) ) / (n*(dv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(++d)");
-      if ( std::abs( sum(e++) - n*(ev+1) ) / (n*(ev+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(e++)");
-      if ( std::abs( sum(++f) - n*(fv+1) ) / (n*(fv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(++f)");
-      if ( std::abs( sum(g++) - n*(gv+1) ) / (n*(gv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(g++)");
-      if ( std::abs( sum(++h) - n*(hv+1) ) / (n*(hv+1)) > 1.e-7 ) die("ERROR: wrong sum: sum(++h)");
+      if ( std::abs(sum(-a) - (-n))/n > 1.e-7 ) die("ERROR: unary negative failed");
+      if ( std::abs(sum(+a) - (+n))/n > 1.e-7 ) die("ERROR: unary positive failed");
     }
 
 

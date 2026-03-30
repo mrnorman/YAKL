@@ -17,11 +17,7 @@ namespace yakl {
   inline void * alloc_device( size_t bytes, char const *label) {
     if (use_pool()) { return get_yakl_instance().pool.allocate(bytes,label); }
     else            {
-      #ifdef YAKL_MANAGED_MEMORY
-        return Kokkos::kokkos_malloc<Kokkos::SharedSpace>( label , bytes );
-      #else
-        return Kokkos::kokkos_malloc( label , bytes );
-      #endif
+      return Kokkos::kokkos_malloc( label , bytes );
     }
   }
 

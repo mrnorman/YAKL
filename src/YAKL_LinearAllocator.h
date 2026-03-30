@@ -128,12 +128,12 @@ namespace yakl {
 
     void finalize() {
       if (allocs.size() != 0) {
-        #if defined(KOKKOS_ENABLE_DEBUG)
+        if constexpr (kokkos_debug) {
           std::cerr << "WARNING: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
           std::cerr << "WARNING: Not all allocations were deallocated before destroying this pool.\n" << std::endl;
           printAllocsLeft();
           std::cerr << "This probably won't end well, but carry on.\n" << std::endl;
-        #endif
+        }
       }
       if (this->pool != nullptr) { myfree( this->pool ); }
       nullify();
