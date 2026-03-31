@@ -9,6 +9,7 @@ using yakl::COLON;
 using yakl::parallel_for_F;
 using yakl::Bounds_F;
 using yakl::SimpleBounds_F;
+using yakl::Bnds;
 
 typedef float real;
 
@@ -71,7 +72,7 @@ int main() {
     real7d test7d("test7d",d1,d2,d3,d4,d5,d6,d7);
     real8d test8d("test8d",d1,d2,d3,d4,d5,d6,d7,d8);
 
-    std::cout << "Is SArray_F trivially copyable? " << std::is_trivially_copyable<yakl::SArray_F<real,{1,1}>>::value << std::endl;
+    std::cout << "Is SArray_F trivially copyable? " << std::is_trivially_copyable<yakl::SArray_F<real,Bnds{1,1}>>::value << std::endl;
 
     test1d = 0.f;
     test2d = 0.f;
@@ -402,7 +403,7 @@ int main() {
     }
 
     {
-      yakl::SArray_F<int,{1,100}> indices;
+      yakl::SArray_F<int,Bnds{1,100}> indices;
       for (int i=1; i <= 100; i++) { indices(i) = i; }
       std::shuffle( indices.begin() , indices.end() , std::default_random_engine(13) );
       int tot = 0;

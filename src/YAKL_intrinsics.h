@@ -10,7 +10,7 @@ namespace yakl {
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // ABS
-    template <class ViewType> inline auto abs(ViewType const & in) {
+    template <class ViewType> inline ViewType abs(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: abs on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: abs on unallocated View");
       if constexpr (is_SArray<ViewType>) {
@@ -32,7 +32,7 @@ namespace yakl {
 
     // SIGN
     template <class ViewType>
-    KOKKOS_INLINE_FUNCTION auto sign( ViewType const & a , ViewType const & b ) {
+    inline ViewType sign( ViewType const & a , ViewType const & b ) {
       if constexpr (std::is_arithmetic_v<ViewType>) {
         return b >= 0 ? std::abs(a) : -std::abs(a);
       } else if constexpr (is_SArray<ViewType>) {
@@ -56,7 +56,7 @@ namespace yakl {
 
     // MERGE
     template <class V1, class V2>
-    KOKKOS_INLINE_FUNCTION auto merge(V1 const & t, V1 const & f, V2 const & cond) {
+    inline V1 merge(V1 const & t, V1 const & f, V2 const & cond) {
       if constexpr (std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2>) {
         return cond ? t : f;
       } else if constexpr (is_SArray<V1> && is_SArray<V2>) {
@@ -141,7 +141,7 @@ namespace yakl {
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // ANY
-    template <class ViewType> inline auto any(ViewType const & in) {
+    template <class ViewType> inline bool any(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: any on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: any on unallocated View");
       if constexpr (is_SArray<ViewType>) {
@@ -163,7 +163,7 @@ namespace yakl {
 
 
     // ALL
-    template <class ViewType> inline auto all(ViewType const & in) {
+    template <class ViewType> inline bool all(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: all on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: all on unallocated View");
       if constexpr (is_SArray<ViewType>) {
@@ -185,7 +185,7 @@ namespace yakl {
 
 
     // SUM
-    template <class ViewType> inline auto sum(ViewType const & in) {
+    template <class ViewType> inline typename ViewType::non_const_value_type sum(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: sum on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: sum on unallocated View");
       using scalar_t = typename ViewType::non_const_value_type;
@@ -208,7 +208,7 @@ namespace yakl {
 
 
     // COUNT
-    template <class ViewType> inline auto count(ViewType const & in) {
+    template <class ViewType> inline size_t count(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: count on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: count on unallocated View");
       if constexpr (is_SArray<ViewType>) {
@@ -230,7 +230,7 @@ namespace yakl {
 
 
     // PRODUCT
-    template <class ViewType> inline auto product(ViewType const & in) {
+    template <class ViewType> inline typename ViewType::non_const_value_type product(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: product on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: product on unallocated View");
       using scalar_t = typename ViewType::non_const_value_type;
@@ -253,7 +253,7 @@ namespace yakl {
 
 
     // MINVAL
-    template <class ViewType> inline auto minval(ViewType const & in) {
+    template <class ViewType> inline typename ViewType::non_const_value_type minval(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: minval on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: minval on unallocated View");
       using scalar_t = typename ViewType::non_const_value_type;
@@ -276,7 +276,7 @@ namespace yakl {
 
 
     // MAXVAL
-    template <class ViewType> inline auto maxval(ViewType const & in) {
+    template <class ViewType> inline typename ViewType::non_const_value_type maxval(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: maxval on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: maxval on unallocated View");
       using scalar_t = typename ViewType::non_const_value_type;
@@ -299,7 +299,9 @@ namespace yakl {
 
 
     // MINLOC
-    template <class ViewType> inline auto minloc(ViewType const & in) {
+    template <class ViewType> inline auto minloc(ViewType const & in) ->
+    decltype(in.unpack_global_index(0))
+    {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: minloc on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: minloc on unallocated View");
       using scalar_t = typename ViewType::non_const_value_type;
@@ -327,7 +329,9 @@ namespace yakl {
 
 
     // MAXLOC
-    template <class ViewType> inline auto maxloc(ViewType const & in) {
+    template <class ViewType> inline auto maxloc(ViewType const & in) ->
+    decltype(in.unpack_global_index(0))
+    {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: maxloc on non-contiguous View");
       if constexpr (kokkos_debug) if (!in.is_allocated      ()) Kokkos::abort("ERROR: maxloc on unallocated View");
       using scalar_t = typename ViewType::non_const_value_type;

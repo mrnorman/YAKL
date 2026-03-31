@@ -7,6 +7,7 @@ using yakl::Array_F;
 using yakl::parallel_for;
 using yakl::SArray;
 using yakl::SArray_F;
+using yakl::Bnds;
 
 typedef double real;
 
@@ -54,7 +55,7 @@ int main() {
       real_c_2d arr_c("arr_c",n1,n2);
       real_f_2d arr_f("arr_c",{-1,n1-2},n2);
       SArray  <real,n1,n2> sarr_c;
-      SArray_F<real,{-1,n1-2},{1,n2}> sarr_f;
+      SArray_F<real,Bnds{-1,n1-2},Bnds{1,n2}> sarr_f;
       real scalar = 1;
 
       if (size(arr_c ) != n1*n2) die("arr_c wrong size tot");
@@ -162,8 +163,8 @@ int main() {
       if (sum(abs(sarr_c))/size(sarr_c) != 4) die("ERROR: Wrong value for sarr_c");
       if (sum(abs(sarr_f))/size(sarr_f) != 5) die("ERROR: Wrong value for sarr_f");
 
-      parallel_for( size(arr_c) , KOKKOS_LAMBDA (int i) { arr_c.data()[i] = i; });
-      parallel_for( size(arr_f) , KOKKOS_LAMBDA (int i) { arr_f.data()[i] = i; });
+      yakl::parallel_for( size(arr_c) , KOKKOS_LAMBDA (int i) { arr_c.data()[i] = i; });
+      yakl::parallel_for( size(arr_f) , KOKKOS_LAMBDA (int i) { arr_f.data()[i] = i; });
       for (int i=0; i < size(sarr_c); i++) { sarr_c.data()[i] = i; }
       for (int i=0; i < size(sarr_f); i++) { sarr_f.data()[i] = i; }
     }
@@ -180,9 +181,9 @@ int main() {
       SArray  <double,n> sarr_a1  ;
       SArray  <double,n> sarr_a2  ;
       SArray  <bool  ,n> sarr_mask;
-      SArray_F<double,{1,n}> fsarr_a1  ;
-      SArray_F<double,{1,n}> fsarr_a2  ;
-      SArray_F<bool  ,{1,n}> fsarr_mask;
+      SArray_F<double,Bnds{1,n}> fsarr_a1  ;
+      SArray_F<double,Bnds{1,n}> fsarr_a2  ;
+      SArray_F<bool  ,Bnds{1,n}> fsarr_mask;
       for (int i=0; i < n; i++) {
         h_a1.data()[i] = 2;
         h_a2.data()[i] = 3;
@@ -250,7 +251,7 @@ int main() {
       real_c_2d arr_c("arr_c",n1,n2);
       real_f_2d arr_f("arr_c",{-1,n1-2},n2);
       SArray  <real,n1,n2> sarr_c;
-      SArray_F<real,{-1,n1-2},{1,n2}> sarr_f;
+      SArray_F<real,Bnds{-1,n1-2},Bnds{1,n2}> sarr_f;
       real_c_2d arr_c_no;
       real_f_2d arr_f_no;
       if (!allocated(arr_c )) die("arr_c error allocated");
@@ -279,7 +280,7 @@ int main() {
       using yakl::intrinsics::sum;
       using yakl::intrinsics::product;
       SArray  <real,n1> sarr_c;
-      SArray_F<real,{1,n1}> sarr_f;
+      SArray_F<real,Bnds{1,n1}> sarr_f;
       sarr_c(0) = -1;
       sarr_c(1) = -2;
       sarr_c(2) = 4;
@@ -319,7 +320,7 @@ int main() {
       Array  <double *,yakl::DeviceSpace> d_arr("d_arr",n);
       Array  <double *,Kokkos::HostSpace> h_arr("h_arr",n);
       SArray  <double,n>                cs_arr;
-      SArray_F<double,{1,n}>            fs_arr;
+      SArray_F<double,Bnds{1,n}>            fs_arr;
       for (int i=0; i < n; i++) {
         h_arr .data()[i] = 1 + i / 100000.;
         cs_arr.data()[i] = 1 + i / 100000.;
@@ -350,9 +351,9 @@ int main() {
       real_c_1d arr_c("arr_c",5);
       real_f_1d arr_f("arr_f",5);
       SArray  <real,5> sarr_c;
-      SArray_F<real,{1,5}> sarr_f;
+      SArray_F<real,Bnds{1,5}> sarr_f;
 
-      parallel_for( 5 , KOKKOS_LAMBDA (int i) {
+      yakl::parallel_for( 5 , KOKKOS_LAMBDA (int i) {
         arr_c (i  ) = i-2;
         arr_f (i+1) = i-2;
       });
@@ -382,9 +383,9 @@ int main() {
       bool_c_1d c("c",10);
       bool_f_1d f("f",10);
       SArray  <bool,10> sc;
-      SArray_F<bool,{1,10}> sf;
+      SArray_F<bool,Bnds{1,10}> sf;
       
-      parallel_for( 10 , KOKKOS_LAMBDA( int i ) {
+      yakl::parallel_for( 10 , KOKKOS_LAMBDA( int i ) {
         c(i) = i%2 == 0;
         f(i+1) = i%2 == 0;
       });
@@ -411,8 +412,8 @@ int main() {
       Array<double *,Kokkos::HostSpace> d("d",n);
       SArray  <float ,n>                e;
       SArray  <double,n>                f;
-      SArray_F<float ,{1,n}>            g;
-      SArray_F<double,{1,n}>            h;
+      SArray_F<float ,Bnds{1,n}>            g;
+      SArray_F<double,Bnds{1,n}>            h;
       double                            i;
       float  av = 1;         a = av;
       double bv = 2;         b = bv;

@@ -126,7 +126,7 @@ namespace yakl {
 
 
     template <class scalar_t> requires std::is_arithmetic_v<scalar_t>
-    auto as() const {
+    Array<typename KokkosType<scalar_t,this_t::rank()>::type,MemSpace> as() const {
       auto func = [&] <std::size_t... Is> (std::index_sequence<Is...>) {
         return Array<typename KokkosType<scalar_t,this_t::rank()>::type,MemSpace>( this->label() , this->extent(Is)... );
       };

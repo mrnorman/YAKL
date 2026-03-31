@@ -97,10 +97,10 @@ namespace yakl {
         : base_t(ptr,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1,b7.u-b7.l+1,b8.u-b8.l+1) ,
           lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l,b7.l,b8.l}) {}
 
-    KOKKOS_INLINE_FUNCTION Array_F(Array_F const &) = default;
-    KOKKOS_INLINE_FUNCTION Array_F(Array_F &&) = default;
-    KOKKOS_INLINE_FUNCTION Array_F & operator=(Array_F const &) = default;
-    KOKKOS_INLINE_FUNCTION Array_F & operator=(Array_F &&) = default;
+    Array_F(Array_F const &) = default;
+    Array_F(Array_F &&) = default;
+    Array_F & operator=(Array_F const &) = default;
+    Array_F & operator=(Array_F &&) = default;
 
 
     template <class KT_RHS, class MemSpace_RHS>
@@ -316,7 +316,7 @@ namespace yakl {
 
 
     template <class scalar_t> requires std::is_arithmetic_v<scalar_t>
-    auto as() const {
+    Array_F<typename KokkosType<scalar_t,this_t::rank()>::type,MemSpace> as() const {
       auto func = [&] <std::size_t... Is> (std::index_sequence<Is...>) {
         return Array_F<typename KokkosType<scalar_t,this_t::rank()>::type,MemSpace>( this->label() , this->extent(Is)... );
       };
@@ -334,21 +334,21 @@ namespace yakl {
 
 
     KOKKOS_INLINE_FUNCTION auto extents() const {
-      SArray_F<size_t,{1,static_cast<int>(this_t::rank())}> ret;
+      SArray_F<size_t,Bnds{1,static_cast<int>(this_t::rank())}> ret;
       for (int i=1; i <= this_t::rank(); i++) { ret(i) = this_t::extent(i-1); }
       return ret;
     }
 
 
     KOKKOS_INLINE_FUNCTION auto ubounds() const {
-      SArray_F<ptrdiff_t,{1,static_cast<int>(this_t::rank())}> ret;
+      SArray_F<ptrdiff_t,Bnds{1,static_cast<int>(this_t::rank())}> ret;
       for (int i=1; i <= this_t::rank(); i++) { ret(i) = lb[i-1] + this_t::extent(i-1)-1; }
       return ret;
     }
 
 
     KOKKOS_INLINE_FUNCTION auto lbounds() const {
-      SArray_F<ptrdiff_t,{1,static_cast<int>(this_t::rank())}> ret;
+      SArray_F<ptrdiff_t,Bnds{1,static_cast<int>(this_t::rank())}> ret;
       for (int i=1; i <= this_t::rank(); i++) { ret(i) = lb[i-1]; }
       return ret;
     }
@@ -370,7 +370,7 @@ namespace yakl {
 
 
     KOKKOS_INLINE_FUNCTION auto unpack_global_index(size_t iglob) const {
-      SArray_F<ptrdiff_t,{1,this_t::rank()}> ret;
+      SArray_F<ptrdiff_t,Bnds{1,this_t::rank()}> ret;
       for (int i=1; i <= this_t::rank(); i++) { ret(i) = iglob / this_t::stride(i-1) + lb[i-1]; }
       return ret;
     }

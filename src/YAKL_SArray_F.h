@@ -35,6 +35,17 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (unsigned int i=0; i < size(); i++) { my_data[i] = val; } }
 
     KOKKOS_INLINE_FUNCTION T & operator()(std::integral auto... indices) const {
+      int          constexpr lb  [rank]   = {static_cast<int>(DIMS.l)...};
+      int          constexpr ub  [rank]   = {static_cast<int>(DIMS.u)...};
+      unsigned int constexpr dims[rank]   = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
+      std::array<unsigned int,rank> constexpr offsets      = [=] {
+        std::array<unsigned int,rank> result = {};
+        for (int i=static_cast<int>(rank)-1; i >= 0; i--) {
+          result[i] = 1;
+          for (int j = i-1; j >= 0; j--) result[i] *= dims[j];
+        }
+        return result;
+      }();
       static_assert( sizeof...(indices) == rank , "ERROR: Indexing SArray_F with the wrong number of indices" );
       int idx[rank] = {static_cast<int>(indices)...};
       unsigned int offset = 0;
@@ -70,25 +81,39 @@ namespace yakl {
     }
 
     KOKKOS_INLINE_FUNCTION auto extents() const {
-      SArray_F<unsigned int,{1,rank}> ret;
+      unsigned int constexpr dims[rank]   = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
+      SArray_F<unsigned int,Bnds{1,rank}> ret;
       for (unsigned int i=1; i <= rank; i++) { ret(i) = dims[i-1]; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto lbounds() const {
-      SArray_F<int,{1,rank}> ret;
+      int          constexpr lb  [rank]   = {static_cast<int>(DIMS.l)...};
+      SArray_F<int,Bnds{1,rank}> ret;
       for (unsigned int i=1; i <= rank; i++) { ret(i) = lb[i-1]; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto ubounds() const {
-      SArray_F<int,{1,rank}> ret;
+      int          constexpr ub  [rank]   = {static_cast<int>(DIMS.u)...};
+      SArray_F<int,Bnds{1,rank}> ret;
       for (unsigned int i=1; i <= rank; i++) { ret(i) = ub[i-1]; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto unpack_global_index(std::integral auto iglob) const {
-      SArray_F<int,{1,rank}> ret;
+      int          constexpr lb  [rank]   = {static_cast<int>(DIMS.l)...};
+      int          constexpr ub  [rank]   = {static_cast<int>(DIMS.u)...};
+      unsigned int constexpr dims[rank]   = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
+      std::array<unsigned int,rank> constexpr offsets      = [=] {
+        std::array<unsigned int,rank> result = {};
+        for (int i=static_cast<int>(rank)-1; i >= 0; i--) {
+          result[i] = 1;
+          for (int j = i-1; j >= 0; j--) result[i] *= dims[j];
+        }
+        return result;
+      }();
+      SArray_F<int,Bnds{1,rank}> ret;
       for (int i=1; i <= rank; i++) { ret(i) = iglob / offsets[i-1] + lb[i-1]; }
       return ret;
     }

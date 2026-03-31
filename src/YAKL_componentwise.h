@@ -27,86 +27,110 @@ namespace yakl {
       return ret;
     }
     template <class V1, class V2, class F> requires yakl::is_Array<V1> && std::is_arithmetic_v<V2>
-    inline auto binary( V1 const & l , V2 const & r , F const & f ) {
+    inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
+    decltype(l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r))>())
+    {
       auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r))>();
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                             Kokkos::RangePolicy<typename V1::execution_space>(0,l.size()) ,
                             KOKKOS_LAMBDA (int i) {
-        ret.data()[i] = f(l.data()[i],r);
+        auto &lloc = l;
+        auto &rloc = r;
+        ret.data()[i] = f(lloc.data()[i],rloc);
       } );
       if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
     template <class V1, class V2, class F> requires std::is_arithmetic_v<V1> && yakl::is_Array<V2>
-    inline auto binary( V1 const & l , V2 const & r , F const & f ) {
+    inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
+    decltype(r.template clone_object<typename V2::memory_space,decltype(f(l,r.data()[0]))>())
+    {
       auto ret = r.template clone_object<typename V2::memory_space,decltype(f(l,r.data()[0]))>();
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                             Kokkos::RangePolicy<typename V2::execution_space>(0,r.size()) ,
                             KOKKOS_LAMBDA (int i) {
-        ret.data()[i] = f(l,r.data()[i]);
+        auto &lloc = l;
+        auto &rloc = r;
+        ret.data()[i] = f(lloc,rloc.data()[i]);
       } );
       if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
     template <class V1, class V2, class F> requires yakl::is_Array<V1> && yakl::is_Array<V2>
-    inline auto binary( V1 const & l , V2 const & r , F const & f ) {
+    inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
+    decltype(l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r.data()[0]))>())
+    {
       auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r.data()[0]))>();
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                             Kokkos::RangePolicy<typename V1::execution_space>(0,l.size()) ,
                             KOKKOS_LAMBDA (int i) {
-        ret.data()[i] = f(l.data()[i],r.data()[i]);
+        auto &lloc = l;
+        auto &rloc = r;
+        ret.data()[i] = f(lloc.data()[i],rloc.data()[i]);
       } );
       if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
 
 
+    struct AddOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l+r;} };
     template <class V1, class V2> auto operator+( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l+r;} );
+      return binary( l , r , AddOp{} );
     }
 
+    struct SubOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l-r;} };
     template <class V1, class V2> auto operator-( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l-r;} );
+      return binary( l , r , SubOp{} );
     }
 
+    struct MultOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l*r;} };
     template <class V1, class V2> auto operator*( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l*r;} );
+      return binary( l , r , MultOp{} );
     }
 
+    struct DivOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l/r;} };
     template <class V1, class V2> auto operator/( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l/r;} );
+      return binary( l , r , DivOp{} );
     }
 
+    struct LTOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l<r;} };
     template <class V1, class V2> auto operator<( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l<r;} );
+      return binary( l , r , LTOp{} );
     }
 
+    struct GTOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l>r;} };
     template <class V1, class V2> auto operator>( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l>r;} );
+      return binary( l , r , GTOp{} );
     }
 
+    struct LEOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l<=r;} };
     template <class V1, class V2> auto operator<=( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l<=r;} );
+      return binary( l , r , LEOp{} );
     }
 
+    struct GEOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l>=r;} };
     template <class V1, class V2> auto operator>=( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l>=r;} );
+      return binary( l , r , GEOp{} );
     }
 
+    struct EEOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l==r;} };
     template <class V1, class V2> auto operator==( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l==r;} );
+      return binary( l , r , EEOp{} );
     }
 
+    struct NEOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l!=r;} };
     template <class V1, class V2> auto operator!=( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l!=r;} );
+      return binary( l , r , NEOp{} );
     }
 
+    struct AndOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l&&r;} };
     template <class V1, class V2> auto operator&&( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l&&r;} );
+      return binary( l , r , AndOp{} );
     }
 
+    struct OrOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l||r;} };
     template <class V1, class V2> auto operator||( V1 const & l , V2 const & r ) {
-      return binary( l , r , []<class T1,class T2>(T1 l,T2 r) constexpr {return l||r;} );
+      return binary( l , r , OrOp{} );
     }
 
 
@@ -123,7 +147,9 @@ namespace yakl {
       return ret;
     }
     template <class V, class F> requires yakl::is_Array<V>
-    inline auto unary( V const & v , F const & f ) {
+    inline auto unary( V const & v , F const & f ) ->
+    decltype(v.template clone_object<typename V::memory_space,decltype(f(v.data()[0]))>())
+    {
       auto ret = v.template clone_object<typename V::memory_space,decltype(f(v.data()[0]))>();
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                             Kokkos::RangePolicy<typename V::execution_space>(0,v.size()) ,
@@ -134,18 +160,22 @@ namespace yakl {
       return ret;
     }
 
+    struct NotOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return !v;} };
     template <class V> auto operator!( V const & v ) {
-      return unary( v , []<class T>(T v) constexpr {return !v;} );
+      return unary( v , NotOp{} );
     }
 
+    struct PosOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return +v;} };
     template <class V> auto operator+( V const & v ) {
-      return unary( v , []<class T>(T v) constexpr {return +v;} );
+      return unary( v , PosOp{} );
     }
 
+    struct NegOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return -v;} };
     template <class V> auto operator-( V const & v ) {
-      return unary( v , []<class T>(T v) constexpr {return -v;} );
+      return unary( v , NegOp{} );
     }
 
+    // TODO: Fill in the rest of these with the new CUDA safe handling
     template <class V> auto abs( V const & v ) {
       return unary( v , []<class T>(T v) constexpr {return std::abs(v);} );
     }

@@ -272,41 +272,43 @@ namespace yakl {
     using signed_t   = typename Bit::signed_t;
     if (bounds.nIter == 0) return;  // exit early if there is no work to do
     Kokkos::parallel_for( str , bounds.nIter , KOKKOS_LAMBDA (int iglob) {
+      auto &bloc = bounds;
+      auto &floc = f;
       if constexpr (simple) {
         if constexpr (N==1) {
-          unsigned_t i0; bounds.unpack(iglob,i0); f(i0);
+          unsigned_t i0; bloc.unpack(iglob,i0); floc(i0);
         } else if constexpr (N==2) {
-          unsigned_t i0,i1; bounds.unpack(iglob,i0,i1); f(i0,i1);
+          unsigned_t i0,i1; bloc.unpack(iglob,i0,i1); floc(i0,i1);
         } else if constexpr (N==3) {
-          unsigned_t i0,i1,i2; bounds.unpack(iglob,i0,i1,i2); f(i0,i1,i2);
+          unsigned_t i0,i1,i2; bloc.unpack(iglob,i0,i1,i2); floc(i0,i1,i2);
         } else if constexpr (N==4) {
-          unsigned_t i0,i1,i2,i3; bounds.unpack(iglob,i0,i1,i2,i3); f(i0,i1,i2,i3);
+          unsigned_t i0,i1,i2,i3; bloc.unpack(iglob,i0,i1,i2,i3); floc(i0,i1,i2,i3);
         } else if constexpr (N==5) {
-          unsigned_t i0,i1,i2,i3,i4; bounds.unpack(iglob,i0,i1,i2,i3,i4); f(i0,i1,i2,i3,i4);
+          unsigned_t i0,i1,i2,i3,i4; bloc.unpack(iglob,i0,i1,i2,i3,i4); floc(i0,i1,i2,i3,i4);
         } else if constexpr (N==6) {
-          unsigned_t i0,i1,i2,i3,i4,i5; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5); f(i0,i1,i2,i3,i4,i5);
+          unsigned_t i0,i1,i2,i3,i4,i5; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5); floc(i0,i1,i2,i3,i4,i5);
         } else if constexpr (N==7) {
-          unsigned_t i0,i1,i2,i3,i4,i5,i6; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); f(i0,i1,i2,i3,i4,i5,i6);
+          unsigned_t i0,i1,i2,i3,i4,i5,i6; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); floc(i0,i1,i2,i3,i4,i5,i6);
         } else if constexpr (N==8) {
-          unsigned_t i0,i1,i2,i3,i4,i5,i6,i7; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); f(i0,i1,i2,i3,i4,i5,i6,i7);
+          unsigned_t i0,i1,i2,i3,i4,i5,i6,i7; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); floc(i0,i1,i2,i3,i4,i5,i6,i7);
         }
       } else {
         if constexpr (N==1) {
-          signed_t i0; bounds.unpack(iglob,i0); f(i0);
+          signed_t i0; bloc.unpack(iglob,i0); floc(i0);
         } else if constexpr (N==2) {
-          signed_t i0,i1; bounds.unpack(iglob,i0,i1); f(i0,i1);
+          signed_t i0,i1; bloc.unpack(iglob,i0,i1); floc(i0,i1);
         } else if constexpr (N==3) {
-          signed_t i0,i1,i2; bounds.unpack(iglob,i0,i1,i2); f(i0,i1,i2);
+          signed_t i0,i1,i2; bloc.unpack(iglob,i0,i1,i2); floc(i0,i1,i2);
         } else if constexpr (N==4) {
-          signed_t i0,i1,i2,i3; bounds.unpack(iglob,i0,i1,i2,i3); f(i0,i1,i2,i3);
+          signed_t i0,i1,i2,i3; bloc.unpack(iglob,i0,i1,i2,i3); floc(i0,i1,i2,i3);
         } else if constexpr (N==5) {
-          signed_t i0,i1,i2,i3,i4; bounds.unpack(iglob,i0,i1,i2,i3,i4); f(i0,i1,i2,i3,i4);
+          signed_t i0,i1,i2,i3,i4; bloc.unpack(iglob,i0,i1,i2,i3,i4); floc(i0,i1,i2,i3,i4);
         } else if constexpr (N==6) {
-          signed_t i0,i1,i2,i3,i4,i5; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5); f(i0,i1,i2,i3,i4,i5);
+          signed_t i0,i1,i2,i3,i4,i5; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5); floc(i0,i1,i2,i3,i4,i5);
         } else if constexpr (N==7) {
-          signed_t i0,i1,i2,i3,i4,i5,i6; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); f(i0,i1,i2,i3,i4,i5,i6);
+          signed_t i0,i1,i2,i3,i4,i5,i6; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); floc(i0,i1,i2,i3,i4,i5,i6);
         } else if constexpr (N==8) {
-          signed_t i0,i1,i2,i3,i4,i5,i6,i7; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); f(i0,i1,i2,i3,i4,i5,i6,i7);
+          signed_t i0,i1,i2,i3,i4,i5,i6,i7; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); floc(i0,i1,i2,i3,i4,i5,i6,i7);
         }
       }
     });
