@@ -52,7 +52,8 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
     auto hy_dens_cell       = host_hy_dens_cell      .createDeviceCopy();
     auto hy_dens_theta_cell = host_hy_dens_theta_cell.createDeviceCopy();
 
-    // yakl::timer_start(label);
+    Kokkos::fence();
+    auto start = std::chrono::steady_clock::now();
 
     //Compute fluxes in the x-direction for each cell
     // for (k=0; k<nz; k++) {
@@ -89,9 +90,9 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
       tend(ll,k,i) = -( flux(ll,k,i+1) - flux(ll,k,i) ) / dx;
     });
 
-    // yakl::timer_stop(label);
-
-    std::cout << yakl::intrinsics::sum(yakl::intrinsics::abs(tend)) << std::endl;
+    Kokkos::fence();
+    std::chrono::duration<double> elapsed_seconds = std::chrono::steady_clock::now() - start;
+    std::cout << std::scientific << std::setprecision(17) << elapsed_seconds.count() << std::endl;
 
   } else {
 
@@ -152,14 +153,16 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
-    int nx = 2048;
-    int nz = 1024;
+    int nx = 8192;
+    int nz = 4096;
     int niter = 10;
 
+    std::cout << "double" << std::endl;
     for (int i=0; i<niter; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_pfor",true ); }
+    std::cout << "float" << std::endl;
     for (int i=0; i<niter; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_pfor" ,true ); }
-    for (int i=0; i<niter; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_for" ,false); }
-    for (int i=0; i<niter; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_for"  ,false); }
+    // for (int i=0; i<niter; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_for" ,false); }
+    // for (int i=0; i<niter; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_for"  ,false); }
 
   }
   yakl::finalize();
