@@ -2,7 +2,7 @@
 
 source ${MODULESHOME}/init/bash
 module reset
-module load PrgEnv-nvidia cray-hdf5 cray-netcdf cray-libsci/25.03.0
+module load PrgEnv-nvidia cray-hdf5 cray-netcdf cray-libsci/25.03.0 cray-parallel-netcdf
 module load cudatoolkit craype-accel-nvidia90
 
 #   cray-libsci/25.03.0    cray-libsci/25.09.0    cray-libsci/25.09.0 (L,D)    cray-libsci_acc/24.07.0    cray-libsci_acc/25.03.0    cray-libsci_acc/25.09.2 (L,D)
@@ -34,6 +34,7 @@ cmake -Wno-dev                          \
       -DYAKL_UNIT_CXX_FLAGS="-DHAVE_MPI;-O3" \
       -DYAKL_UNIT_CXX_LINK_FLAGS=""     \
       -DYAKL_TEST_NETCDF=ON             \
+      -DYAKL_TEST_PNETCDF=ON            \
       -DMPI_COMMAND=""                  \
       ../../..
 
