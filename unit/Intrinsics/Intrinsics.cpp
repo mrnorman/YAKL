@@ -568,6 +568,27 @@ int main() {
 
       if ( std::abs(sum(-a) - (-n))/n > 1.e-7 ) die("ERROR: unary negative failed");
       if ( std::abs(sum(+a) - (+n))/n > 1.e-7 ) die("ERROR: unary positive failed");
+
+      bv = 0.1;  b = bv;
+      if ( count( abs((sqrt (b    )) - (std::sqrt (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary sqrt  failed");
+      if ( count( abs((cbrt (b    )) - (std::cbrt (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary cbrt  failed");
+      if ( count( abs((pow  (b,0.2)) - (std::pow  (bv,0.2))) > 1.e-7 ) != 0 ) die("Error: unary pow   failed");
+      if ( count( abs((sin  (b    )) - (std::sin  (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary sin   failed");
+      if ( count( abs((cos  (b    )) - (std::cos  (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary cos   failed");
+      if ( count( abs((tan  (b    )) - (std::tan  (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary tan   failed");
+      if ( count( abs((asin (b    )) - (std::asin (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary asin  failed");
+      if ( count( abs((acos (b    )) - (std::acos (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary acos  failed");
+      if ( count( abs((atan (b    )) - (std::atan (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary atan  failed");
+      if ( count( abs((exp  (b    )) - (std::exp  (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary exp   failed");
+      if ( count( abs((log  (b    )) - (std::log  (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary log   failed");
+      if ( count( abs((log10(b    )) - (std::log10(bv    ))) > 1.e-7 ) != 0 ) die("Error: unary log10 failed");
+      if ( count( abs((log2 (b    )) - (std::log2 (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary log2  failed");
+      if ( count( abs((floor(b    )) - (std::floor(bv    ))) > 1.e-7 ) != 0 ) die("Error: unary floor failed");
+      if ( count( abs((ceil (b    )) - (std::ceil (bv    ))) > 1.e-7 ) != 0 ) die("Error: unary ceil  failed");
+      if ( count( abs((round(b    )) - (std::round(bv    ))) > 1.e-7 ) != 0 ) die("Error: unary round failed");
+      if ( count( abs((isnan(b    )) - (std::isnan(bv    ))) > 1.e-7 ) != 0 ) die("Error: unary isnan failed");
+      if ( count( abs((isinf(b    )) - (std::isinf(bv    ))) > 1.e-7 ) != 0 ) die("Error: unary isinf failed");
+
     }
 
 
