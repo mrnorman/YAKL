@@ -15,9 +15,9 @@ namespace c {
   public:
     int static constexpr default_lbound = 0;
     /** @brief lower bound */
-    int l;
+    int64_t l;
     /** @brief upper bound */
-    int u;
+    int64_t u;
     /** @brief stride */
     int s;
     /** @brief defines an invalid / uninitialized loop bound */
@@ -28,18 +28,18 @@ namespace c {
     }
     /** @brief Lower bound of zero, stride of one */
     KOKKOS_INLINE_FUNCTION LBnd(size_t u) {
-      this->l = 0;
+      this->l = default_lbound;
       this->u = u-1;
       this->s = 1;
     }
     /** @brief Lower bound of zero, stride of one */
-    KOKKOS_INLINE_FUNCTION LBnd(int u) {
-      this->l = 0;
+    KOKKOS_INLINE_FUNCTION LBnd(int64_t u) {
+      this->l = default_lbound;
       this->u = u-1;
       this->s = 1;
     }
     /** @brief Lower and upper bounds specified, stride of one */
-    KOKKOS_INLINE_FUNCTION LBnd(int l, int u) {
+    KOKKOS_INLINE_FUNCTION LBnd(int64_t l, int64_t u) {
       this->l = l;
       this->u = u;
       this->s = 1;
@@ -48,7 +48,7 @@ namespace c {
       #endif
     }
     /** @brief Lower bound, upper bound, and stride all specified */
-    KOKKOS_INLINE_FUNCTION LBnd(int l, int u, int s) {
+    KOKKOS_INLINE_FUNCTION LBnd(int64_t l, int64_t u, int s) {
       this->l = l;
       this->u = u;
       this->s = s;
@@ -73,10 +73,10 @@ namespace c {
   /////////////////////////////////////////////////////////////////////////////////////////////////
 
   /** @brief Describes a set of C-style tightly-nested loops
-    * 
+    *
     * Also contains functions to unpack indices from a single global index given the loop bounds
     * and strides.
-    * 
+    *
     * @param N     The nuber of tightly nested loops being described
     * @param simple Whether the loop bounds all have lower bounds of `0` and strides of `1`
     */
@@ -86,11 +86,11 @@ namespace c {
 
   /** @brief Describes a set of C-style tightly-nested loops where all loops have lower bounds of `0`
     *        strides of `1`.
-    * 
+    *
     * Also contains functions to unpack indices from a single global index given the loop bounds
     * and strides.
     * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
-    * 
+    *
     * @param N     The nuber of tightly nested loops being described
     */
   template<int N> class Bounds<N,true> {
@@ -100,7 +100,7 @@ namespace c {
     /** @private */
     size_t dims[N];
     /** @brief Declares the total number of iterations for each loop for a set of `1` to `8` tightly-nested loops.
-      * 
+      *
       * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
       * Number of loops passed to the constructor **must** match the number of loops, `N`.*/
     KOKKOS_INLINE_FUNCTION Bounds( size_t b0 , size_t b1=0 , size_t b2=0 , size_t b3=0 , size_t b4=0 , size_t b5=0 ,
@@ -215,11 +215,11 @@ namespace c {
 
   /** @brief Describes a set of C-style tightly-nested loops where at least one loop has a lower bound
     *        other than `0` or a stride other than `1`.
-    * 
+    *
     * Also contains functions to unpack indices from a single global index given the loop bounds
     * and strides.
     * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
-    * 
+    *
     * @param N     The nuber of tightly nested loops being described
     */
   template<int N> class Bounds<N,false> {
@@ -233,13 +233,13 @@ namespace c {
     /** @private */
     size_t strides[N];
     /** @brief Declares the bounds for each loop for a set of `1` to `8` tightly-nested loops.
-      * 
+      *
       * Order is always left-most loop is the slowest varying, and right-most loop is the fastest varying.
       * Number of loop bounds passed to the constructor **must** match the number of loops, `N`.
       * Recall only positive strides are allowed because **requiring** a negative stride implies the loop
       * order matters, which means your kernel is not trivially parallel, and `yakl::c::parallel_for` should
       * not be used.
-      * 
+      *
       * Each parameter accepts either:
       *   * A single integer, for which lower bound defaults to `0`, and stride defaults to `1`
       *   * An initializer list with two entries: `{lower_bound,upper_bound}` (**inclusive**), and stride defaults to `1`

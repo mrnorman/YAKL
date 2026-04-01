@@ -5,7 +5,7 @@
 namespace yakl {
 
   /** @brief This implements the yakl:Array class with yakl::styleC behavior
-    * 
+    *
     * C-style behavior means all lower bounds for
     * dimensions are zero, and index ordering is row-major, meaning the right-most index varies the fastest.
     * IMPORTANT: Please see the yakl::ArrayBase class because this class includes all of its functionality.
@@ -24,8 +24,8 @@ namespace yakl {
     * arr2 = 5; // This will change both arr1 and arr2 because they share the same data pointer
     * ```
     * This will share the same data pointer between `arr1` and `arr2`. Further, passing yakl::Array objects by value is fast
-    * because it only copies the metadata over and shares the pointer to the underlying data. 
-    * 
+    * because it only copies the metadata over and shares the pointer to the underlying data.
+    *
     * To copy data to another array object's data pointer, use `deep_copy_to()`, `createHostCopy()`, or `createDeviceCopy()`.
     * ```
     * yakl::Array<float,1,memHost,styleC> arr1("arr1",n);
@@ -61,7 +61,7 @@ namespace yakl {
     /** @brief This is the type `T` with `const` added to it
       * @details If the original type has `volatile`, then so will this type. */
     typedef typename std::add_const<type>::type    const_value_type;
-    /** @brief This is the type `T` with `const` removed from it 
+    /** @brief This is the type `T` with `const` removed from it
       * @details If the original type has `volatile`, then so will this type. */
     typedef typename std::remove_const<type>::type non_const_value_type;
 
@@ -96,7 +96,7 @@ namespace yakl {
       * Create and allocate an owned and reference counted array object.
       * For C-style array objects, the right-most index varies the fastest. Constructor must match
       * the rank template argument.
-      *        
+      *
       * @param label  String label for this array.
       * @param d[0-7] Size of the respective dimension.
       * @param dims   yakl::Dims object containing the dimensions sizes. Must match the array rank.
@@ -190,7 +190,7 @@ namespace yakl {
       for (int i=0; i < rank; i++) { this->dimension[i] = dims[i]; }
       KOKKOS_IF_ON_HOST( this->allocate(); )
     }
-    
+
 
     // This exists to hold common documentation for all non-owned constructors.
     /** @class doxhide_CArray_non_owned_constructors
@@ -198,14 +198,14 @@ namespace yakl {
       *
       * This is one of the yakl::CArray "non-owned" constructors.
       * Create a non-owned and non-reference-counted array object that wraps the
-      * provided data pointer. 
+      * provided data pointer.
       * For C-style array objects, the right-most index varies the fastest. Constructor must match
       * the rank template argument.
       * When creating a non-owned array object using this form of constructor, it is up to the user to ensure
       * that the underlying data pointer remains allocationg while it is used by this array object.
       * Since this performs no allocations, this constructor may be called on the device, and it has very
       * little runtime cost associated with it.
-      *        
+      *
       * @param label  String label for this array.
       * @param data   Pointer to the allocated data being wrapped by this non-owned array object
       * @param d[0-7] Size of the respective dimension.
@@ -315,7 +315,7 @@ namespace yakl {
     }
     /** @brief Copy metadata, share data pointer; if owned, increment reference counter. No deep copy. */
     KOKKOS_INLINE_FUNCTION Array(Array<const_value_type,rank,myMem,styleC> const &rhs) {
-      static_assert( std::is_const<T>::value , 
+      static_assert( std::is_const<T>::value ,
                      "ERROR: Cannot create non-const Array using const Array" );
       // constructor, so no need to deallocate
       nullify();
@@ -334,7 +334,7 @@ namespace yakl {
     }
     /** @brief Copy metadata, share data pointer; if owned, increment reference counter. No deep copy. */
     KOKKOS_INLINE_FUNCTION Array & operator=(Array<const_value_type,rank,myMem,styleC> const &rhs) {
-      static_assert( std::is_const<T>::value , 
+      static_assert( std::is_const<T>::value ,
                      "ERROR: Cannot create non-const Array using const Array" );
       if constexpr (std::is_const<T>::value) {
         if (this == &rhs) { return *this; }
@@ -404,7 +404,7 @@ namespace yakl {
 
     /*
     DESTRUCTOR
-    Decrement the refCounter, and if it's zero, deallocate and nullify.  
+    Decrement the refCounter, and if it's zero, deallocate and nullify.
     */
     /** @brief If owned, decrement reference counter, and deallocate data when it reaches zero. If non-owned, does nothing */
     KOKKOS_INLINE_FUNCTION ~Array() {
@@ -443,7 +443,7 @@ namespace yakl {
     // Common detailed documentation for all indexers
     /** @class doxhide_CArray_indexers
       * @brief dummy
-      * 
+      *
       * Return a reference to the element at the requested index. Number of indices must match the number of dimensions
       * in this array, `N`. The array object must already be allocated. For index checking, please define the `KOKKOS_ENABLE_DEBUG`
       * CPP macro. Use zero-based indexing with the right-most value varying the fastest (row-major ordering).
@@ -612,7 +612,7 @@ namespace yakl {
     void memset_loc(TLOC rhs) const {
       if (myMem == memDevice) {
         YAKL_SCOPE( myData , this->myData );
-        c::parallel_for( YAKL_AUTO_LABEL() , this->size() , KOKKOS_LAMBDA (int i) { myData[i] = rhs; });
+        c::parallel_for( YAKL_AUTO_LABEL() , this->size() , KOKKOS_LAMBDA (int64_t i) { myData[i] = rhs; });
       } else {
         for (int i=0; i < this->totElems(); i++) { this->myData[i] = rhs; }
       }
@@ -659,7 +659,7 @@ namespace yakl {
       * array object is owned and reference counted, guaranteeing the underling data remains valid while the returned
       * slice is used. If slicing is performed on the device, a non-owned array object is returned, though this
       * rarely if ever presents an issue on the device.
-      * 
+      *
       * Example usage:
       * ```
       * auto myslice = arr.slice<2>({k,COLON,COLON});
@@ -668,10 +668,10 @@ namespace yakl {
       * @param dims yakl::Dims object specifying the indices at which the slice should occur as well as the dimensions
       *        that should be sliced.
       * @param i[0-7]: Index of the array slice.
-      * 
+      *
       */
 
-    /** @brief Array slice using initializer list or std::vector indices 
+    /** @brief Array slice using initializer list or std::vector indices
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( Dims const &dims ) const {
       #ifdef KOKKOS_ENABLE_DEBUG
@@ -712,49 +712,49 @@ namespace yakl {
       }
       return ret;
     }
-    /** @brief Array slice of 1-D array 
+    /** @brief Array slice of 1-D array
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0 ) const {
       static_assert( rank == 1 , "ERROR: Calling slice() with 1 index on a non-rank-1 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0) );
     }
-    /** @brief Array slice of 2-D array 
+    /** @brief Array slice of 2-D array
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1 ) const {
       static_assert( rank == 2 , "ERROR: Calling slice() with 2 index on a non-rank-2 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1) );
     }
-    /** @brief Array slice of 3-D array 
+    /** @brief Array slice of 3-D array
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2 ) const {
       static_assert( rank == 3 , "ERROR: Calling slice() with 3 index on a non-rank-3 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2) );
     }
-    /** @brief Array slice of 4-D array 
+    /** @brief Array slice of 4-D array
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3 ) const {
       static_assert( rank == 4 , "ERROR: Calling slice() with 4 index on a non-rank-4 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3) );
     }
-    /** @brief Array slice of 5-D array 
+    /** @brief Array slice of 5-D array
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4 ) const {
       static_assert( rank == 5 , "ERROR: Calling slice() with 5 index on a non-rank-5 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3,i4) );
     }
-    /** @brief Array slice of 6-D array 
+    /** @brief Array slice of 6-D array
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5 ) const {
       static_assert( rank == 6 , "ERROR: Calling slice() with 6 index on a non-rank-6 array" );
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3,i4,i5) );
     }
-    /** @brief Array slice of 7-D array 
+    /** @brief Array slice of 7-D array
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5,
                                                                 int i6 ) const {
@@ -762,7 +762,7 @@ namespace yakl {
       static_assert( N <= rank , "ERROR: Calling slice() with more dimenions than this array's rank" );
       return slice<N>( Dims(i0,i1,i2,i3,i4,i5,i6) );
     }
-    /** @brief Array slice of 8-D array 
+    /** @brief Array slice of 8-D array
       * \copydetails doxhide_CArray_slicing */
     template <int N> KOKKOS_INLINE_FUNCTION Array<T,N,myMem,styleC> slice( int i0, int i1, int i2, int i3, int i4, int i5, int i6,
                                                                 int i7 ) const {
@@ -783,7 +783,7 @@ namespace yakl {
       * counter is incremented. This means you're guaranteed the data pointer is valid throughout the use
       * of the returned array object. If this is performed on the device, then the returned array is non-owned.
       * Be careful doing this in the innermost loop, even on the host, though, because it is still copying
-      * array metadata, and you may notice the extra cost. 
+      * array metadata, and you may notice the extra cost.
       *
       * Example usage:
       * ```
@@ -793,7 +793,7 @@ namespace yakl {
       * ```
       * @param dims   yakl::Dims object containing the dimensions of the new array object that shares this object's data pointer
       * @param i[0-7] dimensions of the newly reshaped array
-      * 
+      *
       */
 
     /** @brief Reshape array using initializer list or std::vector indices
@@ -849,15 +849,15 @@ namespace yakl {
 
 
     /** @brief Collapse this array into a 1-D array
-      * 
+      *
       * Returns an array object that shares the data pointer of this array object but has only one dimension,
-      * with all of this array object's dimensions collapsed into a single dimension. 
+      * with all of this array object's dimensions collapsed into a single dimension.
       * This is a fast operation. No allocations are performed, and no underlying data is allocated.
       * If this is performed on the host, then the returned array is owned, and the data pointer's reference
       * counter is incremented. This means you're guaranteed the data pointer is valid throughout the use
       * of the returned array object. If this is performed on the device, then the returned array is non-owned.
       * Be careful doing this in the innermost loop, even on the host, though, because it is still copying
-      * array metadata, and you may notice the extra cost. 
+      * array metadata, and you may notice the extra cost.
       * Example usage: `auto new_arr_1d = arr.collapse();`
       */
     KOKKOS_INLINE_FUNCTION Array<T,1,myMem,styleC> collapse() const {
@@ -883,13 +883,13 @@ namespace yakl {
     // Create a host copy of this array. Even if the array exists on the host, a deep copy to a separate
     // object is still performed to avoid any potential bugs when the user expects this behavior
     /** @brief [DEEP_COPY] Create a copy of this array in yakl::memHost space
-      * 
+      *
       * Create and allocate a yakl::memHost array object of the same type, rank, dimensions, and style. Then deep copy
       * the data from this array object to the array object returned by this function. This is a slow routine.
       * It both allocates and deep copies the underlying data.
-      * 
+      *
       * Even if the current array is yakl::memHost, this will still allocate and copy to a new object.
-      * 
+      *
       * @returns A newly allocated array of the same type, rank, and style as this one in yakl::memHost space with
       *          data copied from this array object.
       */
@@ -905,7 +905,7 @@ namespace yakl {
 
     // Create a separately allocate host object with the same rank, memory space, and style
     /** @brief Create and allocate a yakl::memHost array object of the same type, rank, dimensions, and style.
-      * 
+      *
       * This is the same as createHostCopy() but without the data deep copy portion.
       * This may be slow since host objects do not use the YAKL pool allocator.
       * NOTE: This does not deep copy data. It merely creates and allocates a new array object and returns it.
@@ -934,9 +934,9 @@ namespace yakl {
       * Create and allocate a yakl::memDevice array object of the same type, rank, dimensions, and style. Then deep copy
       * the data from this array object to the array object returned by this function. This is a slow routine.
       * It both allocates and deep copies the underlying data.
-      * 
+      *
       * Even if the current array is yakl::memDevice, this will still allocate and copy to a new object.
-      * 
+      *
       * @returns A newly allocated array of the same type, rank, and style as this one in yakl::memDevice space with
       *          data copied from this array object.
       */
@@ -982,7 +982,7 @@ namespace yakl {
       } else {
         auto ret = createDeviceObject<T2>();
         T *data = this->myData;
-        c::parallel_for( YAKL_AUTO_LABEL() , ret.size() , KOKKOS_LAMBDA (int i) {
+        c::parallel_for( YAKL_AUTO_LABEL() , ret.size() , KOKKOS_LAMBDA (int64_t i) {
           ret.data()[i] = data[i];
         });
         return Array<T2,rank,myMem,styleC>(ret);
@@ -992,7 +992,7 @@ namespace yakl {
 
     /* ACCESSORS */
     /** @brief Returns the dimensions of this array as a yakl::SArray object.
-      * 
+      *
       * You should use zero-based indexing on the returned SArray object. */
     KOKKOS_INLINE_FUNCTION SArray<size_t,1,rank> get_dimensions() const {
       SArray<size_t,1,rank> ret;
@@ -1000,7 +1000,7 @@ namespace yakl {
       return ret;
     }
     /** @brief Returns the lower bound of each dimension of this array (which are always all zero) as a yakl::SArray object.
-      * 
+      *
       * You should use zero-based indexing on the returned yakl::SArray object. */
     KOKKOS_INLINE_FUNCTION SArray<size_t,1,rank> get_lbounds() const {
       SArray<size_t,1,rank> ret;
@@ -1008,7 +1008,7 @@ namespace yakl {
       return ret;
     }
     /** @brief Returns the upper bound of each dimension of this array as a yakl::SArray object.
-      * 
+      *
       * You should use zero-based indexing on the returned yakl::SArray object. */
     KOKKOS_INLINE_FUNCTION SArray<size_t,1,rank> get_ubounds() const {
       SArray<size_t,1,rank> ret;
