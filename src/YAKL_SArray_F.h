@@ -11,20 +11,9 @@ namespace yakl {
     using style = FStyle;
     bool                          static constexpr is_SArray    = true;
     unsigned int                  static constexpr rank         = sizeof...(DIMS);
-    int                           static constexpr lb  [rank]   = {static_cast<int>(DIMS.l)...};
-    int                           static constexpr ub  [rank]   = {static_cast<int>(DIMS.u)...};
-    unsigned int                  static constexpr dims[rank]   = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
     unsigned int                  static constexpr num_elements = ((static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1)) * ...);
     bool                          static constexpr is_cstyle    = false;
     bool                          static constexpr is_fstyle    = true;
-    std::array<unsigned int,rank> static constexpr offsets      = [] {
-      std::array<unsigned int,rank> result = {};
-      for (int i=static_cast<int>(rank)-1; i >= 0; i--) {
-        result[i] = 1;
-        for (int j = i-1; j >= 0; j--) result[i] *= dims[j];
-      }
-      return result;
-    }();
     using value_type           = T;
     using const_value_type     = std::add_const_t<T>;
     using non_const_value_type = std::remove_cv_t<T>;
@@ -38,7 +27,7 @@ namespace yakl {
       int          constexpr lb  [rank]   = {static_cast<int>(DIMS.l)...};
       int          constexpr ub  [rank]   = {static_cast<int>(DIMS.u)...};
       unsigned int constexpr dims[rank]   = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
-      std::array<unsigned int,rank> constexpr offsets      = [=] {
+      std::array<unsigned int,rank> constexpr offsets = [=] {
         std::array<unsigned int,rank> result = {};
         for (int i=static_cast<int>(rank)-1; i >= 0; i--) {
           result[i] = 1;
@@ -65,6 +54,7 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION bool   static constexpr span_is_contiguous() { return true; }
     KOKKOS_INLINE_FUNCTION bool   static constexpr is_allocated() { return true; }
     KOKKOS_INLINE_FUNCTION unsigned int static constexpr extent(std::integral auto i) {
+      unsigned int constexpr dims[rank] = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
       if constexpr (kokkos_debug) {
         if ((std::is_signed_v<decltype(i)> && i < 0) || static_cast<unsigned int>(i) >= rank) {
           Kokkos::abort("ERROR: calling SArray_F extent() with out of bounds index"); 
@@ -105,7 +95,7 @@ namespace yakl {
       int          constexpr lb  [rank]   = {static_cast<int>(DIMS.l)...};
       int          constexpr ub  [rank]   = {static_cast<int>(DIMS.u)...};
       unsigned int constexpr dims[rank]   = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
-      std::array<unsigned int,rank> constexpr offsets      = [=] {
+      std::array<unsigned int,rank> constexpr offsets = [=] {
         std::array<unsigned int,rank> result = {};
         for (int i=static_cast<int>(rank)-1; i >= 0; i--) {
           result[i] = 1;

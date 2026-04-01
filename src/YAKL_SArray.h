@@ -15,7 +15,6 @@ namespace yakl {
     using style = CStyle;
     bool                          static constexpr is_SArray    = true;
     unsigned int                  static constexpr rank         = sizeof...(DIMS);
-    unsigned int                  static constexpr dims[rank]   = {DIMS...};
     unsigned int                  static constexpr num_elements = (DIMS * ...);
     bool                          static constexpr is_cstyle    = true;
     bool                          static constexpr is_fstyle    = false;
@@ -32,7 +31,7 @@ namespace yakl {
       static_assert( sizeof...(indices) == rank , "ERROR: Indexing SArray with the wrong number of indices" );
       unsigned int idx[rank] = {static_cast<unsigned int>(indices)...};
       unsigned int constexpr dims[rank] = {DIMS...};
-      std::array<unsigned int,rank> constexpr offsets      = [=] {
+      std::array<unsigned int,rank> constexpr offsets = [=] {
         std::array<unsigned int,rank> result = {};
         for (int i=0; i < static_cast<int>(rank); i++) {
           result[i] = 1;
@@ -95,7 +94,7 @@ namespace yakl {
 
     KOKKOS_INLINE_FUNCTION auto unpack_global_index(std::integral auto iglob) const {
       unsigned int constexpr dims[rank] = {DIMS...};
-      std::array<unsigned int,rank> constexpr offsets      = [=] {
+      std::array<unsigned int,rank> constexpr offsets = [=] {
         std::array<unsigned int,rank> result = {};
         for (int i=0; i < static_cast<int>(rank); i++) {
           result[i] = 1;
