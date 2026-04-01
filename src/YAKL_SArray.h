@@ -26,7 +26,7 @@ namespace yakl {
     T mutable my_data[num_elements];
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
-    KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (unsigned int i=0; i < size(); i++) { my_data[i] = val; } }
+    KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (int i=0; i < size(); i++) { my_data[i] = val; } }
 
     KOKKOS_INLINE_FUNCTION T & operator()(std::integral auto... indices) const {
       static_assert( sizeof...(indices) == rank , "ERROR: Indexing SArray with the wrong number of indices" );
@@ -68,7 +68,7 @@ namespace yakl {
 
     inline friend std::ostream &operator<<( std::ostream& os , SArray const & v ) {
       os << "yakl::SArray: ";
-      for (unsigned int i = 0; i < size(); i++) { os << v.my_data[i] << (i<size()-1 ? " , " : ""); }
+      for (int i = 0; i < size(); i++) { os << v.my_data[i] << (i<size()-1 ? " , " : ""); }
       os << std::endl;
       return os;
     }
@@ -76,20 +76,20 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION auto extents() const {
       unsigned int constexpr dims[rank] = {DIMS...};
       SArray<unsigned int,rank> ret;
-      for (unsigned int i=0; i < rank; i++) { ret(i) = dims[i]; }
+      for (int i=0; i < rank; i++) { ret(i) = dims[i]; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto lbounds() const {
       SArray<unsigned int,rank> ret;
-      for (unsigned int i=0; i < rank; i++) { ret(i) = 0; }
+      for (int i=0; i < rank; i++) { ret(i) = 0; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto ubounds() const {
       unsigned int constexpr dims[rank] = {DIMS...};
       SArray<unsigned int,rank> ret;
-      for (unsigned int i=0; i < rank; i++) { ret(i) = dims[i]-1; }
+      for (int i=0; i < rank; i++) { ret(i) = dims[i]-1; }
       return ret;
     }
 

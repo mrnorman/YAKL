@@ -16,6 +16,7 @@ using yakl::Array;
 using yakl::Array_F;
 using yakl::SArray;
 using yakl::SArray_F;
+using yakl::Bnds;
 using yakl::Bounds;
 using yakl::Bounds_F;
 using yakl::parallel_for;
@@ -67,7 +68,7 @@ int main() {
     std::cout << csarray.lbounds();
     std::cout << csarray.ubounds();
     std::cout << sum(csarray) << std::endl;
-    SArray_F<float,{1,3},{1,2}> fsarray;
+    SArray_F<float,Bnds{1,3},Bnds{1,2}> fsarray;
     fsarray = 2;
     fsarray(3,2) = 1;
     std::cout << fsarray;

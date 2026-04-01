@@ -7,11 +7,6 @@ namespace yakl {
 
 
 
-  struct BitDefault { using signed_t = int           ; using unsigned_t = unsigned int; };
-  struct BitLong    { using signed_t = std::ptrdiff_t; using unsigned_t = size_t      ; };
-
-
-
   template <class Style = CStyle> class LoopSpec {
   public:
     bool      static constexpr is_cstyle = is_CStyle<Style>;
@@ -33,13 +28,12 @@ namespace yakl {
 
 
 
-  template <int N, class Style=CStyle, bool Simple=false, class Bit=BitDefault> class Bounds;
+  template <int N, class Style=CStyle, bool Simple=false> class Bounds;
 
 
-  template<int N, class Style, class Bit> class Bounds<N,Style,true,Bit> {
+  template<int N, class Style> class Bounds<N,Style,true> {
     public:
-    using unsigned_t = typename Bit::unsigned_t;
-    using signed_t   = typename Bit::signed_t;
+    using unsigned_t = size_t;
     bool       static constexpr is_cstyle      = is_CStyle<Style>;
     bool       static constexpr is_fstyle      = is_FStyle<Style>;
     unsigned_t static constexpr default_lbound = is_cstyle ? 0 : 1;
@@ -137,10 +131,10 @@ namespace yakl {
   };
 
 
-  template<int N, class Style, class Bit> class Bounds<N,Style,false,Bit> {
+  template<int N, class Style> class Bounds<N,Style,false> {
     public:
-    using unsigned_t = typename Bit::unsigned_t;
-    using signed_t   = typename Bit::signed_t;
+    using unsigned_t = size_t;
+    using signed_t   = ptrdiff_t;
     bool   static constexpr is_cstyle = is_CStyle<Style>;
     bool   static constexpr is_fstyle = is_FStyle<Style>;
     unsigned_t nIter;
@@ -256,22 +250,22 @@ namespace yakl {
 
 
 
-  template <int N> using SimpleBounds     = Bounds<N,CStyle,true ,BitDefault>;
-  template <int N> using SimpleBounds64   = Bounds<N,CStyle,true ,BitLong   >;
-  template <int N> using SimpleBounds_F   = Bounds<N,FStyle,true ,BitDefault>;
-  template <int N> using SimpleBounds64_F = Bounds<N,FStyle,true ,BitLong   >;
-  template <int N> using Bounds64         = Bounds<N,CStyle,false,BitLong   >;
-  template <int N> using Bounds_F         = Bounds<N,FStyle,false,BitDefault>;
-  template <int N> using Bounds64_F       = Bounds<N,FStyle,false,BitLong   >;
+  template <int N> using SimpleBounds     = Bounds<N,CStyle,true >;
+  template <int N> using SimpleBounds64   = Bounds<N,CStyle,true >;
+  template <int N> using SimpleBounds_F   = Bounds<N,FStyle,true >;
+  template <int N> using SimpleBounds64_F = Bounds<N,FStyle,true >;
+  template <int N> using Bounds64         = Bounds<N,CStyle,false>;
+  template <int N> using Bounds_F         = Bounds<N,FStyle,false>;
+  template <int N> using Bounds64_F       = Bounds<N,FStyle,false>;
 
 
 
-  template <class F, int N, bool simple, class Bit, class Style = CStyle>
-  inline void parallel_for( std::string str , Bounds<N,Style,simple,Bit> const & bounds , F const & f ) {
-    using unsigned_t = typename Bit::unsigned_t;
-    using signed_t   = typename Bit::signed_t;
+  template <class F, int N, bool simple, class Style = CStyle>
+  inline void parallel_for( std::string str , Bounds<N,Style,simple> const & bounds , F const & f ) {
+    using unsigned_t = size_t;
+    using signed_t   = ptrdiff_t;
     if (bounds.nIter == 0) return;  // exit early if there is no work to do
-    Kokkos::parallel_for( str , bounds.nIter , KOKKOS_LAMBDA (int iglob) {
+    Kokkos::parallel_for( str , bounds.nIter , KOKKOS_LAMBDA (size_t iglob) {
       auto &bloc = bounds;
       auto &floc = f;
       if constexpr (simple) {
@@ -315,41 +309,41 @@ namespace yakl {
     if constexpr (yakl_auto_fence) Kokkos::fence();
   }
 
-  template <class F, int N, bool simple, class Bit, class Style = CStyle>
-  inline void parallel_for( Bounds<N,Style,simple,Bit> const & bounds , F const & f ) {
+  template <class F, int N, bool simple, class Style = CStyle>
+  inline void parallel_for( Bounds<N,Style,simple> const & bounds , F const & f ) {
     parallel_for( YAKL_AUTO_LABEL() , bounds , f );
   }
 
   template <class F>
   inline void parallel_for( std::integral auto bnd , F const & f ) {
-    parallel_for( YAKL_AUTO_LABEL() , Bounds<1,CStyle,true,BitDefault>(bnd) , f );
+    parallel_for( YAKL_AUTO_LABEL() , Bounds<1,CStyle,true>(bnd) , f );
   }
 
   template <class F>
   inline void parallel_for( std::string str , std::integral auto bnd , F const & f ) {
-    parallel_for( str , Bounds<1,CStyle,true,BitDefault>(bnd) , f );
+    parallel_for( str , Bounds<1,CStyle,true>(bnd) , f );
   }
 
 
 
-  template <class F, int N, bool simple, class Bit>
-  inline void parallel_for_F( std::string str , Bounds<N,FStyle,simple,Bit> const & bounds , F const & f ) {
-    parallel_for<F,N,simple,Bit,FStyle>( str , bounds , f );
+  template <class F, int N, bool simple>
+  inline void parallel_for_F( std::string str , Bounds<N,FStyle,simple> const & bounds , F const & f ) {
+    parallel_for<F,N,simple,FStyle>( str , bounds , f );
   }
 
-  template <class F, int N, bool simple, class Bit>
-  inline void parallel_for_F( Bounds<N,FStyle,simple,Bit> const & bounds , F const & f ) {
-    parallel_for<F,N,simple,Bit,FStyle>( YAKL_AUTO_LABEL() , bounds , f );
+  template <class F, int N, bool simple>
+  inline void parallel_for_F( Bounds<N,FStyle,simple> const & bounds , F const & f ) {
+    parallel_for<F,N,simple,FStyle>( YAKL_AUTO_LABEL() , bounds , f );
   }
 
   template <class F>
   inline void parallel_for_F( std::integral auto bnd , F const & f ) {
-    parallel_for<F,1,true,BitDefault,FStyle>( YAKL_AUTO_LABEL() , Bounds<1,FStyle,true,BitDefault>(bnd) ,f );
+    parallel_for<F,1,true,FStyle>( YAKL_AUTO_LABEL() , Bounds<1,FStyle,true>(bnd) ,f );
   }
 
   template <class F>
   inline void parallel_for_F( std::string str , std::integral auto bnd , F const & f ) {
-    parallel_for<F,1,true,BitDefault,FStyle>( str , Bounds<1,FStyle,true,BitDefault>(bnd) , f );
+    parallel_for<F,1,true,FStyle>( str , Bounds<1,FStyle,true>(bnd) , f );
   }
 
 }

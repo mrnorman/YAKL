@@ -14,6 +14,7 @@ namespace yakl {
     bool static constexpr is_Array  = true ;
     bool static constexpr is_fstyle = true ;
     bool static constexpr is_cstyle = false;
+    bool static constexpr on_device = std::is_same_v<yakl::DeviceSpace,MemSpace>;
 
     std::array<ptrdiff_t,this_t::rank()> lb = {};
 
@@ -202,7 +203,7 @@ namespace yakl {
                                 i4-this_t::lb[4],
                                 i5-this_t::lb[5],
                                 i6-this_t::lb[6],
-                                i7-this_t::lb[7]  );
+                                i7-this_t::lb[7]);
     }
 
 
@@ -324,7 +325,7 @@ namespace yakl {
       YAKL_SCOPE( me , *this );
       Kokkos::parallel_for( "yakl_as_copy" ,
                             Kokkos::RangePolicy<typename base_t::execution_space>(0,this->size()) ,
-                            KOKKOS_LAMBDA (int i) {
+                            KOKKOS_LAMBDA (size_t i) {
         ret.data()[i] = me.data()[i];
       });
       if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -363,7 +364,7 @@ namespace yakl {
       os << "Array_F [" << loc.label() << "], Dimensions [";
       for (int i = 0; i < loc.rank(); i++) { os << loc.extent(i) << (i<loc.rank()-1 ? "," : ""); }
       os << "] = " << loc.size() << " Elements:  ";
-      for (int i = 0; i < loc.size(); i++) { os << loc.data()[i] << (i<loc.size()-1 ? " , " : ""); }
+      for (size_t i = 0; i < loc.size(); i++) { os << loc.data()[i] << (i<loc.size()-1 ? " , " : ""); }
       os << std::endl;
       return os;
     }

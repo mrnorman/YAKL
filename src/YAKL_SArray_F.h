@@ -32,7 +32,7 @@ namespace yakl {
     T mutable my_data[num_elements];
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
-    KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (unsigned int i=0; i < size(); i++) { my_data[i] = val; } }
+    KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (int i=0; i < size(); i++) { my_data[i] = val; } }
 
     KOKKOS_INLINE_FUNCTION T & operator()(std::integral auto... indices) const {
       int          constexpr lb  [rank]   = {static_cast<int>(DIMS.l)...};
@@ -75,7 +75,7 @@ namespace yakl {
 
     inline friend std::ostream &operator<<( std::ostream& os , SArray_F const & v ) {
       os << "yakl::SArray_F: ";
-      for (unsigned int i = 0; i < size(); i++) { os << v.my_data[i] << (i<size()-1 ? " , " : ""); }
+      for (int i = 0; i < size(); i++) { os << v.my_data[i] << (i<size()-1 ? " , " : ""); }
       os << std::endl;
       return os;
     }
@@ -83,21 +83,21 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION auto extents() const {
       unsigned int constexpr dims[rank]   = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
       SArray_F<unsigned int,Bnds{1,rank}> ret;
-      for (unsigned int i=1; i <= rank; i++) { ret(i) = dims[i-1]; }
+      for (int i=1; i <= rank; i++) { ret(i) = dims[i-1]; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto lbounds() const {
       int          constexpr lb  [rank]   = {static_cast<int>(DIMS.l)...};
       SArray_F<int,Bnds{1,rank}> ret;
-      for (unsigned int i=1; i <= rank; i++) { ret(i) = lb[i-1]; }
+      for (int i=1; i <= rank; i++) { ret(i) = lb[i-1]; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto ubounds() const {
       int          constexpr ub  [rank]   = {static_cast<int>(DIMS.u)...};
       SArray_F<int,Bnds{1,rank}> ret;
-      for (unsigned int i=1; i <= rank; i++) { ret(i) = ub[i-1]; }
+      for (int i=1; i <= rank; i++) { ret(i) = ub[i-1]; }
       return ret;
     }
 

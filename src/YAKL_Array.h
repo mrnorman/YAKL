@@ -30,6 +30,7 @@ namespace yakl {
     bool static constexpr is_Array  = true ;
     bool static constexpr is_fstyle = false;
     bool static constexpr is_cstyle = true ;
+    bool static constexpr on_device = std::is_same_v<yakl::DeviceSpace,MemSpace>;
 
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
@@ -134,7 +135,7 @@ namespace yakl {
       YAKL_SCOPE( me , *this );
       Kokkos::parallel_for( "yakl_as_copy" ,
                             Kokkos::RangePolicy<typename base_t::execution_space>(0,this->size()) ,
-                            KOKKOS_LAMBDA (int i) {
+                            KOKKOS_LAMBDA (size_t i) {
         ret.data()[i] = me.data()[i];
       });
       if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -172,7 +173,7 @@ namespace yakl {
       os << "Array [" << loc.label() << "], Dimensions [";
       for (int i = 0; i < loc.rank(); i++) { os << loc.extent(i) << (i<loc.rank()-1 ? "," : ""); }
       os << "] = " << loc.size() << " Elements:  ";
-      for (int i = 0; i < loc.size(); i++) { os << loc.data()[i] << (i<loc.size()-1 ? " , " : ""); }
+      for (size_t i = 0; i < loc.size(); i++) { os << loc.data()[i] << (i<loc.size()-1 ? " , " : ""); }
       os << std::endl;
       return os;
     }

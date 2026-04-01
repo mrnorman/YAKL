@@ -5,35 +5,35 @@ namespace yakl {
   namespace componentwise {
 
     template <class V1, class V2, class F> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2>
-    inline auto binary( V1 const & l , V2 const & r , F const & f ) {
+    KOKKOS_INLINE_FUNCTION auto binary( V1 const & l , V2 const & r , F const & f ) {
       return f(l,r);
     }
     template <class V1, class V2, class F> requires yakl::is_SArray<V1> && std::is_arithmetic_v<V2>
-    inline auto binary( V1 const & l , V2 const & r , F const & f ) {
-      typename V1::template TypeAs<decltype(f(l.data()[0],r))> ret;
+    KOKKOS_INLINE_FUNCTION auto binary( V1 const & l , V2 const & r , F const & f ) {
+      typename V1::template TypeAs<decltype(f(l(0),r))> ret;
       for (int i=0; i < l.size(); i++) { ret.data()[i] = f(l.data()[i],r); }
       return ret;
     }
     template <class V1, class V2, class F> requires std::is_arithmetic_v<V1> && yakl::is_SArray<V2>
-    inline auto binary( V1 const & l , V2 const & r , F const & f ) {
-      typename V2::template TypeAs<decltype(f(l,r.data()[0]))> ret;
+    KOKKOS_INLINE_FUNCTION auto binary( V1 const & l , V2 const & r , F const & f ) {
+      typename V2::template TypeAs<decltype(f(l,r(0)))> ret;
       for (int i=0; i < r.size(); i++) { ret.data()[i] = f(l,r.data()[i]); }
       return ret;
     }
     template <class V1, class V2, class F> requires yakl::is_SArray<V1> && yakl::is_SArray<V2>
-    inline auto binary( V1 const & l , V2 const & r , F const & f ) {
-      typename V1::template TypeAs<decltype(f(l.data()[0],r.data()[0]))> ret;
+    KOKKOS_INLINE_FUNCTION auto binary( V1 const & l , V2 const & r , F const & f ) {
+      typename V1::template TypeAs<decltype(f(l(0),r(0)))> ret;
       for (int i=0; i < l.size(); i++) { ret.data()[i] = f(l.data()[i],r.data()[i]); }
       return ret;
     }
     template <class V1, class V2, class F> requires yakl::is_Array<V1> && std::is_arithmetic_v<V2>
     inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
-    decltype(l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r))>())
+    decltype(l.template clone_object<typename V1::memory_space,decltype(f(l(0),r))>())
     {
-      auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r))>();
+      auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l(0),r))>();
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                             Kokkos::RangePolicy<typename V1::execution_space>(0,l.size()) ,
-                            KOKKOS_LAMBDA (int i) {
+                            KOKKOS_LAMBDA (size_t i) {
         auto &lloc = l;
         auto &rloc = r;
         ret.data()[i] = f(lloc.data()[i],rloc);
@@ -43,12 +43,12 @@ namespace yakl {
     }
     template <class V1, class V2, class F> requires std::is_arithmetic_v<V1> && yakl::is_Array<V2>
     inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
-    decltype(r.template clone_object<typename V2::memory_space,decltype(f(l,r.data()[0]))>())
+    decltype(r.template clone_object<typename V2::memory_space,decltype(f(l,r(0)))>())
     {
-      auto ret = r.template clone_object<typename V2::memory_space,decltype(f(l,r.data()[0]))>();
+      auto ret = r.template clone_object<typename V2::memory_space,decltype(f(l,r(0)))>();
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                             Kokkos::RangePolicy<typename V2::execution_space>(0,r.size()) ,
-                            KOKKOS_LAMBDA (int i) {
+                            KOKKOS_LAMBDA (size_t i) {
         auto &lloc = l;
         auto &rloc = r;
         ret.data()[i] = f(lloc,rloc.data()[i]);
@@ -58,12 +58,12 @@ namespace yakl {
     }
     template <class V1, class V2, class F> requires yakl::is_Array<V1> && yakl::is_Array<V2>
     inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
-    decltype(l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r.data()[0]))>())
+    decltype(l.template clone_object<typename V1::memory_space,decltype(f(l(0),r(0)))>())
     {
-      auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r.data()[0]))>();
+      auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l(0),r(0)))>();
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                             Kokkos::RangePolicy<typename V1::execution_space>(0,l.size()) ,
-                            KOKKOS_LAMBDA (int i) {
+                            KOKKOS_LAMBDA (size_t i) {
         auto &lloc = l;
         auto &rloc = r;
         ret.data()[i] = f(lloc.data()[i],rloc.data()[i]);
@@ -137,23 +137,23 @@ namespace yakl {
 
 
     template <class V, class F> requires std::is_arithmetic_v<V>
-    inline auto unary( V const & v , F const & f ) {
+    KOKKOS_INLINE_FUNCTION auto unary( V const & v , F const & f ) {
       return f(v);
     }
     template <class V, class F> requires yakl::is_SArray<V>
-    inline auto unary( V const & v , F const & f ) {
-      typename V::template TypeAs<decltype(f(v.data()[0]))> ret;
+    KOKKOS_INLINE_FUNCTION auto unary( V const & v , F const & f ) {
+      typename V::template TypeAs<decltype(f(v(0)))> ret;
       for (int i=0; i < v.size(); i++) { ret.data()[i] = f(v.data()[i]); }
       return ret;
     }
     template <class V, class F> requires yakl::is_Array<V>
     inline auto unary( V const & v , F const & f ) ->
-    decltype(v.template clone_object<typename V::memory_space,decltype(f(v.data()[0]))>())
+    decltype(v.template clone_object<typename V::memory_space,decltype(f(v(0)))>())
     {
-      auto ret = v.template clone_object<typename V::memory_space,decltype(f(v.data()[0]))>();
+      auto ret = v.template clone_object<typename V::memory_space,decltype(f(v(0)))>();
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                             Kokkos::RangePolicy<typename V::execution_space>(0,v.size()) ,
-                            KOKKOS_LAMBDA (int i) {
+                            KOKKOS_LAMBDA (size_t i) {
         ret.data()[i] = f(v.data()[i]);
       } );
       if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -189,8 +189,7 @@ namespace yakl {
     }
 
     template <class V, class V2> auto pow( V const & v , V2 const & v2 ) requires std::is_arithmetic_v<V2> {
-      using type = typename V::value_type;
-      return unary( v , [=]<class T>(T v) constexpr {return std::pow(v,static_cast<type>(v2));} );
+      return unary( v , [=]<class T>(T v) constexpr {return std::pow(v,static_cast<decltype(v(0)+v2)>(v2));} );
     }
 
     template <class V> auto sin( V const & v ) {

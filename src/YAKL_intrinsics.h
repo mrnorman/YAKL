@@ -21,7 +21,7 @@ namespace yakl {
         auto ret = in.clone_object();
         Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                               Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                              KOKKOS_LAMBDA (int i) {
+                              KOKKOS_LAMBDA (size_t i) {
           ret.data()[i] = std::abs(in.data()[i]);
         } );
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -45,7 +45,7 @@ namespace yakl {
         auto ret = a.clone_object();
         Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                               Kokkos::RangePolicy<typename ViewType::execution_space>(0,a.size()) ,
-                              KOKKOS_LAMBDA (int i) {
+                              KOKKOS_LAMBDA (size_t i) {
           ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
         });
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -69,7 +69,7 @@ namespace yakl {
         auto ret = t.clone_object();
         Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                               Kokkos::RangePolicy<typename V1::execution_space>(0,cond.size()) ,
-                              KOKKOS_LAMBDA (int i) {
+                              KOKKOS_LAMBDA (size_t i) {
           ret.data()[i] = cond.data()[i] ? t.data()[i] : f.data()[i];
         });
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -152,7 +152,7 @@ namespace yakl {
         ScalarLiveOut<bool> any_true(false);
         Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                               Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                              KOKKOS_LAMBDA (int i) {
+                              KOKKOS_LAMBDA (size_t i) {
           if (in.data()[i]) any_true = true;
         });
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -174,7 +174,7 @@ namespace yakl {
         ScalarLiveOut<bool> all_true(true);
         Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                               Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                              KOKKOS_LAMBDA (int i) {
+                              KOKKOS_LAMBDA (size_t i) {
           if (!in.data()[i]) all_true = false;
         });
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -197,7 +197,7 @@ namespace yakl {
         scalar_t result;
         Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
                                  Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                                 KOKKOS_LAMBDA (int i , scalar_t & lsum ) {
+                                 KOKKOS_LAMBDA (size_t i , scalar_t & lsum ) {
           lsum += in.data()[i];
         } , Kokkos::Sum<scalar_t>(result) );
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -219,7 +219,7 @@ namespace yakl {
         yakl::Array<size_t *,typename ViewType::memory_space> num1d("num1d",in.size());
         Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                               Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                              KOKKOS_LAMBDA (int i) {
+                              KOKKOS_LAMBDA (size_t i) {
           num1d(i) = in.data()[i] ? 1 : 0;
         });
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -242,7 +242,7 @@ namespace yakl {
         scalar_t result;
         Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
                                  Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                                 KOKKOS_LAMBDA (int i , scalar_t & lprod ) {
+                                 KOKKOS_LAMBDA (size_t i , scalar_t & lprod ) {
           lprod *= in.data()[i];
         } , Kokkos::Prod<scalar_t>(result) );
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -265,7 +265,7 @@ namespace yakl {
         scalar_t result;
         Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
                                  Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                                 KOKKOS_LAMBDA (int i , scalar_t & lmin ) {
+                                 KOKKOS_LAMBDA (size_t i , scalar_t & lmin ) {
           lmin = std::min(lmin,in.data()[i]);
         } , Kokkos::Min<scalar_t>(result) );
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -288,7 +288,7 @@ namespace yakl {
         scalar_t result;
         Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
                                  Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                                 KOKKOS_LAMBDA (int i , scalar_t & lmax ) {
+                                 KOKKOS_LAMBDA (size_t i , scalar_t & lmax ) {
           lmax = std::max(lmax,in.data()[i]);
         } , Kokkos::Max<scalar_t>(result) );
         if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -311,12 +311,12 @@ namespace yakl {
         for (int i=0; i < in.size(); i++) { if (in.data()[i] == mn) iglob = i; }
       } else {
         if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) {
-          for (int i=0; i < in.size(); i++) { if (in.data()[i] == mn) iglob = i; }
+          for (size_t i=0; i < in.size(); i++) { if (in.data()[i] == mn) iglob = i; }
         } else {
           ScalarLiveOut<size_t> iglob_slo(0);
           Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                                 Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                                KOKKOS_LAMBDA (int i) {
+                                KOKKOS_LAMBDA (size_t i) {
             if (in.data()[i] == mn) iglob_slo = i;
           });
           if constexpr (yakl_auto_fence) Kokkos::fence();
@@ -341,12 +341,12 @@ namespace yakl {
         for (int i=0; i < in.size(); i++) { if (in.data()[i] == mx) iglob = i; }
       } else {
         if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) {
-          for (int i=0; i < in.size(); i++) { if (in.data()[i] == mx) iglob = i; }
+          for (size_t i=0; i < in.size(); i++) { if (in.data()[i] == mx) iglob = i; }
         } else {
           ScalarLiveOut<size_t> iglob_slo(0);
           Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
                                 Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                                KOKKOS_LAMBDA (int i) {
+                                KOKKOS_LAMBDA (size_t i) {
             if (in.data()[i] == mx) iglob_slo = i;
           });
           if constexpr (yakl_auto_fence) Kokkos::fence();

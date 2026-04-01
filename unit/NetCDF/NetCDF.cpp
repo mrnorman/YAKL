@@ -149,29 +149,29 @@ int main() {
 
       // We're going to permute the memory space and Array style to ensure it's written and read correctly
       // If the dimensions are off, there will be an error thrown from YAKL_netcdf
-      Array<signed        char,1,memDevice,styleC      > a0("a0",d1);
-      Array<unsigned      char,2,memHost  ,styleC      > a1("a1",d2,d1);
-      Array<             short,3,memDevice,styleC      > a2("a2",d3,d2,d1);
-      Array<unsigned     short,4,memHost  ,styleC      > a3("a3",d4,d3,d2,d1);
-      Array<               int,5,memDevice,styleC      > a4("a4",d5,d4,d3,d2,d1);
-      Array<unsigned       int,6,memHost  ,styleFortran> a5("a5",d1,d2,d3,d4,d5,d6);
-      Array<         long long,7,memDevice,styleFortran> a6("a6",d1,d2,d3,d4,d5,d6,d7);
-      Array<unsigned long long,8,memHost  ,styleFortran> a7("a7",d1,d2,d3,d4,d5,d6,d7,d8);
-      Array<             float,3,memDevice,styleFortran> a8("a8",d1,d2,d3);
-      Array<            double,3,memHost  ,styleFortran> a9("a9",d1,d2,d3);
-      Array<signed        char,2,memDevice,styleC      > a0_unlim("a0_unlim",num_entries,d1);
-      Array<unsigned      char,3,memHost  ,styleC      > a1_unlim("a1_unlim",num_entries,d2,d1);
-      Array<             short,4,memDevice,styleC      > a2_unlim("a2_unlim",num_entries,d3,d2,d1);
-      Array<unsigned     short,5,memHost  ,styleC      > a3_unlim("a3_unlim",num_entries,d4,d3,d2,d1);
-      Array<               int,6,memDevice,styleC      > a4_unlim("a4_unlim",num_entries,d5,d4,d3,d2,d1);
-      Array<unsigned       int,7,memHost  ,styleFortran> a5_unlim("a5_unlim",d1,d2,d3,d4,d5,d6,num_entries);
-      Array<         long long,8,memDevice,styleFortran> a6_unlim("a6_unlim",d1,d2,d3,d4,d5,d6,d7,num_entries);
-      Array<             float,4,memDevice,styleFortran> a8_unlim("a8_unlim",d1,d2,d3,num_entries);
-      Array<            double,4,memHost  ,styleFortran> a9_unlim("a9_unlim",d1,d2,d3,num_entries);
-      Array<              char,2,memHost  ,styleC      > text("text",4,10);
-      Array<              bool,1,memHost  ,styleC      > bool8("bool8",d8);
-      Array<float,1,memHost  ,styleC> s0_unlim("s0_unlim",num_entries);
-      Array<int  ,1,memDevice,styleC> s1_unlim("s1_unlim",num_entries);
+      Array  <signed        char *       ,yakl::DeviceSpace> a0("a0",d1);
+      Array  <unsigned      char **      ,Kokkos::HostSpace> a1("a1",d2,d1);
+      Array  <             short ***     ,yakl::DeviceSpace> a2("a2",d3,d2,d1);
+      Array  <unsigned     short ****    ,Kokkos::HostSpace> a3("a3",d4,d3,d2,d1);
+      Array  <               int *****   ,yakl::DeviceSpace> a4("a4",d5,d4,d3,d2,d1);
+      Array_F<unsigned       int ******  ,Kokkos::HostSpace> a5("a5",d1,d2,d3,d4,d5,d6);
+      Array_F<         long long ******* ,yakl::DeviceSpace> a6("a6",d1,d2,d3,d4,d5,d6,d7);
+      Array_F<unsigned long long ********,Kokkos::HostSpace> a7("a7",d1,d2,d3,d4,d5,d6,d7,d8);
+      Array_F<             float ***     ,yakl::DeviceSpace> a8("a8",d1,d2,d3);
+      Array_F<            double ***     ,Kokkos::HostSpace> a9("a9",d1,d2,d3);
+      Array  <signed        char **      ,yakl::DeviceSpace> a0_unlim("a0_unlim",num_entries,d1);
+      Array  <unsigned      char ***     ,Kokkos::HostSpace> a1_unlim("a1_unlim",num_entries,d2,d1);
+      Array  <             short ****    ,yakl::DeviceSpace> a2_unlim("a2_unlim",num_entries,d3,d2,d1);
+      Array  <unsigned     short *****   ,Kokkos::HostSpace> a3_unlim("a3_unlim",num_entries,d4,d3,d2,d1);
+      Array  <               int ******  ,yakl::DeviceSpace> a4_unlim("a4_unlim",num_entries,d5,d4,d3,d2,d1);
+      Array_F<unsigned       int ******* ,Kokkos::HostSpace> a5_unlim("a5_unlim",d1,d2,d3,d4,d5,d6,num_entries);
+      Array_F<         long long ********,yakl::DeviceSpace> a6_unlim("a6_unlim",d1,d2,d3,d4,d5,d6,d7,num_entries);
+      Array_F<             float ****    ,yakl::DeviceSpace> a8_unlim("a8_unlim",d1,d2,d3,num_entries);
+      Array_F<            double ****    ,Kokkos::HostSpace> a9_unlim("a9_unlim",d1,d2,d3,num_entries);
+      Array  <              char **      ,Kokkos::HostSpace> text("text",4,10);
+      Array  <              bool *       ,Kokkos::HostSpace> bool8("bool8",d8);
+      Array  <             float *       ,Kokkos::HostSpace> s0_unlim("s0_unlim",num_entries);
+      Array  <             int   *       ,yakl::DeviceSpace> s1_unlim("s1_unlim",num_entries);
       float s0;
       int   s1;
 
