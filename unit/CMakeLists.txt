@@ -11,12 +11,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(Kokkos_HOME $ENV{HOME}/kokkos)
 set(Kokkos_BIN  ${CMAKE_CURRENT_BINARY_DIR}/kokkos)
 add_subdirectory(${Kokkos_HOME} ${Kokkos_BIN})
-include_directories(${Kokkos_INCLUDE_DIRS_RET})
 
 set(YAKL_HOME ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(YAKL_BIN  ${CMAKE_CURRENT_BINARY_DIR}/yakl)
 add_subdirectory(${YAKL_HOME} ${YAKL_BIN})
-include_directories(${YAKL_BIN})
 
 # Unit test directories
 add_subdirectory(Atomics)

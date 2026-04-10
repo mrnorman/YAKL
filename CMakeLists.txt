@@ -16,7 +16,7 @@ set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_
 
 # Add the header-only YAKL C++ library target as well as the YAKL Fortran interface library target
 add_library(yakl STATIC ${YAKL_SOURCE})
-target_link_libraries(yakl PUBLIC kokkos)
+target_link_libraries(yakl PUBLIC Kokkos::kokkos)
 target_include_directories(yakl PUBLIC src external src/extensions ${CMAKE_CURRENT_BINARY_DIR})
 
 # Special treatment for MPI
