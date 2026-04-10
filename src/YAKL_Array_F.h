@@ -218,7 +218,7 @@ namespace yakl {
     template <class MemSpaceLoc = MemSpace, class ValTypeLoc = typename base_t::non_const_value_type>
     auto clone_object() const {
       return [&] <std::size_t... Is> (std::index_sequence<Is...>) {
-        using vtype = typename std::remove_cv_t<typename KokkosType<ValTypeLoc,base_t::rank()>::type>;
+        using vtype = typename std::remove_cv_t<typename ViewType<ValTypeLoc,base_t::rank()>::type>;
         return Array_F<vtype,MemSpaceLoc>( this->label() , {lb[Is],lb[Is]+this->extent(Is)-1}... );
       } (std::make_index_sequence<this_t::rank()>{});
     }
@@ -230,7 +230,7 @@ namespace yakl {
       int  constexpr nslice    = rank - new_rank;
       int  constexpr remaining = new_rank;
       auto const    &lb        = this_t::lb;
-      using new_kt = typename KokkosType<typename base_t::value_type,remaining>::type;
+      using new_kt = typename ViewType<typename base_t::value_type,remaining>::type;
       std::array<ptrdiff_t,rank> slice_arr = { static_cast<ptrdiff_t>(indices)... };
       size_t offset = 0;
       for (int i=0; i < nslice; i++) {
@@ -262,7 +262,7 @@ namespace yakl {
     template <class... BNDS> requires (std::is_same_v<BNDS,AB> && ...)
     KOKKOS_INLINE_FUNCTION auto reshape_all(BNDS... newdims) const {
       int constexpr new_rank = sizeof...(newdims);
-      using new_kt = typename KokkosType<typename base_t::value_type,new_rank>::type;
+      using new_kt = typename ViewType<typename base_t::value_type,new_rank>::type;
       if ((static_cast<size_t>(newdims.u-newdims.l+1) * ...) != this_t::size()) {
         Kokkos::abort("ERROR: Resizing array with different total size");
       }
@@ -317,9 +317,9 @@ namespace yakl {
 
 
     template <class scalar_t> requires std::is_arithmetic_v<scalar_t>
-    Array_F<typename KokkosType<scalar_t,this_t::rank()>::type,MemSpace> as() const {
+    Array_F<typename ViewType<scalar_t,this_t::rank()>::type,MemSpace> as() const {
       auto func = [&] <std::size_t... Is> (std::index_sequence<Is...>) {
-        return Array_F<typename KokkosType<scalar_t,this_t::rank()>::type,MemSpace>( this->label() , this->extent(Is)... );
+        return Array_F<typename ViewType<scalar_t,this_t::rank()>::type,MemSpace>( this->label() , this->extent(Is)... );
       };
       auto ret = func(std::make_index_sequence<this_t::rank()>{});
       YAKL_SCOPE( me , *this );
