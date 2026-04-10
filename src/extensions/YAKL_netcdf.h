@@ -503,7 +503,7 @@ namespace yakl {
 
       if (ViewType::on_device) {
         auto arrHost = arr.createHostObject();
-        if (std::is_same<T,bool>::value) {
+        if (std::is_same_v<T,bool>) {
           auto tmp = arr.template clone_object<Kokkos::HostSpace>();
           var.getVar(tmp.data());
           for (int i=0; i < arr.size(); i++) { arrHost.data()[i] = tmp.data()[i] == 1; }
@@ -513,7 +513,7 @@ namespace yakl {
         arrHost.deep_copy_to(arr);
         Kokkos::fence();
       } else {
-        if (std::is_same<T,bool>::value) {
+        if (std::is_same_v<T,bool>) {
           auto tmp = arr.template clone_object<Kokkos::HostSpace,int>();
           var.getVar(tmp.data());
           for (int i=0; i < arr.size(); i++) { arr.data()[i] = tmp.data()[i] == 1; }
@@ -543,19 +543,19 @@ namespace yakl {
 
 
     template <class T> int getType() const {
-           if ( std::is_same<typename std::remove_cv<T>::type,signed        char>::value ) { return NC_BYTE;   }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned      char>::value ) { return NC_UBYTE;  }
-      else if ( std::is_same<typename std::remove_cv<T>::type,             short>::value ) { return NC_SHORT;  }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned     short>::value ) { return NC_USHORT; }
-      else if ( std::is_same<typename std::remove_cv<T>::type,               int>::value ) { return NC_INT;    }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned       int>::value ) { return NC_UINT;   }
-      else if ( std::is_same<typename std::remove_cv<T>::type,              long>::value ) { return NC_INT;    }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned      long>::value ) { return NC_UINT;   }
-      else if ( std::is_same<typename std::remove_cv<T>::type,         long long>::value ) { return NC_INT64;  }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned long long>::value ) { return NC_UINT64; }
-      else if ( std::is_same<typename std::remove_cv<T>::type,             float>::value ) { return NC_FLOAT;  }
-      else if ( std::is_same<typename std::remove_cv<T>::type,            double>::value ) { return NC_DOUBLE; }
-      else if ( std::is_same<typename std::remove_cv<T>::type,              char>::value ) { return NC_CHAR;   }
+           if ( std::is_same_v<typename std::remove_cv_t<T>,signed        char> ) { return NC_BYTE;   }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned      char> ) { return NC_UBYTE;  }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,             short> ) { return NC_SHORT;  }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned     short> ) { return NC_USHORT; }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,               int> ) { return NC_INT;    }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned       int> ) { return NC_UINT;   }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,              long> ) { return NC_INT;    }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned      long> ) { return NC_UINT;   }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,         long long> ) { return NC_INT64;  }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned long long> ) { return NC_UINT64; }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,             float> ) { return NC_FLOAT;  }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,            double> ) { return NC_DOUBLE; }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,              char> ) { return NC_CHAR;   }
       else { Kokkos::abort("Invalid type"); }
       return -1;
     }
