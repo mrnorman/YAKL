@@ -35,5 +35,6 @@ add_subdirectory(OpenMP_Regions)
 add_subdirectory(ParForC)
 add_subdirectory(ParForFortran)
 add_subdirectory(performance EXCLUDE_FROM_ALL)
+add_subdirectory(Random)
 add_subdirectory(Reductions)
 

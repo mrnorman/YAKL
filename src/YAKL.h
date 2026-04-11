@@ -15,6 +15,7 @@
 #include "YAKL_finalize.h"
 #include "YAKL_Style.h"
 #include "YAKL_parallel_for.h"
+#include "YAKL_random.h"
 #include "YAKL_SArray.h"
 #include "YAKL_SArray_F.h"
 #include "YAKL_Array.h"
