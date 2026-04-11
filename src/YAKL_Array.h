@@ -17,7 +17,7 @@ namespace yakl {
 
 
 
-  template <class KT, class MemSpace>
+  template <class KT, class MemSpace = DeviceSpace>
   class Array : public Kokkos::View<KT,Kokkos::LayoutRight,MemSpace> {
     public:
 
