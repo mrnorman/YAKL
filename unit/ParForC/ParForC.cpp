@@ -29,6 +29,7 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     int constexpr n1 = 128;
     int constexpr n2 = 16;
     int constexpr n3 = 4;
@@ -46,6 +47,7 @@ int main() {
 
     arr3d = 0.;
 
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

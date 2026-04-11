@@ -14,6 +14,7 @@ int main(int argc , char **argv) {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     // Write so that d1 is always the fastest varying and ordered from there
     int constexpr nx = 128;
     int constexpr ny = 128;
@@ -54,6 +55,7 @@ int main(int argc , char **argv) {
       if ( count( (arr_read-2) > 0 ) > 0 ) Kokkos::abort("ERROR: Incorrect data in read");
     }
 
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

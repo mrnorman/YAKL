@@ -23,6 +23,7 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     int constexpr n = 1024*1024;
     real1d arr("arr",n);
     auto clk = std::clock();
@@ -82,6 +83,7 @@ int main() {
     if (abs(skew) > 0.01)                  { die("ERROR: skewness is wrong"); }
     if (abs(avgAbsDiff-1./3.) > 0.01)      { die("ERROR: avg abs diff is wrong"); }
     if (maxBinErr > 0.01)                  { die("ERROR: max bin error is wrong"); }
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

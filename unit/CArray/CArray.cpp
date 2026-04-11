@@ -49,6 +49,7 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     int constexpr d1 = 2;
     int constexpr d2 = 3;
     int constexpr d3 = 4;
@@ -399,6 +400,7 @@ int main() {
       if (tot == 99) die("ERROR: Shuffle is not working on CArray");
     }
 
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

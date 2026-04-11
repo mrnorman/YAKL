@@ -8,6 +8,7 @@ namespace yakl {
     // Only finalize if YAKL's already initialized
     if ( get_yakl_instance().is_initialized() ) {
       Kokkos::fence();  // Make sure all device work is done before we start freeing pool memory
+      timer_print();
       get_yakl_instance().pool.finalize();
       get_yakl_instance().yakl_is_initialized = false;
       get_yakl_instance().pool_enabled = false;

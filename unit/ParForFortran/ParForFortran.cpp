@@ -29,6 +29,7 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     int constexpr n1 = 4;
     int constexpr n2 = 16;
     int constexpr n3 = 128;
@@ -45,6 +46,7 @@ int main() {
     if ( abs(sum(arr3d) - (double) n1*n2*n3) / (double) (n1*n2*n3) > 1.e-13) die("ERROR: Wrong sum for arr3d");
 
     arr3d = 0.;
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

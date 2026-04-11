@@ -18,6 +18,7 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     int constexpr n = 1024 + 1;
     {
       typedef float T;
@@ -130,7 +131,7 @@ int main() {
       if ( abs(min + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
       if ( abs(max - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
     }
-
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

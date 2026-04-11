@@ -19,6 +19,7 @@ namespace yakl {
       LinearAllocator pool;                 // Pool allocator. Constructor and destructor do not depend on ordering
       bool            yakl_is_initialized;  // Determine if YAKL has been initialized
       bool            pool_enabled;         // Is the pool allocator being used?
+      Toney           timer;
 
       bool use_pool      () const { return pool_enabled; }
       bool get_pool      () const { return pool_enabled; }

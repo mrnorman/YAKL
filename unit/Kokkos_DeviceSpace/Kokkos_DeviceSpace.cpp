@@ -29,6 +29,7 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     Array<float *,yakl::DeviceSpace> arr("arr",10);
     parallel_for( "mykernel" , 10 , KOKKOS_LAMBDA (int i) {
       arr(i) = i+1;
@@ -97,6 +98,7 @@ int main() {
     std::cout << farr2;
     std::cout << farr2.reshape(5,2).slice<1>(COLON,2);
     Bounds_F<3> bnds({1,3},{-1,5},{2,7,2});
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

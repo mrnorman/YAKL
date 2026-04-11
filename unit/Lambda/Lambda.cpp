@@ -26,6 +26,7 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     int constexpr n = 100;
 
     blah::a = real1d("a",n);
@@ -52,6 +53,7 @@ int main() {
     blah::a = real1d();
     blah::b = real1d();
     blah::c = real1d();
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 
