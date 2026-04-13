@@ -51,9 +51,9 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION T * begin() const { return my_data; }
     KOKKOS_INLINE_FUNCTION T * end  () const { return my_data + size(); }
     KOKKOS_INLINE_FUNCTION unsigned int static constexpr size() { return num_elements; }
-    KOKKOS_INLINE_FUNCTION bool   static constexpr span_is_contiguous() { return true; }
-    KOKKOS_INLINE_FUNCTION bool   static constexpr is_allocated() { return true; }
-    KOKKOS_INLINE_FUNCTION unsigned int static constexpr extent(std::integral auto i) {
+    KOKKOS_INLINE_FUNCTION bool         static constexpr span_is_contiguous() { return true; }
+    KOKKOS_INLINE_FUNCTION bool         static constexpr is_allocated() { return true; }
+    KOKKOS_INLINE_FUNCTION unsigned int static           extent(std::integral auto i) {
       unsigned int constexpr dims[rank] = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
       if constexpr (kokkos_debug) {
         if ((std::is_signed_v<decltype(i)> && i < 0) || static_cast<unsigned int>(i) >= rank) {
@@ -61,6 +61,11 @@ namespace yakl {
         }
       }
       return dims[i];
+    }
+    template <std::integral auto I> requires (I >=0 ) && (I < rank)
+    KOKKOS_INLINE_FUNCTION unsigned int static constexpr extent() {
+      unsigned int constexpr dims[rank] = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
+      return dims[I];
     }
 
     inline friend std::ostream &operator<<( std::ostream& os , SArray_F const & v ) {

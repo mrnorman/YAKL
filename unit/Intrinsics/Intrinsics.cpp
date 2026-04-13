@@ -402,6 +402,127 @@ int main() {
     }
 
 
+    //////////////////////////////////////////////////////////
+    // matmul_cr, matmul_rc, matinv, transpose
+    //////////////////////////////////////////////////////////
+    {
+      using yakl::intrinsics::matmul_rc;
+      using yakl::intrinsics::matmul_cr;
+      using yakl::intrinsics::matinv;
+      using yakl::intrinsics::transpose;
+      SArray<real,3,3> A1_c;
+      SArray<real,3,3> A2_c;
+      SArray<real,3> b_c;
+
+      SArray<real,3> A1_b_ref;
+      SArray<real,3,3> A1_A2_ref;
+
+      A1_c(0,0) = 1;
+      A1_c(0,1) = 2;
+      A1_c(0,2) = 3;
+      A1_c(1,0) = 1.5;
+      A1_c(1,1) = 2.5;
+      A1_c(1,2) = 3.5;
+      A1_c(2,0) = 1.2;
+      A1_c(2,1) = 2.2;
+      A1_c(2,2) = 3.2;
+
+      A2_c(0,0) = 1.9;
+      A2_c(0,1) = 2.9;
+      A2_c(0,2) = 3.9;
+      A2_c(1,0) = 1.1;
+      A2_c(1,1) = 2.1;
+      A2_c(1,2) = 3.1;
+      A2_c(2,0) = 1.4;
+      A2_c(2,1) = 2.4;
+      A2_c(2,2) = 3.4;
+
+      b_c(0) = 0.3;
+      b_c(1) = 4.2;
+      b_c(2) = 1.9;
+
+      A1_b_ref(0) = 14.4;
+      A1_b_ref(1) = 17.6;
+      A1_b_ref(2) = 15.68;
+
+      A1_A2_ref(0,0) = 8.3;
+      A1_A2_ref(0,1) = 14.3;
+      A1_A2_ref(0,2) = 20.3;
+      A1_A2_ref(1,0) = 10.5;
+      A1_A2_ref(1,1) = 18.0;
+      A1_A2_ref(1,2) = 25.5;
+      A1_A2_ref(2,0) = 9.18;
+      A1_A2_ref(2,1) = 15.78;
+      A1_A2_ref(2,2) = 22.38;
+
+      auto A1_b_c  = matmul_rc( A1_c , b_c  );
+      auto A1_A2_c = matmul_rc( A1_c , A2_c );
+
+      real adiff_A1_b_c  = 0;
+      real adiff_A1_A2_c = 0;
+      for (int i=0; i < 3; i++) {
+        adiff_A1_b_c += abs( A1_b_c(i  ) - A1_b_ref(i) );
+      }
+      for (int j=0; j < 3; j++) {
+        for (int i=0; i < 3; i++) {
+          adiff_A1_A2_c += abs( A1_A2_c(j  ,i  ) - A1_A2_ref(j  ,i) );
+        }
+      }
+
+      if (adiff_A1_b_c  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_c  rc");
+      if (adiff_A1_A2_c >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_c rc");
+
+      auto trans_A1_c = transpose( A1_c );
+      auto trans_A2_c = transpose( A2_c );
+
+      A1_b_c  = matmul_cr( trans_A1_c , b_c  );
+      A1_A2_c = matmul_cr( trans_A1_c , trans_A2_c );
+
+      A1_A2_c = transpose( A1_A2_c );
+
+      adiff_A1_b_c  = 0;
+      adiff_A1_A2_c = 0;
+      for (int i=0; i < 3; i++) {
+        adiff_A1_b_c += abs( A1_b_c(i  ) - A1_b_ref(i) );
+      }
+      for (int j=0; j < 3; j++) {
+        for (int i=0; i < 3; i++) {
+          adiff_A1_A2_c += abs( A1_A2_c(j  ,i  ) - A1_A2_ref(j  ,i) );
+        }
+      }
+
+      if (adiff_A1_b_c  >= 1.e-13) die("ERROR: incorrect adiff_A1_b_c  cr");
+      if (adiff_A1_A2_c >= 1.e-13) die("ERROR: incorrect adiff_A1_A2_c cr");
+
+
+      A1_c(0,0) = 1;
+      A1_c(0,1) = 0;
+      A1_c(0,2) = 0;
+      A1_c(1,0) = 1;
+      A1_c(1,1) = 0.5;
+      A1_c(1,2) = 0.25;
+      A1_c(2,0) = 1;
+      A1_c(2,1) = 1;
+      A1_c(2,2) = 1;
+
+      auto A1_inv_c = matinv( A1_c );
+      auto identity_c = matmul_rc( A1_inv_c , A1_c );
+
+      real adiff_inv_c = 0;
+      for (int j=0; j < 3; j++) {
+        for (int i=0; i < 3; i++) {
+          if (i == j) {
+            adiff_inv_c += abs( identity_c(j  ,i  ) - 1 );
+          } else {
+            adiff_inv_c += abs( identity_c(j  ,i  )     );
+          }
+        }
+      }
+      if (adiff_inv_c >= 1.e-13) die("ERROR: incorrect adiff_inv_c");
+    }
+
+
+
     {
       using namespace yakl::componentwise;
       using yakl::intrinsics::sum;

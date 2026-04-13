@@ -5,10 +5,6 @@
 namespace yakl {
   namespace intrinsics {
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
-    // COMPONENTWISE
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
-
     // ABS
     template <class ViewType> inline ViewType abs(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.span_is_contiguous()) Kokkos::abort("ERROR: abs on non-contiguous View");
@@ -28,6 +24,7 @@ namespace yakl {
         return ret;
       }
     }
+
 
 
     // SIGN
@@ -52,6 +49,7 @@ namespace yakl {
         return ret;
       }
     }
+
 
 
     // MERGE
@@ -79,9 +77,174 @@ namespace yakl {
 
 
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
-    // INTRINSICS
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    // MATMUL_RC
+    template <class V1, class V2 >requires is_SArray<V1> && is_SArray<V2> && V1::is_cstyle && V2::is_cstyle
+    KOKKOS_INLINE_FUNCTION auto matmul_rc(V1 const & v1 , V2 const & v2) {
+      static_assert((V1::rank==2) && (V2::rank <= 2),"ERROR: matmul_rc on incompatible rank SArray types");
+      int constexpr nrows1 = V1::template extent<0>();
+      int constexpr ncols1 = V1::template extent<1>();
+      int constexpr nrows2 = V2::template extent<0>();
+      static_assert(ncols1 == nrows2,"ERROR: matmul_rc matrix-vector with incompatible dimension sizes");
+      using T = std::remove_cv_t<decltype(v1.data()[0]+v2.data()[0])>;
+      if constexpr (V2::rank==1) {
+        SArray<T,nrows1> ret;
+        for (int ir1 = 0; ir1 < nrows1; ir1++) {
+          ret(ir1) = static_cast<T>(0);
+          for (int ic1 = 0; ic1 < ncols1; ic1++) { ret(ir1) += v1(ir1,ic1)*v2(ic1); }
+        }
+        return ret;
+      } else {
+        int constexpr ncols2 = V2::template extent<1>();
+        SArray<T,nrows1,ncols2> ret;
+        for (int ir1 = 0; ir1 < nrows1; ir1++) {
+          for (int ic2 = 0; ic2 < ncols2; ic2++) {
+            ret(ir1,ic2) = static_cast<T>(0);
+            for (int ic1 = 0; ic1 < ncols1; ic1++) { ret(ir1,ic2) += v1(ir1,ic1)*v2(ic1,ic2); }
+          }
+        }
+        return ret;
+      }
+    }
+
+
+
+    // MATMUL_CR
+    template <class V1, class V2 >requires is_SArray<V1> && is_SArray<V2> && V1::is_cstyle && V2::is_cstyle
+    KOKKOS_INLINE_FUNCTION auto matmul_cr(V1 const & v1 , V2 const & v2) {
+      static_assert((V1::rank==2) && (V2::rank <= 2),"ERROR: matmul_cr on incompatible rank SArray types");
+      int constexpr nrows1 = V1::template extent<1>();
+      int constexpr ncols1 = V1::template extent<0>();
+      using T = std::remove_cv_t<decltype(v1.data()[0]+v2.data()[0])>;
+      if constexpr (V2::rank==1) {
+        int constexpr nrows2 = V2::template extent<0>();
+        static_assert(ncols1 == nrows2,"ERROR: matmul_cr matrix-vector with incompatible dimension sizes");
+        SArray<T,nrows1> ret;
+        for (int ir1 = 0; ir1 < nrows1; ir1++) {
+          ret(ir1) = static_cast<T>(0);
+          for (int ic1 = 0; ic1 < ncols1; ic1++) { ret(ir1) += v1(ic1,ir1)*v2(ic1); }
+        }
+        return ret;
+      } else {
+        int constexpr nrows2 = V2::template extent<1>();
+        static_assert(ncols1 == nrows2,"ERROR: matmul_cr matrix-vector with incompatible dimension sizes");
+        int constexpr ncols2 = V2::template extent<0>();
+        SArray<T,ncols2,nrows1> ret;
+        for (int ir1 = 0; ir1 < nrows1; ir1++) {
+          for (int ic2 = 0; ic2 < ncols2; ic2++) {
+            ret(ic2,ir1) = static_cast<T>(0);
+            for (int ic1 = 0; ic1 < ncols1; ic1++) { ret(ic2,ir1) += v1(ic1,ir1)*v2(ic2,ic1); }
+          }
+        }
+        return ret;
+      }
+    }
+
+
+
+    // TRANSPOSE
+    template <class V> requires is_SArray<V> && (V::rank == 2) && V::is_cstyle
+    KOKKOS_INLINE_FUNCTION auto transpose(V const & v) {
+      int constexpr nr = V::template extent<0>();
+      int constexpr nc = V::template extent<1>();
+      SArray<typename V::non_const_value_type,nc,nr> ret;
+      for (int ir = 0; ir < nr; ir++) {
+        for (int ic = 0; ic < nc; ic++) { ret(ic,ir) = v(ir,ic); }
+      }
+      return ret;
+    }
+
+
+
+    // template <class V> requires is_SArray<V> && (V::rank == 2) && V::is_cstyle
+    // KOKKOS_INLINE_FUNCTION auto matinv(V const & a) {
+    //   static_assert(V::template extent<0>() == V::template extent<1>(),"ERROR: matinv on non-square matrix");
+    //   int constexpr n = V::template extent<0>();
+    //   using T = typename V::non_const_value_type;
+    //   SArray<T,n,n> scratch;
+    //   SArray<T,n,n> inv;
+    //   // Initialize inverse as identity
+    //   for (int icol = 0; icol < n; icol++) {
+    //     for (int irow = 0; irow < n; irow++) {
+    //       scratch(icol,irow) = a(icol,irow);
+    //       inv    (icol,irow) = icol==irow ? 1 : 0;
+    //     }
+    //   }
+    //   // Gaussian elimination to zero out lower
+    //   for (int idiag = 0; idiag < n; idiag++) {
+    //     // Divide out the diagonal component from the first row
+    //     T factor = static_cast<T>(1)/scratch(idiag,idiag);
+    //     for (int icol = idiag; icol < n; icol++) { scratch(idiag,icol) *= factor; }
+    //     for (int icol = 0; icol < n; icol++) { inv(idiag,icol) *= factor; }
+    //     for (int irow = idiag+1; irow < n; irow++) {
+    //       T factor = scratch(irow,idiag);
+    //       for (int icol = idiag; icol < n; icol++) { scratch(irow,icol) -= factor * scratch(idiag,icol); }
+    //       for (int icol = 0    ; icol < n; icol++) { inv    (irow,icol) -= factor * inv    (idiag,icol); }
+    //     }
+    //   }
+    //   // Gaussian elimination to zero out upper
+    //   for (int idiag = n-1; idiag >= 1; idiag--) {
+    //     for (int irow = 0; irow < idiag; irow++) {
+    //       T factor = scratch(irow,idiag);
+    //       for (int icol = irow+1; icol < n; icol++) { scratch(irow,icol) -= factor * scratch(idiag,icol); }
+    //       for (int icol = 0     ; icol < n; icol++) { inv    (irow,icol) -= factor * inv    (idiag,icol); }
+    //     }
+    //   }
+    //   return inv;
+    // }
+    template <class V> requires is_SArray<V> && (V::rank == 2) && V::is_cstyle
+    KOKKOS_INLINE_FUNCTION auto matinv(V const & a) {
+      static_assert(V::template extent<0>() == V::template extent<1>(),"ERROR: matinv on non-square matrix");
+      int constexpr n = V::template extent<0>();
+      using T = typename V::non_const_value_type;
+      SArray<T,n,n> scratch;
+      SArray<T,n,n> inv;
+      // Initialize scratch as copy of a, inv as identity
+      for (int irow = 0; irow < n; irow++) {
+        for (int icol = 0; icol < n; icol++) {
+          scratch(irow,icol) = a(irow,icol);
+          inv    (irow,icol) = (irow==icol) ? static_cast<T>(1) : static_cast<T>(0);
+        }
+      }
+      // Forward elimination with partial pivoting
+      for (int idiag = 0; idiag < n; idiag++) {
+        // Find pivot row: largest absolute value in column idiag from idiag downward
+        int pivot     = idiag;
+        T   pivot_val = std::abs(scratch(idiag,idiag));
+        for (int irow = idiag+1; irow < n; irow++) {
+          T val = std::abs(scratch(irow,idiag));
+          if (val > pivot_val) { pivot_val = val; pivot = irow; }
+        }
+        // Swap pivot row into diagonal position
+        if (pivot != idiag) {
+          for (int icol = 0; icol < n; icol++) {
+            T tmp = scratch(idiag,icol); scratch(idiag,icol) = scratch(pivot,icol); scratch(pivot,icol) = tmp;
+            tmp   = inv    (idiag,icol); inv    (idiag,icol) = inv    (pivot,icol); inv    (pivot,icol) = tmp;
+          }
+        }
+        // Normalize pivot row
+        T factor = static_cast<T>(1) / scratch(idiag,idiag);
+        for (int icol = idiag; icol < n; icol++) { scratch(idiag,icol) *= factor; }
+        for (int icol = 0;     icol < n; icol++) { inv    (idiag,icol) *= factor; }
+        // Eliminate below
+        for (int irow = idiag+1; irow < n; irow++) {
+          T fac = scratch(irow,idiag);
+          for (int icol = idiag; icol < n; icol++) { scratch(irow,icol) -= fac * scratch(idiag,icol); }
+          for (int icol = 0;     icol < n; icol++) { inv    (irow,icol) -= fac * inv    (idiag,icol); }
+        }
+      }
+      // Back substitution to zero out upper triangle
+      for (int idiag = n-1; idiag >= 1; idiag--) {
+        for (int irow = 0; irow < idiag; irow++) {
+          T fac = scratch(irow,idiag);
+          for (int icol = irow+1; icol < n; icol++) { scratch(irow,icol) -= fac * scratch(idiag,icol); }
+          for (int icol = 0;      icol < n; icol++) { inv    (irow,icol) -= fac * inv    (idiag,icol); }
+        }
+      }
+      return inv;
+    }
+
+
+
 
     template <class ViewType> KOKKOS_INLINE_FUNCTION auto           allocated (ViewType const & in) {
       return in.is_allocated();
@@ -135,10 +298,6 @@ namespace yakl {
     }
 
 
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
-    // REDUCTIONS
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // ANY
     template <class ViewType> inline bool any(ViewType const & in) {

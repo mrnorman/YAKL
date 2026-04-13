@@ -8,7 +8,7 @@ namespace yakl {
   inline int constexpr COLON = 0;
 
 
-  template <class Type> inline constexpr bool is_Array = requires { Type::is_Array; };
+  template <class Type> inline constexpr bool is_Array = requires { requires Type::is_Array; };
 
 
 
