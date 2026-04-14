@@ -3,7 +3,12 @@
 
 namespace yakl {
 
-  struct Bnds { ptrdiff_t l, u; };
+
+  struct CStyle { static constexpr bool is_cstyle = true; };
+  struct FStyle { static constexpr bool is_fstyle = true; };
+
+  template <class Type> inline constexpr bool is_CStyle = requires { requires Type::is_cstyle; };
+  template <class Type> inline constexpr bool is_FStyle = requires { requires Type::is_fstyle; };
 
 
 
@@ -250,13 +255,9 @@ namespace yakl {
 
 
 
-  template <int N> using SimpleBounds     = Bounds<N,CStyle,true >;
-  template <int N> using SimpleBounds64   = Bounds<N,CStyle,true >;
-  template <int N> using SimpleBounds_F   = Bounds<N,FStyle,true >;
-  template <int N> using SimpleBounds64_F = Bounds<N,FStyle,true >;
-  template <int N> using Bounds64         = Bounds<N,CStyle,false>;
-  template <int N> using Bounds_F         = Bounds<N,FStyle,false>;
-  template <int N> using Bounds64_F       = Bounds<N,FStyle,false>;
+  template <int N> using SimpleBounds   = Bounds<N,CStyle,true >;
+  template <int N> using SimpleBounds_F = Bounds<N,FStyle,true >;
+  template <int N> using Bounds_F       = Bounds<N,FStyle,false>;
 
 
 

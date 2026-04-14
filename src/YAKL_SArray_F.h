@@ -4,16 +4,19 @@
 
 namespace yakl {
 
+  struct Bnds { ptrdiff_t l, u; };
+
+
+
   template <class T, Bnds... DIMS> requires (sizeof...(DIMS) > 0) &&
                                             ((static_cast<int>(DIMS.l) <= static_cast<int>(DIMS.u)) && ...)
   class SArray_F {
     public:
-    using style = FStyle;
-    bool                          static constexpr is_SArray    = true;
-    unsigned int                  static constexpr rank         = sizeof...(DIMS);
-    unsigned int                  static constexpr num_elements = ((static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1)) * ...);
-    bool                          static constexpr is_cstyle    = false;
-    bool                          static constexpr is_fstyle    = true;
+    bool         static constexpr is_SArray    = true;
+    unsigned int static constexpr rank         = sizeof...(DIMS);
+    unsigned int static constexpr num_elements = ((static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1)) * ...);
+    bool         static constexpr is_cstyle    = false;
+    bool         static constexpr is_fstyle    = true;
     using value_type           = T;
     using const_value_type     = std::add_const_t<T>;
     using non_const_value_type = std::remove_cv_t<T>;

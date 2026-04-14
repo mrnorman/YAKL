@@ -12,12 +12,11 @@ namespace yakl {
                                                           ((DIMS > 0) && ...)
   class SArray {
     public:
-    using style = CStyle;
-    bool                          static constexpr is_SArray    = true;
-    unsigned int                  static constexpr rank         = sizeof...(DIMS);
-    unsigned int                  static constexpr num_elements = (DIMS * ...);
-    bool                          static constexpr is_cstyle    = true;
-    bool                          static constexpr is_fstyle    = false;
+    bool         static constexpr is_SArray    = true;
+    unsigned int static constexpr rank         = sizeof...(DIMS);
+    unsigned int static constexpr num_elements = (DIMS * ...);
+    bool         static constexpr is_cstyle    = true;
+    bool         static constexpr is_fstyle    = false;
     using value_type           = T;
     using const_value_type     = std::add_const_t<T>;
     using non_const_value_type = std::remove_cv_t<T>;
