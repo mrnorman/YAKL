@@ -63,11 +63,12 @@
 ## Example compilation approach
 ```cmake
 add_subdirectory(${KOKKOS_HOME} ${KOKKOS_BIN})
-include_directories(${Kokkos_INCLUDE_DIRS_RET})
 add_subdirectory(${YAKL_HOME} ${YAKL_BIN})
+target_link_libraries(yakl PUBLIC Kokkos::kokkos)
 add_executable(my_target_name ${MY_SOURCE_FILES})
+target_compile_options(yakl PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${ADDED_CXX_FLAGS}>)
 target_compile_options(my_target_name PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${ADDED_CXX_FLAGS}>)
-target_link_libraries(my_target_name yakl kokkos [${ADDED_LINK_FLAGS}])
+target_link_libraries(my_target_name yakl [${ADDED_LINK_FLAGS}])
 ```
 ```bash
 # OLCF Frontier Example
@@ -88,9 +89,9 @@ CMAKE_COMMAND+=($CMAKE_DIRECTORY_LOC)
 "${CMAKE_COMMAND[@]}"
 ```
 
-## Documentation: https://github.com/mrnorman/YAKL/wiki
+## Documentation: https://github.com/mrnorman/YAKL/wiki (**WARNING**: Doscumentation is subject to the above changes)
 
-## API Documentation: https://mrnorman.github.io/yakl_api/html/index.html
+## API Documentation: https://mrnorman.github.io/yakl_api/html/index.html (**WARNING**: API is subject to the above changes)
 
 ## Cite YAKL: https://link.springer.com/article/10.1007/s10766-022-00739-0
 
