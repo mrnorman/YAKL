@@ -44,7 +44,8 @@ namespace yakl {
     unsigned_t static constexpr default_lbound = is_cstyle ? 0 : 1;
     unsigned_t nIter;
     std::array<unsigned_t,N> offs;
-    KOKKOS_INLINE_FUNCTION Bounds( std::integral auto... sizes ) requires (sizeof...(sizes) == N) {
+    KOKKOS_INLINE_FUNCTION Bounds( std::integral auto... sizes ) {
+      static_assert(sizeof...(sizes)==N,"ERROR: Bounds class creation with wrong number of loop bounds");
       std::array<unsigned_t,N> dims = { static_cast<unsigned_t>(sizes)... };
       nIter = 1;
       for (int i=0; i < N; i++) {
@@ -149,7 +150,8 @@ namespace yakl {
     std::array<unsigned_t,N> strides;
 
     template <class... BNDS> requires (std::is_same_v<BNDS,LoopSpec<Style>> && ...)
-    KOKKOS_INLINE_FUNCTION void init( BNDS... bnds ) requires (sizeof...(bnds) == N) {
+    KOKKOS_INLINE_FUNCTION void init( BNDS... bnds ) {
+      static_assert(sizeof...(bnds) == N,"Error: Bounds::init called with wrong number of bounds parameters");
       std::array<unsigned_t,N> dims = { static_cast<unsigned_t>((bnds.u-bnds.l+1)/bnds.s)... };
       lbounds                       = { static_cast<signed_t  >(bnds.l)... };
       strides                       = { static_cast<unsigned_t>(bnds.s)... };
@@ -162,14 +164,38 @@ namespace yakl {
     }
 
     using LS = LoopSpec<Style>;
-    KOKKOS_INLINE_FUNCTION Bounds(LS s0)                                           requires (N==1) { init(s0); }
-    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1)                                     requires (N==2) { init(s0,s1); }
-    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2)                               requires (N==3) { init(s0,s1,s2); }
-    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3)                         requires (N==4) { init(s0,s1,s2,s3); }
-    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4)                   requires (N==5) { init(s0,s1,s2,s3,s4); }
-    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4,LS s5)             requires (N==6) { init(s0,s1,s2,s3,s4,s5); }
-    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4,LS s5,LS s6)       requires (N==7) { init(s0,s1,s2,s3,s4,s5,s6); }
-    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4,LS s5,LS s6,LS s7) requires (N==8) { init(s0,s1,s2,s3,s4,s5,s6,s7); }
+    KOKKOS_INLINE_FUNCTION Bounds(LS s0) {
+      static_assert(N==1,"ERROR: Creating Bounds with wrong number of bounds parameters");
+      init(s0);
+    }
+    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1) {
+      static_assert(N==2,"ERROR: Creating Bounds with wrong number of bounds parameters");
+      init(s0,s1);
+    }
+    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2) {
+      static_assert(N==3,"ERROR: Creating Bounds with wrong number of bounds parameters");
+      init(s0,s1,s2);
+    }
+    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3) {
+      static_assert(N==4,"ERROR: Creating Bounds with wrong number of bounds parameters");
+      init(s0,s1,s2,s3);
+    }
+    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4) {
+      static_assert(N==5,"ERROR: Creating Bounds with wrong number of bounds parameters");
+      init(s0,s1,s2,s3,s4);
+    }
+    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4,LS s5) {
+      static_assert(N==6,"ERROR: Creating Bounds with wrong number of bounds parameters");
+      init(s0,s1,s2,s3,s4,s5);
+    }
+    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4,LS s5,LS s6) {
+      static_assert(N==7,"ERROR: Creating Bounds with wrong number of bounds parameters");
+      init(s0,s1,s2,s3,s4,s5,s6);
+    }
+    KOKKOS_INLINE_FUNCTION Bounds(LS s0,LS s1,LS s2,LS s3,LS s4,LS s5,LS s6,LS s7) {
+      static_assert(N==8,"ERROR: Creating Bounds with wrong number of bounds parameters");
+      init(s0,s1,s2,s3,s4,s5,s6,s7);
+    }
 
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ) const requires (N==1) {
       i0 = iglob        ;                        i0 = i0*strides[0]+lbounds[0];

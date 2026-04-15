@@ -50,8 +50,11 @@ namespace yakl {
     }
 
 
-    template <std::integral auto new_rank> requires (new_rank <= this_t::rank()) && (new_rank >= 0)
-    KOKKOS_INLINE_FUNCTION auto slice(std::integral auto... indices) const requires (sizeof...(indices) == this_t::rank()) {
+    template <std::integral auto new_rank, class... INTS> requires (new_rank <= this_t::rank()) &&
+                                                                   (new_rank >= 0) &&
+                                                                   (std::is_integral_v<INTS> && ...)
+    KOKKOS_INLINE_FUNCTION auto slice(INTS... indices) const {
+      static_assert(sizeof...(indices)==this_t::rank(),"ERROR: slice calld with wrong number of indices");
       int constexpr rank      = this_t::rank();
       int constexpr nslice    = rank - new_rank;
       int constexpr remaining = new_rank;

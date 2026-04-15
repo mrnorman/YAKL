@@ -5,25 +5,18 @@ module reset
 module load PrgEnv-nvidia cray-hdf5 cray-netcdf cray-libsci/25.03.0 cray-parallel-netcdf
 module load cudatoolkit craype-accel-nvidia90
 
-#   cray-libsci/25.03.0    cray-libsci/25.09.0    cray-libsci/25.09.0 (L,D)    cray-libsci_acc/24.07.0    cray-libsci_acc/25.03.0    cray-libsci_acc/25.09.2 (L,D)
-
-
 ../../cmakeclean.sh
 
 export CC=cc
 export FC=ftn
 export CXX=CC
-export MPICH_GPU_SUPPORT_ENABLED=1
 
 unset CXXFLAGS
 unset FFLAGS
 unset F77FLAGS
 unset F90FLAGS
 
-PNETCDF_DIR=/lustre/storm/nwp501/scratch/imn/pnetcdf_cray_mpich_ucx
-
 export MPICH_GPU_SUPPORT_ENABLED=1
-export UCX_TLS=rc,sm,self,cuda,cuda_copy,cuda_ipc
 
 cmake -Wno-dev                          \
       -DKokkos_ENABLE_CUDA_CONSTEXPR=ON \
