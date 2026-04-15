@@ -155,42 +155,6 @@ namespace yakl {
 
 
 
-    // template <class V> requires is_SArray<V> && (V::rank == 2) && V::is_cstyle
-    // KOKKOS_INLINE_FUNCTION auto matinv(V const & a) {
-    //   static_assert(V::template extent<0>() == V::template extent<1>(),"ERROR: matinv on non-square matrix");
-    //   int constexpr n = V::template extent<0>();
-    //   using T = typename V::non_const_value_type;
-    //   SArray<T,n,n> scratch;
-    //   SArray<T,n,n> inv;
-    //   // Initialize inverse as identity
-    //   for (int icol = 0; icol < n; icol++) {
-    //     for (int irow = 0; irow < n; irow++) {
-    //       scratch(icol,irow) = a(icol,irow);
-    //       inv    (icol,irow) = icol==irow ? 1 : 0;
-    //     }
-    //   }
-    //   // Gaussian elimination to zero out lower
-    //   for (int idiag = 0; idiag < n; idiag++) {
-    //     // Divide out the diagonal component from the first row
-    //     T factor = static_cast<T>(1)/scratch(idiag,idiag);
-    //     for (int icol = idiag; icol < n; icol++) { scratch(idiag,icol) *= factor; }
-    //     for (int icol = 0; icol < n; icol++) { inv(idiag,icol) *= factor; }
-    //     for (int irow = idiag+1; irow < n; irow++) {
-    //       T factor = scratch(irow,idiag);
-    //       for (int icol = idiag; icol < n; icol++) { scratch(irow,icol) -= factor * scratch(idiag,icol); }
-    //       for (int icol = 0    ; icol < n; icol++) { inv    (irow,icol) -= factor * inv    (idiag,icol); }
-    //     }
-    //   }
-    //   // Gaussian elimination to zero out upper
-    //   for (int idiag = n-1; idiag >= 1; idiag--) {
-    //     for (int irow = 0; irow < idiag; irow++) {
-    //       T factor = scratch(irow,idiag);
-    //       for (int icol = irow+1; icol < n; icol++) { scratch(irow,icol) -= factor * scratch(idiag,icol); }
-    //       for (int icol = 0     ; icol < n; icol++) { inv    (irow,icol) -= factor * inv    (idiag,icol); }
-    //     }
-    //   }
-    //   return inv;
-    // }
     template <class V> requires is_SArray<V> && (V::rank == 2) && V::is_cstyle
     KOKKOS_INLINE_FUNCTION auto matinv(V const & a) {
       static_assert(V::template extent<0>() == V::template extent<1>(),"ERROR: matinv on non-square matrix");
