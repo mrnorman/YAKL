@@ -3,17 +3,14 @@
 #include "YAKL.h"
 
 using yakl::Array;
-using yakl::styleC;
-using yakl::memHost;
-using yakl::memDevice;
-using yakl::c::parallel_for;
-using yakl::c::Bounds;
-using yakl::c::SimpleBounds;
+using yakl::parallel_for;
+using yakl::Bounds;
+using yakl::SimpleBounds;
 using yakl::COLON;
 
 typedef float real;
 
-typedef Array<real,1,memDevice,styleC> real1d;
+typedef Array<real *,yakl::DeviceSpace> real1d;
 
 namespace blah {
   real1d a, b, c;
@@ -29,6 +26,7 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     int constexpr n = 100;
 
     blah::a = real1d("a",n);
@@ -55,6 +53,7 @@ int main() {
     blah::a = real1d();
     blah::b = real1d();
     blah::c = real1d();
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

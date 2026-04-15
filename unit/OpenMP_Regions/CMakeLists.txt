@@ -1,7 +1,7 @@
 
 set(MYSRC OpenMP_Regions.cpp)
 add_executable(OpenMP_Regions ${MYSRC})
-target_link_libraries(OpenMP_Regions yakl kokkos)
+target_link_libraries(OpenMP_Regions yakl)
 target_compile_options(OpenMP_Regions PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${YAKL_UNIT_CXX_FLAGS}>)
 if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
   target_link_libraries(OpenMP_Regions "${YAKL_UNIT_CXX_LINK_FLAGS}")

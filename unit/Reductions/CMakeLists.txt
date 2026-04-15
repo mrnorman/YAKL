@@ -1,7 +1,7 @@
 
 set(MYSRC Reductions.cpp)
 add_executable(Reductions ${MYSRC})
-target_link_libraries(Reductions yakl kokkos)
+target_link_libraries(Reductions yakl)
 target_compile_options(Reductions PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${YAKL_UNIT_CXX_FLAGS}>)
 if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
   target_link_libraries(Reductions "${YAKL_UNIT_CXX_LINK_FLAGS}")

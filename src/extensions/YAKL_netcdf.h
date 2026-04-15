@@ -9,7 +9,6 @@
 
 namespace yakl {
   //Error reporting routine for the PNetCDF I/O
-  /** @private */
   inline void ncwrap( int ierr , int line ) {
     if (ierr != NC_NOERR) {
       printf("NetCDF Error at line: %d\n", line);
@@ -18,25 +17,19 @@ namespace yakl {
     }
   }
 
-  /** @brief Tells NetCDF the opened file should be opened for reading only. */
   int constexpr NETCDF_MODE_READ    = NC_NOWRITE;
-  /** @brief Tells NetCDF the opened file should be opened for reading and writing. */
   int constexpr NETCDF_MODE_WRITE   = NC_WRITE;
-  /** @brief Tells NetCDF the created file should overwite a file of the same name. */
   int constexpr NETCDF_MODE_REPLACE = NC_CLOBBER;
-  /** @brief Tells NetCDF the created file should not overwite a file of the same name. */
   int constexpr NETCDF_MODE_NEW     = NC_NOCLOBBER;
 
   // Evidently there were ton of issues when using the C++ interface for NetCDF
   // People can't seem to install it correctly.
   // Therefore, I'm replicating the basic functionality so that I can use the code
   // I previously wrote for handling netCDF files for YAKL Array objects
-  /** @brief Simple way to write yakl::Array objects to NetCDF files */
   class SimpleNetCDF {
   public:
 
 
-    /** @private */
     class NcDim {
     public:
       std::string name;
@@ -92,7 +85,6 @@ namespace yakl {
     };
 
 
-    /** @private */
     class NcVar {
     public:
       int                ncid;
@@ -216,7 +208,6 @@ namespace yakl {
     };
 
 
-    /** @private */
     class NcFile {
     public:
       int ncid;
@@ -326,53 +317,42 @@ namespace yakl {
     };
 
 
-    /** @private */
     NcFile file;
 
 
     SimpleNetCDF() { }
 
 
-    /** @brief Files are automatically closed when SimpleNetCDF objects are destroyed */
     ~SimpleNetCDF() { close(); }
 
 
-    /** @brief Open a netcdf file
-      * @param mode Can be NETCDF_MODE_READ or NETCDF_MODE_WRITE */
     void open(std::string fname , int mode = NETCDF_MODE_READ) { file.open(fname,mode); }
 
 
-    /** @brief Create a netcdf file
-      * @param mode Can be NETCDF_MODE_CLOBBER or NETCDF_MODE_NOCLOBBER */
     void create(std::string fname , int mode = NC_CLOBBER) { file.create(fname,mode); }
 
 
-    /** @brief Close the netcdf file */
     void close() { file.close(); }
 
 
-    /** @brief Determine if a variable name exists */
     bool varExists( std::string varName ) const { return ! file.getVar(varName).isNull(); }
 
 
-    /** @brief Determine if a dimension name exists */
     bool dimExists( std::string dimName ) const { return ! file.getDim(dimName).isNull(); }
 
 
-    /** @brief Determine the size of a dimension name */
     size_t getDimSize( std::string dimName ) const { return file.getDim(dimName).getSize(); }
 
 
-    /** @brief Create a dimension of the given length */
     void createDim( std::string dimName , size_t len ) { file.addDim( dimName , len ); }
 
-    /** @brief Create an unlimited dimension */
     void createDim( std::string dimName ) { file.addDim( dimName ); }
 
 
-    /** @brief Write an entire Array at once */
-    template <class T, int rank, int myMem, int myStyle>
-    void write(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames) {
+    template <class ViewType> requires is_Array<ViewType>
+    void write(ViewType const & arr , std::string varName , std::vector<std::string> dimNames) {
+      int constexpr rank = ViewType::rank();
+      using T = typename ViewType::non_const_value_type;
       if (rank != dimNames.size()) { Kokkos::abort("dimNames.size() != Array's rank"); }
       std::vector<NcDim> dims(rank); // List of dimensions for this variable
       // Make sure the dimensions are in there and are the right sizes
@@ -388,11 +368,8 @@ namespace yakl {
           }
           tmp = dimLoc;
         }
-        if (myStyle == styleC) {
-          dims[i] = tmp;
-        } else {
-          dims[rank-1-i] = tmp;
-        }
+        if (ViewType::is_cstyle) { dims[i] = tmp; }
+        else                     { dims[rank-1-i] = tmp; }
       }
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
@@ -403,7 +380,7 @@ namespace yakl {
         auto varDims = var.getDims();
         if (varDims.size() != rank) { Kokkos::abort("Existing variable's rank != array's rank"); }
         for (int i=0; i < varDims.size(); i++) {
-          if (myStyle == styleC) {
+          if (ViewType::is_cstyle) {
             if (varDims[i].getSize() != arr.extent(i)) {
               Kokkos::abort("Existing variable's dimension sizes are not the same as the array's");
             }
@@ -415,22 +392,16 @@ namespace yakl {
         }
       }
 
-      if (myMem == memDevice) {
-        var.putVar(arr.createHostCopy().data());
-      } else {
-        var.putVar(arr.data());
-      }
+      if (ViewType::on_device) { var.putVar(arr.createHostCopy().data()); }
+      else                     { var.putVar(arr.data()); }
     }
 
 
-    /** @brief Write one entry of a scalar into the unlimited index */
-    template <class T, typename std::enable_if<std::is_arithmetic<T>::value,int>::type = 0 >
+    template <class T> requires std::is_arithmetic_v<T>
     void write1(T val , std::string varName , int ind , std::string ulDimName="unlim" ) {
       // Get the unlimited dimension or create it if it doesn't exist
       auto ulDim = file.getDim( ulDimName );
-      if ( ulDim.isNull() ) {
-        ulDim = file.addDim( ulDimName );
-      }
+      if ( ulDim.isNull() )  ulDim = file.addDim( ulDimName );
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
       if ( var.isNull() ) {
@@ -446,10 +417,11 @@ namespace yakl {
     }
 
 
-    /** @brief Write one entry of an Array into the unlimited index */
-    template <class T, int rank, int myMem, int myStyle>
-    void write1(Array<T,rank,myMem,myStyle> const &arr , std::string varName , std::vector<std::string> dimNames ,
+    template <class ViewType> requires is_Array<ViewType>
+    void write1(ViewType const & arr , std::string varName , std::vector<std::string> dimNames ,
                 int ind , std::string ulDimName="unlim" ) {
+      int constexpr rank = ViewType::rank();
+      using T = typename ViewType::non_const_value_type;
       if (rank != dimNames.size()) { Kokkos::abort("dimNames.size() != Array's rank"); }
       std::vector<NcDim> dims(rank+1); // List of dimensions for this variable
       // Get the unlimited dimension or create it if it doesn't exist
@@ -470,7 +442,7 @@ namespace yakl {
           }
           tmp = dimLoc;
         }
-        if (myStyle == styleC) {
+        if (ViewType::is_cstyle) {
           dims[1+i] = tmp;
         } else {
           dims[1+rank-1-i] = tmp;
@@ -487,7 +459,7 @@ namespace yakl {
           Kokkos::abort("Existing variable's rank != array's rank");
         }
         for (int i=1; i < varDims.size(); i++) {
-          if (myStyle == styleC) {
+          if (ViewType::is_cstyle) {
             if (varDims[i].getSize() != arr.extent(i-1)) {
               Kokkos::abort("Existing variable's dimension sizes are not the same as the array's");
             }
@@ -507,58 +479,44 @@ namespace yakl {
         start[i] = 0;
         count[i] = dims[i].getSize();
       }
-      if (myMem == memDevice) {
-        var.putVar(start,count,arr.createHostCopy().data());
-      } else {
-        var.putVar(start,count,arr.data());
-      }
+      if (ViewType::on_device) { var.putVar(start,count,arr.createHostCopy().data()); }
+      else                     { var.putVar(start,count,arr.data()); }
     }
 
 
-    /** @brief Read an entire Array */
-    template <class T, int rank, int myMem, int myStyle>
-    void read(Array<T,rank,myMem,myStyle> &arr , std::string varName) {
+    template <class ViewType> requires is_Array<ViewType>
+    void read(ViewType const & arr , std::string varName) {
+      int constexpr rank = ViewType::rank();
+      using T = typename ViewType::non_const_value_type;
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
       std::vector<int> dimSizes(rank);
       if ( ! var.isNull() ) {
         auto varDims = var.getDims();
         if (varDims.size() != rank) { Kokkos::abort("Existing variable's rank != array's rank"); }
-        if (myStyle == styleC) {
-          for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[i].getSize(); }
-        } else if (myStyle == styleFortran) {
-          for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[varDims.size()-1-i].getSize(); }
+        if (ViewType::is_cstyle) { for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[i].getSize(); } }
+        else                     { for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[varDims.size()-1-i].getSize(); } }
+        for (int i=0; i < dimSizes.size(); i++) {
+          if (dimSizes[i] != arr.extent(i)) Kokkos::abort("ERROR: Array & var dims mismatch");
         }
-        bool createArr = ! arr.initialized();
-        if (arr.initialized()) {
-          for (int i=0; i < dimSizes.size(); i++) {
-            if (dimSizes[i] != arr.extent(i)) {
-              #ifdef KOKKOS_ENABLE_DEBUG
-                std::cout << "WARNING: Array dims wrong size; deallocating previous array and allocating a new one\n";
-              #endif
-              createArr = true;
-            }
-          }
-        }
-        if (createArr) { arr = Array<T,rank,myMem,myStyle>(varName.c_str(),dimSizes); }
       } else { Kokkos::abort("Variable does not exist"); }
 
-      if (myMem == memDevice) {
+      if (ViewType::on_device) {
         auto arrHost = arr.createHostObject();
-        if (std::is_same<T,bool>::value) {
-          Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
+        if (std::is_same_v<T,bool>) {
+          auto tmp = arr.template clone_object<Kokkos::HostSpace>();
           var.getVar(tmp.data());
-          for (int i=0; i < arr.totElems(); i++) { arrHost.data()[i] = tmp.data()[i] == 1; }
+          for (int i=0; i < arr.size(); i++) { arrHost.data()[i] = tmp.data()[i] == 1; }
         } else {
           var.getVar(arrHost.data());
         }
         arrHost.deep_copy_to(arr);
         Kokkos::fence();
       } else {
-        if (std::is_same<T,bool>::value) {
-          Array<int,rank,memHost,myStyle> tmp("tmp",dimSizes);
+        if (std::is_same_v<T,bool>) {
+          auto tmp = arr.template clone_object<Kokkos::HostSpace,int>();
           var.getVar(tmp.data());
-          for (int i=0; i < arr.totElems(); i++) { arr.data()[i] = tmp.data()[i] == 1; }
+          for (int i=0; i < arr.size(); i++) { arr.data()[i] = tmp.data()[i] == 1; }
         } else {
           var.getVar(arr.data());
         }
@@ -566,8 +524,7 @@ namespace yakl {
     }
 
 
-    /** @brief Read a single scalar value */
-    template <class T>
+    template <class T> requires std::is_arithmetic_v<T>
     void read(T &arr , std::string varName) {
       auto var = file.getVar(varName);
       if ( var.isNull() ) { Kokkos::abort("Variable does not exist"); }
@@ -575,8 +532,7 @@ namespace yakl {
     }
 
 
-    /** @brief Write a single scalar value */
-    template <class T>
+    template <class T> requires std::is_arithmetic_v<T>
     void write(T arr , std::string varName) {
       auto var = file.getVar(varName);
       if ( var.isNull() ) {
@@ -586,21 +542,20 @@ namespace yakl {
     }
 
 
-    /** @private */
     template <class T> int getType() const {
-           if ( std::is_same<typename std::remove_cv<T>::type,signed        char>::value ) { return NC_BYTE;   }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned      char>::value ) { return NC_UBYTE;  }
-      else if ( std::is_same<typename std::remove_cv<T>::type,             short>::value ) { return NC_SHORT;  }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned     short>::value ) { return NC_USHORT; }
-      else if ( std::is_same<typename std::remove_cv<T>::type,               int>::value ) { return NC_INT;    }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned       int>::value ) { return NC_UINT;   }
-      else if ( std::is_same<typename std::remove_cv<T>::type,              long>::value ) { return NC_INT;    }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned      long>::value ) { return NC_UINT;   }
-      else if ( std::is_same<typename std::remove_cv<T>::type,         long long>::value ) { return NC_INT64;  }
-      else if ( std::is_same<typename std::remove_cv<T>::type,unsigned long long>::value ) { return NC_UINT64; }
-      else if ( std::is_same<typename std::remove_cv<T>::type,             float>::value ) { return NC_FLOAT;  }
-      else if ( std::is_same<typename std::remove_cv<T>::type,            double>::value ) { return NC_DOUBLE; }
-      else if ( std::is_same<typename std::remove_cv<T>::type,              char>::value ) { return NC_CHAR;   }
+           if ( std::is_same_v<typename std::remove_cv_t<T>,signed        char> ) { return NC_BYTE;   }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned      char> ) { return NC_UBYTE;  }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,             short> ) { return NC_SHORT;  }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned     short> ) { return NC_USHORT; }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,               int> ) { return NC_INT;    }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned       int> ) { return NC_UINT;   }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,              long> ) { return NC_INT;    }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned      long> ) { return NC_UINT;   }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,         long long> ) { return NC_INT64;  }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned long long> ) { return NC_UINT64; }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,             float> ) { return NC_FLOAT;  }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,            double> ) { return NC_DOUBLE; }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,              char> ) { return NC_CHAR;   }
       else { Kokkos::abort("Invalid type"); }
       return -1;
     }

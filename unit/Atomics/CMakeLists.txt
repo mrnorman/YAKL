@@ -1,7 +1,7 @@
 
 set(MYSRC Atomics.cpp)
 add_executable(Atomics ${MYSRC})
-target_link_libraries(Atomics yakl kokkos)
+target_link_libraries(Atomics yakl)
 target_compile_options(Atomics PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${YAKL_UNIT_CXX_FLAGS}>)
 if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
   target_link_libraries(Atomics "${YAKL_UNIT_CXX_LINK_FLAGS}")

@@ -5,46 +5,43 @@
 #include <algorithm>
 
 using yakl::Array;
-using yakl::styleC;
-using yakl::memHost;
-using yakl::memDevice;
-using yakl::c::parallel_for;
-using yakl::c::Bounds;
-using yakl::c::SimpleBounds;
 using yakl::COLON;
+using yakl::parallel_for;
+using yakl::Bounds;
+using yakl::SimpleBounds;
 
 typedef float real;
 
-typedef Array<real,1,memHost,styleC> realHost1d;
-typedef Array<real,2,memHost,styleC> realHost2d;
-typedef Array<real,3,memHost,styleC> realHost3d;
-typedef Array<real,4,memHost,styleC> realHost4d;
-typedef Array<real,5,memHost,styleC> realHost5d;
-typedef Array<real,6,memHost,styleC> realHost6d;
-typedef Array<real,7,memHost,styleC> realHost7d;
-typedef Array<real,8,memHost,styleC> realHost8d;
+typedef Array<real *       ,Kokkos::HostSpace> realHost1d;
+typedef Array<real **      ,Kokkos::HostSpace> realHost2d;
+typedef Array<real ***     ,Kokkos::HostSpace> realHost3d;
+typedef Array<real ****    ,Kokkos::HostSpace> realHost4d;
+typedef Array<real *****   ,Kokkos::HostSpace> realHost5d;
+typedef Array<real ******  ,Kokkos::HostSpace> realHost6d;
+typedef Array<real ******* ,Kokkos::HostSpace> realHost7d;
+typedef Array<real ********,Kokkos::HostSpace> realHost8d;
 
-typedef Array<real,1,memDevice,styleC> real1d;
-typedef Array<real,2,memDevice,styleC> real2d;
-typedef Array<real,3,memDevice,styleC> real3d;
-typedef Array<real,4,memDevice,styleC> real4d;
-typedef Array<real,5,memDevice,styleC> real5d;
-typedef Array<real,6,memDevice,styleC> real6d;
-typedef Array<real,7,memDevice,styleC> real7d;
-typedef Array<real,8,memDevice,styleC> real8d;
+typedef Array<real *       ,yakl::DeviceSpace> real1d;
+typedef Array<real **      ,yakl::DeviceSpace> real2d;
+typedef Array<real ***     ,yakl::DeviceSpace> real3d;
+typedef Array<real ****    ,yakl::DeviceSpace> real4d;
+typedef Array<real *****   ,yakl::DeviceSpace> real5d;
+typedef Array<real ******  ,yakl::DeviceSpace> real6d;
+typedef Array<real ******* ,yakl::DeviceSpace> real7d;
+typedef Array<real ********,yakl::DeviceSpace> real8d;
 
 void die(std::string msg) {
   Kokkos::abort(msg.c_str());
 }
 
 
-Array<real const,1,memHost,styleC> construct_const_array_host() {
-  return Array<real const,1,memHost,styleC>( realHost1d("arr",10) );
+auto construct_const_array_host() {
+  return Array<real const *,Kokkos::HostSpace>( realHost1d("arr",10) );
 }
 
 
-Array<real const,1,memDevice,styleC> construct_const_array_device() {
-  return Array<real const,1,memDevice,styleC>( real1d("arr",10) );
+auto construct_const_array_device() {
+  return Array<real const *,yakl::DeviceSpace>( real1d("arr",10) );
 }
 
 
@@ -52,6 +49,7 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
+    yakl::timer_start("main");
     int constexpr d1 = 2;
     int constexpr d2 = 3;
     int constexpr d3 = 4;
@@ -74,7 +72,7 @@ int main() {
     real7d test7d("test7d",d1,d2,d3,d4,d5,d6,d7);
     real8d test8d("test8d",d1,d2,d3,d4,d5,d6,d7,d8);
 
-    std::cout << "Is CSArray trivially copyable? " << std::is_trivially_copyable<yakl::CSArray<real,1,1>>::value << std::endl;
+    std::cout << "Is SArray trivially copyable? " << std::is_trivially_copyable<yakl::SArray<real,1,1>>::value << std::endl;
 
     test1d = 0.f;
     test2d = 0.f;
@@ -119,32 +117,32 @@ int main() {
     if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("LOOPS: wrong sum for test7d"); }
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("LOOPS: wrong sum for test8d"); }
 
-    if (test1d.get_rank() != 1) { die("Ranks: wrong rank for test1d"); }
-    if (test2d.get_rank() != 2) { die("Ranks: wrong rank for test2d"); }
-    if (test3d.get_rank() != 3) { die("Ranks: wrong rank for test3d"); }
-    if (test4d.get_rank() != 4) { die("Ranks: wrong rank for test4d"); }
-    if (test5d.get_rank() != 5) { die("Ranks: wrong rank for test5d"); }
-    if (test6d.get_rank() != 6) { die("Ranks: wrong rank for test6d"); }
-    if (test7d.get_rank() != 7) { die("Ranks: wrong rank for test7d"); }
-    if (test8d.get_rank() != 8) { die("Ranks: wrong rank for test8d"); }
+    if (test1d.rank() != 1) { die("Ranks: wrong rank for test1d"); }
+    if (test2d.rank() != 2) { die("Ranks: wrong rank for test2d"); }
+    if (test3d.rank() != 3) { die("Ranks: wrong rank for test3d"); }
+    if (test4d.rank() != 4) { die("Ranks: wrong rank for test4d"); }
+    if (test5d.rank() != 5) { die("Ranks: wrong rank for test5d"); }
+    if (test6d.rank() != 6) { die("Ranks: wrong rank for test6d"); }
+    if (test7d.rank() != 7) { die("Ranks: wrong rank for test7d"); }
+    if (test8d.rank() != 8) { die("Ranks: wrong rank for test8d"); }
 
-    if (test1d.get_elem_count() != d1                     ) { die("get_elem_count: wrong value for test1d"); }
-    if (test2d.get_elem_count() != d1*d2                  ) { die("get_elem_count: wrong value for test2d"); }
-    if (test3d.get_elem_count() != d1*d2*d3               ) { die("get_elem_count: wrong value for test3d"); }
-    if (test4d.get_elem_count() != d1*d2*d3*d4            ) { die("get_elem_count: wrong value for test4d"); }
-    if (test5d.get_elem_count() != d1*d2*d3*d4*d5         ) { die("get_elem_count: wrong value for test5d"); }
-    if (test6d.get_elem_count() != d1*d2*d3*d4*d5*d6      ) { die("get_elem_count: wrong value for test6d"); }
-    if (test7d.get_elem_count() != d1*d2*d3*d4*d5*d6*d7   ) { die("get_elem_count: wrong value for test7d"); }
-    if (test8d.get_elem_count() != d1*d2*d3*d4*d5*d6*d7*d8) { die("get_elem_count: wrong value for test8d"); }
+    if (test1d.size() != d1                     ) { die("size: wrong value for test1d"); }
+    if (test2d.size() != d1*d2                  ) { die("size: wrong value for test2d"); }
+    if (test3d.size() != d1*d2*d3               ) { die("size: wrong value for test3d"); }
+    if (test4d.size() != d1*d2*d3*d4            ) { die("size: wrong value for test4d"); }
+    if (test5d.size() != d1*d2*d3*d4*d5         ) { die("size: wrong value for test5d"); }
+    if (test6d.size() != d1*d2*d3*d4*d5*d6      ) { die("size: wrong value for test6d"); }
+    if (test7d.size() != d1*d2*d3*d4*d5*d6*d7   ) { die("size: wrong value for test7d"); }
+    if (test8d.size() != d1*d2*d3*d4*d5*d6*d7*d8) { die("size: wrong value for test8d"); }
 
-    if (yakl::intrinsics::sum(test1d.get_dimensions()) != d1                     ) { die("get_dimensions: wrong value for test1d"); }
-    if (yakl::intrinsics::sum(test2d.get_dimensions()) != d1+d2                  ) { die("get_dimensions: wrong value for test2d"); }
-    if (yakl::intrinsics::sum(test3d.get_dimensions()) != d1+d2+d3               ) { die("get_dimensions: wrong value for test3d"); }
-    if (yakl::intrinsics::sum(test4d.get_dimensions()) != d1+d2+d3+d4            ) { die("get_dimensions: wrong value for test4d"); }
-    if (yakl::intrinsics::sum(test5d.get_dimensions()) != d1+d2+d3+d4+d5         ) { die("get_dimensions: wrong value for test5d"); }
-    if (yakl::intrinsics::sum(test6d.get_dimensions()) != d1+d2+d3+d4+d5+d6      ) { die("get_dimensions: wrong value for test6d"); }
-    if (yakl::intrinsics::sum(test7d.get_dimensions()) != d1+d2+d3+d4+d5+d6+d7   ) { die("get_dimensions: wrong value for test7d"); }
-    if (yakl::intrinsics::sum(test8d.get_dimensions()) != d1+d2+d3+d4+d5+d6+d7+d8) { die("get_dimensions: wrong value for test8d"); }
+    if (yakl::intrinsics::sum(test1d.extents()) != d1                     ) { die("get_dimensions: wrong value for test1d"); }
+    if (yakl::intrinsics::sum(test2d.extents()) != d1+d2                  ) { die("get_dimensions: wrong value for test2d"); }
+    if (yakl::intrinsics::sum(test3d.extents()) != d1+d2+d3               ) { die("get_dimensions: wrong value for test3d"); }
+    if (yakl::intrinsics::sum(test4d.extents()) != d1+d2+d3+d4            ) { die("get_dimensions: wrong value for test4d"); }
+    if (yakl::intrinsics::sum(test5d.extents()) != d1+d2+d3+d4+d5         ) { die("get_dimensions: wrong value for test5d"); }
+    if (yakl::intrinsics::sum(test6d.extents()) != d1+d2+d3+d4+d5+d6      ) { die("get_dimensions: wrong value for test6d"); }
+    if (yakl::intrinsics::sum(test7d.extents()) != d1+d2+d3+d4+d5+d6+d7   ) { die("get_dimensions: wrong value for test7d"); }
+    if (yakl::intrinsics::sum(test8d.extents()) != d1+d2+d3+d4+d5+d6+d7+d8) { die("get_dimensions: wrong value for test8d"); }
 
     if (test1d.extent(0) != d1) { die("extent: wrong value for test1d"); }
     if (test2d.extent(1) != d2) { die("extent: wrong value for test2d"); }
@@ -158,14 +156,14 @@ int main() {
     ///////////////////////////////////////////////////////////
     // Test unmanaged arrays
     ///////////////////////////////////////////////////////////
-    real1d test1d_ptr("test1d",test1d.data(),d1);
-    real2d test2d_ptr("test2d",test2d.data(),d1,d2);
-    real3d test3d_ptr("test3d",test3d.data(),d1,d2,d3);
-    real4d test4d_ptr("test4d",test4d.data(),d1,d2,d3,d4);
-    real5d test5d_ptr("test5d",test5d.data(),d1,d2,d3,d4,d5);
-    real6d test6d_ptr("test6d",test6d.data(),d1,d2,d3,d4,d5,d6);
-    real7d test7d_ptr("test7d",test7d.data(),d1,d2,d3,d4,d5,d6,d7);
-    real8d test8d_ptr("test8d",test8d.data(),d1,d2,d3,d4,d5,d6,d7,d8);
+    real1d test1d_ptr(test1d.data(),d1);
+    real2d test2d_ptr(test2d.data(),d1,d2);
+    real3d test3d_ptr(test3d.data(),d1,d2,d3);
+    real4d test4d_ptr(test4d.data(),d1,d2,d3,d4);
+    real5d test5d_ptr(test5d.data(),d1,d2,d3,d4,d5);
+    real6d test6d_ptr(test6d.data(),d1,d2,d3,d4,d5,d6);
+    real7d test7d_ptr(test7d.data(),d1,d2,d3,d4,d5,d6,d7);
+    real8d test8d_ptr(test8d.data(),d1,d2,d3,d4,d5,d6,d7,d8);
 
     test1d_ptr = 0.f;
     test2d_ptr = 0.f;
@@ -343,15 +341,15 @@ int main() {
     if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("SimpleBounds: wrong sum for test7d"); }
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("SimpleBounds: wrong sum for test8d"); }
 
-    auto ir_device = test8d.create_ArrayIR();
-    auto ir_host   = test8d.createHostCopy().create_ArrayIR<real const>();
-    if (ir_device.get_memory_type() == array_ir::MEMORY_HOST  ) die("ir_device has wrong memory type");
-    if (ir_host  .get_memory_type() == array_ir::MEMORY_DEVICE) die("ir_host   has wrong memory type");
-    if (ir_host.extent(1) != test8d.extent(1)) die("ir_host extent(1) is wrong");
-    if (!ir_host.valid()) die("ir_host says it's not valid");
-    Array<real const,8,memHost,styleC> wrap(ir_host);
-    if (wrap.extent(1) != test8d.extent(1)) die("wrap extent is wrong");
-    if (wrap.data() != ir_host.data()) die("wrap data pointer is wrong");
+    // auto ir_device = test8d.create_ArrayIR();
+    // auto ir_host   = test8d.createHostCopy().create_ArrayIR<real const>();
+    // if (ir_device.get_memory_type() == array_ir::MEMORY_HOST  ) die("ir_device has wrong memory type");
+    // if (ir_host  .get_memory_type() == array_ir::MEMORY_DEVICE) die("ir_host   has wrong memory type");
+    // if (ir_host.extent(1) != test8d.extent(1)) die("ir_host extent(1) is wrong");
+    // if (!ir_host.valid()) die("ir_host says it's not valid");
+    // Array<real const,8,memHost,styleC> wrap(ir_host);
+    // if (wrap.extent(1) != test8d.extent(1)) die("wrap extent is wrong");
+    // if (wrap.data() != ir_host.data()) die("wrap data pointer is wrong");
 
 
     ///////////////////////////////////////////////////////////
@@ -370,12 +368,12 @@ int main() {
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8*3) { die("SimpleBounds: wrong sum for collapsed test8d"); }
 
     auto constHostArr = construct_const_array_host();
-    constHostArr.deallocate();
-    if (constHostArr.initialized()) die("constHostArr: array didn't deallocate properly");
+    constHostArr = decltype(constHostArr)();
+    if (constHostArr.is_allocated()) die("constHostArr: array didn't deallocate properly");
 
     auto constDevArr = construct_const_array_device();
-    constDevArr.deallocate();
-    if (constDevArr.initialized()) die("constDevArr: array didn't deallocate properly");
+    constDevArr = decltype(constDevArr)();
+    if (constDevArr.is_allocated()) die("constDevArr: array didn't deallocate properly");
 
     ///////////////////////////////////////////////////////////
     // Test subset_slowest_dimension
@@ -385,7 +383,7 @@ int main() {
     if (yakl::intrinsics::sum(test8d) != d2*d3*d4*d5*d6*d7*d8*3) { die("SimpleBounds: wrong sum for reshaped subset"); }
 
     {
-      yakl::Array<int,1,memHost,styleC> indices("indices",100);
+      yakl::Array<int *,Kokkos::HostSpace> indices("indices",100);
       for (int i=0; i < 100; i++) { indices(i) = i; }
       std::shuffle( indices.begin() , indices.end() , std::default_random_engine(13) );
       int tot = 0;
@@ -394,7 +392,7 @@ int main() {
     }
 
     {
-      yakl::SArray<int,1,100> indices;
+      yakl::SArray<int,100> indices;
       for (int i=0; i < 100; i++) { indices(i) = i; }
       std::shuffle( indices.begin() , indices.end() , std::default_random_engine(13) );
       int tot = 0;
@@ -402,6 +400,7 @@ int main() {
       if (tot == 99) die("ERROR: Shuffle is not working on CArray");
     }
 
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

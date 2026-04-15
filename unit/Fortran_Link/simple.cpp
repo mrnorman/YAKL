@@ -3,19 +3,16 @@
 #include "YAKL.h"
 
 using yakl::Array;
-using yakl::styleC;
-using yakl::memHost;
-using yakl::memDevice;
-using yakl::c::parallel_for;
-using yakl::c::Bounds;
-using yakl::c::SimpleBounds;
+using yakl::parallel_for;
+using yakl::Bounds;
+using yakl::SimpleBounds;
 using yakl::COLON;
 
 typedef float real;
 
-typedef Array<real,1,memHost,styleC> realHost1d;
+typedef Array<real *,Kokkos::HostSpace> realHost1d;
 
-typedef Array<real,1,memDevice,styleC> real1d;
+typedef Array<real *,yakl::DeviceSpace> real1d;
 
 
 void die(std::string msg) {
@@ -24,9 +21,9 @@ void die(std::string msg) {
 
 
 extern "C" void add(real *a_p, real *b_p, real *c_p, int &n) {
-  realHost1d a_host("a_host",a_p,n);
-  realHost1d b_host("b_host",b_p,n);
-  realHost1d c_host("c_host",c_p,n);
+  realHost1d a_host(a_p,n);
+  realHost1d b_host(b_p,n);
+  realHost1d c_host(c_p,n);
 
   real1d a("a",n);
   real1d b("b",n);

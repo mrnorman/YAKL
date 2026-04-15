@@ -3,18 +3,14 @@
 #include "YAKL.h"
 
 using yakl::Array;
-using yakl::styleC;
-using yakl::memHost;
-using yakl::memDevice;
 using yakl::COLON;
-using yakl::timer_start;
-using yakl::timer_stop;
 
 
 template <class real>
 void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
-  using yakl::c::SimpleBounds;
-  using yakl::c::parallel_for;
+  yakl::timer_start("tend");
+  using yakl::SimpleBounds;
+  using yakl::parallel_for;
   int constexpr NUM_VARS = 4;
   int constexpr hs = 2;
   int constexpr ID_DENS = 0;
@@ -27,11 +23,11 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
   real dx = 1;
   real dz = 1;
   real dt = 2;
-  yakl::Array<real,3,yakl::memHost,yakl::styleC> host_state("state",NUM_VARS,nz+2*hs,nx+2*hs);
-  yakl::Array<real,3,yakl::memHost,yakl::styleC> host_flux ("flux" ,NUM_VARS,nz,nx+1);
-  yakl::Array<real,3,yakl::memHost,yakl::styleC> host_tend ("tend" ,NUM_VARS,nz,nx);
-  yakl::Array<real,1,yakl::memHost,yakl::styleC> host_hy_dens_cell      ("hy_dens_cell      ",nz+2*hs);
-  yakl::Array<real,1,yakl::memHost,yakl::styleC> host_hy_dens_theta_cell("hy_dens_theta_cell",nz+2*hs);
+  Array<real ***,Kokkos::HostSpace> host_state("state",NUM_VARS,nz+2*hs,nx+2*hs);
+  Array<real ***,Kokkos::HostSpace> host_flux ("flux" ,NUM_VARS,nz,nx+1);
+  Array<real ***,Kokkos::HostSpace> host_tend ("tend" ,NUM_VARS,nz,nx);
+  Array<real *  ,Kokkos::HostSpace> host_hy_dens_cell      ("hy_dens_cell      ",nz+2*hs);
+  Array<real *  ,Kokkos::HostSpace> host_hy_dens_theta_cell("hy_dens_theta_cell",nz+2*hs);
   srand (17);
   for (int l=0; l < NUM_VARS; l++) {
     for (int k=0; k < nz+2*hs; k++) {
@@ -57,15 +53,15 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
     auto hy_dens_cell       = host_hy_dens_cell      .createDeviceCopy();
     auto hy_dens_theta_cell = host_hy_dens_theta_cell.createDeviceCopy();
 
-    yakl::timer_start(label);
+    yakl::timer_start(std::is_same_v<real,float> ? "parallel_for_float" : "parallel_for_double");
 
     //Compute fluxes in the x-direction for each cell
-    // for (k=0; k<nz; k++) {
-    //   for (i=0; i<nx+1; i++) {
+    // for (k=0; k<nz; k++)
+    //   for (i=0; i<nx+1; i++)
     parallel_for( YAKL_AUTO_LABEL() , SimpleBounds<2>(nz,nx+1) , KOKKOS_LAMBDA (int k, int i ) {
-      yakl::SArray<real,1,4> stencil;
-      yakl::SArray<real,1,NUM_VARS> d3_vals;
-      yakl::SArray<real,1,NUM_VARS> vals;
+      yakl::SArray<real,4> stencil;
+      yakl::SArray<real,NUM_VARS> d3_vals;
+      yakl::SArray<real,NUM_VARS> vals;
       //Use fourth-order interpolation from four cell averages to compute the value at the interface in question
       for (int ll=0; ll<NUM_VARS; ll++) {
         for (int s=0; s < sten_size; s++) { stencil(s) = state(ll,hs+k,i+s); }
@@ -87,41 +83,31 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
       flux(ID_RHOT,k,i) = r*u*t   - hv_coef*d3_vals(ID_RHOT);
     });
     //Use the fluxes to compute tendencies for each cell
-    // for (ll=0; ll<NUM_VARS; ll++) {
-    //   for (k=0; k<nz; k++) {
-    //     for (i=0; i<nx; i++) {
+    // for (ll=0; ll<NUM_VARS; ll++)
+    //   for (k=0; k<nz; k++)
+    //     for (i=0; i<nx; i++)
     parallel_for( YAKL_AUTO_LABEL() , SimpleBounds<3>(NUM_VARS,nz,nx) , KOKKOS_LAMBDA ( int ll, int k, int i ) {
       tend(ll,k,i) = -( flux(ll,k,i+1) - flux(ll,k,i) ) / dx;
     });
 
-    yakl::timer_stop(label);
-
-    std::cout << yakl::intrinsics::sum(yakl::intrinsics::abs(tend)) << std::endl;
+    yakl::timer_stop(std::is_same_v<real,float> ? "parallel_for_float" : "parallel_for_double");
 
   } else {
 
-#ifdef YAKL_SEPARATE_MEMORY_SPACE
     auto &state              = host_state             ;
     auto &flux               = host_flux              ;
     auto &tend               = host_tend              ;
     auto &hy_dens_cell       = host_hy_dens_cell      ;
     auto &hy_dens_theta_cell = host_hy_dens_theta_cell;
-#else
-    auto state              = host_state             .createDeviceCopy();
-    auto flux               = host_flux              .createDeviceObject();
-    auto tend               = host_tend              .createDeviceObject();
-    auto hy_dens_cell       = host_hy_dens_cell      .createDeviceCopy();
-    auto hy_dens_theta_cell = host_hy_dens_theta_cell.createDeviceCopy();
-#endif
 
-    yakl::timer_start(label);
+    yakl::timer_start(std::is_same_v<real,float> ? "normal_for_float" : "normal_for_double");
 
     //Compute fluxes in the x-direction for each cell
     for (int k=0; k<nz; k++) {
       for (int i=0; i<nx+1; i++) {
-        yakl::SArray<real,1,4> stencil;
-        yakl::SArray<real,1,NUM_VARS> d3_vals;
-        yakl::SArray<real,1,NUM_VARS> vals;
+        yakl::SArray<real,4> stencil;
+        yakl::SArray<real,NUM_VARS> d3_vals;
+        yakl::SArray<real,NUM_VARS> vals;
         //Use fourth-order interpolation from four cell averages to compute the value at the interface in question
         for (int ll=0; ll<NUM_VARS; ll++) {
           for (int s=0; s < sten_size; s++) { stencil(s) = state(ll,hs+k,i+s); }
@@ -152,11 +138,12 @@ void miniWeather_tend_x(int nx, int nz, char const *label, bool use_pfor) {
       }
     }
 
-    yakl::timer_stop(label);
+    yakl::timer_stop(std::is_same_v<real,float> ? "normal_for_float" : "normal_for_double");
 
     std::cout << yakl::intrinsics::sum(yakl::intrinsics::abs(tend)) << std::endl;
 
   }
+  yakl::timer_stop("tend");
 
 }
 
@@ -165,15 +152,19 @@ int main() {
   Kokkos::initialize();
   yakl::init();
   {
-    int nx = 2048;
-    int nz = 1024;
+    yakl::timer_start("main");
+    int nx = 8192;
+    int nz = 4096;
     int niter = 10;
 
+    std::cout << "double" << std::endl;
     for (int i=0; i<niter; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_pfor",true ); }
+    std::cout << "float" << std::endl;
     for (int i=0; i<niter; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_pfor" ,true ); }
-    for (int i=0; i<niter; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_for" ,false); }
-    for (int i=0; i<niter; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_for"  ,false); }
+    // for (int i=0; i<niter; i++) { miniWeather_tend_x<double>(nx,nz,"miniWeather_tend_x_double_for" ,false); }
+    // for (int i=0; i<niter; i++) { miniWeather_tend_x<float >(nx,nz,"miniWeather_tend_x_float_for"  ,false); }
 
+    yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 

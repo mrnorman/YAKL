@@ -1,7 +1,7 @@
 
 set(MYSRC Intrinsics.cpp)
 add_executable(Intrinsics ${MYSRC})
-target_link_libraries(Intrinsics yakl kokkos)
+target_link_libraries(Intrinsics yakl)
 target_compile_options(Intrinsics PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${YAKL_UNIT_CXX_FLAGS}>)
 if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
   target_link_libraries(Intrinsics "${YAKL_UNIT_CXX_LINK_FLAGS}")

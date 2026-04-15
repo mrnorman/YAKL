@@ -1,27 +1,14 @@
-/**
- * @file 
- *
- * Contains routines to use or override YAKL's timers
- */
 
 #pragma once
-// Included by YAKL.h
-// Inside the yakl namespace
-
-#include "YAKL_Toney.h"
 
 namespace yakl {
-
-  /** @brief Initialize the YAKL timers */
-  inline void timer_init    (               ) { }
-
-  /** @brief Finalize the YAKL timers */
-  inline void timer_finalize(               ) { get_yakl_instance().timer.print_all_threads(); }
-
-  /** @brief Start a timer with the given string label. NOTE: Timers must be perfectly nested */
-  inline void timer_start   (std::string lab) { Kokkos::fence(); get_yakl_instance().timer.start(lab); }
-
-  /** @brief Stop a timer with the given string label. NOTE: Timers must be perfectly nested */
-  inline void timer_stop    (std::string lab) { Kokkos::fence(); get_yakl_instance().timer.stop (lab); }
+  inline void   timer_start                   (std::string l) { Kokkos::fence(); get_yakl_instance().timer.start         (l); }
+  inline void   timer_stop                    (std::string l) { Kokkos::fence(); get_yakl_instance().timer.stop          (l); }
+  inline double timer_get_last_duration       (std::string l) { return get_yakl_instance().timer.get_last_duration       (l); }
+  inline double timer_get_accumulated_duration(std::string l) { return get_yakl_instance().timer.get_accumulated_duration(l); }
+  inline double timer_get_min_duration        (std::string l) { return get_yakl_instance().timer.get_min_duration        (l); }
+  inline double timer_get_max_duration        (std::string l) { return get_yakl_instance().timer.get_max_duration        (l); }
+  inline size_t timer_get_count               (std::string l) { return get_yakl_instance().timer.get_count               (l); }
+  inline void   timer_print                   (             ) {        get_yakl_instance().timer.print                   ( ); }
 }
 
