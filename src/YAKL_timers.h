@@ -9,6 +9,6 @@ namespace yakl {
   inline double timer_get_min_duration        (std::string l) { return get_yakl_instance().timer.get_min_duration        (l); }
   inline double timer_get_max_duration        (std::string l) { return get_yakl_instance().timer.get_max_duration        (l); }
   inline size_t timer_get_count               (std::string l) { return get_yakl_instance().timer.get_count               (l); }
-  inline void   timer_print                   (             ) {        get_yakl_instance().timer.print                   ( ); }
+  inline void   timer_print                   (             ) {        get_yakl_instance().timer.print_main              ( ); }
 }
 

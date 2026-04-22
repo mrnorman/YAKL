@@ -12,6 +12,7 @@ namespace yakl {
       get_yakl_instance().pool.finalize();
       get_yakl_instance().yakl_is_initialized = false;
       get_yakl_instance().pool_enabled = false;
+      autotune::print_best();
     } else {
       if constexpr (kokkos_debug) {
         std::cerr << "WARNING: Calling yakl::finalize() when YAKL is not initialized. ";
