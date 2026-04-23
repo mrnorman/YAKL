@@ -6,15 +6,11 @@ namespace yakl {
 
     using ConfigListType = std::tuple<Config<0,1>,
                                       Config<64,1 >,Config<128,1 >,Config<256,1 >,Config<512,1 >,Config<1024,1 >,
-                                      Config<64,2 >,Config<128,2 >,Config<256,2 >,Config<512,2 >,Config<1024,2 >,
                                       Config<64,4 >,Config<128,4 >,Config<256,4 >,Config<512,4 >,Config<1024,4 >,
-                                      Config<64,8 >,Config<128,8 >,Config<256,8 >,Config<512,8 >,Config<1024,8 >,
-                                      Config<64,16>,Config<128,16>,Config<256,16>,Config<512,16>,Config<1024,16>,
-                                      Config<64,32>,Config<128,32>,Config<256,32>,Config<512,32>,Config<1024,32>,
-                                      Config<64,64>,Config<128,64>,Config<256,64>,Config<512,64>,Config<1024,64>>;
+                                      Config<64,16>,Config<128,16>,Config<256,16>,Config<512,16>,Config<1024,16>>;
 
     struct AutotuneContext {
-      int static constexpr tests_per_config = 3;
+      int static constexpr tests_per_config = 5;
       int static constexpr total_tests      = tests_per_config*std::tuple_size_v<ConfigListType>;
       int tests_performed;
       int best_index;
@@ -95,7 +91,9 @@ namespace yakl {
           auto t2 = std::chrono::high_resolution_clock::now();
           auto time_loc = std::chrono::duration<double>(t2 - t1).count();
         #endif
-        context.timings[index] = std::min( context.timings[index] , (double)time_loc );
+        // Ignore first run, then sum the rest of the runs
+        if (context.timings[index] == std::numeric_limits<double>::max()) { context.timings[index]  = 0;        }
+        else                                                              { context.timings[index] += time_loc; }
         auto & v = context.timings;
         context.best_index = std::distance( v.begin() , std::min_element(v.begin(),v.end()) );
         context.tests_performed++;
