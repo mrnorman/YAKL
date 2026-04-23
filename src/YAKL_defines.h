@@ -8,6 +8,12 @@
   #endif
 #endif
 
+#ifdef YAKL_AUTO_PROFILE
+  #ifndef YAKL_PROFILE
+    #define YAKL_PROFILE
+  #endif
+#endif
+
 namespace yakl {
   #ifdef KOKKOS_ENABLE_DEBUG
     inline constexpr bool kokkos_debug = true;
@@ -25,6 +31,18 @@ namespace yakl {
     inline constexpr bool yakl_auto_fence = true;
   #else
     inline constexpr bool yakl_auto_fence = false;
+  #endif
+
+  #ifdef YAKL_PROFILE
+    inline constexpr bool yakl_profile = true;
+  #else
+    inline constexpr bool yakl_profile = false;
+  #endif
+
+  #ifdef YAKL_AUTO_PROFILE
+    inline constexpr bool yakl_auto_profile = true;
+  #else
+    inline constexpr bool yakl_auto_profile = false;
   #endif
 
   #ifdef HAVE_MPI

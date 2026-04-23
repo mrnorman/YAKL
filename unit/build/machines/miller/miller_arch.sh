@@ -24,7 +24,7 @@ cmake -Wno-dev                          \
       -DKokkos_ARCH_HOPPER90=ON        \
       -DYAKL_F90_FLAGS="-O3"            \
       -DCMAKE_INSTALL_PREFIX="`pwd`"    \
-      -DYAKL_UNIT_CXX_FLAGS="-DHAVE_MPI;-O3" \
+      -DYAKL_UNIT_CXX_FLAGS="-O3" \
       -DYAKL_UNIT_CXX_LINK_FLAGS=""     \
       -DYAKL_TEST_NETCDF=ON             \
       -DYAKL_TEST_PNETCDF=ON            \

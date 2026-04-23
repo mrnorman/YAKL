@@ -209,7 +209,9 @@ namespace yakl {
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
     Array_F const & operator=(TLOC const & v) const {
+      if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::operator=scalar");
       Kokkos::deep_copy(*this,v);
+      if constexpr (yakl_auto_profile) timer_stop("yakl::Array_F::operator=scalar");
       if constexpr (yakl_auto_fence) Kokkos::fence();
       return *this;
     }
@@ -290,7 +292,9 @@ namespace yakl {
     template <class ViewType>
     void deep_copy_to(ViewType const & them) const {
       if (them.size() != this->size()) Kokkos::abort("ERROR: calling deep_copy_to between differently sized arrays");
+      if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::deep_copy_to");
       Kokkos::deep_copy(them,*this);
+      if constexpr (yakl_auto_profile) timer_stop("yakl::Array_F::deep_copy_to");
       if constexpr (yakl_auto_fence) Kokkos::fence();
       if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) Kokkos::fence();
     }
@@ -304,7 +308,9 @@ namespace yakl {
 
     auto createDeviceCopy() const {
       auto ret = createDeviceObject();
+      if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::CreateDeviceCopy deep_copy");
       Kokkos::deep_copy( ret , *this );
+      if constexpr (yakl_auto_profile) timer_stop("yakl::Array_F::CreateDeviceCopy deep_copy");
       if constexpr (yakl_auto_fence) Kokkos::fence();
       return ret;
     }
@@ -312,7 +318,9 @@ namespace yakl {
 
     auto createHostCopy() const {
       auto ret = createHostObject();
+      if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::CreateHostCopy deep_copy");
       Kokkos::deep_copy( ret , *this );
+      if constexpr (yakl_auto_profile) timer_stop("yakl::Array_F::CreateHostCopy deep_copy");
       if constexpr (yakl_auto_fence) Kokkos::fence();
       Kokkos::fence();
       return ret;
@@ -326,11 +334,13 @@ namespace yakl {
       };
       auto ret = func(std::make_index_sequence<this_t::rank()>{});
       YAKL_SCOPE( me , *this );
+      if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::as");
       Kokkos::parallel_for( "yakl_as_copy" ,
                             Kokkos::RangePolicy<typename base_t::execution_space>(0,this->size()) ,
                             KOKKOS_LAMBDA (size_t i) {
         ret.data()[i] = me.data()[i];
       });
+      if constexpr (yakl_auto_profile) timer_stop("yakl::Array_F::as");
       if constexpr (yakl_auto_fence) Kokkos::fence();
       for (int i=0; i < this_t::rank(); i++) { ret.lb[i] = this->lb[i]; }
       return ret;

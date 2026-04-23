@@ -287,90 +287,160 @@ namespace yakl {
 
 
 
-  template <class F, int N, bool simple, class Style = CStyle>
-  inline void parallel_for( std::string str , Bounds<N,Style,simple> const & bounds , F const & f ) {
+  template <int MaxThreadsPerBlock, size_t Strip> struct Config {
+    int static constexpr Thr = MaxThreadsPerBlock;
+    int static constexpr Str = Strip;
+  };
+
+
+
+  template <class F, int N, bool simple, class Style, int MaxThreadsPerBlock=0, size_t Strip=1>
+  inline void parallel_for( std::string                    str    ,
+                            Bounds<N,Style,simple> const & bounds ,
+                            F                      const & f      ,
+                            Config<MaxThreadsPerBlock,Strip> = Config<0,1>{} ) {
     using unsigned_t = size_t;
     using signed_t   = ptrdiff_t;
+    using Kokkos::RangePolicy;
+    using Kokkos::LaunchBounds;
     if (bounds.nIter == 0) return;  // exit early if there is no work to do
-    Kokkos::parallel_for( str , bounds.nIter , KOKKOS_LAMBDA (size_t iglob) {
+    if constexpr (yakl_auto_profile) timer_start(str);
+    Kokkos::parallel_for( str ,
+                          RangePolicy<LaunchBounds<MaxThreadsPerBlock,0>>(0,(bounds.nIter-1)/Strip+1) ,
+                          KOKKOS_LAMBDA (size_t iglob) {
       auto &bloc = bounds;
       auto &floc = f;
-      if constexpr (simple) {
-        if constexpr (N==1) {
-          unsigned_t i0; bloc.unpack(iglob,i0); floc(i0);
-        } else if constexpr (N==2) {
-          unsigned_t i0,i1; bloc.unpack(iglob,i0,i1); floc(i0,i1);
-        } else if constexpr (N==3) {
-          unsigned_t i0,i1,i2; bloc.unpack(iglob,i0,i1,i2); floc(i0,i1,i2);
-        } else if constexpr (N==4) {
-          unsigned_t i0,i1,i2,i3; bloc.unpack(iglob,i0,i1,i2,i3); floc(i0,i1,i2,i3);
-        } else if constexpr (N==5) {
-          unsigned_t i0,i1,i2,i3,i4; bloc.unpack(iglob,i0,i1,i2,i3,i4); floc(i0,i1,i2,i3,i4);
-        } else if constexpr (N==6) {
-          unsigned_t i0,i1,i2,i3,i4,i5; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5); floc(i0,i1,i2,i3,i4,i5);
-        } else if constexpr (N==7) {
-          unsigned_t i0,i1,i2,i3,i4,i5,i6; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); floc(i0,i1,i2,i3,i4,i5,i6);
-        } else if constexpr (N==8) {
-          unsigned_t i0,i1,i2,i3,i4,i5,i6,i7; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); floc(i0,i1,i2,i3,i4,i5,i6,i7);
+      auto &nIter = bounds.nIter;
+      if constexpr (Strip == 1) {
+        if constexpr (simple) {
+          if constexpr (N==1) {
+            unsigned_t i0; bloc.unpack(iglob,i0); floc(i0);
+          } else if constexpr (N==2) {
+            unsigned_t i0,i1; bloc.unpack(iglob,i0,i1); floc(i0,i1);
+          } else if constexpr (N==3) {
+            unsigned_t i0,i1,i2; bloc.unpack(iglob,i0,i1,i2); floc(i0,i1,i2);
+          } else if constexpr (N==4) {
+            unsigned_t i0,i1,i2,i3; bloc.unpack(iglob,i0,i1,i2,i3); floc(i0,i1,i2,i3);
+          } else if constexpr (N==5) {
+            unsigned_t i0,i1,i2,i3,i4; bloc.unpack(iglob,i0,i1,i2,i3,i4); floc(i0,i1,i2,i3,i4);
+          } else if constexpr (N==6) {
+            unsigned_t i0,i1,i2,i3,i4,i5; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5); floc(i0,i1,i2,i3,i4,i5);
+          } else if constexpr (N==7) {
+            unsigned_t i0,i1,i2,i3,i4,i5,i6; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); floc(i0,i1,i2,i3,i4,i5,i6);
+          } else if constexpr (N==8) {
+            unsigned_t i0,i1,i2,i3,i4,i5,i6,i7; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); floc(i0,i1,i2,i3,i4,i5,i6,i7);
+          }
+        } else {
+          if constexpr (N==1) {
+            signed_t i0; bloc.unpack(iglob,i0); floc(i0);
+          } else if constexpr (N==2) {
+            signed_t i0,i1; bloc.unpack(iglob,i0,i1); floc(i0,i1);
+          } else if constexpr (N==3) {
+            signed_t i0,i1,i2; bloc.unpack(iglob,i0,i1,i2); floc(i0,i1,i2);
+          } else if constexpr (N==4) {
+            signed_t i0,i1,i2,i3; bloc.unpack(iglob,i0,i1,i2,i3); floc(i0,i1,i2,i3);
+          } else if constexpr (N==5) {
+            signed_t i0,i1,i2,i3,i4; bloc.unpack(iglob,i0,i1,i2,i3,i4); floc(i0,i1,i2,i3,i4);
+          } else if constexpr (N==6) {
+            signed_t i0,i1,i2,i3,i4,i5; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5); floc(i0,i1,i2,i3,i4,i5);
+          } else if constexpr (N==7) {
+            signed_t i0,i1,i2,i3,i4,i5,i6; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); floc(i0,i1,i2,i3,i4,i5,i6);
+          } else if constexpr (N==8) {
+            signed_t i0,i1,i2,i3,i4,i5,i6,i7; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); floc(i0,i1,i2,i3,i4,i5,i6,i7);
+          }
         }
       } else {
-        if constexpr (N==1) {
-          signed_t i0; bloc.unpack(iglob,i0); floc(i0);
-        } else if constexpr (N==2) {
-          signed_t i0,i1; bloc.unpack(iglob,i0,i1); floc(i0,i1);
-        } else if constexpr (N==3) {
-          signed_t i0,i1,i2; bloc.unpack(iglob,i0,i1,i2); floc(i0,i1,i2);
-        } else if constexpr (N==4) {
-          signed_t i0,i1,i2,i3; bloc.unpack(iglob,i0,i1,i2,i3); floc(i0,i1,i2,i3);
-        } else if constexpr (N==5) {
-          signed_t i0,i1,i2,i3,i4; bloc.unpack(iglob,i0,i1,i2,i3,i4); floc(i0,i1,i2,i3,i4);
-        } else if constexpr (N==6) {
-          signed_t i0,i1,i2,i3,i4,i5; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5); floc(i0,i1,i2,i3,i4,i5);
-        } else if constexpr (N==7) {
-          signed_t i0,i1,i2,i3,i4,i5,i6; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); floc(i0,i1,i2,i3,i4,i5,i6);
-        } else if constexpr (N==8) {
-          signed_t i0,i1,i2,i3,i4,i5,i6,i7; bloc.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); floc(i0,i1,i2,i3,i4,i5,i6,i7);
+        for (size_t i=0; i < Strip; i++) {
+          size_t chunks = (bounds.nIter-1)/Strip+1;
+          size_t iglob_real = iglob+i*chunks;
+          if (iglob_real < nIter) {
+            if constexpr (simple) {
+              if constexpr (N==1) {
+                unsigned_t i0; bloc.unpack(iglob_real,i0); floc(i0);
+              } else if constexpr (N==2) {
+                unsigned_t i0,i1; bloc.unpack(iglob_real,i0,i1); floc(i0,i1);
+              } else if constexpr (N==3) {
+                unsigned_t i0,i1,i2; bloc.unpack(iglob_real,i0,i1,i2); floc(i0,i1,i2);
+              } else if constexpr (N==4) {
+                unsigned_t i0,i1,i2,i3; bloc.unpack(iglob_real,i0,i1,i2,i3); floc(i0,i1,i2,i3);
+              } else if constexpr (N==5) {
+                unsigned_t i0,i1,i2,i3,i4; bloc.unpack(iglob_real,i0,i1,i2,i3,i4); floc(i0,i1,i2,i3,i4);
+              } else if constexpr (N==6) {
+                unsigned_t i0,i1,i2,i3,i4,i5; bloc.unpack(iglob_real,i0,i1,i2,i3,i4,i5); floc(i0,i1,i2,i3,i4,i5);
+              } else if constexpr (N==7) {
+                unsigned_t i0,i1,i2,i3,i4,i5,i6; bloc.unpack(iglob_real,i0,i1,i2,i3,i4,i5,i6); floc(i0,i1,i2,i3,i4,i5,i6);
+              } else if constexpr (N==8) {
+                unsigned_t i0,i1,i2,i3,i4,i5,i6,i7; bloc.unpack(iglob_real,i0,i1,i2,i3,i4,i5,i6,i7); floc(i0,i1,i2,i3,i4,i5,i6,i7);
+              }
+            } else {
+              if constexpr (N==1) {
+                signed_t i0; bloc.unpack(iglob_real,i0); floc(i0);
+              } else if constexpr (N==2) {
+                signed_t i0,i1; bloc.unpack(iglob_real,i0,i1); floc(i0,i1);
+              } else if constexpr (N==3) {
+                signed_t i0,i1,i2; bloc.unpack(iglob_real,i0,i1,i2); floc(i0,i1,i2);
+              } else if constexpr (N==4) {
+                signed_t i0,i1,i2,i3; bloc.unpack(iglob_real,i0,i1,i2,i3); floc(i0,i1,i2,i3);
+              } else if constexpr (N==5) {
+                signed_t i0,i1,i2,i3,i4; bloc.unpack(iglob_real,i0,i1,i2,i3,i4); floc(i0,i1,i2,i3,i4);
+              } else if constexpr (N==6) {
+                signed_t i0,i1,i2,i3,i4,i5; bloc.unpack(iglob_real,i0,i1,i2,i3,i4,i5); floc(i0,i1,i2,i3,i4,i5);
+              } else if constexpr (N==7) {
+                signed_t i0,i1,i2,i3,i4,i5,i6; bloc.unpack(iglob_real,i0,i1,i2,i3,i4,i5,i6); floc(i0,i1,i2,i3,i4,i5,i6);
+              } else if constexpr (N==8) {
+                signed_t i0,i1,i2,i3,i4,i5,i6,i7; bloc.unpack(iglob_real,i0,i1,i2,i3,i4,i5,i6,i7); floc(i0,i1,i2,i3,i4,i5,i6,i7);
+              }
+            }
+          }
         }
       }
     });
+    if constexpr (yakl_auto_profile) timer_stop(str);
     if constexpr (yakl_auto_fence) Kokkos::fence();
   }
 
-  template <class F, int N, bool simple, class Style = CStyle>
-  inline void parallel_for( Bounds<N,Style,simple> const & bounds , F const & f ) {
-    parallel_for( YAKL_AUTO_LABEL() , bounds , f );
+  template <class F, int N, bool simple, class Style, int MaxThreadsPerBlock=0, size_t Strip=1>
+  inline void parallel_for( Bounds<N,Style,simple> const & bounds , F const & f ,
+                            Config<MaxThreadsPerBlock,Strip> config = Config<0,1>{} ) {
+    parallel_for( YAKL_AUTO_LABEL() , bounds , f , config );
   }
 
-  template <class F>
-  inline void parallel_for( std::integral auto bnd , F const & f ) {
-    parallel_for( YAKL_AUTO_LABEL() , Bounds<1,CStyle,true>(bnd) , f );
+  template <class F, int MaxThreadsPerBlock=0, size_t Strip=1>
+  inline void parallel_for( std::integral auto bnd , F const & f ,
+                            Config<MaxThreadsPerBlock,Strip> config = Config<0,1>{} ) {
+    parallel_for( YAKL_AUTO_LABEL() , Bounds<1,CStyle,true>(bnd) , f , config );
   }
 
-  template <class F>
-  inline void parallel_for( std::string str , std::integral auto bnd , F const & f ) {
-    parallel_for( str , Bounds<1,CStyle,true>(bnd) , f );
+  template <class F, int MaxThreadsPerBlock=0, size_t Strip=1>
+  inline void parallel_for( std::string str , std::integral auto bnd , F const & f ,
+                            Config<MaxThreadsPerBlock,Strip> config = Config<0,1>{} ) {
+    parallel_for( str , Bounds<1,CStyle,true>(bnd) , f , config );
   }
 
 
 
-  template <class F, int N, bool simple>
-  inline void parallel_for_F( std::string str , Bounds<N,FStyle,simple> const & bounds , F const & f ) {
-    parallel_for<F,N,simple,FStyle>( str , bounds , f );
+  template <class F, int N, bool simple, int MaxThreadsPerBlock=0, size_t Strip=1>
+  inline void parallel_for_F( std::string str , Bounds<N,FStyle,simple> const & bounds , F const & f ,
+                            Config<MaxThreadsPerBlock,Strip> config = Config<0,1>{} ) {
+    parallel_for<F,N,simple,FStyle>( str , bounds , f , config );
   }
 
-  template <class F, int N, bool simple>
-  inline void parallel_for_F( Bounds<N,FStyle,simple> const & bounds , F const & f ) {
-    parallel_for<F,N,simple,FStyle>( YAKL_AUTO_LABEL() , bounds , f );
+  template <class F, int N, bool simple, int MaxThreadsPerBlock=0, size_t Strip=1>
+  inline void parallel_for_F( Bounds<N,FStyle,simple> const & bounds , F const & f ,
+                            Config<MaxThreadsPerBlock,Strip> config = Config<0,1>{} ) {
+    parallel_for<F,N,simple,FStyle>( YAKL_AUTO_LABEL() , bounds , f , config );
   }
 
-  template <class F>
-  inline void parallel_for_F( std::integral auto bnd , F const & f ) {
-    parallel_for<F,1,true,FStyle>( YAKL_AUTO_LABEL() , Bounds<1,FStyle,true>(bnd) ,f );
+  template <class F, int MaxThreadsPerBlock=0, size_t Strip=1>
+  inline void parallel_for_F( std::integral auto bnd , F const & f ,
+                            Config<MaxThreadsPerBlock,Strip> config = Config<0,1>{} ) {
+    parallel_for<F,1,true,FStyle>( YAKL_AUTO_LABEL() , Bounds<1,FStyle,true>(bnd) , f , config );
   }
 
-  template <class F>
-  inline void parallel_for_F( std::string str , std::integral auto bnd , F const & f ) {
-    parallel_for<F,1,true,FStyle>( str , Bounds<1,FStyle,true>(bnd) , f );
+  template <class F, int MaxThreadsPerBlock=0, size_t Strip=1>
+  inline void parallel_for_F( std::string str , std::integral auto bnd , F const & f ,
+                            Config<MaxThreadsPerBlock,Strip> config = Config<0,1>{} ) {
+    parallel_for<F,1,true,FStyle>( str , Bounds<1,FStyle,true>(bnd) , f , config );
   }
 
 }
