@@ -10,7 +10,9 @@ namespace yakl {
 
   public:
     KOKKOS_INLINE_FUNCTION ScalarLiveOut() {
-      data = Array<T *,yakl::DeviceSpace>("ScalarLiveOut_data",1);  // Create array
+      KOKKOS_IF_ON_HOST((
+        data = Array<T *,yakl::DeviceSpace>("ScalarLiveOut_data",1);  // Create array
+      ))
     }
 
     explicit ScalarLiveOut(T val) {
@@ -20,7 +22,9 @@ namespace yakl {
     }
 
     KOKKOS_INLINE_FUNCTION ~ScalarLiveOut() {
-      data = Array<T *,yakl::DeviceSpace>();
+      KOKKOS_IF_ON_HOST((
+        data = Array<T *,yakl::DeviceSpace>();
+      ))
     }
 
     KOKKOS_INLINE_FUNCTION ScalarLiveOut            ( ScalarLiveOut const &rhs) { this->data = rhs.data; }
