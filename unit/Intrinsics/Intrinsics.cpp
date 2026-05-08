@@ -49,7 +49,7 @@ int main() {
     int constexpr n1 = 5;
     int constexpr n2 = 10;
     /////////////////////////////////////////////////////////////////////////////////////////////////
-    // size, shape, lbound, ubound, epsilon, sign, mod, merge, abs, minval, maxval, minloc, maxloc
+    // size, shape, lbound, ubound, epsilon, sign, merge, abs, minval, maxval, minloc, maxloc
     /////////////////////////////////////////////////////////////////////////////////////////////////
     {
       using yakl::intrinsics::size;
@@ -163,6 +163,14 @@ int main() {
       if (sum(abs(arr_f ))/size(arr_f ) != 3) die("ERROR: Wrong value for arr_f ");
       if (sum(abs(sarr_c))/size(sarr_c) != 4) die("ERROR: Wrong value for sarr_c");
       if (sum(abs(sarr_f))/size(sarr_f) != 5) die("ERROR: Wrong value for sarr_f");
+      yakl::ScalarLiveOut<real> avg_c(0);
+      yakl::ScalarLiveOut<real> avg_f(0);
+      yakl::parallel_for( 1 , KOKKOS_LAMBDA (int i) {
+        avg_c = sum(abs(sarr_c))/size(sarr_c);
+        avg_f = sum(abs(sarr_f))/size(sarr_f);
+      });
+      if (avg_c.hostRead() != 4) die("ERROR: Wrong value for sarr_c");
+      if (avg_f.hostRead() != 5) die("ERROR: Wrong value for sarr_f");
 
       yakl::parallel_for( size(arr_c) , KOKKOS_LAMBDA (int i) { arr_c.data()[i] = i; });
       yakl::parallel_for( size(arr_f) , KOKKOS_LAMBDA (int i) { arr_f.data()[i] = i; });
@@ -205,6 +213,15 @@ int main() {
       if (std::abs(sum(merge(sarr_a1 ,sarr_a2 ,sarr_mask ))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(sarr_)");
       if (std::abs(sum(merge(fsarr_a1,fsarr_a2,fsarr_mask))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(fsarr_)");
 
+      yakl::ScalarLiveOut<real> r1(0);
+      yakl::ScalarLiveOut<real> r2(0);
+      yakl::parallel_for( 1 , KOKKOS_LAMBDA (int i) {
+        r1 = std::abs(sum(merge(sarr_a1 ,sarr_a2 ,sarr_mask ))/n-2.5);
+        r2 = std::abs(sum(merge(fsarr_a1,fsarr_a2,fsarr_mask))/n-2.5);
+      });
+      if (r1.hostRead()>=1.e-10) die("ERROR: Wrong value for merge(sarr_)");
+      if (r2.hostRead()>=1.e-10) die("ERROR: Wrong value for merge(fsarr_)");
+
       using yakl::intrinsics::minval;
       using yakl::intrinsics::maxval;
       Array_F<double *,yakl::DeviceSpace> d_a1_f("d_a1_f",n);
@@ -241,6 +258,33 @@ int main() {
       if ( maxloc(fsarr_a1)(1) != 1 ) die("ERROR: maxloc(fsarr_a1) != 1");
       if ( maxloc(h_a1_f  )(1) != 1 ) die("ERROR: maxloc(h_a1_f  ) != 1");
       if ( maxloc(d_a1_f  )(1) != 1 ) die("ERROR: maxloc(d_a1_f  ) != 1");
+
+      yakl::ScalarLiveOut<real> r3;
+      yakl::ScalarLiveOut<real> r4;
+      yakl::ScalarLiveOut<real> r5;
+      yakl::ScalarLiveOut<real> r6;
+      yakl::ScalarLiveOut<SArray  <unsigned int,1>> r7 ;
+      yakl::ScalarLiveOut<SArray_F<int         ,yakl::Bnds{1,1}>> r8 ;
+      yakl::ScalarLiveOut<SArray  <unsigned int,1>> r9 ;
+      yakl::ScalarLiveOut<SArray_F<int         ,yakl::Bnds{1,1}>> r10;
+      yakl::parallel_for( 1 , KOKKOS_LAMBDA (int i) {
+        r3  = minval(sarr_a1 );
+        r4  = minval(fsarr_a1);
+        r5  = maxval(sarr_a1 );
+        r6  = maxval(fsarr_a1);
+        r7  = minloc(sarr_a1 )(0);
+        r8  = minloc(fsarr_a1)(1);
+        r9  = maxloc(sarr_a1 )(0);
+        r10 = maxloc(fsarr_a1)(1);
+      });
+      if ( r3 .hostRead()    != 1   ) die("ERROR: wrong minval sarr_a1 ");
+      if ( r4 .hostRead()    != 1   ) die("ERROR: wrong minval fsarr_a1");
+      if ( r5 .hostRead()    != n   ) die("ERROR: wrong maxval sarr_a1 ");
+      if ( r6 .hostRead()    != n   ) die("ERROR: wrong maxval fsarr_a1");
+      if ( r7 .hostRead()(0) != n-1 ) die("ERROR: wrong minloc sarr_a1 ");
+      if ( r8 .hostRead()(1) != n   ) die("ERROR: wrong minloc fsarr_a1");
+      if ( r9 .hostRead()(0) != 0   ) die("ERROR: maxloc(sarr_a1 ) != 0");
+      if ( r10.hostRead()(1) != 1   ) die("ERROR: maxloc(fsarr_a1) != 1");
     }
 
     ///////////////////////////////////////

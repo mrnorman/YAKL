@@ -92,7 +92,7 @@ int main() {
     std::cout << farr_re;
     std::cout << sum(farr_re) << std::endl;
     Array_F<float *,yakl::DeviceSpace> farr2("farr2",{1,10});
-    parallel_for_F( YAKL_AUTO_LABEL() , 11 , KOKKOS_LAMBDA (int i) {
+    parallel_for_F( YAKL_AUTO_LABEL() , 10 , KOKKOS_LAMBDA (int i) {
       farr2(i) = i;
     });
     std::cout << farr2;
