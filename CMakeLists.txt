@@ -12,7 +12,7 @@ set(YAKL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/YAKL_fortran_interfaces.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/YAKL_gator_mod.F90)
 
 # Ensure the Fortran file uses the desired flags
-set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_FLAGS "${YAKL_F90_FLAGS}")
+set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_OPTIONS "${YAKL_F90_FLAGS}")
 
 # Add the header-only YAKL C++ library target as well as the YAKL Fortran interface library target
 add_library(yakl STATIC ${YAKL_SOURCE})
