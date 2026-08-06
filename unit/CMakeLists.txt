@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(yakl_unit)
 enable_testing()
+option(YAKL_UNIT_LARGE_MEMORY "Build tests requiring more than 4 GB of device memory" OFF)
 
 enable_language(Fortran)
 enable_language(CXX)
@@ -38,6 +39,9 @@ add_subdirectory(performance EXCLUDE_FROM_ALL)
 add_subdirectory(Random)
 add_subdirectory(Reductions)
 add_subdirectory(Validation)
+if (YAKL_UNIT_LARGE_MEMORY)
+  add_subdirectory(LargeMemory)
+endif()
 
 if (YAKL_ENABLE_COVERAGE)
   find_program(YAKL_GCOV_EXECUTABLE gcov)
@@ -53,6 +57,10 @@ if (YAKL_ENABLE_COVERAGE)
                       CArray_test
                       FArray_test
                       Fortran_Gator_test
+                      Fortran_Gator_bytes_positive
+                      Fortran_Gator_bytes_zero
+                      Fortran_Gator_bytes_negative
+                      Fortran_Gator_bytes_overflow
                       Fortran_Link_test
                       Intrinsics_test
                       Kokkos_DeviceSpace_test
@@ -68,6 +76,9 @@ if (YAKL_ENABLE_COVERAGE)
   endif()
   if (YAKL_TEST_PNETCDF)
     list(APPEND YAKL_UNIT_TESTS PNetCDF_test)
+  endif()
+  if (YAKL_UNIT_LARGE_MEMORY)
+    list(APPEND YAKL_UNIT_TESTS LargeMemory_test)
   endif()
 
   add_test(NAME zz_coverage_summary

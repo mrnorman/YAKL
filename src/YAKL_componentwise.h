@@ -57,7 +57,7 @@ namespace yakl {
       auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::binary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                            Kokkos::RangePolicy<typename V1::execution_space>(0,l.size()) ,
+                            Kokkos::RangePolicy<typename V1::execution_space,Kokkos::IndexType<size_t>>(0,l.size()) ,
                             KOKKOS_LAMBDA (size_t i) {
         auto &lloc = l;
         auto &rloc = r;
@@ -77,7 +77,7 @@ namespace yakl {
       auto ret = r.template clone_object<typename V2::memory_space,decltype(f(l,r.data()[0]))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::binary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                            Kokkos::RangePolicy<typename V2::execution_space>(0,r.size()) ,
+                            Kokkos::RangePolicy<typename V2::execution_space,Kokkos::IndexType<size_t>>(0,r.size()) ,
                             KOKKOS_LAMBDA (size_t i) {
         auto &lloc = l;
         auto &rloc = r;
@@ -102,7 +102,7 @@ namespace yakl {
       auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r.data()[0]))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::binary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                            Kokkos::RangePolicy<typename V1::execution_space>(0,l.size()) ,
+                            Kokkos::RangePolicy<typename V1::execution_space,Kokkos::IndexType<size_t>>(0,l.size()) ,
                             KOKKOS_LAMBDA (size_t i) {
         auto &lloc = l;
         auto &rloc = r;
@@ -197,7 +197,7 @@ namespace yakl {
       auto ret = v.template clone_object<typename V::memory_space,decltype(f(v.data()[0]))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::unary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                            Kokkos::RangePolicy<typename V::execution_space>(0,v.size()) ,
+                            Kokkos::RangePolicy<typename V::execution_space,Kokkos::IndexType<size_t>>(0,v.size()) ,
                             KOKKOS_LAMBDA (size_t i) {
         ret.data()[i] = f(v.data()[i]);
       } );

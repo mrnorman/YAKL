@@ -404,7 +404,8 @@ namespace yakl {
     if (bounds.nIter == 0) return;  // exit early if there is no work to do
     if constexpr (yakl_auto_profile) timer_start(str);
     Kokkos::parallel_for( str ,
-                          RangePolicy<LaunchBounds<MaxThreadsPerBlock,0>>(0,(bounds.nIter-1)/Strip+1) ,
+                          RangePolicy<LaunchBounds<MaxThreadsPerBlock,0>,Kokkos::IndexType<size_t>>(
+                              0,(bounds.nIter-1)/Strip+1) ,
                           KOKKOS_LAMBDA (size_t iglob) {
       auto &bloc = bounds;
       auto &floc = f;

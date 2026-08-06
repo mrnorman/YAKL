@@ -418,7 +418,7 @@ namespace yakl {
       YAKL_SCOPE( me , *this );
       if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::as");
       Kokkos::parallel_for( "yakl_as_copy" ,
-                            Kokkos::RangePolicy<typename base_t::execution_space>(0,this->size()) ,
+                            Kokkos::RangePolicy<typename base_t::execution_space,Kokkos::IndexType<size_t>>(0,this->size()) ,
                             KOKKOS_LAMBDA (size_t i) {
         ret.data()[i] = me.data()[i];
       });

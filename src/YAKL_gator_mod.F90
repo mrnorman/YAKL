@@ -158,23 +158,24 @@ module gator_mod
 contains
 
 
-  function gator_checked_product(dims) result(num_elements)
+  function gator_checked_bytes(dims,element_bytes) result(num_bytes)
     use iso_c_binding
     integer, intent(in) :: dims(:)
-    integer(c_size_t) :: num_elements
+    integer(c_size_t), value :: element_bytes
+    integer(c_size_t) :: num_bytes
     integer :: i
-    num_elements = 1_c_size_t
+    num_bytes = 1_c_size_t
+    if (element_bytes == 0_c_size_t) error stop "ERROR: gator_allocate element size must be positive"
     do i = 1, size(dims)
       if (dims(i) <= 0) error stop "ERROR: gator_allocate dimensions must be positive"
-      if (int(dims(i),c_size_t) > huge(num_elements)/num_elements) then
-        error stop "ERROR: gator_allocate element-count overflow"
+      if (int(dims(i),c_size_t) > huge(num_bytes)/num_bytes) then
+        error stop "ERROR: gator_allocate dimension product overflow"
       endif
-      num_elements = num_elements*int(dims(i),c_size_t)
+      num_bytes = num_bytes*int(dims(i),c_size_t)
     enddo
-    if (num_elements > huge(num_elements)/16_c_size_t) then
-      error stop "ERROR: gator_allocate byte-count overflow"
-    endif
-  end function gator_checked_product
+    if (num_bytes > huge(num_bytes)/element_bytes) error stop "ERROR: gator_allocate byte-count overflow"
+    num_bytes = num_bytes*element_bytes
+  end function gator_checked_bytes
 
 
   function gator_checked_allocate(bytes,already_associated) result(ptr)
@@ -199,7 +200,6 @@ contains
 
 
 #define out inout
-#define product(dims) gator_checked_product(dims)
 #define gator_allocate_c(bytes) gator_checked_allocate(bytes,associated(arr))
 #define gator_deallocate_c(ptr) gator_checked_deallocate(ptr,associated(arr))
 
@@ -220,7 +220,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):) => arr
   end subroutine gator_allocate_int4_1d
@@ -236,7 +236,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):) => arr
   end subroutine gator_allocate_int4_2d
@@ -252,7 +252,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):) => arr
   end subroutine gator_allocate_int4_3d
@@ -268,7 +268,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => arr
   end subroutine gator_allocate_int4_4d
@@ -284,7 +284,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):) => arr
   end subroutine gator_allocate_int4_5d
@@ -300,7 +300,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):) => arr
   end subroutine gator_allocate_int4_6d
@@ -316,7 +316,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
   end subroutine gator_allocate_int4_7d
@@ -333,7 +333,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):) => arr
   end subroutine gator_allocate_int8_1d
@@ -349,7 +349,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):) => arr
   end subroutine gator_allocate_int8_2d
@@ -365,7 +365,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):) => arr
   end subroutine gator_allocate_int8_3d
@@ -381,7 +381,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => arr
   end subroutine gator_allocate_int8_4d
@@ -397,7 +397,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):) => arr
   end subroutine gator_allocate_int8_5d
@@ -413,7 +413,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):) => arr
   end subroutine gator_allocate_int8_6d
@@ -429,7 +429,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(i8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(i8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
   end subroutine gator_allocate_int8_7d
@@ -446,7 +446,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):) => arr
   end subroutine gator_allocate_real4_1d
@@ -462,7 +462,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):) => arr
   end subroutine gator_allocate_real4_2d
@@ -478,7 +478,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):) => arr
   end subroutine gator_allocate_real4_3d
@@ -494,7 +494,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => arr
   end subroutine gator_allocate_real4_4d
@@ -510,7 +510,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):) => arr
   end subroutine gator_allocate_real4_5d
@@ -526,7 +526,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):) => arr
   end subroutine gator_allocate_real4_6d
@@ -542,7 +542,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
   end subroutine gator_allocate_real4_7d
@@ -559,7 +559,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):) => arr
   end subroutine gator_allocate_real8_1d
@@ -575,7 +575,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):) => arr
   end subroutine gator_allocate_real8_2d
@@ -591,7 +591,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):) => arr
   end subroutine gator_allocate_real8_3d
@@ -607,7 +607,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => arr
   end subroutine gator_allocate_real8_4d
@@ -623,7 +623,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):) => arr
   end subroutine gator_allocate_real8_5d
@@ -639,7 +639,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):) => arr
   end subroutine gator_allocate_real8_6d
@@ -655,7 +655,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(r8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(r8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
   end subroutine gator_allocate_real8_7d
@@ -672,7 +672,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):) => arr
   end subroutine gator_allocate_cplx4_1d
@@ -688,7 +688,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):) => arr
   end subroutine gator_allocate_cplx4_2d
@@ -704,7 +704,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):) => arr
   end subroutine gator_allocate_cplx4_3d
@@ -720,7 +720,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => arr
   end subroutine gator_allocate_cplx4_4d
@@ -736,7 +736,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):) => arr
   end subroutine gator_allocate_cplx4_5d
@@ -752,7 +752,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):) => arr
   end subroutine gator_allocate_cplx4_6d
@@ -768,7 +768,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c4),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c4),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
   end subroutine gator_allocate_cplx4_7d
@@ -785,7 +785,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):) => arr
   end subroutine gator_allocate_cplx8_1d
@@ -801,7 +801,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):) => arr
   end subroutine gator_allocate_cplx8_2d
@@ -817,7 +817,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):) => arr
   end subroutine gator_allocate_cplx8_3d
@@ -833,7 +833,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => arr
   end subroutine gator_allocate_cplx8_4d
@@ -849,7 +849,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):) => arr
   end subroutine gator_allocate_cplx8_5d
@@ -865,7 +865,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):) => arr
   end subroutine gator_allocate_cplx8_6d
@@ -881,7 +881,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(c8),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(c8),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
   end subroutine gator_allocate_cplx8_7d
@@ -898,7 +898,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(lg),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(lg),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):) => arr
   end subroutine gator_allocate_log_1d
@@ -914,7 +914,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(lg),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(lg),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):) => arr
   end subroutine gator_allocate_log_2d
@@ -930,7 +930,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(lg),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(lg),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):) => arr
   end subroutine gator_allocate_log_3d
@@ -946,7 +946,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(lg),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(lg),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):) => arr
   end subroutine gator_allocate_log_4d
@@ -962,7 +962,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(lg),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(lg),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):) => arr
   end subroutine gator_allocate_log_5d
@@ -978,7 +978,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(lg),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(lg),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):) => arr
   end subroutine gator_allocate_log_6d
@@ -994,7 +994,7 @@ contains
     else
       lbounds = 1
     endif
-    data_ptr = gator_allocate_c( int(product(dims)*sizeof(lg),c_size_t) )
+    data_ptr = gator_allocate_c( gator_checked_bytes(dims,int(sizeof(lg),c_size_t)) )
     call c_f_pointer( data_ptr , arr , dims )
     arr(lbounds(1):,lbounds(2):,lbounds(3):,lbounds(4):,lbounds(5):,lbounds(6):,lbounds(7):) => arr
   end subroutine gator_allocate_log_7d
@@ -1259,7 +1259,6 @@ contains
 
 #undef gator_deallocate_c
 #undef gator_allocate_c
-#undef product
 #undef out
 
 end module gator_mod
