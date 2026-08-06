@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
     matrix(1,0) = 0.; matrix(1,1) = std::numeric_limits<double>::epsilon()/4;
     (void) yakl::intrinsics::matinv(matrix);
   } else if (scenario == "random_range") {
-    yakl::Random random;
+    yakl::Random random(1368976481,0);
     (void) random.genFP<double>(2.,1.);
   } else if (scenario == "timer_stop") {
     yakl::Toney timer;

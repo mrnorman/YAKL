@@ -35,6 +35,8 @@ typedef Array_F<bool *  ,yakl::DeviceSpace> bool_f_1d;
 typedef Array_F<bool ** ,yakl::DeviceSpace> bool_f_2d;
 typedef Array_F<bool ***,yakl::DeviceSpace> bool_f_3d;
 
+void test_host_device_intrinsics();
+
 
 void die(std::string msg) {
   Kokkos::abort(msg.c_str());
@@ -1053,6 +1055,8 @@ int main() {
 
 
     yakl::timer_stop("main");
+
+    test_host_device_intrinsics();
 
   }
   yakl::finalize();

@@ -5,6 +5,9 @@ namespace yakl {
   namespace componentwise {
 
     template <class V1, class V2>
+    bool constexpr has_array_operand = yakl::is_Array<V1> || yakl::is_Array<V2>;
+
+    template <class V1, class V2>
     KOKKOS_INLINE_FUNCTION bool same_shape(V1 const & a, V2 const & b) {
       if constexpr (V1::rank() != V2::rank()) {
         return false;
@@ -115,62 +118,122 @@ namespace yakl {
 
 
     struct AddOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l+r;} };
-    template <class V1, class V2> auto operator+( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator+( V1 const & l , V2 const & r ) {
+      return binary( l , r , AddOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator+( V1 const & l , V2 const & r ) {
       return binary( l , r , AddOp{} );
     }
 
     struct SubOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l-r;} };
-    template <class V1, class V2> auto operator-( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator-( V1 const & l , V2 const & r ) {
+      return binary( l , r , SubOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator-( V1 const & l , V2 const & r ) {
       return binary( l , r , SubOp{} );
     }
 
     struct MultOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l*r;} };
-    template <class V1, class V2> auto operator*( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator*( V1 const & l , V2 const & r ) {
+      return binary( l , r , MultOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator*( V1 const & l , V2 const & r ) {
       return binary( l , r , MultOp{} );
     }
 
     struct DivOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l/r;} };
-    template <class V1, class V2> auto operator/( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator/( V1 const & l , V2 const & r ) {
+      return binary( l , r , DivOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator/( V1 const & l , V2 const & r ) {
       return binary( l , r , DivOp{} );
     }
 
     struct LTOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l<r;} };
-    template <class V1, class V2> auto operator<( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator<( V1 const & l , V2 const & r ) {
+      return binary( l , r , LTOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator<( V1 const & l , V2 const & r ) {
       return binary( l , r , LTOp{} );
     }
 
     struct GTOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l>r;} };
-    template <class V1, class V2> auto operator>( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator>( V1 const & l , V2 const & r ) {
+      return binary( l , r , GTOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator>( V1 const & l , V2 const & r ) {
       return binary( l , r , GTOp{} );
     }
 
     struct LEOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l<=r;} };
-    template <class V1, class V2> auto operator<=( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator<=( V1 const & l , V2 const & r ) {
+      return binary( l , r , LEOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator<=( V1 const & l , V2 const & r ) {
       return binary( l , r , LEOp{} );
     }
 
     struct GEOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l>=r;} };
-    template <class V1, class V2> auto operator>=( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator>=( V1 const & l , V2 const & r ) {
+      return binary( l , r , GEOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator>=( V1 const & l , V2 const & r ) {
       return binary( l , r , GEOp{} );
     }
 
     struct EEOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l==r;} };
-    template <class V1, class V2> auto operator==( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator==( V1 const & l , V2 const & r ) {
+      return binary( l , r , EEOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator==( V1 const & l , V2 const & r ) {
       return binary( l , r , EEOp{} );
     }
 
     struct NEOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l!=r;} };
-    template <class V1, class V2> auto operator!=( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator!=( V1 const & l , V2 const & r ) {
+      return binary( l , r , NEOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator!=( V1 const & l , V2 const & r ) {
       return binary( l , r , NEOp{} );
     }
 
     struct AndOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l&&r;} };
-    template <class V1, class V2> auto operator&&( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator&&( V1 const & l , V2 const & r ) {
+      return binary( l , r , AndOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator&&( V1 const & l , V2 const & r ) {
       return binary( l , r , AndOp{} );
     }
 
     struct OrOp{template <class V1,class V2> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2> KOKKOS_INLINE_FUNCTION auto operator()(V1 l,V2 r)const{return l||r;} };
-    template <class V1, class V2> auto operator||( V1 const & l , V2 const & r ) {
+    template <class V1, class V2> requires (!has_array_operand<V1,V2>)
+    KOKKOS_INLINE_FUNCTION auto operator||( V1 const & l , V2 const & r ) {
+      return binary( l , r , OrOp{} );
+    }
+    template <class V1, class V2> requires has_array_operand<V1,V2>
+    inline auto operator||( V1 const & l , V2 const & r ) {
       return binary( l , r , OrOp{} );
     }
 
@@ -207,32 +270,62 @@ namespace yakl {
     }
 
     struct NotOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return !v;} };
-    template <class V> auto operator!( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto operator!( V const & v ) {
+      return unary( v , NotOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto operator!( V const & v ) {
       return unary( v , NotOp{} );
     }
 
     struct PosOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return +v;} };
-    template <class V> auto operator+( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto operator+( V const & v ) {
+      return unary( v , PosOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto operator+( V const & v ) {
       return unary( v , PosOp{} );
     }
 
     struct NegOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return -v;} };
-    template <class V> auto operator-( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto operator-( V const & v ) {
+      return unary( v , NegOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto operator-( V const & v ) {
       return unary( v , NegOp{} );
     }
 
     struct AbsOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::abs(v);} };
-    template <class V> auto abs( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto abs( V const & v ) {
+      return unary( v , AbsOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto abs( V const & v ) {
       return unary( v , AbsOp{} );
     }
 
     struct SqrtOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::sqrt(v);} };
-    template <class V> auto sqrt( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto sqrt( V const & v ) {
+      return unary( v , SqrtOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto sqrt( V const & v ) {
       return unary( v , SqrtOp{} );
     }
 
     struct CbrtOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::cbrt(v);} };
-    template <class V> auto cbrt( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto cbrt( V const & v ) {
+      return unary( v , CbrtOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto cbrt( V const & v ) {
       return unary( v , CbrtOp{} );
     }
 
@@ -242,82 +335,162 @@ namespace yakl {
       template <class V> requires std::is_arithmetic_v<V>
       KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::pow(v,v2);}
     };
-    template <class V, class V2> auto pow( V const & v , V2 const & v2 ) requires std::is_arithmetic_v<V2> {
+    template <class V, class V2> requires std::is_arithmetic_v<V2> && (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto pow( V const & v , V2 const & v2 ) {
+      return unary( v , PowOp{v2} );
+    }
+    template <class V, class V2> requires std::is_arithmetic_v<V2> && yakl::is_Array<V>
+    inline auto pow( V const & v , V2 const & v2 ) {
       return unary( v , PowOp{v2} );
     }
 
     struct SinOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::sin(v);} };
-    template <class V> auto sin( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto sin( V const & v ) {
+      return unary( v , SinOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto sin( V const & v ) {
       return unary( v , SinOp{} );
     }
 
     struct CosOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::cos(v);} };
-    template <class V> auto cos( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto cos( V const & v ) {
+      return unary( v , CosOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto cos( V const & v ) {
       return unary( v , CosOp{} );
     }
 
     struct TanOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::tan(v);} };
-    template <class V> auto tan( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto tan( V const & v ) {
+      return unary( v , TanOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto tan( V const & v ) {
       return unary( v , TanOp{} );
     }
 
     struct AsinOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::asin(v);} };
-    template <class V> auto asin( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto asin( V const & v ) {
+      return unary( v , AsinOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto asin( V const & v ) {
       return unary( v , AsinOp{} );
     }
 
     struct AcosOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::acos(v);} };
-    template <class V> auto acos( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto acos( V const & v ) {
+      return unary( v , AcosOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto acos( V const & v ) {
       return unary( v , AcosOp{} );
     }
 
     struct AtanOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::atan(v);} };
-    template <class V> auto atan( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto atan( V const & v ) {
+      return unary( v , AtanOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto atan( V const & v ) {
       return unary( v , AtanOp{} );
     }
 
     struct ExpOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::exp(v);} };
-    template <class V> auto exp( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto exp( V const & v ) {
+      return unary( v , ExpOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto exp( V const & v ) {
       return unary( v , ExpOp{} );
     }
 
     struct LogOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::log(v);} };
-    template <class V> auto log( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto log( V const & v ) {
+      return unary( v , LogOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto log( V const & v ) {
       return unary( v , LogOp{} );
     }
 
     struct Log10Op{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::log10(v);} };
-    template <class V> auto log10( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto log10( V const & v ) {
+      return unary( v , Log10Op{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto log10( V const & v ) {
       return unary( v , Log10Op{} );
     }
 
     struct Log2Op{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::log2(v);} };
-    template <class V> auto log2( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto log2( V const & v ) {
+      return unary( v , Log2Op{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto log2( V const & v ) {
       return unary( v , Log2Op{} );
     }
 
     struct FloorOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::floor(v);} };
-    template <class V> auto floor( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto floor( V const & v ) {
+      return unary( v , FloorOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto floor( V const & v ) {
       return unary( v , FloorOp{} );
     }
 
     struct CeilOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::ceil(v);} };
-    template <class V> auto ceil( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto ceil( V const & v ) {
+      return unary( v , CeilOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto ceil( V const & v ) {
       return unary( v , CeilOp{} );
     }
 
     struct RoundOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::round(v);} };
-    template <class V> auto round( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto round( V const & v ) {
+      return unary( v , RoundOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto round( V const & v ) {
       return unary( v , RoundOp{} );
     }
 
     struct IsnanOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::isnan(v);} };
-    template <class V> auto isnan( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto isnan( V const & v ) {
+      return unary( v , IsnanOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto isnan( V const & v ) {
       return unary( v , IsnanOp{} );
     }
 
     struct IsinfOp{template <class V> requires std::is_arithmetic_v<V> KOKKOS_INLINE_FUNCTION auto operator()(V v)const{return std::isinf(v);} };
-    template <class V> auto isinf( V const & v ) {
+    template <class V> requires (!yakl::is_Array<V>)
+    KOKKOS_INLINE_FUNCTION auto isinf( V const & v ) {
+      return unary( v , IsinfOp{} );
+    }
+    template <class V> requires yakl::is_Array<V>
+    inline auto isinf( V const & v ) {
       return unary( v , IsinfOp{} );
     }
 
