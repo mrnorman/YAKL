@@ -199,11 +199,13 @@ namespace yakl {
       using T = typename V::non_const_value_type;
       SArray<T,n,n> scratch;
       SArray<T,n,n> inv;
+      T matrix_scale = static_cast<T>(0);
       // Initialize scratch as copy of a, inv as identity
       for (int irow = 0; irow < n; irow++) {
         for (int icol = 0; icol < n; icol++) {
           scratch(irow,icol) = a(irow,icol);
           inv    (irow,icol) = (irow==icol) ? static_cast<T>(1) : static_cast<T>(0);
+          if constexpr (kokkos_debug) matrix_scale = std::max(matrix_scale,std::abs(a(irow,icol)));
         }
       }
       // Forward elimination with partial pivoting
@@ -216,7 +218,8 @@ namespace yakl {
           if (val > pivot_val) { pivot_val = val; pivot = irow; }
         }
         if constexpr (kokkos_debug) {
-          if (pivot_val == static_cast<T>(0)) Kokkos::abort("ERROR: matinv called with a singular matrix");
+          T const tolerance = std::numeric_limits<T>::epsilon()*matrix_scale*static_cast<T>(n);
+          if (pivot_val <= tolerance) Kokkos::abort("ERROR: matinv called with a singular or numerically singular matrix");
         }
         // Swap pivot row into diagonal position
         if (pivot != idiag) {
@@ -313,16 +316,16 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline bool any(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: any on unallocated Array");
-      ScalarLiveOut<bool> any_true(false);
+      bool any_true;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::any");
-      Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                            Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                            KOKKOS_LAMBDA (size_t i) {
-        if (in.data()[i]) any_true = true;
-      });
+      Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
+                               KOKKOS_LAMBDA (size_t i , bool & lany) {
+        lany = lany || in.data()[i];
+      } , Kokkos::LOr<bool>(any_true) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::any");
       if constexpr (yakl_auto_fence) Kokkos::fence();
-      return any_true.hostRead();
+      return any_true;
     }
 
 
@@ -337,16 +340,16 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline bool all(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: all on unallocated Array");
-      ScalarLiveOut<bool> all_true(true);
+      bool all_true;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::all");
-      Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                            Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                            KOKKOS_LAMBDA (size_t i) {
-        if (!in.data()[i]) all_true = false;
-      });
+      Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
+                               KOKKOS_LAMBDA (size_t i , bool & lall) {
+        lall = lall && in.data()[i];
+      } , Kokkos::LAnd<bool>(all_true) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::all");
       if constexpr (yakl_auto_fence) Kokkos::fence();
-      return all_true.hostRead();
+      return all_true;
     }
 
 

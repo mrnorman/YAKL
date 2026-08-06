@@ -679,6 +679,38 @@ int main() {
       if ( ! all( arr_f  >= -2 ) ) die("! all( arr_f  >= -2 )");
       if ( ! all( sarr_c >= -2 ) ) die("! all( sarr_c >= -2 )");
       if ( ! all( sarr_f >= -2 ) ) die("! all( sarr_f >= -2 )");
+
+      // A large alternating input makes many device threads contribute both reduction outcomes. Repeating the
+      // reductions increases the chance that a backend or implementation containing shared non-atomic writes fails.
+      size_t constexpr raceSize = 1024*1024;
+      int    constexpr repeats  = 32;
+      bool_c_1d raceValues("raceValues",raceSize);
+      yakl::parallel_for( raceSize , KOKKOS_LAMBDA (size_t i) {
+        raceValues(i) = i%2 == 0;
+      });
+      for (int repeat=0; repeat < repeats; repeat++) {
+        if (!any(raceValues)) die("any failed for large alternating device input");
+        if ( all(raceValues)) die("all failed for large alternating device input");
+      }
+
+      // Exercise unanimous reductions and a dissenting value at the final index, which can be handled by a late block.
+      raceValues = false;
+      if ( any(raceValues)) die("any failed for large all-false device input");
+      if ( all(raceValues)) die("all failed for large all-false device input");
+      yakl::parallel_for( raceSize , KOKKOS_LAMBDA (size_t i) {
+        raceValues(i) = i == raceSize-1;
+      });
+      if (!any(raceValues)) die("any failed for a lone true value in the final device block");
+      if ( all(raceValues)) die("all failed for a lone true value in the final device block");
+
+      raceValues = true;
+      if (!any(raceValues)) die("any failed for large all-true device input");
+      if (!all(raceValues)) die("all failed for large all-true device input");
+      yakl::parallel_for( raceSize , KOKKOS_LAMBDA (size_t i) {
+        raceValues(i) = i != raceSize-1;
+      });
+      if (!any(raceValues)) die("any failed for a lone false value in the final device block");
+      if ( all(raceValues)) die("all failed for a lone false value in the final device block");
     }
 
 

@@ -38,6 +38,7 @@ add_subdirectory(ParForFortran)
 add_subdirectory(performance EXCLUDE_FROM_ALL)
 add_subdirectory(Random)
 add_subdirectory(Reductions)
+add_subdirectory(Timers)
 add_subdirectory(Validation)
 if (YAKL_UNIT_LARGE_MEMORY)
   add_subdirectory(LargeMemory)
@@ -57,10 +58,18 @@ if (YAKL_ENABLE_COVERAGE)
                       CArray_test
                       FArray_test
                       Fortran_Gator_test
+                      Fortran_Gator_wrappers
+                      Fortran_Gator_wrappers_no_pool
+                      Fortran_Gator_kokkos_ownership
+                      Fortran_Gator_kokkos_yakl_ownership
                       Fortran_Gator_bytes_positive
                       Fortran_Gator_bytes_zero
                       Fortran_Gator_bytes_negative
                       Fortran_Gator_bytes_overflow
+                      Fortran_Gator_associated_allocate
+                      Fortran_Gator_disassociated_deallocate
+                      Fortran_Gator_interior_deallocate
+                      Fortran_Gator_zero_extent
                       Fortran_Link_test
                       Intrinsics_test
                       Kokkos_DeviceSpace_test
@@ -70,7 +79,14 @@ if (YAKL_ENABLE_COVERAGE)
                       ParForFortran_test
                       Random_test
                       Reductions_test
+                      Timers_disabled_test
+                      Timers_profile_test
+                      Timers_auto_profile_test
                       Validation_positive
+                      Validation_environment_negative
+                      Validation_config_disable
+                      Validation_config_enable
+                      Validation_config_size_default
                       Validation_array_slice
                       Validation_array_subset
                       Validation_array_reshape
@@ -83,6 +99,18 @@ if (YAKL_ENABLE_COVERAGE)
                       Validation_simple_bounds_negative
                       Validation_simple_bounds_overflow
                       Validation_linear_allocator
+                      Validation_linear_allocator_zero_pool
+                      Validation_linear_allocator_small_block
+                      Validation_linear_allocator_overflow
+                      Validation_linear_allocator_allocation_overflow
+                      Validation_linear_allocator_exhaustion
+                      Validation_linear_allocator_invalid_free
+                      Validation_linear_allocator_double_free
+                      Validation_linear_allocator_end_pointer
+                      Validation_linear_allocator_uninitialized
+                      Validation_linear_allocator_empty_callback
+                      Validation_matinv_singular
+                      Validation_matinv_near_singular
                       Validation_random_range
                       Validation_timer_stop
                       Validation_unpack_index

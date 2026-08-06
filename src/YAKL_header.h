@@ -22,6 +22,7 @@
 #include <cstring>
 #include <vector>
 #include <array>
+#include <atomic>
 #include <mutex>
 #include "stdlib.h"
 #include <list>

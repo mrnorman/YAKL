@@ -30,6 +30,47 @@ int main(int argc, char **argv) {
     void * ptr = Kokkos::kokkos_malloc("outside YAKL lifetime",16);
     yakl::free_device(ptr,"outside YAKL lifetime");
     return 0;
+  } else if (scenario == "environment_negative") {
+    setenv("GATOR_DISABLE","1",1);
+    setenv("GATOR_INITIAL_MB","-17",1);
+    setenv("GATOR_BLOCK_BYTES","-64",1);
+    std::ostringstream warnings;
+    auto *oldBuffer = std::cout.rdbuf(warnings.rdbuf());
+    yakl::init();
+    std::cout.rdbuf(oldBuffer);
+    if (yakl::get_yakl_instance().use_pool()) fail("GATOR_DISABLE did not disable the pool");
+    if (warnings.str().find("Defaulting to 4GB") == std::string::npos) {
+      fail("negative GATOR_INITIAL_MB was accepted or emitted the wrong default diagnostic");
+    }
+    if (warnings.str().find("Defaulting to 4096 bytes") == std::string::npos) {
+      fail("negative GATOR_BLOCK_BYTES was accepted or emitted the wrong default diagnostic");
+    }
+    yakl::finalize();
+    Kokkos::finalize();
+    return 0;
+  } else if (scenario == "config_disable") {
+    unsetenv("GATOR_DISABLE");
+    setenv("GATOR_INITIAL_MB","1",1);
+    yakl::init(yakl::InitConfig().set_pool_enabled(false));
+    if (yakl::get_yakl_instance().use_pool()) fail("InitConfig::set_pool_enabled(false) did not disable the pool");
+    yakl::finalize();
+    Kokkos::finalize();
+    return 0;
+  } else if (scenario == "config_enable") {
+    setenv("GATOR_DISABLE","1",1);
+    setenv("GATOR_INITIAL_MB","1",1);
+    yakl::init(yakl::InitConfig().set_pool_enabled(true));
+    if (! yakl::get_yakl_instance().use_pool()) fail("explicit pool enable did not override GATOR_DISABLE");
+    yakl::finalize();
+    Kokkos::finalize();
+    return 0;
+  } else if (scenario == "config_size_default") {
+    unsetenv("GATOR_DISABLE");
+    yakl::init(yakl::InitConfig().set_pool_size_mb(1));
+    if (! yakl::get_yakl_instance().use_pool()) fail("setting a pool size unexpectedly disabled the pool");
+    yakl::finalize();
+    Kokkos::finalize();
+    return 0;
   }
 
   yakl::init();
@@ -118,6 +159,50 @@ int main(int argc, char **argv) {
   } else if (scenario == "linear_allocator") {
     yakl::LinearAllocator allocator(1024,0);
     (void) allocator;
+  } else if (scenario == "linear_allocator_zero_pool") {
+    yakl::LinearAllocator allocator(0,yakl::LinearAllocator::requiredAlignment);
+    (void) allocator;
+  } else if (scenario == "linear_allocator_small_block") {
+    yakl::LinearAllocator allocator(1024,2*sizeof(size_t));
+    (void) allocator;
+  } else if (scenario == "linear_allocator_overflow") {
+    yakl::LinearAllocator allocator(std::numeric_limits<size_t>::max(),yakl::LinearAllocator::requiredAlignment);
+    (void) allocator;
+  } else if (scenario == "linear_allocator_allocation_overflow") {
+    yakl::LinearAllocator allocator(1024,yakl::LinearAllocator::requiredAlignment);
+    (void) allocator.allocate(std::numeric_limits<size_t>::max());
+  } else if (scenario == "linear_allocator_exhaustion") {
+    yakl::LinearAllocator allocator(256,yakl::LinearAllocator::requiredAlignment);
+    (void) allocator.allocate(257);
+  } else if (scenario == "linear_allocator_invalid_free") {
+    yakl::LinearAllocator allocator(256,yakl::LinearAllocator::requiredAlignment);
+    auto *ptr = static_cast<char *>(allocator.allocate(1));
+    (void) allocator.free(ptr+1);
+  } else if (scenario == "linear_allocator_double_free") {
+    yakl::LinearAllocator allocator(256,yakl::LinearAllocator::requiredAlignment);
+    void *ptr = allocator.allocate(1);
+    allocator.free(ptr);
+    (void) allocator.free(ptr);
+  } else if (scenario == "linear_allocator_end_pointer") {
+    yakl::LinearAllocator allocator(256,yakl::LinearAllocator::requiredAlignment);
+    (void) allocator.getPtr(allocator.nBlocks);
+  } else if (scenario == "linear_allocator_uninitialized") {
+    yakl::LinearAllocator allocator;
+    (void) allocator.allocate(1);
+  } else if (scenario == "linear_allocator_empty_callback") {
+    yakl::LinearAllocator allocator(256,yakl::LinearAllocator::requiredAlignment,
+                                    std::function<void *(size_t)>(),[] (void *) {},[] (void *, size_t) {});
+    (void) allocator;
+  } else if (scenario == "matinv_singular") {
+    yakl::SArray<double,2,2> matrix;
+    matrix(0,0) = 1.; matrix(0,1) = 2.;
+    matrix(1,0) = 2.; matrix(1,1) = 4.;
+    (void) yakl::intrinsics::matinv(matrix);
+  } else if (scenario == "matinv_near_singular") {
+    yakl::SArray<double,2,2> matrix;
+    matrix(0,0) = 1.; matrix(0,1) = 0.;
+    matrix(1,0) = 0.; matrix(1,1) = std::numeric_limits<double>::epsilon()/4;
+    (void) yakl::intrinsics::matinv(matrix);
   } else if (scenario == "random_range") {
     yakl::Random random;
     (void) random.genFP<double>(2.,1.);

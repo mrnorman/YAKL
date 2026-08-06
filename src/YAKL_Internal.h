@@ -20,7 +20,7 @@ namespace yakl {
       LinearAllocator pool;                 // Pool allocator. Constructor and destructor do not depend on ordering
       bool            yakl_is_initialized;  // Determine if YAKL has been initialized
       bool            pool_enabled;         // Is the pool allocator being used?
-      size_t          num_device_allocations; // Number of live allocations made through yakl::DeviceSpace
+      std::atomic<size_t> num_device_allocations; // Number of live allocations made through yakl::DeviceSpace
       Toney           timer;
 
       bool use_pool      () const { return pool_enabled; }

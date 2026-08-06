@@ -189,11 +189,9 @@ contains
   end function gator_checked_allocate
 
 
-  subroutine gator_checked_deallocate(ptr,is_associated)
+  subroutine gator_checked_deallocate(ptr)
     use iso_c_binding
     type(c_ptr), value :: ptr
-    logical, value :: is_associated
-    if (.not. is_associated) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     if (.not. c_associated(ptr)) error stop "ERROR: gator_deallocate received a null C pointer"
     call gator_deallocate_c(ptr)
   end subroutine gator_checked_deallocate
@@ -201,7 +199,7 @@ contains
 
 #define out inout
 #define gator_allocate_c(bytes) gator_checked_allocate(bytes,associated(arr))
-#define gator_deallocate_c(ptr) gator_checked_deallocate(ptr,associated(arr))
+#define gator_deallocate_c(ptr) gator_checked_deallocate(ptr)
 
 
 
@@ -1006,252 +1004,301 @@ contains
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine gator_deallocate_int4_1d( arr )
     integer, pointer, intent(inout) :: arr(:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr=> NULL()
   end subroutine gator_deallocate_int4_1d
   subroutine gator_deallocate_int4_2d( arr )
     integer, pointer, intent(inout) :: arr(:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int4_2d
   subroutine gator_deallocate_int4_3d( arr )
     integer, pointer, intent(inout) :: arr(:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int4_3d
   subroutine gator_deallocate_int4_4d( arr )
     integer, pointer, intent(inout) :: arr(:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int4_4d
   subroutine gator_deallocate_int4_5d( arr )
     integer, pointer, intent(inout) :: arr(:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int4_5d
   subroutine gator_deallocate_int4_6d( arr )
     integer, pointer, intent(inout) :: arr(:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int4_6d
   subroutine gator_deallocate_int4_7d( arr )
     integer, pointer, intent(inout) :: arr(:,:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int4_7d
 
   subroutine gator_deallocate_int8_1d( arr )
     integer(8), pointer, intent(inout) :: arr(:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr=> NULL()
   end subroutine gator_deallocate_int8_1d
   subroutine gator_deallocate_int8_2d( arr )
     integer(8), pointer, intent(inout) :: arr(:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int8_2d
   subroutine gator_deallocate_int8_3d( arr )
     integer(8), pointer, intent(inout) :: arr(:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int8_3d
   subroutine gator_deallocate_int8_4d( arr )
     integer(8), pointer, intent(inout) :: arr(:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int8_4d
   subroutine gator_deallocate_int8_5d( arr )
     integer(8), pointer, intent(inout) :: arr(:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int8_5d
   subroutine gator_deallocate_int8_6d( arr )
     integer(8), pointer, intent(inout) :: arr(:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int8_6d
   subroutine gator_deallocate_int8_7d( arr )
     integer(8), pointer, intent(inout) :: arr(:,:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_int8_7d
 
   subroutine gator_deallocate_real4_1d( arr )
     real, pointer, intent(inout) :: arr(:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr=> NULL()
   end subroutine gator_deallocate_real4_1d
   subroutine gator_deallocate_real4_2d( arr )
     real, pointer, intent(inout) :: arr(:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real4_2d
   subroutine gator_deallocate_real4_3d( arr )
     real, pointer, intent(inout) :: arr(:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real4_3d
   subroutine gator_deallocate_real4_4d( arr )
     real, pointer, intent(inout) :: arr(:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real4_4d
   subroutine gator_deallocate_real4_5d( arr )
     real, pointer, intent(inout) :: arr(:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real4_5d
   subroutine gator_deallocate_real4_6d( arr )
     real, pointer, intent(inout) :: arr(:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real4_6d
   subroutine gator_deallocate_real4_7d( arr )
     real, pointer, intent(inout) :: arr(:,:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real4_7d
 
   subroutine gator_deallocate_real8_1d( arr )
     real(8), pointer, intent(inout) :: arr(:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr=> NULL()
   end subroutine gator_deallocate_real8_1d
   subroutine gator_deallocate_real8_2d( arr )
     real(8), pointer, intent(inout) :: arr(:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real8_2d
   subroutine gator_deallocate_real8_3d( arr )
     real(8), pointer, intent(inout) :: arr(:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real8_3d
   subroutine gator_deallocate_real8_4d( arr )
     real(8), pointer, intent(inout) :: arr(:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real8_4d
   subroutine gator_deallocate_real8_5d( arr )
     real(8), pointer, intent(inout) :: arr(:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real8_5d
   subroutine gator_deallocate_real8_6d( arr )
     real(8), pointer, intent(inout) :: arr(:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real8_6d
   subroutine gator_deallocate_real8_7d( arr )
     real(8), pointer, intent(inout) :: arr(:,:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_real8_7d
 
   subroutine gator_deallocate_cplx4_1d( arr )
     complex, pointer, intent(inout) :: arr(:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr=> NULL()
   end subroutine gator_deallocate_cplx4_1d
   subroutine gator_deallocate_cplx4_2d( arr )
     complex, pointer, intent(inout) :: arr(:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx4_2d
   subroutine gator_deallocate_cplx4_3d( arr )
     complex, pointer, intent(inout) :: arr(:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx4_3d
   subroutine gator_deallocate_cplx4_4d( arr )
     complex, pointer, intent(inout) :: arr(:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx4_4d
   subroutine gator_deallocate_cplx4_5d( arr )
     complex, pointer, intent(inout) :: arr(:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx4_5d
   subroutine gator_deallocate_cplx4_6d( arr )
     complex, pointer, intent(inout) :: arr(:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx4_6d
   subroutine gator_deallocate_cplx4_7d( arr )
     complex, pointer, intent(inout) :: arr(:,:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx4_7d
 
   subroutine gator_deallocate_cplx8_1d( arr )
     complex(8), pointer, intent(inout) :: arr(:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr=> NULL()
   end subroutine gator_deallocate_cplx8_1d
   subroutine gator_deallocate_cplx8_2d( arr )
     complex(8), pointer, intent(inout) :: arr(:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx8_2d
   subroutine gator_deallocate_cplx8_3d( arr )
     complex(8), pointer, intent(inout) :: arr(:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx8_3d
   subroutine gator_deallocate_cplx8_4d( arr )
     complex(8), pointer, intent(inout) :: arr(:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx8_4d
   subroutine gator_deallocate_cplx8_5d( arr )
     complex(8), pointer, intent(inout) :: arr(:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx8_5d
   subroutine gator_deallocate_cplx8_6d( arr )
     complex(8), pointer, intent(inout) :: arr(:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx8_6d
   subroutine gator_deallocate_cplx8_7d( arr )
     complex(8), pointer, intent(inout) :: arr(:,:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_cplx8_7d
 
   subroutine gator_deallocate_log_1d( arr )
     logical, pointer, intent(inout) :: arr(:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr=> NULL()
   end subroutine gator_deallocate_log_1d
   subroutine gator_deallocate_log_2d( arr )
     logical, pointer, intent(inout) :: arr(:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_log_2d
   subroutine gator_deallocate_log_3d( arr )
     logical, pointer, intent(inout) :: arr(:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_log_3d
   subroutine gator_deallocate_log_4d( arr )
     logical, pointer, intent(inout) :: arr(:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_log_4d
   subroutine gator_deallocate_log_5d( arr )
     logical, pointer, intent(inout) :: arr(:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_log_5d
   subroutine gator_deallocate_log_6d( arr )
     logical, pointer, intent(inout) :: arr(:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_log_6d
   subroutine gator_deallocate_log_7d( arr )
     logical, pointer, intent(inout) :: arr(:,:,:,:,:,:,:)
+    if (.not. associated(arr)) error stop "ERROR: gator_deallocate called with a disassociated pointer"
     call gator_deallocate_c( c_loc( arr ) )
     arr => NULL()
   end subroutine gator_deallocate_log_7d

@@ -32,7 +32,7 @@ namespace yakl {
               static_cast<unsigned long long>(size_mb) <= std::numeric_limits<size_t>::max()/(1024*1024)) {
             pool_bytes = static_cast<size_t>(size_mb)*1024*1024;
           } else {
-            if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 1GB\n";
+            if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 4GB\n";
           }
         }
         // Check for GATOR_BLOCK_BYTES environment variable
@@ -43,15 +43,16 @@ namespace yakl {
           long long block_bytes = std::strtoll(env,&end,10);
           if (errno == 0 && end != env && *end == '\0' && block_bytes > 0 &&
               static_cast<unsigned long long>(block_bytes) <= std::numeric_limits<size_t>::max() &&
-              block_bytes%(2*sizeof(size_t)) == 0) {
+              block_bytes%LinearAllocator::requiredAlignment == 0) {
             pool_block_bytes = static_cast<size_t>(block_bytes);
           } else {
-            if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 2*sizeof(size_t)\n";
-            if (yakl_mainproc()) std::cout << "         GATOR_BLOCK_BYTES must be > 0 and a multiple of 2*sizeof(size_t)\n";
+            if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 4096 bytes\n";
+            if (yakl_mainproc()) {
+              std::cout << "         GATOR_BLOCK_BYTES must be a positive multiple of Kokkos memory alignment\n";
+            }
           }
         }
       } else {
-        pool_enabled     = config.get_pool_enabled();
         if constexpr (kokkos_debug) {
           if (config.get_pool_size_mb() > std::numeric_limits<size_t>::max()/(1024*1024)) {
             Kokkos::abort("ERROR: configured pool size overflows size_t");
@@ -59,8 +60,10 @@ namespace yakl {
         }
         pool_bytes       = config.get_pool_size_mb()*1024*1024;
         pool_block_bytes = config.get_pool_block_bytes();
-        if (pool_block_bytes == 0 || pool_block_bytes%(2*sizeof(size_t)) != 0) pool_block_bytes = 4096;
+        if (pool_block_bytes == 0 || pool_block_bytes%LinearAllocator::requiredAlignment != 0) pool_block_bytes = 4096;
       }
+      if (config.get_pool_setting() == InitConfig::PoolSetting::Enabled)  pool_enabled = true;
+      if (config.get_pool_setting() == InitConfig::PoolSetting::Disabled) pool_enabled = false;
 
       get_yakl_instance().yakl_is_initialized = true;
       get_yakl_instance().pool_enabled = pool_enabled;

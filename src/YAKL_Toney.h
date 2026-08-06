@@ -33,14 +33,13 @@ namespace yakl {
       Duration            max_duration;
       Duration            min_duration;
       TimePoint           previous_time_point;
-      std::vector<size_t> child_hashes;
+      std::vector<int>    child_indices;
       int                 parent_index;
       bool                multiple_parents;
     };
 
     struct ActiveStackEntry {
-      size_t label_hash;
-      int    timer_index;
+      int timer_index;
     };
 
     std::vector<Timer>            timers;
@@ -56,17 +55,17 @@ namespace yakl {
         int  parent_timer_index   = active_stack.back().timer_index;
         auto &parent_timer        = timers[parent_timer_index];
         bool i_am_already_a_child = false;
-        for ( auto &child_hash : parent_timer.child_hashes ) {
-          if ( child_hash == label_hash ) { i_am_already_a_child = true; break; }
+        for ( auto &child_index : parent_timer.child_indices ) {
+          if ( child_index == timer_index ) { i_am_already_a_child = true; break; }
         }
-        if ( ! i_am_already_a_child ) parent_timer.child_hashes.push_back( label_hash );
+        if ( ! i_am_already_a_child ) parent_timer.child_indices.push_back( timer_index );
         if (timer.parent_index == parent_index_just_created) timer.parent_index = parent_timer_index;
         if (timer.parent_index != parent_timer_index) timer.multiple_parents = true;
       } else {
         if (timer.parent_index == parent_index_just_created) timer.parent_index = parent_index_main;
         if (timer.parent_index != parent_index_main) timer.multiple_parents = true;
       }
-      active_stack.push_back( { label_hash , timer_index } );
+      active_stack.push_back( { timer_index } );
       timer.hits++;
       timer.previous_time_point = Clock::now();
     }
@@ -82,12 +81,7 @@ namespace yakl {
           Kokkos::abort("ERROR: active timer index is out of bounds");
         }
       }
-      if ( hasher(label) != active_stack.back().label_hash ) Kokkos::abort("ERROR: timers must be perfectly nested");
-      if constexpr (kokkos_debug) {
-        if (timers[active_stack.back().timer_index].label != label) {
-          Kokkos::abort("ERROR: timer-label hash collision detected");
-        }
-      }
+      if (timers[active_stack.back().timer_index].label != label) Kokkos::abort("ERROR: timers must be perfectly nested");
       auto &timer = timers[active_stack.back().timer_index];
       Duration duration           = now - timer.previous_time_point;
       timer.max_duration          = std::max( timer.max_duration , duration );
@@ -100,22 +94,24 @@ namespace yakl {
 
     int get_or_create_timer_index( std::string label , size_t label_hash ) {
       for ( int i=0; i < timers.size(); i++) {
-        if ( label_hash == timers[i].label_hash ) {
-          if constexpr (kokkos_debug) {
-            if (label != timers[i].label) Kokkos::abort("ERROR: timer-label hash collision detected");
-          }
-          return i;
-        }
+        if ( label == timers[i].label ) return i;
       }
       timers.push_back( { label , label_hash , 0 , Duration::zero() , Duration::zero() , Duration::zero() ,
-                          Duration::max() , TimePoint::min() , std::vector<size_t>() , parent_index_just_created ,
+                          Duration::max() , TimePoint::min() , std::vector<int>() , parent_index_just_created ,
                           false } );
       return timers.size()-1;
     }
 
 
     int get_timer_id( size_t label_hash , bool die = true ) const {
-      for (int i=0; i < timers.size(); i++) { if (label_hash == timers[i].label_hash) return i; }
+      int timer_index = -1;
+      for (int i=0; i < timers.size(); i++) {
+        if (label_hash == timers[i].label_hash) {
+          if (timer_index != -1) Kokkos::abort("ERROR: timer hash identifies more than one label");
+          timer_index = i;
+        }
+      }
+      if (timer_index != -1) return timer_index;
       if (die) Kokkos::abort("ERROR: label not found in timers");
       return -1;
     }
@@ -123,8 +119,7 @@ namespace yakl {
 
     int get_timer_id( std::string label , bool die = true ) const {
       if (label.empty()) Kokkos::abort("ERROR: calling get_last_duration() with an empty label");
-      auto label_hash = hasher( label );
-      for (int i=0; i < timers.size(); i++) { if (label_hash == timers[i].label_hash) return i; }
+      for (int i=0; i < timers.size(); i++) { if (label == timers[i].label) return i; }
       if (die) Kokkos::abort("ERROR: label not found in timers");
       return -1;
     }
@@ -200,8 +195,8 @@ namespace yakl {
            << std::setw(15) << std::left << std::scientific << std::setprecision(6) << timer.min_duration.count()
            << std::setw(15) << std::left << std::scientific << std::setprecision(6) << timer.max_duration.count() << "\n";
         printed[timer_index] = true;
-        for (int ichild = 0; ichild < timer.child_hashes.size(); ichild++) {
-          int child_timer_index = get_timer_id( timer.child_hashes[ichild] );
+        for (int ichild = 0; ichild < timer.child_indices.size(); ichild++) {
+          int child_timer_index = timer.child_indices[ichild];
           int level_loc = level + 1;
           print_timer_and_children( child_timer_index , printed , level_loc , os );
         }
