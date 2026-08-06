@@ -448,6 +448,105 @@ int main() {
           fStackMax(1) != -2 || fStackMax(2) != 5 || fStackMax(3) != 8) {
         die("ERROR: multidimensional Fortran-style maxloc returned an incorrect location");
       }
+
+      // Tied extrema must select the first element in linear memory order for
+      // host arrays, device arrays, and stack arrays alike.
+      cHost (0,1,2) = -1000;
+      cHost (0,0,3) =  1000;
+      cStack(0,1,2) = -1000;
+      cStack(0,0,3) =  1000;
+      fHost (-2,4,7) = -2000;
+      fHost (-1,3,7) =  2000;
+      fStack(-2,4,7) = -2000;
+      fStack(-1,3,7) =  2000;
+      cHost.deep_copy_to(cDevice);
+      fHost.deep_copy_to(fDevice);
+
+      auto const cTiedHostMin = minloc(cHost);
+      auto const cTiedHostMax = maxloc(cHost);
+      auto const cTiedDeviceMin = minloc(cDevice);
+      auto const cTiedDeviceMax = maxloc(cDevice);
+      auto const cTiedStackMin = minloc(cStack);
+      auto const cTiedStackMax = maxloc(cStack);
+      if (cTiedHostMin(0) != 0 || cTiedHostMin(1) != 1 || cTiedHostMin(2) != 2 ||
+          cTiedDeviceMin(0) != 0 || cTiedDeviceMin(1) != 1 || cTiedDeviceMin(2) != 2 ||
+          cTiedStackMin(0) != 0 || cTiedStackMin(1) != 1 || cTiedStackMin(2) != 2) {
+        die("ERROR: tied C-style minloc did not return the first location");
+      }
+      if (cTiedHostMax(0) != 0 || cTiedHostMax(1) != 0 || cTiedHostMax(2) != 3 ||
+          cTiedDeviceMax(0) != 0 || cTiedDeviceMax(1) != 0 || cTiedDeviceMax(2) != 3 ||
+          cTiedStackMax(0) != 0 || cTiedStackMax(1) != 0 || cTiedStackMax(2) != 3) {
+        die("ERROR: tied C-style maxloc did not return the first location");
+      }
+
+      auto const fTiedHostMin = minloc(fHost);
+      auto const fTiedHostMax = maxloc(fHost);
+      auto const fTiedDeviceMin = minloc(fDevice);
+      auto const fTiedDeviceMax = maxloc(fDevice);
+      auto const fTiedStackMin = minloc(fStack);
+      auto const fTiedStackMax = maxloc(fStack);
+      if (fTiedHostMin(1) != -2 || fTiedHostMin(2) != 4 || fTiedHostMin(3) != 7 ||
+          fTiedDeviceMin(1) != -2 || fTiedDeviceMin(2) != 4 || fTiedDeviceMin(3) != 7 ||
+          fTiedStackMin(1) != -2 || fTiedStackMin(2) != 4 || fTiedStackMin(3) != 7) {
+        die("ERROR: tied Fortran-style minloc did not return the first location");
+      }
+      if (fTiedHostMax(1) != -1 || fTiedHostMax(2) != 3 || fTiedHostMax(3) != 7 ||
+          fTiedDeviceMax(1) != -1 || fTiedDeviceMax(2) != 3 || fTiedDeviceMax(3) != 7 ||
+          fTiedStackMax(1) != -1 || fTiedStackMax(2) != 3 || fTiedStackMax(3) != 7) {
+        die("ERROR: tied Fortran-style maxloc did not return the first location");
+      }
+
+      yakl::ScalarLiveOut<int> tiedStackErrors(0);
+      yakl::parallel_for( "tied stack minloc and maxloc" , 1 , KOKKOS_LAMBDA (int) {
+        auto const cMin = yakl::intrinsics::minloc(cStack);
+        auto const cMax = yakl::intrinsics::maxloc(cStack);
+        auto const fMin = yakl::intrinsics::minloc(fStack);
+        auto const fMax = yakl::intrinsics::maxloc(fStack);
+        if (cMin(0) != 0 || cMin(1) != 1 || cMin(2) != 2 ||
+            cMax(0) != 0 || cMax(1) != 0 || cMax(2) != 3 ||
+            fMin(1) != -2 || fMin(2) != 4 || fMin(3) != 7 ||
+            fMax(1) != -1 || fMax(2) != 3 || fMax(3) != 7) {
+          tiedStackErrors = 1;
+        }
+      });
+      if (tiedStackErrors.hostRead() != 0) {
+        die("ERROR: device execution returned incorrect tied stack minloc or maxloc");
+      }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // Tied minloc and maxloc across multiple reduction blocks
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    {
+      int constexpr n = 4097;
+      int constexpr lowerBound = -37;
+      Array<int *,Kokkos::HostSpace> cHost("large tied C array",n);
+      Array_F<int *,Kokkos::HostSpace> fHost("large tied Fortran array",{lowerBound,lowerBound+n-1});
+      for (int i=0; i < n; i++) {
+        cHost.data()[i] = 0;
+        fHost.data()[i] = 0;
+      }
+      for (int i : {17,2048,4096}) {
+        cHost.data()[i] = -2;
+        fHost.data()[i] = -2;
+      }
+      for (int i : {9,3000,4000}) {
+        cHost.data()[i] = 2;
+        fHost.data()[i] = 2;
+      }
+      auto cDevice = cHost.createDeviceCopy();
+      auto fDevice = fHost.createDeviceCopy();
+
+      using yakl::intrinsics::minloc;
+      using yakl::intrinsics::maxloc;
+      if (minloc(cHost)(0) != 17 || minloc(cDevice)(0) != 17 ||
+          maxloc(cHost)(0) !=  9 || maxloc(cDevice)(0) !=  9) {
+        die("ERROR: C-style minloc or maxloc disagreed across reduction blocks");
+      }
+      if (minloc(fHost)(1) != lowerBound+17 || minloc(fDevice)(1) != lowerBound+17 ||
+          maxloc(fHost)(1) != lowerBound+9  || maxloc(fDevice)(1) != lowerBound+9) {
+        die("ERROR: Fortran-style minloc or maxloc disagreed across reduction blocks");
+      }
     }
 
     ///////////////////////////////////////

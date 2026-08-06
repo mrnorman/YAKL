@@ -458,32 +458,29 @@ namespace yakl {
     // MINLOC
     template <class ViewType> requires yakl::is_SArray<ViewType>
     KOKKOS_INLINE_FUNCTION auto minloc(ViewType const & in) -> decltype(in.unpack_global_index(0)) {
-      using scalar_t = typename ViewType::non_const_value_type;
-      auto mn = minval(in);
+      auto const mn = minval(in);
       size_t iglob = 0;
-      for (int i=0; i < in.size(); i++) { if (in.data()[i] == mn) iglob = i; }
+      for (int i=0; i < in.size(); i++) {
+        if (in.data()[i] == mn) {
+          iglob = i;
+          break;
+        }
+      }
       return in.unpack_global_index(iglob);
     }
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline auto minloc(ViewType const & in) -> decltype(in.unpack_global_index(0)) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: minloc on unallocated Array");
-      using scalar_t = typename ViewType::non_const_value_type;
-      auto mn = minval(in);
-      size_t iglob = 0;
-      if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) {
-        for (size_t i=0; i < in.size(); i++) { if (in.data()[i] == mn) iglob = i; }
-      } else {
-        ScalarLiveOut<size_t> iglob_slo(0);
-        if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::minloc");
-        Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                              Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                              KOKKOS_LAMBDA (size_t i) {
-          if (in.data()[i] == mn) iglob_slo = i;
-        });
-        if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::minloc");
-        if constexpr (yakl_auto_fence) Kokkos::fence();
-        iglob = iglob_slo.hostRead();
-      }
+      auto const mn = minval(in);
+      size_t iglob;
+      if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::minloc");
+      Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
+                               Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
+                               KOKKOS_LAMBDA (size_t i , size_t & lmin ) {
+        if (in.data()[i] == mn) lmin = std::min(lmin,i);
+      } , Kokkos::Min<size_t>(iglob) );
+      if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::minloc");
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       return in.unpack_global_index(iglob);
     }
 
@@ -493,37 +490,33 @@ namespace yakl {
     template <class ViewType> requires yakl::is_SArray<ViewType>
     KOKKOS_INLINE_FUNCTION auto maxloc(ViewType const & in) -> decltype(in.unpack_global_index(0)) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: maxloc on unallocated Array");
-      using scalar_t = typename ViewType::non_const_value_type;
-      auto mx = maxval(in);
+      auto const mx = maxval(in);
       size_t iglob = 0;
-      for (int i=0; i < in.size(); i++) { if (in.data()[i] == mx) iglob = i; }
+      for (int i=0; i < in.size(); i++) {
+        if (in.data()[i] == mx) {
+          iglob = i;
+          break;
+        }
+      }
       return in.unpack_global_index(iglob);
     }
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline auto maxloc(ViewType const & in) -> decltype(in.unpack_global_index(0)) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: maxloc on unallocated Array");
-      using scalar_t = typename ViewType::non_const_value_type;
-      auto mx = maxval(in);
-      size_t iglob = 0;
-      if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) {
-        for (size_t i=0; i < in.size(); i++) { if (in.data()[i] == mx) iglob = i; }
-      } else {
-        ScalarLiveOut<size_t> iglob_slo(0);
-        if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::maxloc");
-        Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                              Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
-                              KOKKOS_LAMBDA (size_t i) {
-          if (in.data()[i] == mx) iglob_slo = i;
-        });
-        if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::maxloc");
-        if constexpr (yakl_auto_fence) Kokkos::fence();
-        iglob =  iglob_slo.hostRead();
-      }
+      auto const mx = maxval(in);
+      size_t iglob;
+      if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::maxloc");
+      Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
+                               Kokkos::RangePolicy<typename ViewType::execution_space>(0,in.size()) ,
+                               KOKKOS_LAMBDA (size_t i , size_t & lmin ) {
+        if (in.data()[i] == mx) lmin = std::min(lmin,i);
+      } , Kokkos::Min<size_t>(iglob) );
+      if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::maxloc");
+      if constexpr (yakl_auto_fence) Kokkos::fence();
       return in.unpack_global_index(iglob);
     }
 
 
   }
 }
-
 
