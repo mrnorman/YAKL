@@ -175,6 +175,28 @@ namespace yakl {
         }
       }
 
+      size_t elementCount() const {
+        size_t count = 1;
+        for (auto const & dim : dims) {
+          if (dim.getSize() != 0 && count > std::numeric_limits<size_t>::max()/dim.getSize()) {
+            Kokkos::abort("ERROR: netCDF variable element count overflows size_t");
+          }
+          count *= dim.getSize();
+        }
+        return count;
+      }
+
+      size_t elementCount(std::vector<size_t> const & extents) const {
+        size_t count = 1;
+        for (auto const extent : extents) {
+          if (extent != 0 && count > std::numeric_limits<size_t>::max()/extent) {
+            Kokkos::abort("ERROR: netCDF hyperslab element count overflows size_t");
+          }
+          count *= extent;
+        }
+        return count;
+      }
+
       void putVar(double             const *data) { checkData(data); ncwrap( nc_put_var_double   ( ncid , id , data ) , __LINE__ ); }
       void putVar(float              const *data) { checkData(data); ncwrap( nc_put_var_float    ( ncid , id , data ) , __LINE__ ); }
       void putVar(int                const *data) { checkData(data); ncwrap( nc_put_var_int      ( ncid , id , data ) , __LINE__ ); }
@@ -184,7 +206,13 @@ namespace yakl {
       void putVar(short              const *data) { checkData(data); ncwrap( nc_put_var_short    ( ncid , id , data ) , __LINE__ ); }
       void putVar(unsigned char      const *data) { checkData(data); ncwrap( nc_put_var_uchar    ( ncid , id , data ) , __LINE__ ); }
       void putVar(unsigned int       const *data) { checkData(data); ncwrap( nc_put_var_uint     ( ncid , id , data ) , __LINE__ ); }
-      void putVar(unsigned long      const *data) { checkData(data); ncwrap( nc_put_var_uint     ( ncid , id , (unsigned int const *) data ) , __LINE__ ); }
+      void putVar(unsigned long const *data) {
+        checkData(data);
+        size_t const count = elementCount();
+        std::vector<unsigned long long> converted(count);
+        for (size_t i=0; i < count; i++) converted[i] = static_cast<unsigned long long>(data[i]);
+        ncwrap( nc_put_var_ulonglong( ncid , id , converted.data() ) , __LINE__ );
+      }
       void putVar(unsigned long long const *data) { checkData(data); ncwrap( nc_put_var_ulonglong( ncid , id , data ) , __LINE__ ); }
       void putVar(unsigned short     const *data) { checkData(data); ncwrap( nc_put_var_ushort   ( ncid , id , data ) , __LINE__ ); }
       void putVar(char               const *data) { checkData(data); ncwrap( nc_put_var_text     ( ncid , id , data ) , __LINE__ ); }
@@ -199,7 +227,14 @@ namespace yakl {
       void putVar(std::vector<size_t> start , std::vector<size_t> count, short              const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_short    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned char      const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_uchar    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned int       const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_uint     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned long      const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_uint     ( ncid , id , start.data() , count.data(), (unsigned int const *) data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start, std::vector<size_t> count, unsigned long const *data) {
+        checkData(data);
+        checkHyperslab(start,count);
+        size_t const numElements = elementCount(count);
+        std::vector<unsigned long long> converted(numElements);
+        for (size_t i=0; i < numElements; i++) converted[i] = static_cast<unsigned long long>(data[i]);
+        ncwrap( nc_put_vara_ulonglong( ncid , id , start.data() , count.data() , converted.data() ) , __LINE__ );
+      }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned long long const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_ulonglong( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned short     const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_ushort   ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, char               const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_text     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
@@ -214,7 +249,18 @@ namespace yakl {
       void getVar(short              *data) const { checkData(data); ncwrap( nc_get_var_short    ( ncid , id , data ) , __LINE__ ); }
       void getVar(unsigned char      *data) const { checkData(data); ncwrap( nc_get_var_uchar    ( ncid , id , data ) , __LINE__ ); }
       void getVar(unsigned int       *data) const { checkData(data); ncwrap( nc_get_var_uint     ( ncid , id , data ) , __LINE__ ); }
-      void getVar(unsigned long      *data) const { checkData(data); ncwrap( nc_get_var_uint     ( ncid , id , (unsigned int *) data ) , __LINE__ ); }
+      void getVar(unsigned long *data) const {
+        checkData(data);
+        size_t const count = elementCount();
+        std::vector<unsigned long long> converted(count);
+        ncwrap( nc_get_var_ulonglong( ncid , id , converted.data() ) , __LINE__ );
+        for (size_t i=0; i < count; i++) {
+          if (converted[i] > std::numeric_limits<unsigned long>::max()) {
+            Kokkos::abort("ERROR: netCDF value does not fit in unsigned long");
+          }
+          data[i] = static_cast<unsigned long>(converted[i]);
+        }
+      }
       void getVar(unsigned long long *data) const { checkData(data); ncwrap( nc_get_var_ulonglong( ncid , id , data ) , __LINE__ ); }
       void getVar(unsigned short     *data) const { checkData(data); ncwrap( nc_get_var_ushort   ( ncid , id , data ) , __LINE__ ); }
       void getVar(char               *data) const { checkData(data); ncwrap( nc_get_var_text     ( ncid , id , data ) , __LINE__ ); }
@@ -236,18 +282,18 @@ namespace yakl {
       NcFile() { ncid = -999; }
       ~NcFile() {}
       NcFile(int ncid) { this->ncid = ncid; }
-      NcFile(NcFile &&in) {
+      NcFile(NcFile const &) = delete;
+      NcFile &operator=(NcFile const &) = delete;
+      NcFile(NcFile &&in) noexcept {
         this->ncid = in.ncid;
+        in.ncid = -999;
       }
-      NcFile(NcFile const &in) {
-        this->ncid = in.ncid;
-      }
-      NcFile &operator=(NcFile &&in) {
-        this->ncid = in.ncid;
-        return *this;
-      }
-      NcFile &operator=(NcFile const &in) {
-        this->ncid = in.ncid;
+      NcFile &operator=(NcFile &&in) noexcept {
+        if (this != &in) {
+          close();
+          this->ncid = in.ncid;
+          in.ncid = -999;
+        }
         return *this;
       }
 
@@ -360,6 +406,11 @@ namespace yakl {
 
 
     SimpleNetCDF() { }
+
+    SimpleNetCDF(SimpleNetCDF const &) = delete;
+    SimpleNetCDF &operator=(SimpleNetCDF const &) = delete;
+    SimpleNetCDF(SimpleNetCDF &&) noexcept = default;
+    SimpleNetCDF &operator=(SimpleNetCDF &&) noexcept = default;
 
 
     ~SimpleNetCDF() { close(); }
@@ -622,7 +673,9 @@ namespace yakl {
       else if ( std::is_same_v<typename std::remove_cv_t<T>,               int> ) { return NC_INT;    }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned       int> ) { return NC_UINT;   }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,              long> ) { return NC_INT;    }
-      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned      long> ) { return NC_UINT;   }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned      long> ) {
+        return sizeof(unsigned long) == sizeof(unsigned int) ? NC_UINT : NC_UINT64;
+      }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,         long long> ) { return NC_INT64;  }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned long long> ) { return NC_UINT64; }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,             float> ) { return NC_FLOAT;  }

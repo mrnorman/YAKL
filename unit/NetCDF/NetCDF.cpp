@@ -1,5 +1,8 @@
 
 #include <iostream>
+#include <limits>
+#include <type_traits>
+#include <utility>
 #include "YAKL.h"
 #include "YAKL_netcdf.h"
 
@@ -9,6 +12,58 @@ using yakl::Array_F;
 
 void die(std::string msg) {
   Kokkos::abort(msg.c_str());
+}
+
+
+void test_unsigned_long_and_move_ownership() {
+  static_assert(!std::is_copy_constructible_v<yakl::SimpleNetCDF>);
+  static_assert(!std::is_copy_assignable_v<yakl::SimpleNetCDF>);
+  static_assert( std::is_nothrow_move_constructible_v<yakl::SimpleNetCDF>);
+  static_assert( std::is_nothrow_move_assignable_v<yakl::SimpleNetCDF>);
+
+  std::string const fileName = "unsigned_long.nc";
+  unsigned long base = 17;
+  if constexpr (sizeof(unsigned long) > sizeof(unsigned int)) {
+    base = static_cast<unsigned long>(std::numeric_limits<unsigned int>::max()) + 37UL;
+  }
+
+  Array<unsigned long *,Kokkos::HostSpace> values("unsigned long values",4);
+  for (size_t i=0; i < values.size(); i++) values(i) = base + static_cast<unsigned long>(11*i);
+  unsigned long const scalar = base + 101UL;
+
+  {
+    yakl::SimpleNetCDF original;
+    original.create(fileName);
+    yakl::SimpleNetCDF moved(std::move(original));
+    yakl::SimpleNetCDF nc;
+    nc = std::move(moved);
+    nc.write(values,"values",{"nvalues"});
+    nc.write(scalar,"scalar");
+    nc.write1(values,"record_values",{"nvalues"},0,"record");
+    nc.write1(scalar,"record_scalar",0,"record");
+  }
+
+  {
+    yakl::SimpleNetCDF original;
+    original.open(fileName);
+    yakl::SimpleNetCDF nc(std::move(original));
+    Array<unsigned long *,Kokkos::HostSpace> valuesRead("unsigned long values read",4);
+    Array<unsigned long **,Kokkos::HostSpace> recordValues("unsigned long record values read",1,4);
+    Array<unsigned long *,Kokkos::HostSpace> recordScalar("unsigned long record scalar read",1);
+    unsigned long scalarRead = 0;
+    nc.read(valuesRead,"values");
+    nc.read(scalarRead,"scalar");
+    nc.read(recordValues,"record_values");
+    nc.read(recordScalar,"record_scalar");
+    for (size_t i=0; i < values.size(); i++) {
+      if (valuesRead(i) != values(i) || recordValues(0,i) != values(i)) {
+        die("ERROR: unsigned long netCDF array data was corrupted");
+      }
+    }
+    if (scalarRead != scalar || recordScalar(0) != scalar) {
+      die("ERROR: unsigned long netCDF scalar data was corrupted");
+    }
+  }
 }
 
 
@@ -233,6 +288,8 @@ int main() {
       if ( text(2,0) != 'm' || text(2,1) != 'o' ) die("ERROR: text is incorrect");
     }
 
+    test_unsigned_long_and_move_ownership();
+
     yakl::timer_stop("main");
   }
   yakl::finalize();
@@ -240,4 +297,3 @@ int main() {
   
   return 0;
 }
-

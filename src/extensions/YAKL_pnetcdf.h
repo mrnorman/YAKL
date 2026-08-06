@@ -355,7 +355,33 @@ namespace yakl {
     SimplePNetCDF(MPI_Comm comm = MPI_COMM_WORLD) : comm(comm) , ncid(-1) , mode(MODE_UNOPENED) {
       if (comm == MPI_COMM_NULL) Kokkos::abort("ERROR: SimplePNetCDF received MPI_COMM_NULL");
     }
-    ~SimplePNetCDF() { close(); }
+    SimplePNetCDF(SimplePNetCDF const &) = delete;
+    SimplePNetCDF &operator=(SimplePNetCDF const &) = delete;
+    SimplePNetCDF(SimplePNetCDF &&in) noexcept : ncid(in.ncid) , comm(in.comm) , mode(in.mode) {
+      in.ncid = -1;
+      in.mode = MODE_UNOPENED;
+    }
+    SimplePNetCDF &operator=(SimplePNetCDF &&in) {
+      if (this != &in) {
+        close();
+        ncid = in.ncid;
+        comm = in.comm;
+        mode = in.mode;
+        in.ncid = -1;
+        in.mode = MODE_UNOPENED;
+      }
+      return *this;
+    }
+    ~SimplePNetCDF() noexcept {
+      if (mode == MODE_DATA_INDEP) {
+        int const ierr = ncmpi_end_indep_data(ncid);
+        if (ierr != NC_NOERR) std::fprintf(stderr,"PNetCDF destructor error: %s\n",ncmpi_strerror(ierr));
+      }
+      if (mode != MODE_UNOPENED) {
+        int const ierr = ncmpi_close(ncid);
+        if (ierr != NC_NOERR) std::fprintf(stderr,"PNetCDF destructor error: %s\n",ncmpi_strerror(ierr));
+      }
+    }
 
 
     // All MPI tasks in the Comm must call this
