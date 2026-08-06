@@ -310,12 +310,57 @@ namespace yakl {
     MPI_Comm  comm;
     int       mode;
 
-    SimplePNetCDF(MPI_Comm comm = MPI_COMM_WORLD) : comm(comm) , ncid(-1) , mode(MODE_UNOPENED) { }
+    template <class T>
+    void check_scalar_variable(int varid) const {
+      nc_type xtype;
+      int ndims;
+      ncmpiwrap(ncmpi_inq_vartype(ncid,varid,&xtype),__LINE__);
+      ncmpiwrap(ncmpi_inq_varndims(ncid,varid,&ndims),__LINE__);
+      if (xtype != getType<T>() || ndims != 0) {
+        Kokkos::abort("ERROR: PNetCDF scalar variable has incompatible type or rank");
+      }
+    }
+
+    template <class ViewType>
+    void check_array_variable(int varid, ViewType const & arr, std::vector<MPI_Offset> const * start = nullptr,
+                              bool writing = false) const {
+      nc_type xtype;
+      int ndims;
+      ncmpiwrap(ncmpi_inq_vartype(ncid,varid,&xtype),__LINE__);
+      ncmpiwrap(ncmpi_inq_varndims(ncid,varid,&ndims),__LINE__);
+      if (xtype != getType<typename ViewType::non_const_value_type>() || ndims != ViewType::rank()) {
+        Kokkos::abort("ERROR: PNetCDF variable and Array have incompatible type or rank");
+      }
+      std::vector<int> dimids(ndims);
+      ncmpiwrap(ncmpi_inq_vardimid(ncid,varid,dimids.data()),__LINE__);
+      int unlimited = -1;
+      ncmpiwrap(ncmpi_inq_unlimdim(ncid,&unlimited),__LINE__);
+      for (int i=0; i < ndims; i++) {
+        MPI_Offset dim_size;
+        ncmpiwrap(ncmpi_inq_dimlen(ncid,dimids[i],&dim_size),__LINE__);
+        MPI_Offset const extent = static_cast<MPI_Offset>(arr.extent(i));
+        MPI_Offset const begin = start == nullptr ? 0 : (*start)[i];
+        if (extent > std::numeric_limits<MPI_Offset>::max()-begin) {
+          Kokkos::abort("ERROR: PNetCDF hyperslab bound overflow");
+        }
+        if (!(writing && dimids[i] == unlimited) && begin+extent > dim_size) {
+          Kokkos::abort("ERROR: PNetCDF Array or hyperslab exceeds its variable dimensions");
+        }
+        if (start == nullptr && extent != dim_size) {
+          Kokkos::abort("ERROR: PNetCDF Array and variable dimension sizes differ");
+        }
+      }
+    }
+
+    SimplePNetCDF(MPI_Comm comm = MPI_COMM_WORLD) : comm(comm) , ncid(-1) , mode(MODE_UNOPENED) {
+      if (comm == MPI_COMM_NULL) Kokkos::abort("ERROR: SimplePNetCDF received MPI_COMM_NULL");
+    }
     ~SimplePNetCDF() { close(); }
 
 
     // All MPI tasks in the Comm must call this
     void open(std::string fname , int omode = NC_WRITE , MPI_Info info = MPI_INFO_NULL ) {
+      if (fname.empty()) Kokkos::abort("ERROR: PNetCDF filename cannot be empty");
       close();
       ncmpiwrap( ncmpi_open( comm , fname.c_str() , omode , info , &ncid ) , __LINE__ );
       mode = MODE_DATA_COLL;
@@ -324,6 +369,7 @@ namespace yakl {
 
     // All MPI tasks in the Comm must call this
     void create(std::string fname , int flag = NC_CLOBBER , MPI_Info info = MPI_INFO_NULL ) {
+      if (fname.empty()) Kokkos::abort("ERROR: PNetCDF filename cannot be empty");
       close();
       ncmpiwrap( ncmpi_create( comm , fname.c_str() , flag , info , &ncid ) , __LINE__ );
       mode = MODE_DEFINE;
@@ -342,6 +388,7 @@ namespace yakl {
     // Callable by only one task
     int get_dim_id( std::string dimName ) const {
       if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: calling get_dim_id on unopened file");
+      if (dimName.empty()) Kokkos::abort("ERROR: PNetCDF dimension name cannot be empty");
       int dimid;
       ncmpiwrap( ncmpi_inq_dimid( ncid , dimName.c_str() , &dimid) , __LINE__ );
       return dimid;
@@ -351,6 +398,7 @@ namespace yakl {
     // Callable by only one task
     int get_var_id( std::string varName ) const {
       if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: calling get_var_id on unopened file");
+      if (varName.empty()) Kokkos::abort("ERROR: PNetCDF variable name cannot be empty");
       int varid;
       ncmpiwrap( ncmpi_inq_varid( ncid , varName.c_str() , &varid) , __LINE__ );
       return varid;
@@ -360,6 +408,7 @@ namespace yakl {
     // Callable by only one task
     bool var_exists( std::string varName ) const {
       if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: calling var_exists on unopened file");
+      if (varName.empty()) Kokkos::abort("ERROR: PNetCDF variable name cannot be empty");
       int varid;
       int ierr = ncmpi_inq_varid( ncid , varName.c_str() , &varid);
       return ierr == NC_NOERR;
@@ -369,6 +418,7 @@ namespace yakl {
     // Callable by only one task
     bool dim_exists( std::string dimName ) const {
       if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: calling dim_exists on unopened file");
+      if (dimName.empty()) Kokkos::abort("ERROR: PNetCDF dimension name cannot be empty");
       int dimid;
       int ierr = ncmpi_inq_dimid( ncid , dimName.c_str() , &dimid);
       return ierr == NC_NOERR;
@@ -378,6 +428,7 @@ namespace yakl {
     // Callable by only one task
     MPI_Offset get_dim_size( std::string dimName ) const {
       if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: calling get_dim_size on unopened file");
+      if (dimName.empty()) Kokkos::abort("ERROR: PNetCDF dimension name cannot be empty");
       int dimid;
       MPI_Offset dimlen;
       ncmpiwrap( ncmpi_inq_dimid ( ncid , dimName.c_str() , &dimid) , __LINE__ );
@@ -390,6 +441,8 @@ namespace yakl {
     template <class T>
     void create_var( std::string varName , std::vector<std::string> dnames ) {
       if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: calling create_var on unopened file");
+      if (varName.empty()) Kokkos::abort("ERROR: PNetCDF variable name cannot be empty");
+      for (auto const & name : dnames) if (name.empty()) Kokkos::abort("ERROR: PNetCDF dimension name cannot be empty");
       redef();
       int ndims = dnames.size();
       std::vector<int> dimids(ndims);
@@ -403,6 +456,8 @@ namespace yakl {
     // All MPI tasks in the Comm must call this
     void create_dim( std::string dimName , MPI_Offset len ) {
       if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: calling create_dim on unopened file");
+      if (dimName.empty()) Kokkos::abort("ERROR: PNetCDF dimension name cannot be empty");
+      if (len < 0 && len != NC_UNLIMITED) Kokkos::abort("ERROR: PNetCDF dimension length cannot be negative");
       redef();
       int dimid;
       ncmpiwrap( ncmpi_def_dim( ncid , dimName.c_str() , len , &dimid ) , __LINE__ );
@@ -456,7 +511,9 @@ namespace yakl {
     void write(T val, std::string varName ) {
       if (mode == MODE_UNOPENED ) Kokkos::abort("ERROR: calling write on unopened file");
       if (mode == MODE_DEFINE   ) Kokkos::abort("ERROR: calling write on file in define mode"); // cannot call enddef b/c callable by single task
+      if (varName.empty()) Kokkos::abort("ERROR: PNetCDF variable name cannot be empty");
       int varid = get_var_id( varName );
+      check_scalar_variable<T>(varid);
       pnetcdf_put_var( ncid ,  varid , &val );
     }
 
@@ -466,7 +523,9 @@ namespace yakl {
     void read(T &val, std::string varName ) {
       if (mode == MODE_UNOPENED ) Kokkos::abort("ERROR: calling read on unopened file");
       if (mode == MODE_DEFINE   ) Kokkos::abort("ERROR: calling read on file in define mode"); // cannot call enddef b/c callable by single task
+      if (varName.empty()) Kokkos::abort("ERROR: PNetCDF variable name cannot be empty");
       int varid = get_var_id( varName );
+      check_scalar_variable<T>(varid);
       pnetcdf_get_var( ncid ,  varid , &val );
     }
 
@@ -476,17 +535,23 @@ namespace yakl {
     void write(ViewType const & arr , std::string varName) {
       if (mode == MODE_UNOPENED ) Kokkos::abort("ERROR: calling write on unopened file");
       if (mode == MODE_DEFINE   ) Kokkos::abort("ERROR: calling write on file in define mode"); // cannot call enddef b/c callable by single task
+      if (varName.empty()) Kokkos::abort("ERROR: PNetCDF variable name cannot be empty");
+      if (!arr.is_allocated()) Kokkos::abort("ERROR: writing an unallocated Array with PNetCDF");
       int varid = get_var_id( varName );
+      check_array_variable(varid,arr);
       pnetcdf_put_var( ncid ,  varid , arr.createHostCopy().data() );
     }
 
 
     // Callable by only one task
-    template <class ViewType>
+    template <class ViewType> requires is_Array<ViewType>
     void read(ViewType const & arr_in , std::string varName) {
       if (mode == MODE_UNOPENED ) Kokkos::abort("ERROR: calling read on unopened file");
       if (mode == MODE_DEFINE   ) Kokkos::abort("ERROR: calling read on file in define mode"); // cannot call enddef b/c callable by single task
+      if (varName.empty()) Kokkos::abort("ERROR: PNetCDF variable name cannot be empty");
+      if (!arr_in.is_allocated()) Kokkos::abort("ERROR: reading into an unallocated Array with PNetCDF");
       int varid = get_var_id( varName );
+      check_array_variable(varid,arr_in);
       Array<typename ViewType::non_const_data_type,Kokkos::HostSpace> arr;
       if constexpr (ViewType::on_device) { arr = arr_in.createHostObject(); }
       else                               { arr = arr_in;                    }
@@ -496,34 +561,42 @@ namespace yakl {
 
 
     // All MPI tasks in the Comm must call this
-    template <class ViewType>
+    template <class ViewType> requires is_Array<ViewType>
     void write_all(ViewType const & arr , std::string varName , std::vector<MPI_Offset> start ) {
       if (mode == MODE_UNOPENED  ) Kokkos::abort("ERROR: calling write_all on unopened file");
       if (mode == MODE_DEFINE    ) enddef();
       if (mode == MODE_DATA_INDEP) end_indep_data();
+      if (varName.empty()) Kokkos::abort("ERROR: PNetCDF variable name cannot be empty");
+      if (!arr.is_allocated()) Kokkos::abort("ERROR: writing an unallocated Array with PNetCDF");
       int constexpr rank = ViewType::rank();
       if (static_cast<size_t>(rank) != start.size()) { Kokkos::abort("start.size() != Array's rank"); }
+      for (auto const offset : start) if (offset < 0) Kokkos::abort("ERROR: PNetCDF start offset cannot be negative");
       std::vector<MPI_Offset> count(rank);
       for (int i=0; i < rank; i++) { count[i] = arr.extent(i); }
       int varid = get_var_id(varName);
+      check_array_variable(varid,arr,&start,true);
       pnetcdf_put_vara_all( ncid ,  varid , start.data() , count.data() , arr.createHostCopy().data() );
     }
 
 
     // All MPI tasks in the Comm must call this
-    template <class ViewType>
+    template <class ViewType> requires is_Array<ViewType>
     void read_all(ViewType const & arr_in , std::string varName , std::vector<MPI_Offset> start ) {
       if (mode == MODE_UNOPENED  ) Kokkos::abort("ERROR: calling read_all on unopened file");
       if (mode == MODE_DEFINE    ) enddef();
       if (mode == MODE_DATA_INDEP) end_indep_data();
+      if (varName.empty()) Kokkos::abort("ERROR: PNetCDF variable name cannot be empty");
+      if (!arr_in.is_allocated()) Kokkos::abort("ERROR: reading into an unallocated Array with PNetCDF");
       int constexpr rank = ViewType::rank();
       if (static_cast<size_t>(rank) != start   .size()) { Kokkos::abort("start.size() != Array's rank"); }
+      for (auto const offset : start) if (offset < 0) Kokkos::abort("ERROR: PNetCDF start offset cannot be negative");
       Array<typename ViewType::non_const_data_type,Kokkos::HostSpace> arr;
       if constexpr (ViewType::on_device) { arr = arr_in.createHostObject(); }
       else                               { arr = arr_in;                    }
       std::vector<MPI_Offset> count(rank);
       for (int i=0; i < rank; i++) { count[i] = arr.extent(i); }
       int varid = get_var_id(varName);
+      check_array_variable(varid,arr_in,&start,false);
       pnetcdf_get_vara_all( ncid ,  varid , start.data() , count.data() , arr.data() );
       if (ViewType::on_device) arr.deep_copy_to(arr_in);
     }
@@ -550,5 +623,3 @@ namespace yakl {
   };
 
 }
-
-

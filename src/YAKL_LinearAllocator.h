@@ -50,9 +50,13 @@ namespace yakl {
       if (bytes == 0) Kokkos::abort("ERROR: Attempting to create a memory pool with zero bytes");
       nullify();
 
-      if (blockSize%(2*sizeof(size_t)) != 0) {
+      if (blockSize == 0 || blockSize%(2*sizeof(size_t)) != 0) {
         std::cerr << "ERROR: Pool labeled \"" << pool_name << "\" -> LinearAllocator:" << std::endl;
         Kokkos::abort("Error: LinearAllocator blockSize must be a multiple of 2*sizeof(size_t)");
+      }
+      if (!mymalloc || !myfree || !myzero) Kokkos::abort("ERROR: LinearAllocator received an empty callback");
+      if (bytes > std::numeric_limits<size_t>::max()-(blockSize-1)) {
+        Kokkos::abort("ERROR: LinearAllocator pool-size rounding overflow");
       }
       this->blockSize = blockSize;
       this->nBlocks   = (bytes-1) / blockSize + 1;
@@ -158,6 +162,12 @@ namespace yakl {
     // Otherwise, the correct pointer is returned
     void * allocate(size_t bytes, std::string label="") {
       if (bytes == 0) return nullptr;
+      if constexpr (kokkos_debug) {
+        if (!initialized()) Kokkos::abort("ERROR: allocating from an uninitialized LinearAllocator");
+      }
+      if (bytes > std::numeric_limits<size_t>::max()-(blockSize-1)) {
+        Kokkos::abort("ERROR: LinearAllocator allocation-size rounding overflow");
+      }
       size_t blocksReq = (bytes-1)/blockSize + 1; // Number of blocks needed for this allocation
       // If there are no allocations, then place this allocaiton at the beginning.
       if (allocs.empty()) {
@@ -211,6 +221,10 @@ namespace yakl {
     // Determine if there is room for an allocation of the requested number of bytes
     bool iGotRoom( size_t bytes ) const {
       if (bytes == 0) return true;
+      if constexpr (kokkos_debug) {
+        if (!initialized()) Kokkos::abort("ERROR: querying an uninitialized LinearAllocator");
+      }
+      if (bytes > std::numeric_limits<size_t>::max()-(blockSize-1)) return false;
       size_t blocksReq = (bytes-1)/blockSize + 1; // Number of blocks needed for this allocation
       if (allocs.empty()) {
         if (nBlocks >= blocksReq) { return true; }
@@ -230,6 +244,7 @@ namespace yakl {
 
     // Determine if the requested pointer belongs to this pool
     bool thisIsMyPointer(void * ptr_in) const {
+      if (pool == nullptr || ptr_in == nullptr) return false;
       std::uintptr_t ptr   = reinterpret_cast<uintptr_t>(ptr_in);
       std::uintptr_t start = reinterpret_cast<uintptr_t>(pool  );
       std::uintptr_t end   = start + poolSize();
@@ -241,6 +256,9 @@ namespace yakl {
 
 
     size_t poolSize() const {
+      if (blockSize != 0 && nBlocks > std::numeric_limits<size_t>::max()/blockSize) {
+        Kokkos::abort("ERROR: LinearAllocator pool-size overflow");
+      }
       return nBlocks*blockSize;
     }
 
@@ -250,6 +268,9 @@ namespace yakl {
 
     // Transform a block index into a memory pointer
     void * getPtr( size_t blockIndex ) const {
+      if constexpr (kokkos_bounds_debug) {
+        if (pool == nullptr || blockIndex >= nBlocks) Kokkos::abort("ERROR: LinearAllocator block index out of bounds");
+      }
       return static_cast<char*>(pool) + blockIndex * blockSize;
     }
 
@@ -257,5 +278,4 @@ namespace yakl {
   };
 
 }
-
 

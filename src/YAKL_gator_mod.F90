@@ -158,6 +158,52 @@ module gator_mod
 contains
 
 
+  function gator_checked_product(dims) result(num_elements)
+    use iso_c_binding
+    integer, intent(in) :: dims(:)
+    integer(c_size_t) :: num_elements
+    integer :: i
+    num_elements = 1_c_size_t
+    do i = 1, size(dims)
+      if (dims(i) <= 0) error stop "ERROR: gator_allocate dimensions must be positive"
+      if (int(dims(i),c_size_t) > huge(num_elements)/num_elements) then
+        error stop "ERROR: gator_allocate element-count overflow"
+      endif
+      num_elements = num_elements*int(dims(i),c_size_t)
+    enddo
+    if (num_elements > huge(num_elements)/16_c_size_t) then
+      error stop "ERROR: gator_allocate byte-count overflow"
+    endif
+  end function gator_checked_product
+
+
+  function gator_checked_allocate(bytes,already_associated) result(ptr)
+    use iso_c_binding
+    integer(c_size_t), value :: bytes
+    logical, value :: already_associated
+    type(c_ptr) :: ptr
+    if (already_associated) error stop "ERROR: gator_allocate called with an associated pointer"
+    ptr = gator_allocate_c(bytes)
+    if (.not. c_associated(ptr)) error stop "ERROR: gator_allocate returned a null C pointer"
+  end function gator_checked_allocate
+
+
+  subroutine gator_checked_deallocate(ptr,is_associated)
+    use iso_c_binding
+    type(c_ptr), value :: ptr
+    logical, value :: is_associated
+    if (.not. is_associated) error stop "ERROR: gator_deallocate called with a disassociated pointer"
+    if (.not. c_associated(ptr)) error stop "ERROR: gator_deallocate received a null C pointer"
+    call gator_deallocate_c(ptr)
+  end subroutine gator_checked_deallocate
+
+
+#define out inout
+#define product(dims) gator_checked_product(dims)
+#define gator_allocate_c(bytes) gator_checked_allocate(bytes,associated(arr))
+#define gator_deallocate_c(ptr) gator_checked_deallocate(ptr,associated(arr))
+
+
 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !! gator_allocate
@@ -1210,5 +1256,10 @@ contains
     arr => NULL()
   end subroutine gator_deallocate_log_7d
 
+
+#undef gator_deallocate_c
+#undef gator_allocate_c
+#undef product
+#undef out
 
 end module gator_mod

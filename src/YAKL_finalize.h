@@ -5,6 +5,9 @@
 namespace yakl {
 
   inline void finalize() {
+    if constexpr (kokkos_debug) {
+      if (!Kokkos::is_initialized()) Kokkos::abort("ERROR: yakl::finalize called after Kokkos::finalize");
+    }
     // Only finalize if YAKL's already initialized
     if ( get_yakl_instance().is_initialized() ) {
       Kokkos::fence();  // Make sure all device work is done before we start freeing pool memory
@@ -23,5 +26,4 @@ namespace yakl {
   }
 
 }
-
 

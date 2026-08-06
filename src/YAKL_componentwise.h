@@ -4,6 +4,18 @@
 namespace yakl {
   namespace componentwise {
 
+    template <class V1, class V2>
+    KOKKOS_INLINE_FUNCTION bool same_shape(V1 const & a, V2 const & b) {
+      if constexpr (V1::rank() != V2::rank()) {
+        return false;
+      } else {
+        for (int i=0; i < V1::rank(); i++) {
+          if (a.extent(i) != b.extent(i)) return false;
+        }
+        return true;
+      }
+    }
+
     template <class V1, class V2, class F> requires std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2>
     KOKKOS_INLINE_FUNCTION auto binary( V1 const & l , V2 const & r , F const & f ) {
       return f(l,r);
@@ -22,6 +34,15 @@ namespace yakl {
     }
     template <class V1, class V2, class F> requires yakl::is_SArray<V1> && yakl::is_SArray<V2>
     KOKKOS_INLINE_FUNCTION auto binary( V1 const & l , V2 const & r , F const & f ) {
+      static_assert(V1::rank == V2::rank,"ERROR: componentwise binary operation requires equal ranks");
+      static_assert(V1::size() == V2::size(),"ERROR: componentwise binary operation requires equal sizes");
+      if constexpr (kokkos_debug) {
+        for (int i=0; i < V1::rank; i++) {
+          if (l.extent(i) != r.extent(i)) {
+            Kokkos::abort("ERROR: componentwise binary operation requires identical shapes");
+          }
+        }
+      }
       typename V1::template TypeAs<decltype(f(l.data()[0],r.data()[0]))> ret;
       for (int i=0; i < l.size(); i++) { ret.data()[i] = f(l.data()[i],r.data()[i]); }
       return ret;
@@ -30,6 +51,9 @@ namespace yakl {
     inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
     decltype(l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r))>())
     {
+      if constexpr (kokkos_debug) {
+        if (!l.is_allocated()) Kokkos::abort("ERROR: componentwise binary operation on an unallocated Array");
+      }
       auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::binary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -47,6 +71,9 @@ namespace yakl {
     inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
     decltype(r.template clone_object<typename V2::memory_space,decltype(f(l,r.data()[0]))>())
     {
+      if constexpr (kokkos_debug) {
+        if (!r.is_allocated()) Kokkos::abort("ERROR: componentwise binary operation on an unallocated Array");
+      }
       auto ret = r.template clone_object<typename V2::memory_space,decltype(f(l,r.data()[0]))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::binary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -64,6 +91,14 @@ namespace yakl {
     inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
     decltype(l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r.data()[0]))>())
     {
+      if constexpr (kokkos_debug) {
+        if (!l.is_allocated() || !r.is_allocated()) {
+          Kokkos::abort("ERROR: componentwise binary operation on an unallocated Array");
+        }
+        if (!same_shape(l,r)) {
+          Kokkos::abort("ERROR: componentwise binary operation requires arrays with identical shapes");
+        }
+      }
       auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r.data()[0]))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::binary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -156,6 +191,9 @@ namespace yakl {
     inline auto unary( V const & v , F const & f ) ->
     decltype(v.template clone_object<typename V::memory_space,decltype(f(v.data()[0]))>())
     {
+      if constexpr (kokkos_debug) {
+        if (!v.is_allocated()) Kokkos::abort("ERROR: componentwise unary operation on an unallocated Array");
+      }
       auto ret = v.template clone_object<typename V::memory_space,decltype(f(v.data()[0]))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::unary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,

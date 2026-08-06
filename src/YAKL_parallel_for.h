@@ -18,17 +18,50 @@ namespace yakl {
     bool      static constexpr is_fstyle = is_FStyle<Style>;
     ptrdiff_t static constexpr default_lbound = is_cstyle ? 0 : 1;
     ptrdiff_t l, u, s;
-    KOKKOS_INLINE_FUNCTION LoopSpec() : l(-1),u(-1),s(-1) { }
-    KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto u) : l(default_lbound),u(u-1+default_lbound),s(1) { }
-    KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto l, std::integral auto u) : l(l),u(u),s(1) {
-      if constexpr (kokkos_debug) { if (u < l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
+    KOKKOS_INLINE_FUNCTION static ptrdiff_t checked_bound(std::integral auto value) {
+      if constexpr (kokkos_debug) {
+        if (!std::in_range<ptrdiff_t>(value)) Kokkos::abort("ERROR: loop bound is not representable by ptrdiff_t");
+      }
+      return static_cast<ptrdiff_t>(value);
     }
-    KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto l, std::integral auto u, std::integral auto s) : l(l),u(u),s(s) {
-      if constexpr (kokkos_debug) { if (u < l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
-      if constexpr (kokkos_debug) { if (s < 1) Kokkos::abort("ERROR: non-positive strides not supported."); }
+    KOKKOS_INLINE_FUNCTION static ptrdiff_t checked_stride(std::integral auto value) {
+      ptrdiff_t const stride = checked_bound(value);
+      if constexpr (kokkos_debug) {
+        if (stride < 1) Kokkos::abort("ERROR: non-positive strides not supported.");
+      }
+      return stride;
+    }
+    KOKKOS_INLINE_FUNCTION LoopSpec() : l(-1),u(-1),s(-1) { }
+    KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto u) : l(default_lbound),u(default_lbound-1),s(1) {
+      if constexpr (kokkos_debug) {
+        if ((std::is_signed_v<decltype(u)> && u < 0) ||
+            static_cast<size_t>(u) > static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max())) {
+          Kokkos::abort("ERROR: loop extent must be nonnegative and representable by ptrdiff_t");
+        }
+      }
+      this->u = static_cast<ptrdiff_t>(u)-1+default_lbound;
+    }
+    KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto l, std::integral auto u) : l(checked_bound(l)),u(checked_bound(u)),s(1) {
+      if constexpr (kokkos_debug) { if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
+    }
+    KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto l, std::integral auto u, std::integral auto s) :
+        l(checked_bound(l)),u(checked_bound(u)),s(checked_stride(s)) {
+      if constexpr (kokkos_debug) { if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
     }
     KOKKOS_INLINE_FUNCTION bool   valid      () const { return this->s > 0; }
-    KOKKOS_INLINE_FUNCTION size_t index_range() const { return this->u-this->l+1; }
+    KOKKOS_INLINE_FUNCTION size_t index_range() const {
+      if constexpr (kokkos_debug) {
+        if (!valid() || u < l) Kokkos::abort("ERROR: requesting the range of an invalid LoopSpec");
+      }
+      using unsigned_bound_t = std::make_unsigned_t<ptrdiff_t>;
+      auto const difference = static_cast<unsigned_bound_t>(u)-static_cast<unsigned_bound_t>(l);
+      if constexpr (kokkos_debug) {
+        if (difference == std::numeric_limits<unsigned_bound_t>::max()) {
+          Kokkos::abort("ERROR: LoopSpec range overflow");
+        }
+      }
+      return static_cast<size_t>((difference+1)/static_cast<unsigned_bound_t>(s));
+    }
   };
 
 
@@ -46,25 +79,52 @@ namespace yakl {
     std::array<unsigned_t,N> offs;
     KOKKOS_INLINE_FUNCTION Bounds( std::integral auto... sizes ) {
       static_assert(sizeof...(sizes)==N,"ERROR: Bounds class creation with wrong number of loop bounds");
-      std::array<unsigned_t,N> dims = { static_cast<unsigned_t>(sizes)... };
+      std::array<ptrdiff_t,N> signed_dims = { static_cast<ptrdiff_t>(sizes)... };
+      std::array<unsigned_t,N> dims = {};
+      for (int i=0; i < N; i++) {
+        if constexpr (kokkos_debug) {
+          if (signed_dims[i] < 0) Kokkos::abort("ERROR: Bounds dimensions cannot be negative");
+        }
+        dims[i] = static_cast<unsigned_t>(signed_dims[i]);
+      }
       nIter = 1;
       for (int i=0; i < N; i++) {
+        if constexpr (kokkos_debug) {
+          if (dims[i] != 0 && nIter > std::numeric_limits<unsigned_t>::max()/dims[i]) {
+            Kokkos::abort("ERROR: Bounds iteration-count overflow");
+          }
+        }
         nIter *= dims[i];
         offs[i] = 1;
-        for (int j=i+1; j < N; j++) { offs[i] *= dims[j]; }
+        for (int j=i+1; j < N; j++) {
+          if constexpr (kokkos_debug) {
+            if (dims[j] != 0 && offs[i] > std::numeric_limits<unsigned_t>::max()/dims[j]) {
+              Kokkos::abort("ERROR: Bounds offset overflow");
+            }
+          }
+          offs[i] *= dims[j];
+        }
+      }
+    }
+    KOKKOS_INLINE_FUNCTION void check_global_index(unsigned_t iglob) const {
+      if constexpr (kokkos_bounds_debug) {
+        if (iglob >= nIter) Kokkos::abort("ERROR: Bounds::unpack global index out of bounds");
       }
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ) const requires (N==1) {
+      check_global_index(iglob);
       i0 = iglob        ;                        i0 += default_lbound;
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ,
                                                            unsigned_t & i1 ) const requires (N==2) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
       i1 = iglob        ;                        i1 += default_lbound;
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ,
                                                            unsigned_t & i1 ,
                                                            unsigned_t & i2 ) const requires (N==3) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
       i2 = iglob        ;                        i2 += default_lbound;
@@ -73,6 +133,7 @@ namespace yakl {
                                                            unsigned_t & i1 ,
                                                            unsigned_t & i2 ,
                                                            unsigned_t & i3 ) const requires (N==4) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
@@ -83,6 +144,7 @@ namespace yakl {
                                                            unsigned_t & i2 ,
                                                            unsigned_t & i3 ,
                                                            unsigned_t & i4) const requires (N==5) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
@@ -95,6 +157,7 @@ namespace yakl {
                                                            unsigned_t & i3 ,
                                                            unsigned_t & i4 ,
                                                            unsigned_t & i5) const requires (N==6) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
@@ -109,6 +172,7 @@ namespace yakl {
                                                            unsigned_t & i4 ,
                                                            unsigned_t & i5 ,
                                                            unsigned_t & i6) const requires (N==7) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
@@ -125,6 +189,7 @@ namespace yakl {
                                                            unsigned_t & i5 ,
                                                            unsigned_t & i6 ,
                                                            unsigned_t & i7) const requires (N==8) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 += default_lbound;
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 += default_lbound;
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 += default_lbound;
@@ -152,14 +217,37 @@ namespace yakl {
     template <class... BNDS> requires (std::is_same_v<BNDS,LoopSpec<Style>> && ...)
     KOKKOS_INLINE_FUNCTION void init( BNDS... bnds ) {
       static_assert(sizeof...(bnds) == N,"Error: Bounds::init called with wrong number of bounds parameters");
-      std::array<unsigned_t,N> dims = { static_cast<unsigned_t>((bnds.u-bnds.l+1)/bnds.s)... };
+      if constexpr (kokkos_debug) {
+        if (((!bnds.valid() || bnds.u < bnds.l) || ...)) {
+          Kokkos::abort("ERROR: Bounds created from an invalid LoopSpec");
+        }
+      }
+      std::array<unsigned_t,N> dims = { bnds.index_range()... };
       lbounds                       = { static_cast<signed_t  >(bnds.l)... };
       strides                       = { static_cast<unsigned_t>(bnds.s)... };
       nIter = 1;
       for (int i=0; i < N; i++) {
+        if constexpr (kokkos_debug) {
+          if (dims[i] != 0 && nIter > std::numeric_limits<unsigned_t>::max()/dims[i]) {
+            Kokkos::abort("ERROR: Bounds iteration-count overflow");
+          }
+        }
         nIter *= dims[i];
         offs[i] = 1;
-        for (int j=i+1; j < N; j++) { offs[i] *= dims[j]; }
+        for (int j=i+1; j < N; j++) {
+          if constexpr (kokkos_debug) {
+            if (dims[j] != 0 && offs[i] > std::numeric_limits<unsigned_t>::max()/dims[j]) {
+              Kokkos::abort("ERROR: Bounds offset overflow");
+            }
+          }
+          offs[i] *= dims[j];
+        }
+      }
+    }
+
+    KOKKOS_INLINE_FUNCTION void check_global_index(unsigned_t iglob) const {
+      if constexpr (kokkos_bounds_debug) {
+        if (iglob >= nIter) Kokkos::abort("ERROR: Bounds::unpack global index out of bounds");
       }
     }
 
@@ -198,16 +286,19 @@ namespace yakl {
     }
 
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ) const requires (N==1) {
+      check_global_index(iglob);
       i0 = iglob        ;                        i0 = i0*strides[0]+lbounds[0];
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
                                                            signed_t & i1 ) const requires (N==2) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
       i1 = iglob        ;                        i1 = i1*strides[1]+lbounds[1];
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
                                                            signed_t & i1 ,
                                                            signed_t & i2 ) const requires (N==3) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
       i2 = iglob        ;                        i2 = i2*strides[2]+lbounds[2];
@@ -216,6 +307,7 @@ namespace yakl {
                                                            signed_t & i1 ,
                                                            signed_t & i2 ,
                                                            signed_t & i3 ) const requires (N==4) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
@@ -226,6 +318,7 @@ namespace yakl {
                                                            signed_t & i2 ,
                                                            signed_t & i3 ,
                                                            signed_t & i4) const requires (N==5) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
@@ -238,6 +331,7 @@ namespace yakl {
                                                            signed_t & i3 ,
                                                            signed_t & i4 ,
                                                            signed_t & i5) const requires (N==6) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
@@ -252,6 +346,7 @@ namespace yakl {
                                                            signed_t & i4 ,
                                                            signed_t & i5 ,
                                                            signed_t & i6) const requires (N==7) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
@@ -268,6 +363,7 @@ namespace yakl {
                                                            signed_t & i5 ,
                                                            signed_t & i6 ,
                                                            signed_t & i7) const requires (N==8) {
+      check_global_index(iglob);
       i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
       i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
       i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
@@ -299,6 +395,8 @@ namespace yakl {
                             Bounds<N,Style,simple> const & bounds ,
                             F                      const & f      ,
                             Config<MaxThreadsPerBlock,Strip> = Config<0,1>{} ) {
+    static_assert(MaxThreadsPerBlock >= 0,"ERROR: Config maximum threads per block cannot be negative");
+    static_assert(Strip > 0,"ERROR: Config strip length must be positive");
     using unsigned_t = size_t;
     using signed_t   = ptrdiff_t;
     using Kokkos::RangePolicy;
@@ -444,4 +542,3 @@ namespace yakl {
   }
 
 }
-

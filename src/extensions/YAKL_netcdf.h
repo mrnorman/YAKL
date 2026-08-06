@@ -146,56 +146,78 @@ namespace yakl {
       bool               operator==(NcDim const &rhs) const { return this->name == rhs.name && !isNull(); }
       bool               operator!=(NcDim const &rhs) const { return this->name != rhs.name || isNull(); }
       NcDim getDim(int i) const {
-        if (isNull() || dims.size() <= i) {
+        if (isNull() || i < 0 || static_cast<size_t>(i) >= dims.size()) {
           return NcDim();
         } else {
           return dims[i];
         }
       }
 
-      void putVar(double             const *data) { ncwrap( nc_put_var_double   ( ncid , id , data ) , __LINE__ ); }
-      void putVar(float              const *data) { ncwrap( nc_put_var_float    ( ncid , id , data ) , __LINE__ ); }
-      void putVar(int                const *data) { ncwrap( nc_put_var_int      ( ncid , id , data ) , __LINE__ ); }
-      void putVar(long               const *data) { ncwrap( nc_put_var_long     ( ncid , id , data ) , __LINE__ ); }
-      void putVar(long long          const *data) { ncwrap( nc_put_var_longlong ( ncid , id , data ) , __LINE__ ); }
-      void putVar(signed char        const *data) { ncwrap( nc_put_var_schar    ( ncid , id , data ) , __LINE__ ); }
-      void putVar(short              const *data) { ncwrap( nc_put_var_short    ( ncid , id , data ) , __LINE__ ); }
-      void putVar(unsigned char      const *data) { ncwrap( nc_put_var_uchar    ( ncid , id , data ) , __LINE__ ); }
-      void putVar(unsigned int       const *data) { ncwrap( nc_put_var_uint     ( ncid , id , data ) , __LINE__ ); }
-      void putVar(unsigned long      const *data) { ncwrap( nc_put_var_uint     ( ncid , id , (unsigned int const *) data ) , __LINE__ ); }
-      void putVar(unsigned long long const *data) { ncwrap( nc_put_var_ulonglong( ncid , id , data ) , __LINE__ ); }
-      void putVar(unsigned short     const *data) { ncwrap( nc_put_var_ushort   ( ncid , id , data ) , __LINE__ ); }
-      void putVar(char               const *data) { ncwrap( nc_put_var_text     ( ncid , id , data ) , __LINE__ ); }
+      template <class T>
+      void checkData(T const * data) const {
+        if (isNull()) Kokkos::abort("ERROR: I/O attempted with a null netCDF variable");
+        bool empty = false;
+        for (auto const & dim : dims) empty = empty || dim.getSize() == 0;
+        if (data == nullptr && !empty) Kokkos::abort("ERROR: netCDF I/O received a null data pointer");
+      }
+
+      void checkHyperslab(std::vector<size_t> const & start, std::vector<size_t> const & count) const {
+        if (start.size() != dims.size() || count.size() != dims.size()) {
+          Kokkos::abort("ERROR: netCDF hyperslab rank differs from variable rank");
+        }
+        for (size_t i=0; i < dims.size(); i++) {
+          if (count[i] > std::numeric_limits<size_t>::max()-start[i]) {
+            Kokkos::abort("ERROR: netCDF hyperslab bound overflow");
+          }
+          if (!dims[i].isUnlimited() && start[i]+count[i] > dims[i].getSize()) {
+            Kokkos::abort("ERROR: netCDF hyperslab exceeds a fixed dimension");
+          }
+        }
+      }
+
+      void putVar(double             const *data) { checkData(data); ncwrap( nc_put_var_double   ( ncid , id , data ) , __LINE__ ); }
+      void putVar(float              const *data) { checkData(data); ncwrap( nc_put_var_float    ( ncid , id , data ) , __LINE__ ); }
+      void putVar(int                const *data) { checkData(data); ncwrap( nc_put_var_int      ( ncid , id , data ) , __LINE__ ); }
+      void putVar(long               const *data) { checkData(data); ncwrap( nc_put_var_long     ( ncid , id , data ) , __LINE__ ); }
+      void putVar(long long          const *data) { checkData(data); ncwrap( nc_put_var_longlong ( ncid , id , data ) , __LINE__ ); }
+      void putVar(signed char        const *data) { checkData(data); ncwrap( nc_put_var_schar    ( ncid , id , data ) , __LINE__ ); }
+      void putVar(short              const *data) { checkData(data); ncwrap( nc_put_var_short    ( ncid , id , data ) , __LINE__ ); }
+      void putVar(unsigned char      const *data) { checkData(data); ncwrap( nc_put_var_uchar    ( ncid , id , data ) , __LINE__ ); }
+      void putVar(unsigned int       const *data) { checkData(data); ncwrap( nc_put_var_uint     ( ncid , id , data ) , __LINE__ ); }
+      void putVar(unsigned long      const *data) { checkData(data); ncwrap( nc_put_var_uint     ( ncid , id , (unsigned int const *) data ) , __LINE__ ); }
+      void putVar(unsigned long long const *data) { checkData(data); ncwrap( nc_put_var_ulonglong( ncid , id , data ) , __LINE__ ); }
+      void putVar(unsigned short     const *data) { checkData(data); ncwrap( nc_put_var_ushort   ( ncid , id , data ) , __LINE__ ); }
+      void putVar(char               const *data) { checkData(data); ncwrap( nc_put_var_text     ( ncid , id , data ) , __LINE__ ); }
       void putVar(bool               const *data) { Kokkos::abort("ERROR: Cannot write bools to netCDF file"); }
 
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, double             const *data) { ncwrap( nc_put_vara_double   ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, float              const *data) { ncwrap( nc_put_vara_float    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, int                const *data) { ncwrap( nc_put_vara_int      ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, long               const *data) { ncwrap( nc_put_vara_long     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, long long          const *data) { ncwrap( nc_put_vara_longlong ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, signed char        const *data) { ncwrap( nc_put_vara_schar    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, short              const *data) { ncwrap( nc_put_vara_short    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned char      const *data) { ncwrap( nc_put_vara_uchar    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned int       const *data) { ncwrap( nc_put_vara_uint     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned long      const *data) { ncwrap( nc_put_vara_uint     ( ncid , id , start.data() , count.data(), (unsigned int const *) data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned long long const *data) { ncwrap( nc_put_vara_ulonglong( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned short     const *data) { ncwrap( nc_put_vara_ushort   ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
-      void putVar(std::vector<size_t> start , std::vector<size_t> count, char               const *data) { ncwrap( nc_put_vara_text     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, double             const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_double   ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, float              const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_float    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, int                const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_int      ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, long               const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_long     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, long long          const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_longlong ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, signed char        const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_schar    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, short              const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_short    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned char      const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_uchar    ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned int       const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_uint     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned long      const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_uint     ( ncid , id , start.data() , count.data(), (unsigned int const *) data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned long long const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_ulonglong( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, unsigned short     const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_ushort   ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
+      void putVar(std::vector<size_t> start , std::vector<size_t> count, char               const *data) { checkData(data); checkHyperslab(start,count); ncwrap( nc_put_vara_text     ( ncid , id , start.data() , count.data(), data ) , __LINE__ ); }
       void putVar(std::vector<size_t> start , std::vector<size_t> count, bool               const *data) { Kokkos::abort("ERROR: Cannot write bools to netCDF file"); }
 
-      void getVar(double             *data) const { ncwrap( nc_get_var_double   ( ncid , id , data ) , __LINE__ ); }
-      void getVar(float              *data) const { ncwrap( nc_get_var_float    ( ncid , id , data ) , __LINE__ ); }
-      void getVar(int                *data) const { ncwrap( nc_get_var_int      ( ncid , id , data ) , __LINE__ ); }
-      void getVar(long               *data) const { ncwrap( nc_get_var_long     ( ncid , id , data ) , __LINE__ ); }
-      void getVar(long long          *data) const { ncwrap( nc_get_var_longlong ( ncid , id , data ) , __LINE__ ); }
-      void getVar(signed char        *data) const { ncwrap( nc_get_var_schar    ( ncid , id , data ) , __LINE__ ); }
-      void getVar(short              *data) const { ncwrap( nc_get_var_short    ( ncid , id , data ) , __LINE__ ); }
-      void getVar(unsigned char      *data) const { ncwrap( nc_get_var_uchar    ( ncid , id , data ) , __LINE__ ); }
-      void getVar(unsigned int       *data) const { ncwrap( nc_get_var_uint     ( ncid , id , data ) , __LINE__ ); }
-      void getVar(unsigned long      *data) const { ncwrap( nc_get_var_uint     ( ncid , id , (unsigned int *) data ) , __LINE__ ); }
-      void getVar(unsigned long long *data) const { ncwrap( nc_get_var_ulonglong( ncid , id , data ) , __LINE__ ); }
-      void getVar(unsigned short     *data) const { ncwrap( nc_get_var_ushort   ( ncid , id , data ) , __LINE__ ); }
-      void getVar(char               *data) const { ncwrap( nc_get_var_text     ( ncid , id , data ) , __LINE__ ); }
+      void getVar(double             *data) const { checkData(data); ncwrap( nc_get_var_double   ( ncid , id , data ) , __LINE__ ); }
+      void getVar(float              *data) const { checkData(data); ncwrap( nc_get_var_float    ( ncid , id , data ) , __LINE__ ); }
+      void getVar(int                *data) const { checkData(data); ncwrap( nc_get_var_int      ( ncid , id , data ) , __LINE__ ); }
+      void getVar(long               *data) const { checkData(data); ncwrap( nc_get_var_long     ( ncid , id , data ) , __LINE__ ); }
+      void getVar(long long          *data) const { checkData(data); ncwrap( nc_get_var_longlong ( ncid , id , data ) , __LINE__ ); }
+      void getVar(signed char        *data) const { checkData(data); ncwrap( nc_get_var_schar    ( ncid , id , data ) , __LINE__ ); }
+      void getVar(short              *data) const { checkData(data); ncwrap( nc_get_var_short    ( ncid , id , data ) , __LINE__ ); }
+      void getVar(unsigned char      *data) const { checkData(data); ncwrap( nc_get_var_uchar    ( ncid , id , data ) , __LINE__ ); }
+      void getVar(unsigned int       *data) const { checkData(data); ncwrap( nc_get_var_uint     ( ncid , id , data ) , __LINE__ ); }
+      void getVar(unsigned long      *data) const { checkData(data); ncwrap( nc_get_var_uint     ( ncid , id , (unsigned int *) data ) , __LINE__ ); }
+      void getVar(unsigned long long *data) const { checkData(data); ncwrap( nc_get_var_ulonglong( ncid , id , data ) , __LINE__ ); }
+      void getVar(unsigned short     *data) const { checkData(data); ncwrap( nc_get_var_ushort   ( ncid , id , data ) , __LINE__ ); }
+      void getVar(char               *data) const { checkData(data); ncwrap( nc_get_var_text     ( ncid , id , data ) , __LINE__ ); }
       void getVar(bool               *data) const { Kokkos::abort("ERROR: Cannot read bools directly from netCDF file. This should've been intercepted and changed to int."); }
 
       void print() {
@@ -232,6 +254,7 @@ namespace yakl {
       bool isNull() { return ncid == -999; }
 
       void open( std::string fname , int mode ) {
+        if (fname.empty()) Kokkos::abort("ERROR: cannot open a netCDF file with an empty name");
         close();
         if (! (mode == NETCDF_MODE_READ || mode == NETCDF_MODE_WRITE) ) {
           Kokkos::abort("ERROR: open mode can be NETCDF_MODE_READ or NETCDF_MODE_WRITE");
@@ -240,6 +263,7 @@ namespace yakl {
       }
 
       void create( std::string fname , int mode ) {
+        if (fname.empty()) Kokkos::abort("ERROR: cannot create a netCDF file with an empty name");
         close();
         if (! (mode == NETCDF_MODE_NEW || mode == NETCDF_MODE_REPLACE) ) {
           Kokkos::abort("ERROR: open mode can be NETCDF_MODE_NEW or NETCDF_MODE_REPLACE");
@@ -253,6 +277,8 @@ namespace yakl {
       }
 
       NcVar getVar( std::string varName ) const {
+        if (ncid == -999) Kokkos::abort("ERROR: querying a variable in an unopened netCDF file");
+        if (varName.empty()) Kokkos::abort("ERROR: netCDF variable name cannot be empty");
         int varid;
         int ierr = nc_inq_varid( ncid , varName.c_str() , &varid);
         if (ierr != NC_NOERR) return NcVar();
@@ -272,6 +298,8 @@ namespace yakl {
       }
 
       NcDim getDim( std::string dimName ) const {
+        if (ncid == -999) Kokkos::abort("ERROR: querying a dimension in an unopened netCDF file");
+        if (dimName.empty()) Kokkos::abort("ERROR: netCDF dimension name cannot be empty");
         int dimid;
         int ierr = nc_inq_dimid( ncid , dimName.c_str() , &dimid);
         if (ierr != NC_NOERR) return NcDim();
@@ -279,6 +307,8 @@ namespace yakl {
       }
 
       NcDim getDim( int dimid ) const {
+        if (ncid == -999) Kokkos::abort("ERROR: querying a dimension in an unopened netCDF file");
+        if (dimid < 0) Kokkos::abort("ERROR: netCDF dimension ID cannot be negative");
         char   dname[NC_MAX_NAME+1];
         size_t len;
         int    unlim_dimid;
@@ -288,6 +318,9 @@ namespace yakl {
       }
 
       NcVar addVar( std::string varName , int type , std::vector<NcDim> &dims ) {
+        if (ncid == -999) Kokkos::abort("ERROR: defining a variable in an unopened netCDF file");
+        if (varName.empty()) Kokkos::abort("ERROR: netCDF variable name cannot be empty");
+        for (auto const & dim : dims) if (dim.isNull()) Kokkos::abort("ERROR: netCDF variable has a null dimension");
         std::vector<int> dimids(dims.size());
         for (int i=0; i < dims.size(); i++) { dimids[i] = dims[i].getId(); }
         int varid;
@@ -296,6 +329,8 @@ namespace yakl {
       }
 
       NcVar addVar( std::string varName , int type ) {
+        if (ncid == -999) Kokkos::abort("ERROR: defining a variable in an unopened netCDF file");
+        if (varName.empty()) Kokkos::abort("ERROR: netCDF variable name cannot be empty");
         int varid;
         int *dummy = nullptr;
         ncwrap( nc_def_var(ncid , varName.c_str() , type , 0 , dummy , &varid) , __LINE__ );
@@ -303,12 +338,16 @@ namespace yakl {
       }
 
       NcDim addDim( std::string dimName , size_t len ) {
+        if (ncid == -999) Kokkos::abort("ERROR: defining a dimension in an unopened netCDF file");
+        if (dimName.empty()) Kokkos::abort("ERROR: netCDF dimension name cannot be empty");
         int dimid;
         ncwrap( nc_def_dim(ncid , dimName.c_str() , len , &dimid ) , __LINE__ );
         return NcDim( dimName , len , dimid , false );
       }
 
       NcDim addDim( std::string dimName ) {
+        if (ncid == -999) Kokkos::abort("ERROR: defining a dimension in an unopened netCDF file");
+        if (dimName.empty()) Kokkos::abort("ERROR: netCDF dimension name cannot be empty");
         int dimid;
         ncwrap( nc_def_dim(ncid , dimName.c_str() , NC_UNLIMITED , &dimid ) , __LINE__ );
         return NcDim( dimName , 0 , dimid , true );
@@ -341,7 +380,11 @@ namespace yakl {
     bool dimExists( std::string dimName ) const { return ! file.getDim(dimName).isNull(); }
 
 
-    size_t getDimSize( std::string dimName ) const { return file.getDim(dimName).getSize(); }
+    size_t getDimSize( std::string dimName ) const {
+      auto const dim = file.getDim(dimName);
+      if (dim.isNull()) Kokkos::abort("ERROR: requested netCDF dimension does not exist");
+      return dim.getSize();
+    }
 
 
     void createDim( std::string dimName , size_t len ) { file.addDim( dimName , len ); }
@@ -353,7 +396,10 @@ namespace yakl {
     void write(ViewType const & arr , std::string varName , std::vector<std::string> dimNames) {
       int constexpr rank = ViewType::rank();
       using T = typename ViewType::non_const_value_type;
+      if (!arr.is_allocated()) Kokkos::abort("ERROR: writing an unallocated Array to netCDF");
+      if (varName.empty()) Kokkos::abort("ERROR: netCDF variable name cannot be empty");
       if (rank != dimNames.size()) { Kokkos::abort("dimNames.size() != Array's rank"); }
+      for (auto const & name : dimNames) if (name.empty()) Kokkos::abort("ERROR: netCDF dimension name cannot be empty");
       std::vector<NcDim> dims(rank); // List of dimensions for this variable
       // Make sure the dimensions are in there and are the right sizes
       for (int i=0; i<rank; i++) {
@@ -399,6 +445,8 @@ namespace yakl {
 
     template <class T> requires std::is_arithmetic_v<T>
     void write1(T val , std::string varName , int ind , std::string ulDimName="unlim" ) {
+      if (varName.empty() || ulDimName.empty()) Kokkos::abort("ERROR: netCDF names cannot be empty");
+      if (ind < 0) Kokkos::abort("ERROR: netCDF record index cannot be negative");
       // Get the unlimited dimension or create it if it doesn't exist
       auto ulDim = file.getDim( ulDimName );
       if ( ulDim.isNull() )  ulDim = file.addDim( ulDimName );
@@ -408,11 +456,16 @@ namespace yakl {
         std::vector<NcDim> dims(1);
         dims[0] = ulDim;
         var = file.addVar( varName , getType<T>() , dims );
+      } else {
+        if (var.getType() != getType<T>() || var.getDimCount() != 1 || !var.getDim(0).isUnlimited()) {
+          Kokkos::abort("ERROR: existing netCDF record variable has incompatible type or dimensions");
+        }
       }
       std::vector<size_t> start(1);
       std::vector<size_t> count(1);
       start[0] = ind;
       count[0] = 1;
+      var.checkHyperslab(start,count);
       var.putVar(start,count,&val);
     }
 
@@ -422,7 +475,11 @@ namespace yakl {
                 int ind , std::string ulDimName="unlim" ) {
       int constexpr rank = ViewType::rank();
       using T = typename ViewType::non_const_value_type;
+      if (!arr.is_allocated()) Kokkos::abort("ERROR: writing an unallocated Array to netCDF");
+      if (varName.empty() || ulDimName.empty()) Kokkos::abort("ERROR: netCDF names cannot be empty");
+      if (ind < 0) Kokkos::abort("ERROR: netCDF record index cannot be negative");
       if (rank != dimNames.size()) { Kokkos::abort("dimNames.size() != Array's rank"); }
+      for (auto const & name : dimNames) if (name.empty()) Kokkos::abort("ERROR: netCDF dimension name cannot be empty");
       std::vector<NcDim> dims(rank+1); // List of dimensions for this variable
       // Get the unlimited dimension or create it if it doesn't exist
       dims[0] = file.getDim( ulDimName );
@@ -458,6 +515,7 @@ namespace yakl {
         if (varDims.size() != rank+1) {
           Kokkos::abort("Existing variable's rank != array's rank");
         }
+        if (!varDims[0].isUnlimited()) Kokkos::abort("ERROR: first netCDF record dimension is not unlimited");
         for (int i=1; i < varDims.size(); i++) {
           if (ViewType::is_cstyle) {
             if (varDims[i].getSize() != arr.extent(i-1)) {
@@ -479,6 +537,7 @@ namespace yakl {
         start[i] = 0;
         count[i] = dims[i].getSize();
       }
+      var.checkHyperslab(start,count);
       if (ViewType::on_device) { var.putVar(start,count,arr.createHostCopy().data()); }
       else                     { var.putVar(start,count,arr.data()); }
     }
@@ -488,10 +547,16 @@ namespace yakl {
     void read(ViewType const & arr , std::string varName) {
       int constexpr rank = ViewType::rank();
       using T = typename ViewType::non_const_value_type;
+      if (!arr.is_allocated()) Kokkos::abort("ERROR: reading netCDF into an unallocated Array");
+      if (varName.empty()) Kokkos::abort("ERROR: netCDF variable name cannot be empty");
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
       std::vector<int> dimSizes(rank);
       if ( ! var.isNull() ) {
+        int expectedType;
+        if constexpr (std::is_same_v<T,bool>) expectedType = NC_INT;
+        else                                  expectedType = getType<T>();
+        if (var.getType() != expectedType) Kokkos::abort("ERROR: netCDF variable and Array types differ");
         auto varDims = var.getDims();
         if (varDims.size() != rank) { Kokkos::abort("Existing variable's rank != array's rank"); }
         if (ViewType::is_cstyle) { for (int i=0; i < varDims.size(); i++) { dimSizes[i] = varDims[i].getSize(); } }
@@ -503,8 +568,8 @@ namespace yakl {
 
       if (ViewType::on_device) {
         auto arrHost = arr.createHostObject();
-        if (std::is_same_v<T,bool>) {
-          auto tmp = arr.template clone_object<Kokkos::HostSpace>();
+        if constexpr (std::is_same_v<T,bool>) {
+          auto tmp = arr.template clone_object<Kokkos::HostSpace,int>();
           var.getVar(tmp.data());
           for (int i=0; i < arr.size(); i++) { arrHost.data()[i] = tmp.data()[i] == 1; }
         } else {
@@ -513,7 +578,7 @@ namespace yakl {
         arrHost.deep_copy_to(arr);
         Kokkos::fence();
       } else {
-        if (std::is_same_v<T,bool>) {
+        if constexpr (std::is_same_v<T,bool>) {
           auto tmp = arr.template clone_object<Kokkos::HostSpace,int>();
           var.getVar(tmp.data());
           for (int i=0; i < arr.size(); i++) { arr.data()[i] = tmp.data()[i] == 1; }
@@ -526,17 +591,24 @@ namespace yakl {
 
     template <class T> requires std::is_arithmetic_v<T>
     void read(T &arr , std::string varName) {
+      if (varName.empty()) Kokkos::abort("ERROR: netCDF variable name cannot be empty");
       auto var = file.getVar(varName);
       if ( var.isNull() ) { Kokkos::abort("Variable does not exist"); }
+      if (var.getType() != getType<T>() || var.getDimCount() != 0) {
+        Kokkos::abort("ERROR: netCDF scalar variable has incompatible type or rank");
+      }
       var.getVar(&arr);
     }
 
 
     template <class T> requires std::is_arithmetic_v<T>
     void write(T arr , std::string varName) {
+      if (varName.empty()) Kokkos::abort("ERROR: netCDF variable name cannot be empty");
       auto var = file.getVar(varName);
       if ( var.isNull() ) {
         var = file.addVar( varName , getType<T>() );
+      } else if (var.getType() != getType<T>() || var.getDimCount() != 0) {
+        Kokkos::abort("ERROR: existing netCDF scalar variable has incompatible type or rank");
       }
       var.putVar(&arr);
     }
@@ -565,5 +637,3 @@ namespace yakl {
 
 
 }
-
-

@@ -153,7 +153,8 @@ int main() {
       void *middle = allocator.allocate(16,"middle");
       void *last = allocator.allocate(17,"last");
       if (allocator.numAllocs() != 3 || allocator.iGotRoom(1)) { die("ERROR: LinearAllocator exact-capacity check failed"); }
-      if (! allocator.thisIsMyPointer(first) || allocator.thisIsMyPointer(allocator.getPtr(4))) {
+      void *pastEnd = static_cast<void *>(static_cast<char *>(allocator.pool)+allocator.poolSize());
+      if (! allocator.thisIsMyPointer(first) || allocator.thisIsMyPointer(pastEnd)) {
         die("ERROR: LinearAllocator pointer ownership bounds are incorrect");
       }
 

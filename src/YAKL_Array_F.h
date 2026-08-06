@@ -26,6 +26,26 @@ namespace yakl {
       KOKKOS_INLINE_FUNCTION AB(std::integral auto l, std::integral auto u) : l(l) , u(u) { }
     };
 
+    KOKKOS_INLINE_FUNCTION static size_t checked_extent(AB bnd) {
+      using unsigned_bound_t = std::make_unsigned_t<ptrdiff_t>;
+      if constexpr (kokkos_debug) {
+        if (bnd.u < bnd.l) Kokkos::abort("ERROR: Array_F upper bound is less than its lower bound");
+        auto const difference = static_cast<unsigned_bound_t>(bnd.u) - static_cast<unsigned_bound_t>(bnd.l);
+        if (difference > std::numeric_limits<size_t>::max()-1) {
+          Kokkos::abort("ERROR: Array_F extent overflow");
+        }
+      }
+      auto const difference = static_cast<unsigned_bound_t>(bnd.u) - static_cast<unsigned_bound_t>(bnd.l);
+      return static_cast<size_t>(difference) + 1;
+    }
+
+    KOKKOS_INLINE_FUNCTION static typename this_t::value_type * checked_pointer(typename this_t::value_type * ptr) {
+      if constexpr (kokkos_debug) {
+        if (ptr == nullptr) Kokkos::abort("ERROR: constructing a nonempty unmanaged Array_F from a null pointer");
+      }
+      return ptr;
+    }
+
 
     Array_F() = default;
     ~Array_F() = default;
@@ -34,68 +54,75 @@ namespace yakl {
     // Owned constructors
     Array_F(std::string const & label, AB b1)
         requires (this_t::rank()==1)
-        : base_t(label,b1.u-b1.l+1) ,
+        : base_t(label,checked_extent(b1)) ,
           lb({b1.l}) {}
     Array_F(std::string const & label, AB b1, AB b2)
         requires (this_t::rank()==2)
-        : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1) ,
+        : base_t(label,checked_extent(b1),checked_extent(b2)) ,
           lb({b1.l,b2.l}) {}
     Array_F(std::string const & label, AB b1, AB b2, AB b3)
         requires (this_t::rank()==3)
-        : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1) ,
+        : base_t(label,checked_extent(b1),checked_extent(b2),checked_extent(b3)) ,
           lb({b1.l,b2.l,b3.l}) {}
     Array_F(std::string const & label, AB b1, AB b2, AB b3, AB b4)
         requires (this_t::rank()==4)
-        : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1) ,
+        : base_t(label,checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4)) ,
           lb({b1.l,b2.l,b3.l,b4.l}) {}
     Array_F(std::string const & label, AB b1, AB b2, AB b3, AB b4, AB b5)
         requires (this_t::rank()==5)
-        : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1) ,
+        : base_t(label,checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4),checked_extent(b5)) ,
           lb({b1.l,b2.l,b3.l,b4.l,b5.l}) {}
     Array_F(std::string const & label, AB b1, AB b2, AB b3, AB b4, AB b5, AB b6)
         requires (this_t::rank()==6)
-        : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1) ,
+        : base_t(label,checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4),checked_extent(b5),
+                 checked_extent(b6)) ,
           lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l}) {}
     Array_F(std::string const & label, AB b1, AB b2, AB b3, AB b4, AB b5, AB b6, AB b7)
         requires (this_t::rank()==7)
-        : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1,b7.u-b7.l+1) ,
+        : base_t(label,checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4),checked_extent(b5),
+                 checked_extent(b6),checked_extent(b7)) ,
           lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l,b7.l}) {}
     Array_F(std::string const & label, AB b1, AB b2, AB b3, AB b4, AB b5, AB b6, AB b7, AB b8)
         requires (this_t::rank()==8)
-        : base_t(label,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1,b7.u-b7.l+1,b8.u-b8.l+1) ,
+        : base_t(label,checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4),checked_extent(b5),
+                 checked_extent(b6),checked_extent(b7),checked_extent(b8)) ,
           lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l,b7.l,b8.l}) {}
     // Non-owned constructors
     KOKKOS_INLINE_FUNCTION Array_F(typename this_t::value_type *ptr, AB b1)
         requires (this_t::rank()==1)
-        : base_t(ptr,b1.u-b1.l+1) ,
+        : base_t(checked_pointer(ptr),checked_extent(b1)) ,
           lb({b1.l}) {}
     KOKKOS_INLINE_FUNCTION Array_F(typename this_t::value_type *ptr, AB b1, AB b2)
         requires (this_t::rank()==2)
-        : base_t(ptr,b1.u-b1.l+1,b2.u-b2.l+1) ,
+        : base_t(checked_pointer(ptr),checked_extent(b1),checked_extent(b2)) ,
           lb({b1.l,b2.l}) {}
     KOKKOS_INLINE_FUNCTION Array_F(typename this_t::value_type *ptr, AB b1, AB b2, AB b3)
         requires (this_t::rank()==3)
-        : base_t(ptr,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1) ,
+        : base_t(checked_pointer(ptr),checked_extent(b1),checked_extent(b2),checked_extent(b3)) ,
           lb({b1.l,b2.l,b3.l}) {}
     KOKKOS_INLINE_FUNCTION Array_F(typename this_t::value_type *ptr, AB b1, AB b2, AB b3, AB b4)
         requires (this_t::rank()==4)
-        : base_t(ptr,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1) ,
+        : base_t(checked_pointer(ptr),checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4)) ,
           lb({b1.l,b2.l,b3.l,b4.l}) {}
     KOKKOS_INLINE_FUNCTION Array_F(typename this_t::value_type *ptr, AB b1, AB b2, AB b3, AB b4, AB b5)
         requires (this_t::rank()==5)
-        : base_t(ptr,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1) ,
+        : base_t(checked_pointer(ptr),checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4),
+                 checked_extent(b5)) ,
           lb({b1.l,b2.l,b3.l,b4.l,b5.l}) {}
     KOKKOS_INLINE_FUNCTION Array_F(typename this_t::value_type *ptr, AB b1, AB b2, AB b3, AB b4, AB b5, AB b6)
         requires (this_t::rank()==6)
-        : base_t(ptr,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1) ,
+        : base_t(checked_pointer(ptr),checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4),checked_extent(b5),
+                 checked_extent(b6)) ,
           lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l}) {}
     KOKKOS_INLINE_FUNCTION Array_F(typename this_t::value_type *ptr, AB b1, AB b2, AB b3, AB b4, AB b5, AB b6, AB b7)
         requires (this_t::rank()==7)
-        : base_t(ptr,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1,b7.u-b7.l+1) ,
+        : base_t(checked_pointer(ptr),checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4),checked_extent(b5),
+                 checked_extent(b6),checked_extent(b7)) ,
           lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l,b7.l}) {}
     KOKKOS_INLINE_FUNCTION Array_F(typename this_t::value_type *ptr, AB b1, AB b2, AB b3, AB b4, AB b5, AB b6, AB b7, AB b8)
         requires (this_t::rank()==8)
-        : base_t(ptr,b1.u-b1.l+1,b2.u-b2.l+1,b3.u-b3.l+1,b4.u-b4.l+1,b5.u-b5.l+1,b6.u-b6.l+1,b7.u-b7.l+1,b8.u-b8.l+1) ,
+        : base_t(checked_pointer(ptr),checked_extent(b1),checked_extent(b2),checked_extent(b3),checked_extent(b4),checked_extent(b5),
+                 checked_extent(b6),checked_extent(b7),checked_extent(b8)) ,
           lb({b1.l,b2.l,b3.l,b4.l,b5.l,b6.l,b7.l,b8.l}) {}
 
     Array_F(Array_F const &) = default;
@@ -209,6 +236,9 @@ namespace yakl {
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
     Array_F const & operator=(TLOC const & v) const {
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: assigning a scalar to an unallocated Array_F");
+      }
       if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::operator=scalar");
       Kokkos::deep_copy(*this,v);
       if constexpr (yakl_auto_profile) timer_stop("yakl::Array_F::operator=scalar");
@@ -237,6 +267,18 @@ namespace yakl {
       auto const    &lb        = this_t::lb;
       using new_kt = typename ViewType<typename base_t::value_type,remaining>::type;
       std::array<ptrdiff_t,rank> slice_arr = { static_cast<ptrdiff_t>(indices)... };
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: slicing an unallocated Array_F");
+      }
+      if constexpr (kokkos_bounds_debug) {
+        for (int i=0; i < nslice; i++) {
+          int const dim = rank-1-i;
+          ptrdiff_t const ub = lb[dim] + static_cast<ptrdiff_t>(this_t::extent(dim)) - 1;
+          if (slice_arr[dim] < lb[dim] || slice_arr[dim] > ub) {
+            Kokkos::abort("ERROR: Array_F::slice index out of bounds");
+          }
+        }
+      }
       size_t offset = 0;
       for (int i=0; i < nslice; i++) {
         offset += (slice_arr[rank-1-i]-lb[rank-1-i]) * this_t::stride(rank-1-i);
@@ -257,6 +299,15 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION auto subset_slowest_dimension(std::integral auto l, std::integral auto u) const {
       auto constexpr rank = this_t::rank();
       auto const    &lb   = this_t::lb;
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: subsetting an unallocated Array_F");
+      }
+      if constexpr (kokkos_bounds_debug) {
+        ptrdiff_t const upper = lb[rank-1] + static_cast<ptrdiff_t>(this_t::extent(rank-1)) - 1;
+        if (l < lb[rank-1] || u < l || u > upper) {
+          Kokkos::abort("ERROR: Array_F::subset_slowest_dimension bounds are invalid");
+        }
+      }
       typename this_t::value_type * offset = this_t::data()+(l-lb[rank-1])*this_t::stride(rank-1);
       return [&] <std::size_t... Is> (std::index_sequence<Is...>) {
         return this_t( offset , {lb[Is],lb[Is]+this_t::extent(Is)-1}... , {l,u} );
@@ -268,7 +319,18 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION auto reshape_all(BNDS... newdims) const {
       int constexpr new_rank = sizeof...(newdims);
       using new_kt = typename ViewType<typename base_t::value_type,new_rank>::type;
-      if ((static_cast<size_t>(newdims.u-newdims.l+1) * ...) != this_t::size()) {
+      std::array<AB,new_rank> bounds = {newdims...};
+      size_t new_size = 1;
+      for (int i=0; i < new_rank; i++) {
+        size_t const extent = checked_extent(bounds[i]);
+        if constexpr (kokkos_debug) {
+          if (extent != 0 && new_size > std::numeric_limits<size_t>::max()/extent) {
+            Kokkos::abort("ERROR: Array_F::reshape dimension product overflow");
+          }
+        }
+        new_size *= extent;
+      }
+      if (new_size != this_t::size()) {
         Kokkos::abort("ERROR: Resizing array with different total size");
       }
       auto loc = Array_F<new_kt,MemSpace>(this_t::data(),{newdims.l,newdims.u}...);
@@ -285,7 +347,18 @@ namespace yakl {
 
 
     KOKKOS_INLINE_FUNCTION auto collapse(std::integral auto lb = 1) const {
-      return Array_F<typename base_t::value_type *,MemSpace>(this_t::data(),{lb,lb+this_t::size()-1});
+      ptrdiff_t const lower = static_cast<ptrdiff_t>(lb);
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: collapsing an unallocated Array_F");
+        if ((!std::is_signed_v<decltype(lb)> && static_cast<size_t>(lb) >
+             static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max())) ||
+            this_t::size()-1 > static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max()) ||
+            lower > std::numeric_limits<ptrdiff_t>::max()-static_cast<ptrdiff_t>(this_t::size()-1)) {
+          Kokkos::abort("ERROR: Array_F::collapse upper-bound overflow");
+        }
+      }
+      return Array_F<typename base_t::value_type *,MemSpace>(
+          this_t::data(),{lower,lower+static_cast<ptrdiff_t>(this_t::size()-1)});
     }
 
 
@@ -307,6 +380,9 @@ namespace yakl {
 
 
     auto createDeviceCopy() const {
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: copying an unallocated Array_F to the device");
+      }
       auto ret = createDeviceObject();
       if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::CreateDeviceCopy deep_copy");
       Kokkos::deep_copy( ret , *this );
@@ -317,6 +393,9 @@ namespace yakl {
 
 
     auto createHostCopy() const {
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: copying an unallocated Array_F to the host");
+      }
       auto ret = createHostObject();
       if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::CreateHostCopy deep_copy");
       Kokkos::deep_copy( ret , *this );
@@ -329,6 +408,9 @@ namespace yakl {
 
     template <class scalar_t> requires std::is_arithmetic_v<scalar_t>
     Array_F<typename ViewType<scalar_t,this_t::rank()>::type,MemSpace> as() const {
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: converting an unallocated Array_F");
+      }
       auto func = [&] <std::size_t... Is> (std::index_sequence<Is...>) {
         return Array_F<typename ViewType<scalar_t,this_t::rank()>::type,MemSpace>( this->label() , this->extent(Is)... );
       };
@@ -400,4 +482,3 @@ namespace yakl {
   };
 
 }
-

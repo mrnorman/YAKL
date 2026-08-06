@@ -5,6 +5,18 @@
 namespace yakl {
   namespace intrinsics {
 
+    template <class V1, class V2>
+    KOKKOS_INLINE_FUNCTION bool same_shape(V1 const & a, V2 const & b) {
+      if constexpr (V1::rank() != V2::rank()) {
+        return false;
+      } else {
+        for (int i=0; i < V1::rank(); i++) {
+          if (a.extent(i) != b.extent(i)) return false;
+        }
+        return true;
+      }
+    }
+
     // ABS
     template <class ViewType> requires yakl::is_SArray<ViewType>
     KOKKOS_INLINE_FUNCTION ViewType abs(ViewType const & in) {
@@ -46,6 +58,9 @@ namespace yakl {
     inline ViewType sign( ViewType const & a , ViewType const & b ) {
       if constexpr (kokkos_debug) if (!a.is_allocated() ||
                                       !b.is_allocated()) Kokkos::abort("ERROR: sign on unallocated Array");
+      if constexpr (kokkos_debug) {
+        if (!same_shape(a,b)) Kokkos::abort("ERROR: sign requires arrays with identical shapes");
+      }
       auto ret = a.clone_object();
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::sign");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -68,6 +83,8 @@ namespace yakl {
       if constexpr (std::is_arithmetic_v<V1> && std::is_arithmetic_v<V2>) {
         return cond ? t : f;
       } else {
+        static_assert(V1::rank == V2::rank,"ERROR: merge requires arrays with identical ranks");
+        static_assert(V1::size() == V2::size(),"ERROR: merge requires arrays with identical sizes");
         V1 ret;
         for (int i=0; i < cond.size(); i++) { ret.data()[i] = cond.data()[i] ? t.data()[i] : f.data()[i]; }
         return ret;
@@ -78,6 +95,11 @@ namespace yakl {
       if constexpr (kokkos_debug) if (!t   .is_allocated() ||
                                       !f   .is_allocated() ||
                                       !cond.is_allocated()) Kokkos::abort("ERROR: merge on unallocated Array");
+      if constexpr (kokkos_debug) {
+        if (!same_shape(t,f) || !same_shape(t,cond)) {
+          Kokkos::abort("ERROR: merge requires arrays with identical shapes");
+        }
+      }
       auto ret = t.clone_object();
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::merge");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -192,6 +214,9 @@ namespace yakl {
         for (int irow = idiag+1; irow < n; irow++) {
           T val = std::abs(scratch(irow,idiag));
           if (val > pivot_val) { pivot_val = val; pivot = irow; }
+        }
+        if constexpr (kokkos_debug) {
+          if (pivot_val == static_cast<T>(0)) Kokkos::abort("ERROR: matinv called with a singular matrix");
         }
         // Swap pivot row into diagonal position
         if (pivot != idiag) {
@@ -413,6 +438,7 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline typename ViewType::non_const_value_type minval(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: minval on unallocated Array");
+      if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: minval on an empty Array");
       using scalar_t = typename ViewType::non_const_value_type;
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::minval");
@@ -440,6 +466,7 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline typename ViewType::non_const_value_type maxval(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: maxval on unallocated Array");
+      if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: maxval on an empty Array");
       using scalar_t = typename ViewType::non_const_value_type;
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::maxval");
@@ -471,6 +498,7 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline auto minloc(ViewType const & in) -> decltype(in.unpack_global_index(0)) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: minloc on unallocated Array");
+      if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: minloc on an empty Array");
       auto const mn = minval(in);
       size_t iglob;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::minloc");
@@ -503,6 +531,7 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline auto maxloc(ViewType const & in) -> decltype(in.unpack_global_index(0)) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: maxloc on unallocated Array");
+      if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: maxloc on an empty Array");
       auto const mx = maxval(in);
       size_t iglob;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::maxloc");
@@ -519,4 +548,3 @@ namespace yakl {
 
   }
 }
-

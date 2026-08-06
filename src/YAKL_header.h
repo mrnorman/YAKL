@@ -4,7 +4,10 @@
 
 
 #include <chrono>
+#include <cerrno>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <unordered_map>
 #include <thread>
 #include <iostream>
@@ -30,4 +33,3 @@
 #ifdef HAVE_MPI
 #include <mpi.h>
 #endif
-

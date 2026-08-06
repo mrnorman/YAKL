@@ -38,13 +38,13 @@ namespace yakl {
         }
         return result;
       }();
-      unsigned int offset = 0;
-      for (int i = 0; i < rank; i++) offset += idx[i] * offsets[i];
       if constexpr (kokkos_bounds_debug) {
         for (int i = 0; i < rank; i++) {
           if (idx[i] >= dims[i]) Kokkos::abort("ERROR: SArray index out of bounds");
         }
       }
+      unsigned int offset = 0;
+      for (int i = 0; i < rank; i++) offset += idx[i] * offsets[i];
       return my_data[offset];
     }
 
@@ -122,4 +122,3 @@ namespace yakl {
   };
 
 }
-

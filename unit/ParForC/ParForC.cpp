@@ -82,7 +82,6 @@ int main() {
         sum(tuned) != yakl::autotune::AutotuneContext::total_tests + 1) {
       die("ERROR: autotuned C-style launch did not complete its state machine");
     }
-    if (yakl::autotune::get_config(-1) != std::make_pair(0,0)) die("ERROR: invalid autotune config lookup is incorrect");
     yakl::autotune::autotune_contexts.erase(tuneKey);
 
     yakl::timer_stop("main");

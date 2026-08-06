@@ -75,7 +75,19 @@ namespace yakl {
     void stop(std::string label) {
       TimePoint now = Clock::now();
       if (label.empty()) Kokkos::abort("ERROR: calling stop() with an empty label");
+      if (active_stack.empty()) Kokkos::abort("ERROR: calling stop() when no timer is active");
+      if constexpr (kokkos_bounds_debug) {
+        if (active_stack.back().timer_index < 0 ||
+            static_cast<size_t>(active_stack.back().timer_index) >= timers.size()) {
+          Kokkos::abort("ERROR: active timer index is out of bounds");
+        }
+      }
       if ( hasher(label) != active_stack.back().label_hash ) Kokkos::abort("ERROR: timers must be perfectly nested");
+      if constexpr (kokkos_debug) {
+        if (timers[active_stack.back().timer_index].label != label) {
+          Kokkos::abort("ERROR: timer-label hash collision detected");
+        }
+      }
       auto &timer = timers[active_stack.back().timer_index];
       Duration duration           = now - timer.previous_time_point;
       timer.max_duration          = std::max( timer.max_duration , duration );
@@ -88,7 +100,12 @@ namespace yakl {
 
     int get_or_create_timer_index( std::string label , size_t label_hash ) {
       for ( int i=0; i < timers.size(); i++) {
-        if ( label_hash == timers[i].label_hash ) return i;
+        if ( label_hash == timers[i].label_hash ) {
+          if constexpr (kokkos_debug) {
+            if (label != timers[i].label) Kokkos::abort("ERROR: timer-label hash collision detected");
+          }
+          return i;
+        }
       }
       timers.push_back( { label , label_hash , 0 , Duration::zero() , Duration::zero() , Duration::zero() ,
                           Duration::max() , TimePoint::min() , std::vector<size_t>() , parent_index_just_created ,
@@ -165,6 +182,12 @@ namespace yakl {
                                    std::vector<bool> & printed  ,
                                    int &level                   ,
                                    std::ostream & os            ) const {
+      if constexpr (kokkos_bounds_debug) {
+        if (timer_index < 0 || static_cast<size_t>(timer_index) >= timers.size() ||
+            printed.size() != timers.size()) {
+          Kokkos::abort("ERROR: invalid timer index or printed-vector size");
+        }
+      }
       auto & timer = timers[timer_index];
       if (! printed[timer_index]) {
         std::string label = timer.label;
@@ -188,4 +211,3 @@ namespace yakl {
   };
 
 }
-

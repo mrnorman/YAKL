@@ -43,6 +43,11 @@ namespace yakl {
                                Bounds<N,Style,simple> const & bounds ,
                                F                      const & f      ,
                                CurrInd<I> = CurrInd<0>{} ) {
+      if constexpr (kokkos_debug) {
+        if (index < 0 || index >= std::tuple_size_v<ConfigListType>) {
+          Kokkos::abort("ERROR: autotune configuration index out of bounds");
+        }
+      }
       if constexpr (I < std::tuple_size_v<ConfigListType>) {
         if (index == I) { yakl::parallel_for( str , bounds , f , std::get<I>(ConfigListType{}) ); }
         else            { launch_config( index , str , bounds , f , CurrInd<I+1>{} ); }
@@ -57,6 +62,12 @@ namespace yakl {
                               F                      const & f      ) {
       auto lab = str+std::string(":")+std::to_string(bounds.nIter)+std::string("_iterations");
       auto time_and_visit = [&] (int index , AutotuneContext & context) {
+        if constexpr (kokkos_debug) {
+          if (index < 0 || index >= std::tuple_size_v<ConfigListType> || context.tests_performed < 0 ||
+              context.tests_performed >= AutotuneContext::total_tests) {
+            Kokkos::abort("ERROR: invalid autotune context or configuration index");
+          }
+        }
         #if   defined(KOKKOS_ENABLE_CUDA)
           cudaEvent_t start, stop;
           if (cudaEventCreate(&start)  != cudaSuccess) Kokkos::abort("ERROR: failed event creation");
@@ -133,6 +144,11 @@ namespace yakl {
 
     template <int I=0>
     inline std::pair<int,int> get_config(int index) {
+      if constexpr (kokkos_debug) {
+        if (index < 0 || index >= std::tuple_size_v<ConfigListType>) {
+          Kokkos::abort("ERROR: autotune configuration index out of bounds");
+        }
+      }
       if constexpr (I < std::tuple_size_v<ConfigListType>) {
         if (index == I) { return std::make_pair(std::tuple_element_t<I,ConfigListType>::Thr,
                                                 std::tuple_element_t<I,ConfigListType>::Str); }
@@ -152,6 +168,13 @@ namespace yakl {
         #endif
         if (myrank == 0) std::cout << "\n*** AUTOTUNE RESULTS ***\n";
         for (auto const & [key,c] : autotune_contexts) {
+          if constexpr (kokkos_debug) {
+            if (c.best_index < 0 || c.best_index >= std::tuple_size_v<ConfigListType> ||
+                !std::isfinite(c.timings[0]) || !std::isfinite(c.timings[c.best_index]) ||
+                c.timings[c.best_index] <= 0) {
+              Kokkos::abort("ERROR: invalid autotune result");
+            }
+          }
           auto config = get_config(c.best_index);
           if (myrank == 0) std::cout << key << " : Config<" << std::get<0>(config) << "," << std::get<1>(config)
                                             << "> , Speedup: " << c.timings[0]/c.timings[c.best_index] << std::endl;
@@ -161,4 +184,3 @@ namespace yakl {
 
   }
 }
-

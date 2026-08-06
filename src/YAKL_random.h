@@ -61,7 +61,8 @@ namespace yakl {
 
     /** @brief Generates a random floating point value between `0` and `1`
       * @param T The type of the floating point number */
-    template <class T> KOKKOS_INLINE_FUNCTION T genFP() {
+    template <class T> requires std::is_floating_point_v<T>
+    KOKKOS_INLINE_FUNCTION T genFP() {
       return static_cast<T>(gen()) / static_cast<T>(std::numeric_limits<u8>::max());
     }
 
@@ -69,11 +70,14 @@ namespace yakl {
       * @param T  The type of the floating point number
       * @param lb Lower bound of the random number
       * @param ub Upper bound of the random number*/
-    template <class T> KOKKOS_INLINE_FUNCTION T genFP(T lb, T ub) {
+    template <class T> requires std::is_floating_point_v<T>
+    KOKKOS_INLINE_FUNCTION T genFP(T lb, T ub) {
+      if constexpr (kokkos_debug) {
+        if (ub < lb) Kokkos::abort("ERROR: Random::genFP upper bound is less than lower bound");
+      }
       return genFP<T>() * (ub-lb) + lb;
     }
 
   };
 
 }
-

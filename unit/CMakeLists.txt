@@ -37,6 +37,7 @@ add_subdirectory(ParForFortran)
 add_subdirectory(performance EXCLUDE_FROM_ALL)
 add_subdirectory(Random)
 add_subdirectory(Reductions)
+add_subdirectory(Validation)
 
 if (YAKL_ENABLE_COVERAGE)
   find_program(YAKL_GCOV_EXECUTABLE gcov)
@@ -60,7 +61,8 @@ if (YAKL_ENABLE_COVERAGE)
                       ParForC_test
                       ParForFortran_test
                       Random_test
-                      Reductions_test)
+                      Reductions_test
+                      Validation_positive)
   if (YAKL_TEST_NETCDF)
     list(APPEND YAKL_UNIT_TESTS NetCDF_test)
   endif()
