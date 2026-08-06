@@ -7,8 +7,9 @@ namespace yakl {
   class YAKL_Internal {
     private:
       YAKL_Internal() {
-        yakl_is_initialized = false;  // Determine if YAKL has been initialized
-        pool_enabled        = false;
+        yakl_is_initialized    = false;  // Determine if YAKL has been initialized
+        pool_enabled           = false;
+        num_device_allocations = 0;
       }
       ~YAKL_Internal() = default;
 
@@ -19,6 +20,7 @@ namespace yakl {
       LinearAllocator pool;                 // Pool allocator. Constructor and destructor do not depend on ordering
       bool            yakl_is_initialized;  // Determine if YAKL has been initialized
       bool            pool_enabled;         // Is the pool allocator being used?
+      size_t          num_device_allocations; // Number of live allocations made through yakl::DeviceSpace
       Toney           timer;
 
       bool use_pool      () const { return pool_enabled; }
@@ -35,4 +37,3 @@ namespace yakl {
   /** @private */
   inline YAKL_Internal & get_yakl_instance() { return YAKL_Internal::get_instance(); }
 }
-

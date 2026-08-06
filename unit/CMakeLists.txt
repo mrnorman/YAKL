@@ -70,7 +70,21 @@ if (YAKL_ENABLE_COVERAGE)
                       ParForFortran_test
                       Random_test
                       Reductions_test
-                      Validation_positive)
+                      Validation_positive
+                      Validation_array_slice
+                      Validation_array_subset
+                      Validation_array_reshape
+                      Validation_component_shape
+                      Validation_loop_extent
+                      Validation_loop_stride
+                      Validation_linear_allocator
+                      Validation_random_range
+                      Validation_timer_stop
+                      Validation_unpack_index
+                      Validation_autotune_index
+                      Validation_allocate_before_init
+                      Validation_free_before_init
+                      Validation_finalize_with_live_allocation)
   if (YAKL_TEST_NETCDF)
     list(APPEND YAKL_UNIT_TESTS NetCDF_test)
   endif()

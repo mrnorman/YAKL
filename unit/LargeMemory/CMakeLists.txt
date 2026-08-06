@@ -1,0 +1,8 @@
+set(MYSRC LargeMemory.cpp)
+add_executable(LargeMemory ${MYSRC})
+target_link_libraries(LargeMemory yakl)
+target_compile_options(LargeMemory PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${YAKL_UNIT_CXX_FLAGS}>)
+if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
+  target_link_libraries(LargeMemory "${YAKL_UNIT_CXX_LINK_FLAGS}")
+endif()
+add_test(NAME LargeMemory_test COMMAND ./LargeMemory)
