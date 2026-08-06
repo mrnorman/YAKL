@@ -5,7 +5,7 @@
 namespace yakl {
 
 
-  inline int constexpr COLON = 0;
+  inline constexpr auto COLON = Kokkos::ALL;
 
 
   template <class Type> inline constexpr bool is_Array = requires { requires Type::is_Array; };
@@ -32,6 +32,47 @@ namespace yakl {
     bool static constexpr is_cstyle = true ;
     bool static constexpr on_device = std::is_same_v<yakl::DeviceSpace,MemSpace>;
 
+    private:
+
+    template <class, class> friend class Array;
+
+    template <class SourceView>
+    void retain_reference_host(SourceView const & source, size_t offset) {
+#if KOKKOS_VERSION >= 40700
+      auto handle = source.accessor().offset(source.data_handle(),offset);
+      base_t::operator=(base_t(handle,this->mapping()));
+#else
+      base_t::operator=(base_t(source.impl_track(),this->impl_map()));
+#endif
+    }
+
+    template <class SourceView>
+    void retain_subview_host(SourceView const & source) {
+      base_t::operator=(source);
+    }
+
+    template <int NewRank, size_t I, size_t Rank>
+    static auto slice_argument_host(std::array<ptrdiff_t,Rank> const & indices) {
+      if constexpr (I < Rank-NewRank) return indices[I];
+      else                            return Kokkos::ALL;
+    }
+
+    template <int NewRank, class Loc, size_t Rank, size_t... Is>
+    void retain_slice_reference_host(Loc & loc, std::array<ptrdiff_t,Rank> const & indices,
+                                     std::index_sequence<Is...>) const {
+      auto subview = Kokkos::subview(static_cast<base_t const &>(*this),
+                                     slice_argument_host<NewRank,Is>(indices)...);
+      loc.retain_subview_host(subview);
+    }
+
+    KOKKOS_INLINE_FUNCTION static ptrdiff_t slice_index(std::integral auto index) {
+      return static_cast<ptrdiff_t>(index);
+    }
+
+    KOKKOS_INLINE_FUNCTION static ptrdiff_t slice_index(Kokkos::ALL_t) { return 0; }
+
+    public:
+
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
     Array const & operator=(TLOC const & v) const {
@@ -57,21 +98,25 @@ namespace yakl {
 
     template <std::integral auto new_rank, class... INTS> requires (new_rank <= this_t::rank()) &&
                                                                    (new_rank >= 0) &&
-                                                                   (std::is_integral_v<INTS> && ...)
+                                                                   ((std::integral<INTS> ||
+                                                                     std::same_as<INTS,Kokkos::ALL_t>) && ...)
     KOKKOS_INLINE_FUNCTION auto slice(INTS... indices) const {
       static_assert(sizeof...(indices)==this_t::rank(),"ERROR: slice calld with wrong number of indices");
       int constexpr rank      = this_t::rank();
       int constexpr nslice    = rank - new_rank;
       int constexpr remaining = new_rank;
       using new_kt = typename ViewType<typename base_t::value_type,remaining>::type;
-      std::array<size_t,rank> slice_arr = { static_cast<size_t>(indices)... };
+      using index_types = std::tuple<INTS...>;
+      static_assert([] <size_t... Is> (std::index_sequence<Is...>) {
+        return (std::integral<std::tuple_element_t<Is,index_types>> && ...);
+      } (std::make_index_sequence<nslice>{}), "ERROR: Array::slice requires an integer for each removed dimension");
+      std::array<ptrdiff_t,rank> slice_arr = { slice_index(indices)... };
       if constexpr (kokkos_debug) {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: slicing an unallocated Array");
       }
       if constexpr (kokkos_bounds_debug) {
-        std::array<ptrdiff_t,rank> signed_indices = { static_cast<ptrdiff_t>(indices)... };
         for (int i=0; i < nslice; i++) {
-          if (signed_indices[i] < 0 || static_cast<size_t>(signed_indices[i]) >= this_t::extent(i)) {
+          if (slice_arr[i] < 0 || static_cast<size_t>(slice_arr[i]) >= this_t::extent(i)) {
             Kokkos::abort("ERROR: Array::slice index out of bounds");
           }
         }
@@ -79,7 +124,9 @@ namespace yakl {
       size_t offset = 0;
       for (int i=0; i < nslice; i++) { offset += slice_arr[i] * this_t::stride(i); }
       return [&] <std::size_t... Ir> ( std::index_sequence<Ir...> ) {
-        return Array<new_kt,MemSpace>( this_t::data()+offset , this_t::extent(nslice + Ir)... );
+        auto loc = Array<new_kt,MemSpace>( this_t::data()+offset , this_t::extent(nslice + Ir)... );
+        KOKKOS_IF_ON_HOST(( retain_slice_reference_host<new_rank>(loc,slice_arr,std::make_index_sequence<rank>{}); ))
+        return loc;
       } ( std::make_index_sequence<remaining>{} );
     }
 
@@ -102,7 +149,9 @@ namespace yakl {
       }
       typename this_t::value_type * offset = this_t::data()+l*this_t::stride(0);
       return [&] <std::size_t... Is> (std::index_sequence<Is...>) {
-        return this_t( offset , u-l+1 , this->extent(1+Is)... );
+        auto loc = this_t( offset , u-l+1 , this->extent(1+Is)... );
+        KOKKOS_IF_ON_HOST(( loc.retain_reference_host(*this,l*this_t::stride(0)); ))
+        return loc;
       } (std::make_index_sequence<this_t::rank()-1>{});
     }
 
@@ -124,7 +173,9 @@ namespace yakl {
       if (new_size != this_t::size()) {
         Kokkos::abort("ERROR: Resizing array with different total size");
       }
-      return Array<new_kt,MemSpace>(this_t::data(),newdims...);
+      auto loc = Array<new_kt,MemSpace>(this_t::data(),newdims...);
+      KOKKOS_IF_ON_HOST(( loc.retain_reference_host(*this,0); ))
+      return loc;
     }
 
 
@@ -132,8 +183,13 @@ namespace yakl {
       if constexpr (kokkos_debug) {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: collapsing an unallocated Array");
       }
-      return Array<typename base_t::value_type *,MemSpace>(this_t::data(),this_t::size());
+      auto loc = Array<typename base_t::value_type *,MemSpace>(this_t::data(),this_t::size());
+      KOKKOS_IF_ON_HOST(( loc.retain_reference_host(*this,0); ))
+      return loc;
     }
+
+
+    KOKKOS_INLINE_FUNCTION auto flatten() const { return this_t::collapse(); }
 
 
     template <class ViewType>

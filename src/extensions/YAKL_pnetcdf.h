@@ -5,6 +5,7 @@
 #include "YAKL.h"
 #include "mpi.h"
 #include <pnetcdf.h>
+#include <limits>
 #include <stdexcept>
 
 namespace yakl {
@@ -18,9 +19,75 @@ namespace yakl {
   }
 
 
+  inline size_t pnetcdf_var_element_count(int ncid, int varid) {
+    int ndims;
+    ncmpiwrap(ncmpi_inq_varndims(ncid,varid,&ndims),__LINE__);
+    std::vector<int> dimids(ndims);
+    if (ndims > 0) ncmpiwrap(ncmpi_inq_vardimid(ncid,varid,dimids.data()),__LINE__);
+    size_t count = 1;
+    for (int i=0; i < ndims; i++) {
+      MPI_Offset extent;
+      ncmpiwrap(ncmpi_inq_dimlen(ncid,dimids[i],&extent),__LINE__);
+      if (extent < 0 || static_cast<unsigned long long>(extent) > std::numeric_limits<size_t>::max()) {
+        Kokkos::abort("ERROR: PNetCDF variable extent does not fit in size_t");
+      }
+      size_t const size = static_cast<size_t>(extent);
+      if (size != 0 && count > std::numeric_limits<size_t>::max()/size) {
+        Kokkos::abort("ERROR: PNetCDF variable element count overflows size_t");
+      }
+      count *= size;
+    }
+    return count;
+  }
+
+
+  inline size_t pnetcdf_hyperslab_element_count(int ncid, int varid, MPI_Offset const count[]) {
+    int ndims;
+    ncmpiwrap(ncmpi_inq_varndims(ncid,varid,&ndims),__LINE__);
+    size_t num_elements = 1;
+    for (int i=0; i < ndims; i++) {
+      if (count[i] < 0 || static_cast<unsigned long long>(count[i]) > std::numeric_limits<size_t>::max()) {
+        Kokkos::abort("ERROR: PNetCDF hyperslab extent does not fit in size_t");
+      }
+      size_t const size = static_cast<size_t>(count[i]);
+      if (size != 0 && num_elements > std::numeric_limits<size_t>::max()/size) {
+        Kokkos::abort("ERROR: PNetCDF hyperslab element count overflows size_t");
+      }
+      num_elements *= size;
+    }
+    return num_elements;
+  }
+
+
+  template <class To, class From>
+  std::vector<To> pnetcdf_convert_buffer(From const *data, size_t count) {
+    std::vector<To> converted(count);
+    for (size_t i=0; i < count; i++) converted[i] = static_cast<To>(data[i]);
+    return converted;
+  }
+
+
+  inline void pnetcdf_copy_unsigned_long(unsigned long *data, std::vector<unsigned long long> const &converted) {
+    for (size_t i=0; i < converted.size(); i++) {
+      if (converted[i] > std::numeric_limits<unsigned long>::max()) {
+        Kokkos::abort("ERROR: PNetCDF value does not fit in unsigned long");
+      }
+      data[i] = static_cast<unsigned long>(converted[i]);
+    }
+  }
+
+
+  inline void pnetcdf_copy_bool(bool *data, std::vector<unsigned char> const &converted) {
+    for (size_t i=0; i < converted.size(); i++) data[i] = converted[i] != 0;
+  }
+
+
   //////////////////////////////////////////////
   // ncmpi_put_var
   //////////////////////////////////////////////
+  inline void pnetcdf_put_var(int ncid , int varid , char const *data) {
+    ncmpiwrap( ncmpi_put_var_text( ncid , varid , data ) , __LINE__ );
+  }
   inline void pnetcdf_put_var(int ncid , int varid , signed char const *data) {
     ncmpiwrap( ncmpi_put_var_schar( ncid , varid , data ) , __LINE__ );
   }
@@ -39,6 +106,13 @@ namespace yakl {
   inline void pnetcdf_put_var(int ncid , int varid , unsigned int const *data) {
     ncmpiwrap( ncmpi_put_var_uint( ncid , varid , data ) , __LINE__ );
   }
+  inline void pnetcdf_put_var(int ncid , int varid , long const *data) {
+    ncmpiwrap( ncmpi_put_var_long( ncid , varid , data ) , __LINE__ );
+  }
+  inline void pnetcdf_put_var(int ncid , int varid , unsigned long const *data) {
+    auto converted = pnetcdf_convert_buffer<unsigned long long>(data,pnetcdf_var_element_count(ncid,varid));
+    ncmpiwrap( ncmpi_put_var_ulonglong( ncid , varid , converted.data() ) , __LINE__ );
+  }
   inline void pnetcdf_put_var(int ncid , int varid , long long const *data) {
     ncmpiwrap( ncmpi_put_var_longlong( ncid , varid , data ) , __LINE__ );
   }
@@ -51,11 +125,18 @@ namespace yakl {
   inline void pnetcdf_put_var(int ncid , int varid , double const *data) {
     ncmpiwrap( ncmpi_put_var_double( ncid , varid , data ) , __LINE__ );
   }
+  inline void pnetcdf_put_var(int ncid , int varid , bool const *data) {
+    auto converted = pnetcdf_convert_buffer<unsigned char>(data,pnetcdf_var_element_count(ncid,varid));
+    ncmpiwrap( ncmpi_put_var_uchar( ncid , varid , converted.data() ) , __LINE__ );
+  }
 
 
   //////////////////////////////////////////////
   // ncmpi_put_var1
   //////////////////////////////////////////////
+  inline void pnetcdf_put_var1(int ncid , int varid , char const *data) {
+    ncmpiwrap( ncmpi_put_var1_text( ncid , varid , 0 , data ) , __LINE__ );
+  }
   inline void pnetcdf_put_var1(int ncid , int varid , signed char const *data) {
     ncmpiwrap( ncmpi_put_var1_schar( ncid , varid , 0 , data ) , __LINE__ );
   }
@@ -74,6 +155,13 @@ namespace yakl {
   inline void pnetcdf_put_var1(int ncid , int varid , unsigned int const *data) {
     ncmpiwrap( ncmpi_put_var1_uint( ncid , varid , 0 , data ) , __LINE__ );
   }
+  inline void pnetcdf_put_var1(int ncid , int varid , long const *data) {
+    ncmpiwrap( ncmpi_put_var1_long( ncid , varid , 0 , data ) , __LINE__ );
+  }
+  inline void pnetcdf_put_var1(int ncid , int varid , unsigned long const *data) {
+    unsigned long long const converted = static_cast<unsigned long long>(*data);
+    ncmpiwrap( ncmpi_put_var1_ulonglong( ncid , varid , 0 , &converted ) , __LINE__ );
+  }
   inline void pnetcdf_put_var1(int ncid , int varid , long long const *data) {
     ncmpiwrap( ncmpi_put_var1_longlong( ncid , varid , 0 , data ) , __LINE__ );
   }
@@ -86,11 +174,19 @@ namespace yakl {
   inline void pnetcdf_put_var1(int ncid , int varid , double const *data) {
     ncmpiwrap( ncmpi_put_var1_double( ncid , varid , 0 , data ) , __LINE__ );
   }
+  inline void pnetcdf_put_var1(int ncid , int varid , bool const *data) {
+    unsigned char const converted = *data ? 1 : 0;
+    ncmpiwrap( ncmpi_put_var1_uchar( ncid , varid , 0 , &converted ) , __LINE__ );
+  }
 
 
   //////////////////////////////////////////////
   // ncmpi_put_vara
   //////////////////////////////////////////////
+  inline void pnetcdf_put_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                               char const *data) {
+    ncmpiwrap( ncmpi_put_vara_text( ncid , varid , start , count , data ) , __LINE__ );
+  }
   inline void pnetcdf_put_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , signed char const *data) {
     ncmpiwrap( ncmpi_put_vara_schar( ncid , varid , start , count , data ) , __LINE__ );
   }
@@ -109,6 +205,15 @@ namespace yakl {
   inline void pnetcdf_put_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , unsigned int const *data) {
     ncmpiwrap( ncmpi_put_vara_uint( ncid , varid , start , count , data ) , __LINE__ );
   }
+  inline void pnetcdf_put_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                               long const *data) {
+    ncmpiwrap( ncmpi_put_vara_long( ncid , varid , start , count , data ) , __LINE__ );
+  }
+  inline void pnetcdf_put_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                               unsigned long const *data) {
+    auto converted = pnetcdf_convert_buffer<unsigned long long>(data,pnetcdf_hyperslab_element_count(ncid,varid,count));
+    ncmpiwrap( ncmpi_put_vara_ulonglong( ncid , varid , start , count , converted.data() ) , __LINE__ );
+  }
   inline void pnetcdf_put_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , long long const *data) {
     ncmpiwrap( ncmpi_put_vara_longlong( ncid , varid , start , count , data ) , __LINE__ );
   }
@@ -121,11 +226,20 @@ namespace yakl {
   inline void pnetcdf_put_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , double const *data) {
     ncmpiwrap( ncmpi_put_vara_double( ncid , varid , start , count , data ) , __LINE__ );
   }
+  inline void pnetcdf_put_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                               bool const *data) {
+    auto converted = pnetcdf_convert_buffer<unsigned char>(data,pnetcdf_hyperslab_element_count(ncid,varid,count));
+    ncmpiwrap( ncmpi_put_vara_uchar( ncid , varid , start , count , converted.data() ) , __LINE__ );
+  }
 
 
   //////////////////////////////////////////////
   // ncmpi_put_vara_all
   //////////////////////////////////////////////
+  inline void pnetcdf_put_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                                   char const *data) {
+    ncmpiwrap( ncmpi_put_vara_text_all( ncid , varid , start , count , data ) , __LINE__ );
+  }
   inline void pnetcdf_put_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , signed char const *data) {
     ncmpiwrap( ncmpi_put_vara_schar_all( ncid , varid , start , count , data ) , __LINE__ );
   }
@@ -144,6 +258,15 @@ namespace yakl {
   inline void pnetcdf_put_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , unsigned int const *data) {
     ncmpiwrap( ncmpi_put_vara_uint_all( ncid , varid , start , count , data ) , __LINE__ );
   }
+  inline void pnetcdf_put_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                                   long const *data) {
+    ncmpiwrap( ncmpi_put_vara_long_all( ncid , varid , start , count , data ) , __LINE__ );
+  }
+  inline void pnetcdf_put_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                                   unsigned long const *data) {
+    auto converted = pnetcdf_convert_buffer<unsigned long long>(data,pnetcdf_hyperslab_element_count(ncid,varid,count));
+    ncmpiwrap( ncmpi_put_vara_ulonglong_all( ncid , varid , start , count , converted.data() ) , __LINE__ );
+  }
   inline void pnetcdf_put_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , long long const *data) {
     ncmpiwrap( ncmpi_put_vara_longlong_all( ncid , varid , start , count , data ) , __LINE__ );
   }
@@ -156,12 +279,20 @@ namespace yakl {
   inline void pnetcdf_put_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , double const *data) {
     ncmpiwrap( ncmpi_put_vara_double_all( ncid , varid , start , count , data ) , __LINE__ );
   }
+  inline void pnetcdf_put_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                                   bool const *data) {
+    auto converted = pnetcdf_convert_buffer<unsigned char>(data,pnetcdf_hyperslab_element_count(ncid,varid,count));
+    ncmpiwrap( ncmpi_put_vara_uchar_all( ncid , varid , start , count , converted.data() ) , __LINE__ );
+  }
 
 
 
   //////////////////////////////////////////////
   // ncmpi_get_var
   //////////////////////////////////////////////
+  inline void pnetcdf_get_var(int ncid , int varid , char *data) {
+    ncmpiwrap( ncmpi_get_var_text( ncid , varid , data ) , __LINE__ );
+  }
   inline void pnetcdf_get_var(int ncid , int varid , signed char *data) {
     ncmpiwrap( ncmpi_get_var_schar( ncid , varid , data ) , __LINE__ );
   }
@@ -180,6 +311,14 @@ namespace yakl {
   inline void pnetcdf_get_var(int ncid , int varid , unsigned int *data) {
     ncmpiwrap( ncmpi_get_var_uint( ncid , varid , data ) , __LINE__ );
   }
+  inline void pnetcdf_get_var(int ncid , int varid , long *data) {
+    ncmpiwrap( ncmpi_get_var_long( ncid , varid , data ) , __LINE__ );
+  }
+  inline void pnetcdf_get_var(int ncid , int varid , unsigned long *data) {
+    std::vector<unsigned long long> converted(pnetcdf_var_element_count(ncid,varid));
+    ncmpiwrap( ncmpi_get_var_ulonglong( ncid , varid , converted.data() ) , __LINE__ );
+    pnetcdf_copy_unsigned_long(data,converted);
+  }
   inline void pnetcdf_get_var(int ncid , int varid , long long *data) {
     ncmpiwrap( ncmpi_get_var_longlong( ncid , varid , data ) , __LINE__ );
   }
@@ -192,11 +331,19 @@ namespace yakl {
   inline void pnetcdf_get_var(int ncid , int varid , double *data) {
     ncmpiwrap( ncmpi_get_var_double( ncid , varid , data ) , __LINE__ );
   }
+  inline void pnetcdf_get_var(int ncid , int varid , bool *data) {
+    std::vector<unsigned char> converted(pnetcdf_var_element_count(ncid,varid));
+    ncmpiwrap( ncmpi_get_var_uchar( ncid , varid , converted.data() ) , __LINE__ );
+    pnetcdf_copy_bool(data,converted);
+  }
 
 
   //////////////////////////////////////////////
   // ncmpi_get_var1
   //////////////////////////////////////////////
+  inline void pnetcdf_get_var1(int ncid , int varid , char *data) {
+    ncmpiwrap( ncmpi_get_var1_text( ncid , varid , 0 , data ) , __LINE__ );
+  }
   inline void pnetcdf_get_var1(int ncid , int varid , signed char *data) {
     ncmpiwrap( ncmpi_get_var1_schar( ncid , varid , 0 , data ) , __LINE__ );
   }
@@ -215,6 +362,17 @@ namespace yakl {
   inline void pnetcdf_get_var1(int ncid , int varid , unsigned int *data) {
     ncmpiwrap( ncmpi_get_var1_uint( ncid , varid , 0 , data ) , __LINE__ );
   }
+  inline void pnetcdf_get_var1(int ncid , int varid , long *data) {
+    ncmpiwrap( ncmpi_get_var1_long( ncid , varid , 0 , data ) , __LINE__ );
+  }
+  inline void pnetcdf_get_var1(int ncid , int varid , unsigned long *data) {
+    unsigned long long converted;
+    ncmpiwrap( ncmpi_get_var1_ulonglong( ncid , varid , 0 , &converted ) , __LINE__ );
+    if (converted > std::numeric_limits<unsigned long>::max()) {
+      Kokkos::abort("ERROR: PNetCDF value does not fit in unsigned long");
+    }
+    *data = static_cast<unsigned long>(converted);
+  }
   inline void pnetcdf_get_var1(int ncid , int varid , long long *data) {
     ncmpiwrap( ncmpi_get_var1_longlong( ncid , varid , 0 , data ) , __LINE__ );
   }
@@ -227,11 +385,20 @@ namespace yakl {
   inline void pnetcdf_get_var1(int ncid , int varid , double *data) {
     ncmpiwrap( ncmpi_get_var1_double( ncid , varid , 0 , data ) , __LINE__ );
   }
+  inline void pnetcdf_get_var1(int ncid , int varid , bool *data) {
+    unsigned char converted;
+    ncmpiwrap( ncmpi_get_var1_uchar( ncid , varid , 0 , &converted ) , __LINE__ );
+    *data = converted != 0;
+  }
 
 
   //////////////////////////////////////////////
   // ncmpi_get_vara
   //////////////////////////////////////////////
+  inline void pnetcdf_get_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                               char *data) {
+    ncmpiwrap( ncmpi_get_vara_text( ncid , varid , start , count , data ) , __LINE__ );
+  }
   inline void pnetcdf_get_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , signed char *data) {
     ncmpiwrap( ncmpi_get_vara_schar( ncid , varid , start , count , data ) , __LINE__ );
   }
@@ -250,6 +417,16 @@ namespace yakl {
   inline void pnetcdf_get_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , unsigned int *data) {
     ncmpiwrap( ncmpi_get_vara_uint( ncid , varid , start , count , data ) , __LINE__ );
   }
+  inline void pnetcdf_get_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                               long *data) {
+    ncmpiwrap( ncmpi_get_vara_long( ncid , varid , start , count , data ) , __LINE__ );
+  }
+  inline void pnetcdf_get_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                               unsigned long *data) {
+    std::vector<unsigned long long> converted(pnetcdf_hyperslab_element_count(ncid,varid,count));
+    ncmpiwrap( ncmpi_get_vara_ulonglong( ncid , varid , start , count , converted.data() ) , __LINE__ );
+    pnetcdf_copy_unsigned_long(data,converted);
+  }
   inline void pnetcdf_get_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , long long *data) {
     ncmpiwrap( ncmpi_get_vara_longlong( ncid , varid , start , count , data ) , __LINE__ );
   }
@@ -262,11 +439,21 @@ namespace yakl {
   inline void pnetcdf_get_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , double *data) {
     ncmpiwrap( ncmpi_get_vara_double( ncid , varid , start , count , data ) , __LINE__ );
   }
+  inline void pnetcdf_get_vara(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                               bool *data) {
+    std::vector<unsigned char> converted(pnetcdf_hyperslab_element_count(ncid,varid,count));
+    ncmpiwrap( ncmpi_get_vara_uchar( ncid , varid , start , count , converted.data() ) , __LINE__ );
+    pnetcdf_copy_bool(data,converted);
+  }
 
 
   //////////////////////////////////////////////
   // ncmpi_get_vara_all
   //////////////////////////////////////////////
+  inline void pnetcdf_get_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                                   char *data) {
+    ncmpiwrap( ncmpi_get_vara_text_all( ncid , varid , start , count , data ) , __LINE__ );
+  }
   inline void pnetcdf_get_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , signed char *data) {
     ncmpiwrap( ncmpi_get_vara_schar_all( ncid , varid , start , count , data ) , __LINE__ );
   }
@@ -285,6 +472,16 @@ namespace yakl {
   inline void pnetcdf_get_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , unsigned int *data) {
     ncmpiwrap( ncmpi_get_vara_uint_all( ncid , varid , start , count , data ) , __LINE__ );
   }
+  inline void pnetcdf_get_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                                   long *data) {
+    ncmpiwrap( ncmpi_get_vara_long_all( ncid , varid , start , count , data ) , __LINE__ );
+  }
+  inline void pnetcdf_get_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                                   unsigned long *data) {
+    std::vector<unsigned long long> converted(pnetcdf_hyperslab_element_count(ncid,varid,count));
+    ncmpiwrap( ncmpi_get_vara_ulonglong_all( ncid , varid , start , count , converted.data() ) , __LINE__ );
+    pnetcdf_copy_unsigned_long(data,converted);
+  }
   inline void pnetcdf_get_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , long long *data) {
     ncmpiwrap( ncmpi_get_vara_longlong_all( ncid , varid , start , count , data ) , __LINE__ );
   }
@@ -296,6 +493,12 @@ namespace yakl {
   }
   inline void pnetcdf_get_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] , double *data) {
     ncmpiwrap( ncmpi_get_vara_double_all( ncid , varid , start , count , data ) , __LINE__ );
+  }
+  inline void pnetcdf_get_vara_all(int ncid , int varid , MPI_Offset const start[] , MPI_Offset const count[] ,
+                                   bool *data) {
+    std::vector<unsigned char> converted(pnetcdf_hyperslab_element_count(ncid,varid,count));
+    ncmpiwrap( ncmpi_get_vara_uchar_all( ncid , varid , start , count , converted.data() ) , __LINE__ );
+    pnetcdf_copy_bool(data,converted);
   }
 
 
@@ -633,6 +836,7 @@ namespace yakl {
     ***************************************************************************************************/
     template <class T> nc_type getType() const {
            if ( std::is_same_v<typename std::remove_cv_t<T> ,          char> ) { return NC_CHAR;   }
+      else if ( std::is_same_v<typename std::remove_cv_t<T> ,signed    char> ) { return NC_BYTE;   }
       else if ( std::is_same_v<typename std::remove_cv_t<T> ,unsigned  char> ) { return NC_UBYTE;  }
       else if ( std::is_same_v<typename std::remove_cv_t<T> ,         short> ) { return NC_SHORT;  }
       else if ( std::is_same_v<typename std::remove_cv_t<T> ,unsigned short> ) { return NC_USHORT; }
@@ -640,8 +844,11 @@ namespace yakl {
       else if ( std::is_same_v<typename std::remove_cv_t<T> ,unsigned   int> ) { return NC_UINT;   }
       else if ( std::is_same_v<typename std::remove_cv_t<T> ,          long> ) { return NC_INT64;  }
       else if ( std::is_same_v<typename std::remove_cv_t<T> ,unsigned  long> ) { return NC_UINT64; }
+      else if ( std::is_same_v<typename std::remove_cv_t<T> ,     long long> ) { return NC_INT64;  }
+      else if ( std::is_same_v<typename std::remove_cv_t<T> ,unsigned long long> ) { return NC_UINT64; }
       else if ( std::is_same_v<typename std::remove_cv_t<T> ,         float> ) { return NC_FLOAT;  }
       else if ( std::is_same_v<typename std::remove_cv_t<T> ,        double> ) { return NC_DOUBLE; }
+      else if ( std::is_same_v<typename std::remove_cv_t<T> ,          bool> ) { return NC_UBYTE;  }
       else { Kokkos::abort("Invalid type"); }
       return -1;
     }
