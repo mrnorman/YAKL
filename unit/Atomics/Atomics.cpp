@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <utility>
 #include "YAKL.h"
 
 using yakl::Array;
@@ -131,10 +132,35 @@ int main() {
       if ( abs(min + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
       if ( abs(max - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
     }
+
+    // Exercise ScalarLiveOut independently of atomics, including its shared
+    // copy semantics and device-side arithmetic assignment/get accessors.
+    {
+      yakl::ScalarLiveOut<int> live;
+      live.hostWrite(7);
+      if (live.hostRead() != 7) { die("ERROR: ScalarLiveOut default construction or hostWrite failed"); }
+
+      yakl::ScalarLiveOut<int> copied(live);
+      copied.hostWrite(-3);
+      if (live.hostRead() != -3) { die("ERROR: ScalarLiveOut copy constructor did not share storage"); }
+
+      yakl::ScalarLiveOut<int> copyAssigned(0);
+      copyAssigned = copied;
+      copyAssigned.hostWrite(11);
+      if (live.hostRead() != 11) { die("ERROR: ScalarLiveOut copy assignment did not share storage"); }
+
+      yakl::ScalarLiveOut<int> moved(std::move(copyAssigned));
+      yakl::ScalarLiveOut<int> moveAssigned(0);
+      moveAssigned = std::move(moved);
+      parallel_for( "ScalarLiveOut accessors" , 1 , KOKKOS_LAMBDA (int) {
+        moveAssigned = moveAssigned.get() + 5;
+      });
+      if (moveAssigned.hostRead() != 16) { die("ERROR: ScalarLiveOut move or device accessors failed"); }
+    }
+
     yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 
   return 0;
 }
-

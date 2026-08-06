@@ -194,7 +194,12 @@ namespace yakl {
 
     KOKKOS_INLINE_FUNCTION auto unpack_global_index(size_t iglob) const {
       SArray<size_t,this_t::rank()> ret;
-      for (int i=0; i < this_t::rank(); i++) { ret(i) = iglob / this_t::stride(i); }
+      if constexpr (kokkos_bounds_debug) {
+        if (iglob >= this_t::size()) Kokkos::abort("ERROR: Array::unpack_global_index index out of bounds");
+      }
+      for (int i=0; i < this_t::rank(); i++) {
+        ret(i) = (iglob / this_t::stride(i)) % this_t::extent(i);
+      }
       return ret;
     }
 
@@ -204,5 +209,4 @@ namespace yakl {
   };
 
 }
-
 

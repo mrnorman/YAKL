@@ -43,6 +43,30 @@ int main() {
     if ( abs(sum) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
     if ( abs(min + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
     if ( abs(max - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
+
+    // Singleton inputs catch incorrect reducer initialization, while an
+    // asymmetric all-negative input catches zero-initialized max reductions.
+    real1d singleton("singleton",1);
+    parallel_for( "Initialize singleton" , 1 , KOKKOS_LAMBDA (int) {
+      singleton(0) = -17.25;
+    });
+    if (yakl::intrinsics::sum(singleton) != -17.25) { die("ERROR: Wrong singleton device sum"); }
+    if (yakl::intrinsics::minval(singleton) != -17.25) { die("ERROR: Wrong singleton device min"); }
+    if (yakl::intrinsics::maxval(singleton) != -17.25) { die("ERROR: Wrong singleton device max"); }
+
+    int constexpr nneg = 7;
+    real1d negative("negative",nneg);
+    parallel_for( "Initialize negative data" , nneg , KOKKOS_LAMBDA (int i) {
+      negative(i) = -2*i - 1;
+    });
+    if (yakl::intrinsics::sum(negative) != -49) { die("ERROR: Wrong all-negative device sum"); }
+    if (yakl::intrinsics::minval(negative) != -13) { die("ERROR: Wrong all-negative device min"); }
+    if (yakl::intrinsics::maxval(negative) != -1) { die("ERROR: Wrong all-negative device max"); }
+
+    auto negativeHost = negative.createHostCopy();
+    if (yakl::intrinsics::sum(negativeHost) != -49) { die("ERROR: Wrong all-negative host sum"); }
+    if (yakl::intrinsics::minval(negativeHost) != -13) { die("ERROR: Wrong all-negative host min"); }
+    if (yakl::intrinsics::maxval(negativeHost) != -1) { die("ERROR: Wrong all-negative host max"); }
     yakl::timer_stop("main");
   }
   yakl::finalize();
@@ -50,4 +74,3 @@ int main() {
   
   return 0;
 }
-

@@ -19,6 +19,18 @@ add_library(yakl STATIC ${YAKL_SOURCE})
 target_link_libraries(yakl PUBLIC Kokkos::kokkos)
 target_include_directories(yakl PUBLIC src external src/extensions ${CMAKE_CURRENT_BINARY_DIR})
 
+option(YAKL_ENABLE_COVERAGE "Instrument YAKL and its consumers for gcov coverage" OFF)
+if (YAKL_ENABLE_COVERAGE)
+  if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR NOT CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+    message(FATAL_ERROR "YAKL_ENABLE_COVERAGE requires GNU C++ and Fortran compilers")
+  endif()
+
+  # Most YAKL implementation code is header-only, so these options must propagate to consumers.
+  target_compile_options(yakl PUBLIC $<$<COMPILE_LANGUAGE:CXX>:--coverage>
+                                     $<$<COMPILE_LANGUAGE:Fortran>:--coverage>)
+  target_link_libraries(yakl PUBLIC --coverage)
+endif()
+
 # Special treatment for MPI
 if (YAKL_HAVE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
@@ -27,4 +39,3 @@ if (YAKL_HAVE_MPI)
     target_link_libraries(${YAKL_FORTRAN_INTERFACE_TARGET} MPI::MPI_C)
   endif()
 endif()
-

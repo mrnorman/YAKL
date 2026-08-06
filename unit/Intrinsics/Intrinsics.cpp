@@ -287,6 +287,169 @@ int main() {
       if ( r10.hostRead()(1) != 1   ) die("ERROR: maxloc(fsarr_a1) != 1");
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    // Exhaustive multidimensional unpack_global_index, minloc, and maxloc
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    {
+      int constexpr d1 = 2;
+      int constexpr d2 = 3;
+      int constexpr d3 = 4;
+      int constexpr numElements = d1*d2*d3;
+      using CStack = SArray<int,d1,d2,d3>;
+      using FStack = SArray_F<int,Bnds{-2,-1},Bnds{3,5},Bnds{7,10}>;
+
+      Array<int ***,Kokkos::HostSpace> cHost("cHost",d1,d2,d3);
+      Array_F<int ***,Kokkos::HostSpace> fHost("fHost",{-2,-1},{3,5},{7,10});
+      CStack cStack;
+      FStack fStack;
+      for (int iglob=0; iglob < numElements; iglob++) {
+        cHost.data()[iglob] = 100 + iglob;
+        fHost.data()[iglob] = 200 + iglob;
+        cStack.data()[iglob] = 300 + iglob;
+        fStack.data()[iglob] = 400 + iglob;
+      }
+
+      // Check every linear index, not only corners. The indexed value verifies
+      // that returned coordinates address the same physical element.
+      for (int iglob=0; iglob < numElements; iglob++) {
+        int const ci =  iglob / (d2*d3);
+        int const cj = (iglob / d3) % d2;
+        int const ck =  iglob             % d3;
+        auto const cHostLoc = cHost.unpack_global_index(iglob);
+        auto const cStackLoc = cStack.unpack_global_index(iglob);
+        if (cHostLoc(0) != ci || cHostLoc(1) != cj || cHostLoc(2) != ck ||
+            cHost(cHostLoc(0),cHostLoc(1),cHostLoc(2)) != cHost.data()[iglob]) {
+          die("ERROR: Array::unpack_global_index returned incorrect C-style coordinates");
+        }
+        if (cStackLoc(0) != ci || cStackLoc(1) != cj || cStackLoc(2) != ck ||
+            cStack(cStackLoc(0),cStackLoc(1),cStackLoc(2)) != cStack.data()[iglob]) {
+          die("ERROR: SArray::unpack_global_index returned incorrect C-style coordinates");
+        }
+
+        int const fi = -2 +  iglob             % d1;
+        int const fj =  3 + (iglob / d1)       % d2;
+        int const fk =  7 + (iglob / (d1*d2))  % d3;
+        auto const fHostLoc = fHost.unpack_global_index(iglob);
+        auto const fStackLoc = fStack.unpack_global_index(iglob);
+        if (fHostLoc(1) != fi || fHostLoc(2) != fj || fHostLoc(3) != fk ||
+            fHost(fHostLoc(1),fHostLoc(2),fHostLoc(3)) != fHost.data()[iglob]) {
+          die("ERROR: Array_F::unpack_global_index returned incorrect Fortran-style coordinates");
+        }
+        if (fStackLoc(1) != fi || fStackLoc(2) != fj || fStackLoc(3) != fk ||
+            fStack(fStackLoc(1),fStackLoc(2),fStackLoc(3)) != fStack.data()[iglob]) {
+          die("ERROR: SArray_F::unpack_global_index returned incorrect Fortran-style coordinates");
+        }
+      }
+
+      // Place unique extrema where every coordinate matters and none of the
+      // locations is the first or last linear element.
+      cHost(1,0,3) = -1000;
+      cHost(0,2,1) =  1000;
+      cStack(1,0,3) = -1000;
+      cStack(0,2,1) =  1000;
+      fHost (-1,3,10) = -2000;
+      fHost (-2,5, 8) =  2000;
+      fStack(-1,3,10) = -2000;
+      fStack(-2,5, 8) =  2000;
+
+      auto cDevice = cHost.createDeviceCopy();
+      auto fDevice = fHost.createDeviceCopy();
+
+      // Compile and execute all four decoders on the device as well. Dynamic
+      // arrays use one thread per element; stack arrays are checked in one thread.
+      yakl::ScalarLiveOut<int> deviceErrors(0);
+      yakl::parallel_for( "unpack_global_index dynamic arrays" , numElements , KOKKOS_LAMBDA (size_t iglob) {
+        size_t const ci =  iglob / (d2*d3);
+        size_t const cj = (iglob / d3) % d2;
+        size_t const ck =  iglob             % d3;
+        auto const cLoc = cDevice.unpack_global_index(iglob);
+        if (cLoc(0) != ci || cLoc(1) != cj || cLoc(2) != ck ||
+            cDevice(cLoc(0),cLoc(1),cLoc(2)) != cDevice.data()[iglob]) {
+          Kokkos::atomic_add(&deviceErrors(),1);
+        }
+
+        ptrdiff_t const fi = -2 + static_cast<ptrdiff_t>( iglob             % d1);
+        ptrdiff_t const fj =  3 + static_cast<ptrdiff_t>((iglob / d1)      % d2);
+        ptrdiff_t const fk =  7 + static_cast<ptrdiff_t>((iglob / (d1*d2)) % d3);
+        auto const fLoc = fDevice.unpack_global_index(iglob);
+        if (fLoc(1) != fi || fLoc(2) != fj || fLoc(3) != fk ||
+            fDevice(fLoc(1),fLoc(2),fLoc(3)) != fDevice.data()[iglob]) {
+          Kokkos::atomic_add(&deviceErrors(),1);
+        }
+      });
+      yakl::parallel_for( "unpack_global_index stack arrays" , 1 , KOKKOS_LAMBDA (int) {
+        for (int iglob=0; iglob < numElements; iglob++) {
+          int const ci =  iglob / (d2*d3);
+          int const cj = (iglob / d3) % d2;
+          int const ck =  iglob             % d3;
+          auto const cLoc = cStack.unpack_global_index(iglob);
+          if (cLoc(0) != ci || cLoc(1) != cj || cLoc(2) != ck ||
+              cStack(cLoc(0),cLoc(1),cLoc(2)) != cStack.data()[iglob]) {
+            Kokkos::atomic_add(&deviceErrors(),1);
+          }
+
+          int const fi = -2 +  iglob             % d1;
+          int const fj =  3 + (iglob / d1)       % d2;
+          int const fk =  7 + (iglob / (d1*d2))  % d3;
+          auto const fLoc = fStack.unpack_global_index(iglob);
+          if (fLoc(1) != fi || fLoc(2) != fj || fLoc(3) != fk ||
+              fStack(fLoc(1),fLoc(2),fLoc(3)) != fStack.data()[iglob]) {
+            Kokkos::atomic_add(&deviceErrors(),1);
+          }
+        }
+
+        auto const cMin = yakl::intrinsics::minloc(cStack);
+        auto const cMax = yakl::intrinsics::maxloc(cStack);
+        auto const fMin = yakl::intrinsics::minloc(fStack);
+        auto const fMax = yakl::intrinsics::maxloc(fStack);
+        if (cMin(0) != 1 || cMin(1) != 0 || cMin(2) != 3 ||
+            cMax(0) != 0 || cMax(1) != 2 || cMax(2) != 1 ||
+            fMin(1) != -1 || fMin(2) != 3 || fMin(3) != 10 ||
+            fMax(1) != -2 || fMax(2) != 5 || fMax(3) != 8) {
+          Kokkos::atomic_add(&deviceErrors(),1);
+        }
+      });
+      if (deviceErrors.hostRead() != 0) {
+        die("ERROR: unpack_global_index, minloc, or maxloc failed on the device");
+      }
+
+      using yakl::intrinsics::minloc;
+      using yakl::intrinsics::maxloc;
+      auto const cHostMin = minloc(cHost);
+      auto const cHostMax = maxloc(cHost);
+      auto const cDeviceMin = minloc(cDevice);
+      auto const cDeviceMax = maxloc(cDevice);
+      auto const cStackMin = minloc(cStack);
+      auto const cStackMax = maxloc(cStack);
+      if (cHostMin(0) != 1 || cHostMin(1) != 0 || cHostMin(2) != 3 ||
+          cDeviceMin(0) != 1 || cDeviceMin(1) != 0 || cDeviceMin(2) != 3 ||
+          cStackMin(0) != 1 || cStackMin(1) != 0 || cStackMin(2) != 3) {
+        die("ERROR: multidimensional C-style minloc returned an incorrect location");
+      }
+      if (cHostMax(0) != 0 || cHostMax(1) != 2 || cHostMax(2) != 1 ||
+          cDeviceMax(0) != 0 || cDeviceMax(1) != 2 || cDeviceMax(2) != 1 ||
+          cStackMax(0) != 0 || cStackMax(1) != 2 || cStackMax(2) != 1) {
+        die("ERROR: multidimensional C-style maxloc returned an incorrect location");
+      }
+
+      auto const fHostMin = minloc(fHost);
+      auto const fHostMax = maxloc(fHost);
+      auto const fDeviceMin = minloc(fDevice);
+      auto const fDeviceMax = maxloc(fDevice);
+      auto const fStackMin = minloc(fStack);
+      auto const fStackMax = maxloc(fStack);
+      if (fHostMin(1) != -1 || fHostMin(2) != 3 || fHostMin(3) != 10 ||
+          fDeviceMin(1) != -1 || fDeviceMin(2) != 3 || fDeviceMin(3) != 10 ||
+          fStackMin(1) != -1 || fStackMin(2) != 3 || fStackMin(3) != 10) {
+        die("ERROR: multidimensional Fortran-style minloc returned an incorrect location");
+      }
+      if (fHostMax(1) != -2 || fHostMax(2) != 5 || fHostMax(3) != 8 ||
+          fDeviceMax(1) != -2 || fDeviceMax(2) != 5 || fDeviceMax(3) != 8 ||
+          fStackMax(1) != -2 || fStackMax(2) != 5 || fStackMax(3) != 8) {
+        die("ERROR: multidimensional Fortran-style maxloc returned an incorrect location");
+      }
+    }
+
     ///////////////////////////////////////
     // allocated, associated
     ///////////////////////////////////////
@@ -766,4 +929,3 @@ int main() {
   
   return 0;
 }
-

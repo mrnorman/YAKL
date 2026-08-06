@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <utility>
 #include "YAKL.h"
 
 using yakl::Array;
@@ -24,6 +25,52 @@ int main() {
   yakl::init();
   {
     yakl::timer_start("main");
+
+    // Reproducibility, reseeding, and value bounds are more useful failures than
+    // the statistical test below when the PRNG implementation changes.
+    {
+      yakl::Random default1;
+      yakl::Random default2;
+      for (int i=0; i < 32; i++) {
+        if (default1.gen() != default2.gen()) { die("ERROR: default Random seed is not reproducible"); }
+      }
+
+      unsigned long long constexpr seed = 8675309;
+      yakl::Random original(seed);
+      yakl::Random copied(original);
+      for (int i=0; i < 32; i++) {
+        if (original.gen() != copied.gen()) { die("ERROR: Random copy constructor did not preserve state"); }
+      }
+
+      yakl::Random copyAssigned(1);
+      copyAssigned = original;
+      if (copyAssigned.gen() != original.gen()) { die("ERROR: Random copy assignment did not preserve state"); }
+
+      yakl::Random moveSource(seed);
+      yakl::Random moveExpected(seed);
+      yakl::Random moved(std::move(moveSource));
+      if (moved.gen() != moveExpected.gen()) { die("ERROR: Random move constructor did not preserve state"); }
+
+      yakl::Random moveAssignSource(seed + 1);
+      yakl::Random moveAssignExpected(seed + 1);
+      yakl::Random moveAssigned(2);
+      moveAssigned = std::move(moveAssignSource);
+      if (moveAssigned.gen() != moveAssignExpected.gen()) { die("ERROR: Random move assignment did not preserve state"); }
+
+      yakl::Random reseeded(3);
+      reseeded.set_seed(seed);
+      yakl::Random seeded(seed);
+      if (reseeded.gen() != seeded.gen()) { die("ERROR: Random reseeding did not reset the sequence"); }
+
+      for (int i=0; i < 1024; i++) {
+        double unit = seeded.genFP<double>();
+        float ranged = seeded.genFP<float>(-2.5f,3.5f);
+        if (unit < 0 || unit > 1) { die("ERROR: Random unit value is outside [0,1]"); }
+        if (ranged < -2.5f || ranged > 3.5f) { die("ERROR: Random ranged value is outside its bounds"); }
+      }
+      if (seeded.genFP<double>(4.25,4.25) != 4.25) { die("ERROR: Random equal-bound range did not return its bound"); }
+    }
+
     int constexpr n = 1024*1024;
     real1d arr("arr",n);
     auto clk = std::clock();

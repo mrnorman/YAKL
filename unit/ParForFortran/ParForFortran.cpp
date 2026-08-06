@@ -46,6 +46,21 @@ int main() {
     if ( abs(sum(arr3d) - (double) n1*n2*n3) / (double) (n1*n2*n3) > 1.e-13) die("ERROR: Wrong sum for arr3d");
 
     arr3d = 0.;
+
+    Array_F<int *,yakl::DeviceSpace> sentinel("sentinel",1);
+    sentinel = 42;
+    parallel_for_F( "zero work" , SimpleBounds_F<2>(0,7) , KOKKOS_LAMBDA (int, int) {
+      sentinel(1) = -1;
+    });
+    if (sum(sentinel) != 42) die("ERROR: zero-work Fortran-style launch executed its kernel");
+
+    int constexpr nstrip = 17;
+    Array_F<int *,yakl::DeviceSpace> stripped("stripped",nstrip);
+    stripped = 0;
+    parallel_for_F( "strip tail" , nstrip , KOKKOS_LAMBDA (int i) {
+      stripped(i) = i;
+    }, yakl::Config<128,4>{});
+    if (sum(stripped) != nstrip*(nstrip+1)/2) die("ERROR: Fortran-style strip-mined launch missed its tail");
     yakl::timer_stop("main");
   }
   yakl::finalize();
@@ -53,4 +68,3 @@ int main() {
   
   return 0;
 }
-

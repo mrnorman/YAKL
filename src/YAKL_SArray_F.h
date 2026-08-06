@@ -101,7 +101,6 @@ namespace yakl {
 
     KOKKOS_INLINE_FUNCTION auto unpack_global_index(std::integral auto iglob) const {
       int          constexpr lb  [rank]   = {static_cast<int>(DIMS.l)...};
-      int          constexpr ub  [rank]   = {static_cast<int>(DIMS.u)...};
       unsigned int constexpr dims[rank]   = {(static_cast<unsigned int>(static_cast<int>(DIMS.u)-static_cast<int>(DIMS.l)+1))...};
       std::array<unsigned int,rank> constexpr offsets = [=] {
         std::array<unsigned int,rank> result = {};
@@ -112,7 +111,14 @@ namespace yakl {
         return result;
       }();
       SArray_F<int,Bnds{1,rank}> ret;
-      for (int i=1; i <= rank; i++) { ret(i) = iglob / offsets[i-1] + lb[i-1]; }
+      if constexpr (kokkos_bounds_debug) {
+        if ((std::is_signed_v<decltype(iglob)> && iglob < 0) || static_cast<size_t>(iglob) >= size()) {
+          Kokkos::abort("ERROR: SArray_F::unpack_global_index index out of bounds");
+        }
+      }
+      for (int i=1; i <= rank; i++) {
+        ret(i) = static_cast<int>((static_cast<size_t>(iglob) / offsets[i-1]) % dims[i-1]) + lb[i-1];
+      }
       return ret;
     }
 
@@ -120,5 +126,4 @@ namespace yakl {
   };
 
 }
-
 

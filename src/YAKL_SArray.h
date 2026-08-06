@@ -107,7 +107,14 @@ namespace yakl {
         return result;
       }();
       SArray<unsigned int,rank> ret;
-      for (int i=0; i < rank; i++) { ret(i) = iglob / offsets[i]; }
+      if constexpr (kokkos_bounds_debug) {
+        if ((std::is_signed_v<decltype(iglob)> && iglob < 0) || static_cast<size_t>(iglob) >= size()) {
+          Kokkos::abort("ERROR: SArray::unpack_global_index index out of bounds");
+        }
+      }
+      for (int i=0; i < rank; i++) {
+        ret(i) = (static_cast<size_t>(iglob) / offsets[i]) % dims[i];
+      }
       return ret;
     }
 
@@ -115,5 +122,4 @@ namespace yakl {
   };
 
 }
-
 

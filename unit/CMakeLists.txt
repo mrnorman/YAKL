@@ -38,3 +38,41 @@ add_subdirectory(performance EXCLUDE_FROM_ALL)
 add_subdirectory(Random)
 add_subdirectory(Reductions)
 
+if (YAKL_ENABLE_COVERAGE)
+  find_program(YAKL_GCOV_EXECUTABLE gcov)
+  find_program(YAKL_GCOVR_EXECUTABLE gcovr)
+  if (NOT YAKL_GCOV_EXECUTABLE)
+    message(FATAL_ERROR "YAKL_ENABLE_COVERAGE requires gcov")
+  endif()
+  if (NOT YAKL_GCOVR_EXECUTABLE)
+    message(FATAL_ERROR "YAKL_ENABLE_COVERAGE requires gcovr")
+  endif()
+
+  set(YAKL_UNIT_TESTS Atomics_test
+                      CArray_test
+                      FArray_test
+                      Fortran_Gator_test
+                      Fortran_Link_test
+                      Intrinsics_test
+                      Kokkos_DeviceSpace_test
+                      Lambda_test
+                      OpenMP_Regions_test
+                      ParForC_test
+                      ParForFortran_test
+                      Random_test
+                      Reductions_test)
+  if (YAKL_TEST_NETCDF)
+    list(APPEND YAKL_UNIT_TESTS NetCDF_test)
+  endif()
+  if (YAKL_TEST_PNETCDF)
+    list(APPEND YAKL_UNIT_TESTS PNetCDF_test)
+  endif()
+
+  add_test(NAME zz_coverage_summary
+           COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/coverage_summary.sh
+                        ${YAKL_HOME}
+                        ${CMAKE_CURRENT_BINARY_DIR}
+                        ${YAKL_GCOVR_EXECUTABLE}
+                        ${YAKL_GCOV_EXECUTABLE})
+  set_tests_properties(zz_coverage_summary PROPERTIES DEPENDS "${YAKL_UNIT_TESTS}")
+endif()

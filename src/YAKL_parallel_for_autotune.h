@@ -114,7 +114,7 @@ namespace yakl {
 
     template <class F>
     inline void parallel_for( std::string str , std::integral auto bnd , F const & f ) {
-      parallel_for( str , Bounds<1,CStyle,true>(bnd) , f );
+      yakl::autotune::parallel_for( str , Bounds<1,CStyle,true>(bnd) , f );
     }
 
 
@@ -126,7 +126,7 @@ namespace yakl {
 
     template <class F>
     inline void parallel_for_F( std::string str , std::integral auto bnd , F const & f ) {
-      parallel_for<F,1,true,FStyle>( str , Bounds<1,FStyle,true>(bnd) , f );
+      yakl::autotune::parallel_for<F,1,true,FStyle>( str , Bounds<1,FStyle,true>(bnd) , f );
     }
 
 
@@ -161,5 +161,4 @@ namespace yakl {
 
   }
 }
-
 
