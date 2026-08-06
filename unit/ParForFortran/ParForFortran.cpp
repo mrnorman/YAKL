@@ -61,6 +61,14 @@ int main() {
       stripped(i) = i;
     }, yakl::Config<128,4>{});
     if (sum(stripped) != nstrip*(nstrip+1)/2) die("ERROR: Fortran-style strip-mined launch missed its tail");
+
+    Array_F<int *,yakl::DeviceSpace> strided("strided",{-2,4});
+    strided = 0;
+    parallel_for_F( "strided inclusive endpoint" ,
+                    Bounds_F<1>(yakl::LoopSpec<yakl::FStyle>(-2,4,3)) , KOKKOS_LAMBDA (ptrdiff_t i) {
+      strided(i) = i + 3;
+    });
+    if (sum(strided) != 12) die("ERROR: Fortran-style strided launch omitted its final valid iteration");
     yakl::timer_stop("main");
   }
   yakl::finalize();

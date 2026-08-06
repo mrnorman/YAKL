@@ -65,6 +65,14 @@ int main() {
     }, yakl::Config<128,4>{});
     if (sum(stripped) != nstrip*(nstrip+1)/2) die("ERROR: C-style strip-mined launch missed its tail");
 
+    Array<int *,yakl::DeviceSpace> strided("strided",5);
+    strided = 0;
+    parallel_for( "strided inclusive endpoint" ,
+                  Bounds<1,yakl::CStyle,false>(yakl::LoopSpec<>(0,4,2)) , KOKKOS_LAMBDA (ptrdiff_t i) {
+      strided(i) = i + 1;
+    });
+    if (sum(strided) != 9) die("ERROR: C-style strided launch omitted its final valid iteration");
+
     // Drive the autotuner through first-use, sampling, and selected-config
     // paths with a single-element kernel to keep the test inexpensive.
     std::string const tuneLabel = "unit autotune";

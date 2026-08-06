@@ -1,4 +1,5 @@
 #include <iostream>
+#include <limits>
 #include <string>
 #include "YAKL.h"
 
@@ -6,6 +7,12 @@ using yakl::Array;
 using yakl::Array_F;
 using yakl::Bnds;
 using yakl::SArray_F;
+
+template <size_t Strip>
+concept ValidStripConfig = requires { typename yakl::Config<128,Strip>; };
+
+static_assert( ValidStripConfig<1>);
+static_assert(!ValidStripConfig<0>);
 
 void fail(std::string const &message) {
   Kokkos::abort(message.c_str());
@@ -50,14 +57,17 @@ int main(int argc, char **argv) {
     }
 
     yakl::Bounds_F<2> bounds({-7,5,3},{11,20,4});
-    if (bounds.nIter != 8) fail("strided Bounds iteration count is incorrect");
+    if (bounds.nIter != 15) fail("strided Bounds iteration count is incorrect");
+    bool foundFinalPair = false;
     for (size_t linear=0; linear < bounds.nIter; linear++) {
       ptrdiff_t i, j;
       bounds.unpack(linear,i,j);
       if (i < -7 || i > 5 || (i+7)%3 != 0 || j < 11 || j > 20 || (j-11)%4 != 0) {
         fail("strided Bounds unpack returned an invalid index");
       }
+      foundFinalPair = foundFinalPair || (i == 5 && j == 19);
     }
+    if (!foundFinalPair) fail("strided Bounds omitted its final valid iteration");
   } else if (scenario == "array_slice") {
     Array<int **,Kokkos::HostSpace> arr("arr",2,3);
     auto slice = arr.slice<1>(2,yakl::COLON);
@@ -73,8 +83,25 @@ int main(int argc, char **argv) {
   } else if (scenario == "component_shape") {
     using namespace yakl::componentwise;
     Array<int **,Kokkos::HostSpace> left("left",2,3);
-    Array<int **,Kokkos::HostSpace> right("right",3,2);
+    Array<int **,Kokkos::HostSpace> right("right",2,2);
     auto result = left + right;
+    (void) result;
+  } else if (scenario == "sign_shape") {
+    Array<int **,Kokkos::HostSpace> magnitude("magnitude",2,3);
+    Array<int **,Kokkos::HostSpace> signSource("sign source",2,2);
+    auto result = yakl::intrinsics::sign(magnitude,signSource);
+    (void) result;
+  } else if (scenario == "merge_value_shape") {
+    Array<int **,Kokkos::HostSpace> trueValues("true values",2,3);
+    Array<int **,Kokkos::HostSpace> falseValues("false values",2,2);
+    Array<int **,Kokkos::HostSpace> condition("condition",2,3);
+    auto result = yakl::intrinsics::merge(trueValues,falseValues,condition);
+    (void) result;
+  } else if (scenario == "merge_condition_shape") {
+    Array<int **,Kokkos::HostSpace> trueValues("true values",2,3);
+    Array<int **,Kokkos::HostSpace> falseValues("false values",2,3);
+    Array<int **,Kokkos::HostSpace> condition("condition",2,2);
+    auto result = yakl::intrinsics::merge(trueValues,falseValues,condition);
     (void) result;
   } else if (scenario == "loop_extent") {
     yakl::LoopSpec<> loop(-1);
@@ -82,6 +109,12 @@ int main(int argc, char **argv) {
   } else if (scenario == "loop_stride") {
     yakl::LoopSpec<> loop(0,10,0);
     (void) loop;
+  } else if (scenario == "simple_bounds_negative") {
+    yakl::SimpleBounds<1> bounds(-1);
+    (void) bounds;
+  } else if (scenario == "simple_bounds_overflow") {
+    yakl::SimpleBounds<2> bounds(std::numeric_limits<size_t>::max(),2);
+    (void) bounds;
   } else if (scenario == "linear_allocator") {
     yakl::LinearAllocator allocator(1024,0);
     (void) allocator;

@@ -75,8 +75,13 @@ if (YAKL_ENABLE_COVERAGE)
                       Validation_array_subset
                       Validation_array_reshape
                       Validation_component_shape
+                      Validation_sign_shape
+                      Validation_merge_value_shape
+                      Validation_merge_condition_shape
                       Validation_loop_extent
                       Validation_loop_stride
+                      Validation_simple_bounds_negative
+                      Validation_simple_bounds_overflow
                       Validation_linear_allocator
                       Validation_random_range
                       Validation_timer_stop

@@ -55,12 +55,13 @@ namespace yakl {
       }
       using unsigned_bound_t = std::make_unsigned_t<ptrdiff_t>;
       auto const difference = static_cast<unsigned_bound_t>(u)-static_cast<unsigned_bound_t>(l);
+      auto const quotient = difference/static_cast<unsigned_bound_t>(s);
       if constexpr (kokkos_debug) {
-        if (difference == std::numeric_limits<unsigned_bound_t>::max()) {
+        if (quotient == std::numeric_limits<unsigned_bound_t>::max()) {
           Kokkos::abort("ERROR: LoopSpec range overflow");
         }
       }
-      return static_cast<size_t>((difference+1)/static_cast<unsigned_bound_t>(s));
+      return static_cast<size_t>(quotient+1);
     }
   };
 
@@ -77,16 +78,15 @@ namespace yakl {
     unsigned_t static constexpr default_lbound = is_cstyle ? 0 : 1;
     unsigned_t nIter;
     std::array<unsigned_t,N> offs;
+    KOKKOS_INLINE_FUNCTION static unsigned_t checked_extent(std::integral auto size) {
+      if constexpr (kokkos_debug) {
+        if (!std::in_range<unsigned_t>(size)) Kokkos::abort("ERROR: Bounds dimensions cannot be negative or overflow size_t");
+      }
+      return static_cast<unsigned_t>(size);
+    }
     KOKKOS_INLINE_FUNCTION Bounds( std::integral auto... sizes ) {
       static_assert(sizeof...(sizes)==N,"ERROR: Bounds class creation with wrong number of loop bounds");
-      std::array<ptrdiff_t,N> signed_dims = { static_cast<ptrdiff_t>(sizes)... };
-      std::array<unsigned_t,N> dims = {};
-      for (int i=0; i < N; i++) {
-        if constexpr (kokkos_debug) {
-          if (signed_dims[i] < 0) Kokkos::abort("ERROR: Bounds dimensions cannot be negative");
-        }
-        dims[i] = static_cast<unsigned_t>(signed_dims[i]);
-      }
+      std::array<unsigned_t,N> dims = { checked_extent(sizes)... };
       nIter = 1;
       for (int i=0; i < N; i++) {
         if constexpr (kokkos_debug) {
@@ -383,7 +383,7 @@ namespace yakl {
 
 
 
-  template <int MaxThreadsPerBlock, size_t Strip> struct Config {
+  template <int MaxThreadsPerBlock, size_t Strip> requires (MaxThreadsPerBlock >= 0 && Strip > 0) struct Config {
     int static constexpr Thr = MaxThreadsPerBlock;
     int static constexpr Str = Strip;
   };

@@ -289,7 +289,7 @@ int main() {
     // Test non-standard loop bounds
     ///////////////////////////////////////////////////////////
     test3d = 0.;
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,{-1,d2-3},{0,d3,2}) , KOKKOS_LAMBDA (int i, int j, int k) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,{-1,d2-3},{0,d3-1,2}) , KOKKOS_LAMBDA (int i, int j, int k) {
       test3d(i,j+2,k) = 1;
     });
     if (yakl::intrinsics::sum(test3d) != 8) { die("non-standard loop: wrong sum for test3d");}
@@ -407,4 +407,3 @@ int main() {
   
   return 0;
 }
-
