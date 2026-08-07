@@ -48,8 +48,9 @@ host-visible results, timer boundaries, and `yakl::finalize()` synchronize regar
 ### `HAVE_MPI`
 
 Define this only when MPI headers and libraries are available and the build is configured for MPI. It makes MPI declarations
-visible to YAKL and allows rank-zero-only reporting paths to query `MPI_COMM_WORLD`. The PNetCDF extension independently
-requires MPI and PNetCDF dependencies; merely defining `HAVE_MPI` does not provide them.
+visible to YAKL and allows rank-zero-only reporting paths to query `MPI_COMM_WORLD`. CMake users should set
+`YAKL_HAVE_MPI=ON`, which finds and links MPI and supplies `HAVE_MPI` transitively through the `yakl` target. The PNetCDF
+extension independently requires PNetCDF; merely defining `HAVE_MPI` does not provide that dependency.
 
 ## Kokkos definitions observed by YAKL
 
@@ -92,7 +93,7 @@ These are CMake variables rather than C/C++ preprocessor definitions:
 | CMake option | Purpose |
 | --- | --- |
 | `YAKL_ENABLE_COVERAGE` | Build YAKL and consumers with GNU gcov instrumentation. |
-| `YAKL_HAVE_MPI` | Configure the YAKL library target with MPI support. |
+| `YAKL_HAVE_MPI` | Find and link MPI and publicly define `HAVE_MPI` on the `yakl` target. |
 | `YAKL_TEST_NETCDF` | Opt the unit suite into NetCDF tests when dependencies are available. |
 | `YAKL_TEST_PNETCDF` | Opt the unit suite into PNetCDF tests when dependencies are available. |
 | `YAKL_UNIT_LARGE_MEMORY` | Build tests requiring more than 4 GiB of device memory. |

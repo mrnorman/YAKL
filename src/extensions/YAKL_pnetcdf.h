@@ -10,6 +10,13 @@
 
 namespace yakl {
 
+  inline MPI_Offset pnetcdf_checked_mpi_offset(size_t value) {
+    if (!std::in_range<MPI_Offset>(value)) {
+      Kokkos::abort("ERROR: PNetCDF Array extent does not fit in MPI_Offset");
+    }
+    return static_cast<MPI_Offset>(value);
+  }
+
   //Error reporting routine for the PNetCDF I/O
   inline void ncmpiwrap( int ierr , int line ) {
     if (ierr != NC_NOERR) {
@@ -28,7 +35,7 @@ namespace yakl {
     for (int i=0; i < ndims; i++) {
       MPI_Offset extent;
       ncmpiwrap(ncmpi_inq_dimlen(ncid,dimids[i],&extent),__LINE__);
-      if (extent < 0 || static_cast<unsigned long long>(extent) > std::numeric_limits<size_t>::max()) {
+      if (!std::in_range<size_t>(extent)) {
         Kokkos::abort("ERROR: PNetCDF variable extent does not fit in size_t");
       }
       size_t const size = static_cast<size_t>(extent);
@@ -46,7 +53,7 @@ namespace yakl {
     ncmpiwrap(ncmpi_inq_varndims(ncid,varid,&ndims),__LINE__);
     size_t num_elements = 1;
     for (int i=0; i < ndims; i++) {
-      if (count[i] < 0 || static_cast<unsigned long long>(count[i]) > std::numeric_limits<size_t>::max()) {
+      if (!std::in_range<size_t>(count[i])) {
         Kokkos::abort("ERROR: PNetCDF hyperslab extent does not fit in size_t");
       }
       size_t const size = static_cast<size_t>(count[i]);
@@ -541,7 +548,9 @@ namespace yakl {
       for (int i=0; i < ndims; i++) {
         MPI_Offset dim_size;
         ncmpiwrap(ncmpi_inq_dimlen(ncid,dimids[i],&dim_size),__LINE__);
-        MPI_Offset const extent = static_cast<MPI_Offset>(arr.extent(i));
+        // NetCDF lists dimensions slowest-to-fastest. Array uses that order, while Array_F stores it in reverse.
+        int const array_dim = ViewType::is_cstyle ? i : ndims-1-i;
+        MPI_Offset const extent = pnetcdf_checked_mpi_offset(arr.extent(array_dim));
         MPI_Offset const begin = start == nullptr ? 0 : (*start)[i];
         if (extent > std::numeric_limits<MPI_Offset>::max()-begin) {
           Kokkos::abort("ERROR: PNetCDF hyperslab bound overflow");
@@ -687,6 +696,13 @@ namespace yakl {
       if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: calling create_dim on unopened file");
       if (dimName.empty()) Kokkos::abort("ERROR: PNetCDF dimension name cannot be empty");
       if (len < 0 && len != NC_UNLIMITED) Kokkos::abort("ERROR: PNetCDF dimension length cannot be negative");
+      if (len == NC_UNLIMITED) {
+        int unlimited = -1;
+        ncmpiwrap(ncmpi_inq_unlimdim(ncid,&unlimited),__LINE__);
+        if (unlimited >= 0) {
+          throw std::runtime_error("ERROR: SimplePNetCDF supports only one unlimited dimension per file");
+        }
+      }
       redef();
       int dimid;
       ncmpiwrap( ncmpi_def_dim( ncid , dimName.c_str() , len , &dimid ) , __LINE__ );
@@ -768,7 +784,12 @@ namespace yakl {
       if (!arr.is_allocated()) Kokkos::abort("ERROR: writing an unallocated Array with PNetCDF");
       int varid = get_var_id( varName );
       check_array_variable(varid,arr);
-      pnetcdf_put_var( ncid ,  varid , arr.createHostCopy().data() );
+      if constexpr (ViewType::on_device) {
+        auto arr_host = arr.createHostCopy();
+        pnetcdf_put_var( ncid , varid , arr_host.data() );
+      } else {
+        pnetcdf_put_var( ncid , varid , arr.data() );
+      }
     }
 
 
@@ -781,11 +802,13 @@ namespace yakl {
       if (!arr_in.is_allocated()) Kokkos::abort("ERROR: reading into an unallocated Array with PNetCDF");
       int varid = get_var_id( varName );
       check_array_variable(varid,arr_in);
-      Array<typename ViewType::non_const_data_type,Kokkos::HostSpace> arr;
-      if constexpr (ViewType::on_device) { arr = arr_in.createHostObject(); }
-      else                               { arr = arr_in;                    }
-      pnetcdf_get_var( ncid ,  varid , arr.data() );
-      if (ViewType::on_device) arr.deep_copy_to(arr_in);
+      if constexpr (ViewType::on_device) {
+        auto arr_host = arr_in.createHostObject();
+        pnetcdf_get_var( ncid , varid , arr_host.data() );
+        arr_host.deep_copy_to(arr_in);
+      } else {
+        pnetcdf_get_var( ncid , varid , arr_in.data() );
+      }
     }
 
 
@@ -801,10 +824,18 @@ namespace yakl {
       if (static_cast<size_t>(rank) != start.size()) { Kokkos::abort("start.size() != Array's rank"); }
       for (auto const offset : start) if (offset < 0) Kokkos::abort("ERROR: PNetCDF start offset cannot be negative");
       std::vector<MPI_Offset> count(rank);
-      for (int i=0; i < rank; i++) { count[i] = arr.extent(i); }
+      for (int i=0; i < rank; i++) {
+        int const array_dim = ViewType::is_cstyle ? i : rank-1-i;
+        count[i] = pnetcdf_checked_mpi_offset(arr.extent(array_dim));
+      }
       int varid = get_var_id(varName);
       check_array_variable(varid,arr,&start,true);
-      pnetcdf_put_vara_all( ncid ,  varid , start.data() , count.data() , arr.createHostCopy().data() );
+      if constexpr (ViewType::on_device) {
+        auto arr_host = arr.createHostCopy();
+        pnetcdf_put_vara_all( ncid , varid , start.data() , count.data() , arr_host.data() );
+      } else {
+        pnetcdf_put_vara_all( ncid , varid , start.data() , count.data() , arr.data() );
+      }
     }
 
 
@@ -819,15 +850,269 @@ namespace yakl {
       int constexpr rank = ViewType::rank();
       if (static_cast<size_t>(rank) != start   .size()) { Kokkos::abort("start.size() != Array's rank"); }
       for (auto const offset : start) if (offset < 0) Kokkos::abort("ERROR: PNetCDF start offset cannot be negative");
-      Array<typename ViewType::non_const_data_type,Kokkos::HostSpace> arr;
-      if constexpr (ViewType::on_device) { arr = arr_in.createHostObject(); }
-      else                               { arr = arr_in;                    }
       std::vector<MPI_Offset> count(rank);
-      for (int i=0; i < rank; i++) { count[i] = arr.extent(i); }
+      for (int i=0; i < rank; i++) {
+        int const array_dim = ViewType::is_cstyle ? i : rank-1-i;
+        count[i] = pnetcdf_checked_mpi_offset(arr_in.extent(array_dim));
+      }
       int varid = get_var_id(varName);
       check_array_variable(varid,arr_in,&start,false);
-      pnetcdf_get_vara_all( ncid ,  varid , start.data() , count.data() , arr.data() );
-      if (ViewType::on_device) arr.deep_copy_to(arr_in);
+      if constexpr (ViewType::on_device) {
+        auto arr_host = arr_in.createHostObject();
+        pnetcdf_get_vara_all( ncid , varid , start.data() , count.data() , arr_host.data() );
+        arr_host.deep_copy_to(arr_in);
+      } else {
+        pnetcdf_get_vara_all( ncid , varid , start.data() , count.data() , arr_in.data() );
+      }
+    }
+
+
+  private:
+    template <class T>
+    void putAttributeData(int varid, std::string const & attName, T const *data, size_t count) {
+      using U = std::remove_cv_t<T>;
+      if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: writing an attribute to an unopened PNetCDF file");
+      if (varid < NC_GLOBAL) Kokkos::abort("ERROR: PNetCDF attribute variable does not exist");
+      if (attName.empty()) Kokkos::abort("ERROR: PNetCDF attribute name cannot be empty");
+      if (!std::in_range<MPI_Offset>(count)) {
+        Kokkos::abort("ERROR: PNetCDF attribute length does not fit in MPI_Offset");
+      }
+      redef();
+      MPI_Offset const length = static_cast<MPI_Offset>(count);
+      nc_type const xtype = std::is_same_v<U,bool> ? NC_UBYTE : getType<U>();
+      if constexpr (std::is_same_v<U,char>) {
+        ncmpiwrap(ncmpi_put_att_text(ncid,varid,attName.c_str(),length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,signed char>) {
+        ncmpiwrap(ncmpi_put_att_schar(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned char>) {
+        ncmpiwrap(ncmpi_put_att_uchar(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,short>) {
+        ncmpiwrap(ncmpi_put_att_short(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned short>) {
+        ncmpiwrap(ncmpi_put_att_ushort(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,int>) {
+        ncmpiwrap(ncmpi_put_att_int(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned int>) {
+        ncmpiwrap(ncmpi_put_att_uint(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,long>) {
+        ncmpiwrap(ncmpi_put_att_long(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned long>) {
+        std::vector<unsigned long long> converted(count);
+        for (size_t i=0; i < count; i++) converted[i] = static_cast<unsigned long long>(data[i]);
+        ncmpiwrap(ncmpi_put_att_ulonglong(ncid,varid,attName.c_str(),xtype,length,converted.data()),__LINE__);
+      } else if constexpr (std::is_same_v<U,long long>) {
+        ncmpiwrap(ncmpi_put_att_longlong(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned long long>) {
+        ncmpiwrap(ncmpi_put_att_ulonglong(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,float>) {
+        ncmpiwrap(ncmpi_put_att_float(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,double>) {
+        ncmpiwrap(ncmpi_put_att_double(ncid,varid,attName.c_str(),xtype,length,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,bool>) {
+        std::vector<unsigned char> converted(count);
+        for (size_t i=0; i < count; i++) converted[i] = data[i] ? 1 : 0;
+        ncmpiwrap(ncmpi_put_att_uchar(ncid,varid,attName.c_str(),xtype,length,converted.data()),__LINE__);
+      }
+    }
+
+
+    template <class T>
+    void getAttributeData(int varid, std::string const & attName, T *data) const {
+      using U = std::remove_cv_t<T>;
+      if constexpr (std::is_same_v<U,char>) {
+        ncmpiwrap(ncmpi_get_att_text(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,signed char>) {
+        ncmpiwrap(ncmpi_get_att_schar(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned char>) {
+        ncmpiwrap(ncmpi_get_att_uchar(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,short>) {
+        ncmpiwrap(ncmpi_get_att_short(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned short>) {
+        ncmpiwrap(ncmpi_get_att_ushort(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,int>) {
+        ncmpiwrap(ncmpi_get_att_int(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned int>) {
+        ncmpiwrap(ncmpi_get_att_uint(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,long>) {
+        ncmpiwrap(ncmpi_get_att_long(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned long>) {
+        MPI_Offset count;
+        ncmpiwrap(ncmpi_inq_attlen(ncid,varid,attName.c_str(),&count),__LINE__);
+        std::vector<unsigned long long> converted(static_cast<size_t>(count));
+        ncmpiwrap(ncmpi_get_att_ulonglong(ncid,varid,attName.c_str(),converted.data()),__LINE__);
+        for (size_t i=0; i < converted.size(); i++) {
+          if (converted[i] > std::numeric_limits<unsigned long>::max()) {
+            Kokkos::abort("ERROR: PNetCDF attribute value does not fit in unsigned long");
+          }
+          data[i] = static_cast<unsigned long>(converted[i]);
+        }
+      } else if constexpr (std::is_same_v<U,long long>) {
+        ncmpiwrap(ncmpi_get_att_longlong(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned long long>) {
+        ncmpiwrap(ncmpi_get_att_ulonglong(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,float>) {
+        ncmpiwrap(ncmpi_get_att_float(ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,double>) {
+        ncmpiwrap(ncmpi_get_att_double(ncid,varid,attName.c_str(),data),__LINE__);
+      }
+    }
+
+
+    template <class T>
+    size_t checkAttribute(int varid, std::string const & attName) const {
+      if (mode == MODE_UNOPENED) Kokkos::abort("ERROR: accessing an attribute in an unopened PNetCDF file");
+      if (attName.empty()) Kokkos::abort("ERROR: PNetCDF attribute name cannot be empty");
+      nc_type xtype;
+      MPI_Offset count;
+      ncmpiwrap(ncmpi_inq_att(ncid,varid,attName.c_str(),&xtype,&count),__LINE__);
+      nc_type const expected = std::is_same_v<std::remove_cv_t<T>,bool> ? NC_UBYTE : getType<T>();
+      if (xtype != expected) Kokkos::abort("ERROR: PNetCDF attribute type differs from the requested type");
+      if (!std::in_range<size_t>(count)) {
+        Kokkos::abort("ERROR: PNetCDF attribute length does not fit in size_t");
+      }
+      return static_cast<size_t>(count);
+    }
+
+
+  public:
+    // Attribute writes can enter define mode, so every task in the communicator must call them.
+    template <class T> requires std::is_arithmetic_v<T>
+    void writeGlobalAttribute(T const &value, std::string attName) {
+      putAttributeData(NC_GLOBAL,attName,&value,1);
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void writeGlobalAttribute(std::vector<T> const &values, std::string attName) {
+      if constexpr (std::is_same_v<T,bool>) {
+        std::vector<unsigned char> converted(values.size());
+        for (size_t i=0; i < values.size(); i++) converted[i] = values[i] ? 1 : 0;
+        putAttributeData(NC_GLOBAL,attName,converted.data(),converted.size());
+      } else {
+        putAttributeData(NC_GLOBAL,attName,values.data(),values.size());
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void readGlobalAttribute(T &value, std::string attName) const {
+      if (checkAttribute<T>(NC_GLOBAL,attName) != 1) Kokkos::abort("ERROR: PNetCDF attribute is not scalar");
+      if constexpr (std::is_same_v<T,bool>) {
+        unsigned char converted;
+        getAttributeData(NC_GLOBAL,attName,&converted);
+        value = converted != 0;
+      } else {
+        getAttributeData(NC_GLOBAL,attName,&value);
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void readGlobalAttribute(std::vector<T> &values, std::string attName) const {
+      size_t const count = checkAttribute<T>(NC_GLOBAL,attName);
+      if constexpr (std::is_same_v<T,bool>) {
+        std::vector<unsigned char> converted(count);
+        getAttributeData(NC_GLOBAL,attName,converted.data());
+        values.assign(count,false);
+        for (size_t i=0; i < count; i++) values[i] = converted[i] != 0;
+      } else {
+        values.resize(count);
+        getAttributeData(NC_GLOBAL,attName,values.data());
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void writeVariableAttribute(T const &value, std::string varName, std::string attName) {
+      putAttributeData(get_var_id(varName),attName,&value,1);
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void writeVariableAttribute(std::vector<T> const &values, std::string varName, std::string attName) {
+      int const varid = get_var_id(varName);
+      if constexpr (std::is_same_v<T,bool>) {
+        std::vector<unsigned char> converted(values.size());
+        for (size_t i=0; i < values.size(); i++) converted[i] = values[i] ? 1 : 0;
+        putAttributeData(varid,attName,converted.data(),converted.size());
+      } else {
+        putAttributeData(varid,attName,values.data(),values.size());
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void readVariableAttribute(T &value, std::string varName, std::string attName) const {
+      int const varid = get_var_id(varName);
+      if (checkAttribute<T>(varid,attName) != 1) Kokkos::abort("ERROR: PNetCDF attribute is not scalar");
+      if constexpr (std::is_same_v<T,bool>) {
+        unsigned char converted;
+        getAttributeData(varid,attName,&converted);
+        value = converted != 0;
+      } else {
+        getAttributeData(varid,attName,&value);
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void readVariableAttribute(std::vector<T> &values, std::string varName, std::string attName) const {
+      int const varid = get_var_id(varName);
+      size_t const count = checkAttribute<T>(varid,attName);
+      if constexpr (std::is_same_v<T,bool>) {
+        std::vector<unsigned char> converted(count);
+        getAttributeData(varid,attName,converted.data());
+        values.assign(count,false);
+        for (size_t i=0; i < count; i++) values[i] = converted[i] != 0;
+      } else {
+        values.resize(count);
+        getAttributeData(varid,attName,values.data());
+      }
+    }
+
+
+    template <class T> requires std::is_same_v<std::remove_cvref_t<T>,std::string>
+    void writeGlobalAttribute(T const &value, std::string attName) {
+      putAttributeData(NC_GLOBAL,attName,value.data(),value.size());
+    }
+
+
+    template <class T> requires std::is_same_v<std::remove_cvref_t<T>,std::string>
+    void readGlobalAttribute(T &value, std::string attName) const {
+      size_t const count = checkAttribute<char>(NC_GLOBAL,attName);
+      value.resize(count);
+      getAttributeData(NC_GLOBAL,attName,value.data());
+    }
+
+
+    template <class T> requires std::is_same_v<std::remove_cvref_t<T>,std::string>
+    void writeVariableAttribute(T const &value, std::string varName, std::string attName) {
+      putAttributeData(get_var_id(varName),attName,value.data(),value.size());
+    }
+
+
+    template <class T> requires std::is_same_v<std::remove_cvref_t<T>,std::string>
+    void readVariableAttribute(T &value, std::string varName, std::string attName) const {
+      int const varid = get_var_id(varName);
+      size_t const count = checkAttribute<char>(varid,attName);
+      value.resize(count);
+      getAttributeData(varid,attName,value.data());
+    }
+
+
+    template <class T>
+    T readGlobalAttribute(std::string attName) const {
+      T value;
+      readGlobalAttribute(value,attName);
+      return value;
+    }
+
+
+    template <class T>
+    T readVariableAttribute(std::string varName, std::string attName) const {
+      T value;
+      readVariableAttribute(value,varName,attName);
+      return value;
     }
 
 

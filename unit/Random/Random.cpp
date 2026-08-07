@@ -123,7 +123,38 @@ int main() {
         die("ERROR: Random equal-bound range did not return its bound");
       }
 
+      // A direct ub-lb calculation overflows for this finite interval and collapses almost every draw near +max.
       int constexpr nstreams = 64;
+      double constexpr maximum = std::numeric_limits<double>::max();
+      yakl::Random extremeHost(seed,stream);
+      bool hostNegative = false;
+      bool hostPositive = false;
+      for (int draw=0; draw < 256; draw++) {
+        double const value = extremeHost.gen_uniform<double>(-maximum,maximum);
+        if (!(value >= -maximum && value < maximum)) die("ERROR: Random extreme host range produced an invalid value");
+        hostNegative = hostNegative || value < 0;
+        hostPositive = hostPositive || value > 0;
+      }
+      if (!hostNegative || !hostPositive) die("ERROR: Random extreme host range is severely biased");
+
+      int1d extremeDeviceFlags("Random extreme device range",nstreams);
+      parallel_for("Random extreme device range",nstreams,KOKKOS_LAMBDA (int i) {
+        double constexpr localMaximum = std::numeric_limits<double>::max();
+        yakl::Random random(seed,static_cast<uint64_t>(i));
+        int flags = 0;
+        for (int draw=0; draw < 256; draw++) {
+          double const value = random.gen_uniform<double>(-localMaximum,localMaximum);
+          if (!(value >= -localMaximum && value < localMaximum)) flags |= 1;
+          if (value < 0) flags |= 2;
+          if (value > 0) flags |= 4;
+        }
+        extremeDeviceFlags(i) = flags;
+      });
+      auto extremeHostFlags = extremeDeviceFlags.createHostCopy();
+      for (int i=0; i < nstreams; i++) {
+        if (extremeHostFlags(i) != 6) die("ERROR: Random extreme device range is invalid or severely biased");
+      }
+
       int constexpr ndraws = 8;
       uint64_2d deviceValues("Random host device agreement",nstreams,ndraws);
       parallel_for( "Random host device agreement" , nstreams , KOKKOS_LAMBDA (int i) {

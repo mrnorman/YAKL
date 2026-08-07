@@ -4,6 +4,9 @@
 
 namespace yakl {
 
+  /** Initialize YAKL from the controlling host thread, outside application host-threaded regions.
+    * No other application host thread may execute a YAKL operation until this call returns.
+    */
   inline void init( InitConfig config = InitConfig() ) {
     if constexpr (kokkos_debug) {
       if (!Kokkos::is_initialized()) Kokkos::abort("ERROR: yakl::init called before Kokkos::initialize");
@@ -35,20 +38,22 @@ namespace yakl {
             if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_INITIAL_MB. Defaulting to 4GB\n";
           }
         }
-        // Check for GATOR_BLOCK_BYTES environment variable
-        env = std::getenv("GATOR_BLOCK_BYTES");
-        if ( env != nullptr ) {
-          char * end = nullptr;
-          errno = 0;
-          long long block_bytes = std::strtoll(env,&end,10);
-          if (errno == 0 && end != env && *end == '\0' && block_bytes > 0 &&
-              static_cast<unsigned long long>(block_bytes) <= std::numeric_limits<size_t>::max() &&
-              block_bytes%LinearAllocator::requiredAlignment == 0) {
-            pool_block_bytes = static_cast<size_t>(block_bytes);
-          } else {
-            if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 4096 bytes\n";
-            if (yakl_mainproc()) {
-              std::cout << "         GATOR_BLOCK_BYTES must be a positive multiple of Kokkos memory alignment\n";
+        // An explicitly configured block size takes precedence, so do not parse or diagnose the environment value.
+        if (!config.pool_block_bytes_was_set()) {
+          env = std::getenv("GATOR_BLOCK_BYTES");
+          if ( env != nullptr ) {
+            char * end = nullptr;
+            errno = 0;
+            long long block_bytes = std::strtoll(env,&end,10);
+            if (errno == 0 && end != env && *end == '\0' && block_bytes > 0 &&
+                static_cast<unsigned long long>(block_bytes) <= std::numeric_limits<size_t>::max() &&
+                block_bytes%LinearAllocator::requiredAlignment == 0) {
+              pool_block_bytes = static_cast<size_t>(block_bytes);
+            } else {
+              if (yakl_mainproc()) std::cout << "WARNING: Invalid GATOR_BLOCK_BYTES. Defaulting to 4096 bytes\n";
+              if (yakl_mainproc()) {
+                std::cout << "         GATOR_BLOCK_BYTES must be a positive multiple of Kokkos memory alignment\n";
+              }
             }
           }
         }
@@ -59,9 +64,9 @@ namespace yakl {
           }
         }
         pool_bytes       = config.get_pool_size_mb()*1024*1024;
-        pool_block_bytes = config.get_pool_block_bytes();
-        if (pool_block_bytes == 0 || pool_block_bytes%LinearAllocator::requiredAlignment != 0) pool_block_bytes = 4096;
       }
+      if (config.pool_block_bytes_was_set()) pool_block_bytes = config.get_pool_block_bytes();
+      if (pool_block_bytes == 0 || pool_block_bytes%LinearAllocator::requiredAlignment != 0) pool_block_bytes = 4096;
       if (config.get_pool_setting() == InitConfig::PoolSetting::Enabled)  pool_enabled = true;
       if (config.get_pool_setting() == InitConfig::PoolSetting::Disabled) pool_enabled = false;
 

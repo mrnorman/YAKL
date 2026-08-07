@@ -34,10 +34,12 @@ one object between threads is a data race.
 | `gen_exponential<T>(rate)` | Exponential distribution with positive rate; default `T=float`, rate one. |
 | `gen_lognormal<T,CacheSpare>(normal_mean,normal_stddev)` | Exponential of a normal draw using underlying-normal parameters. |
 
-Floating uniform generation uses the scalar type's mantissa width and never returns the upper endpoint. `CacheSpare=true`
+Floating uniform generation uses the scalar type's mantissa width and never returns the upper endpoint. Ranged generation
+uses overflow-safe interpolation, including for finite intervals such as `[-max,+max)`. `CacheSpare=true`
 uses both Box-Muller outputs across calls. Setting it false discards any old spare and the newly produced second value, giving
 a fixed two-uniform consumption per normal call at higher cost. Zero standard deviation returns the mean without consuming
-random state. Invalid bounds, probabilities, standard deviations, or rates are rejected when debug checks are enabled.
+random state. Non-finite parameters, reversed bounds, out-of-range probabilities, negative standard deviations, and
+nonpositive rates are rejected when debug checks are enabled.
 
 Copying a generator copies its exact sequence position and cached normal state. The original and copy will then produce
 identical future values until called differently; copying is not a way to create a new stream.
@@ -86,14 +88,21 @@ Available queries are:
 
 Timers are active only with `YAKL_PROFILE` (or `YAKL_AUTO_PROFILE`). Disabled timer starts, stops, and printing do nothing;
 queries return zero. Enabled start/stop calls fence Kokkos before reading the clock. Timing therefore measures completed work
-but introduces synchronization.
+but introduces synchronization. Elapsed time is measured with the monotonic `std::chrono::steady_clock`.
 
 Timers must be perfectly nested. The most recently started label must be the next one stopped. Stopping an empty stack,
 stopping a different label, or querying an unknown label is an error. Labels are compared by string, so distinct labels are
 not merged merely because their hashes collide. Reusing one label accumulates hits, last/min/max duration, and total duration.
-Nested labels are displayed as parent/child relationships; a label observed under multiple parents is reported accordingly.
+Recursive use of the same label records every invocation with its own start time and inclusive duration. Nested labels are
+displayed as parent/child relationships; a label observed under multiple parents is reported accordingly.
+
+Timer operations are thread-safe. Nesting is tracked independently for each host thread, while records with the same label
+are aggregated across threads. Duration and count queries and printed reports observe a consistent snapshot of completed
+timer updates. Direct unsynchronized access to `Toney`'s public storage is not part of this guarantee.
 
 `timer_print()` prints the current main timer hierarchy. `yakl::finalize()` prints it automatically when profiling is active.
+Finalization then clears timer records and per-thread nesting stacks so a later YAKL lifecycle interval starts with no timer
+history from the preceding interval.
 `yakl::Toney` is the underlying public timer type and exposes `start`, `stop`, duration/count queries, `print_main`, and
 `print`; direct use is possible, but the global wrappers supply the required device fence and compile-time disabling.
 

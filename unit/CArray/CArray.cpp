@@ -12,6 +12,14 @@ using yakl::parallel_for;
 using yakl::Bounds;
 using yakl::SimpleBounds;
 
+template <auto... DIMS>
+concept ValidSArrayDimensions = requires { typename yakl::SArray<unsigned char,DIMS...>; };
+
+using WideCountSArray = yakl::SArray<unsigned char,65536u,65536u>;
+static_assert(WideCountSArray::num_elements == size_t{65536}*65536);
+static_assert(std::same_as<decltype(WideCountSArray::size()),size_t>);
+static_assert(! ValidSArrayDimensions<std::numeric_limits<size_t>::max(),2>);
+
 typedef float real;
 
 typedef Array<real *       ,Kokkos::HostSpace> realHost1d;

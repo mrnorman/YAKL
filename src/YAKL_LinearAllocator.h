@@ -162,6 +162,7 @@ namespace yakl {
       this->mymalloc  = [] (size_t bytes) -> void * { return ::malloc(bytes); };
       this->myfree    = [] (void *ptr) { ::free(ptr); };
       this->myzero    = [] (void *ptr, size_t bytes) {};
+      this->pool_name.clear();
     }
 
 

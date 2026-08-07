@@ -131,7 +131,7 @@ the same element count.
 
 `SArray<T,dims...>` and `SArray_F<T,Bnds...>` store all elements directly inside the object. Their constructors and methods
 are host/device callable and they require no YAKL initialization or allocation. Dimensions must be nonempty valid
-compile-time ranges.
+compile-time ranges whose total element count fits in `size_t`; `size()` and dimension metadata use `size_t`.
 
 ```cpp
 yakl::SArray<double,3,3> m;
@@ -149,7 +149,9 @@ Both expose `value_type`, `const_value_type`, `non_const_value_type`, `rank`, `s
 the shape while changing the scalar type. Scalar assignment fills all elements. Stream output is host-only in practice.
 
 Unlike dynamic arrays, assigning or passing an `SArray` by value copies its elements. Keep fixed arrays small enough for the
-target execution space's stack/register constraints.
+target execution space's stack/register constraints. Internal element loops use `int` counters because these objects are
+intended for small stack/register-resident data. Although shape products and metadata use `size_t`, an `SArray` with
+billions of elements is outside the supported practical range.
 
 ## Generic array code
 

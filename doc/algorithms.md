@@ -30,8 +30,10 @@ auto mask  = yakl::intrinsics::merge(positive,negative,condition);
 | `same_shape(a,b)` | array-like values | True when ranks and every extent match. |
 
 Dynamic `sign` inputs must have identical types and shape. Dynamic `merge` requires `t` and `f` to share a type and all
-three arrays to have identical shapes. Static shapes are constrained at compile time where possible. Returned dynamic
-arrays are new allocations shaped like the first data operand.
+three arrays to have identical shapes. `merge` also requires every dynamic operand to have the same C/Fortran array style
+and Kokkos memory space; mixing `Array` with `Array_F` or host with device storage is a compile-time error. Static shapes
+and styles are constrained at compile time where possible. Returned dynamic arrays are new allocations shaped like the
+first data operand.
 
 ### Inquiry functions
 
@@ -67,7 +69,9 @@ Dynamic reductions use `Kokkos::parallel_reduce`. The returned scalar or locatio
 Location results use `unpack_global_index`: `Array` returns zero-based indices; `Array_F` and `SArray_F` return their actual
 possibly negative lower-bound-relative indices. If an extremum occurs multiple times, the lowest contiguous linear offset
 wins. Min/max values and locations require nonempty inputs. Floating-point reduction association is backend-dependent, so
-bitwise-identical sums/products across different execution configurations are not promised.
+bitwise-identical sums/products across different execution configurations are not promised. With Kokkos debug enabled,
+`minloc` and `maxloc` reject any input containing NaN. Release builds omit the NaN check entirely; callers must provide
+NaN-free input when a meaningful location is required.
 
 ### Small-matrix operations
 
@@ -80,9 +84,10 @@ These functions operate only on C-style `SArray` values and are host/device call
 | `transpose(a)` | Transpose a rank-two static array. |
 | `matinv(a)` | Invert a square static matrix with partial pivoting. |
 
-Matrix dimensions are compile-time checked. `matinv` returns the same scalar type and dimension. With Kokkos debug enabled,
-it rejects a pivot no larger than `epsilon * matrix_scale * dimension`; without debug checking, singular input violates the
-precondition and may produce infinities or NaNs.
+Matrix dimensions are compile-time checked. `matinv` accepts only floating-point element types and returns the same scalar
+type and dimension. With Kokkos debug enabled, it rejects a pivot no larger than
+`epsilon * matrix_scale * dimension`; without debug checking, singular input violates the precondition and may produce
+infinities or NaNs.
 
 ## Componentwise API
 
@@ -105,7 +110,8 @@ auto mask = (a >= lower) && (a <= upper);
 - two dynamic arrays of identical rank and shape.
 
 The result shape/style follows the array operand (the left operand for array-array operations), and its value type is deduced
-from applying the scalar operation. Array-array operands must be compatible in execution/memory use; no data migration is
+from applying the scalar operation. Two array operands must use the same style and memory space: `Array`/`Array_F`,
+`SArray`/`SArray_F`, and host/device mixtures are rejected at compile time. No implicit index remapping or data migration is
 performed. Dividing by zero and other scalar-domain behavior follow the underlying C++ operator.
 
 ### Unary operators and functions

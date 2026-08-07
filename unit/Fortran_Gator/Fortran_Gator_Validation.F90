@@ -11,6 +11,8 @@ program Fortran_Gator_Validation
     case ("positive")
       bytes = gator_checked_bytes((/1024,2048/),8_c_size_t)
       if (bytes /= 16777216_c_size_t) error stop "ERROR: safe byte-count calculation is incorrect"
+      bytes = checked_bounds(bytes,(/2,3/),(/-huge(0),huge(0)-2/))
+      if (bytes /= 16777216_c_size_t) error stop "ERROR: valid extreme lower bounds changed the byte count"
     case ("zero")
       bytes = gator_checked_bytes((/1024,0/),8_c_size_t)
     case ("negative")
@@ -32,6 +34,8 @@ program Fortran_Gator_Validation
     case ("zero_extent")
       call gator_init()
       call gator_allocate(arr,(/0/))
+    case ("lower_bound_overflow")
+      call gator_allocate(arr,(/2/),(/huge(0)/))
     case default
       error stop "ERROR: unknown Fortran Gator validation scenario"
   end select

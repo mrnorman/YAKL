@@ -14,10 +14,12 @@ namespace yakl {
       int tests_performed;
       int best_index;
       std::array<double,configuration_count> timings;
+      std::array<int,configuration_count> sample_counts;
       AutotuneContext() {
         tests_performed = 0;
-        best_index = 0;
-        timings.fill(std::numeric_limits<double>::max());
+        best_index = -1;
+        timings.fill(0);
+        sample_counts.fill(0);
       }
       AutotuneContext(AutotuneContext const &)             = default;
       AutotuneContext(AutotuneContext &&)                  = default;
@@ -95,7 +97,7 @@ namespace yakl {
           if (hipEventRecord(start,0) != hipSuccess) Kokkos::abort("ERROR: failed event record"  );
         #else
           Kokkos::fence();
-          auto t1 = std::chrono::high_resolution_clock::now();
+          auto const t1 = std::chrono::steady_clock::now();
         #endif
         launch_config(index,str,bounds,f);
         #if   defined(KOKKOS_ENABLE_CUDA)
@@ -114,19 +116,35 @@ namespace yakl {
           if (hipEventDestroy(stop)                     != hipSuccess) Kokkos::abort("ERROR: failed event destroy");
         #else
           Kokkos::fence();
-          auto t2 = std::chrono::high_resolution_clock::now();
+          auto const t2 = std::chrono::steady_clock::now();
           auto time_loc = std::chrono::duration<double>(t2 - t1).count();
         #endif
-        // Ignore first run, then sum the rest of the runs
-        if (context.timings[index] == std::numeric_limits<double>::max()) { context.timings[index]  = 0;        }
-        else                                                              { context.timings[index] += time_loc; }
-        auto & v = context.timings;
-        context.best_index = std::distance( v.begin() , std::min_element(v.begin(),v.end()) );
+        // Each configuration starts with a warmup. Keep it separate from measured samples so an incomplete tuning
+        // cycle cannot select that zero-valued warmup as its best result.
+        bool const is_warmup = context.tests_performed%AutotuneContext::tests_per_config == 0;
+        if (!is_warmup) {
+          context.timings[index] += time_loc;
+          context.sample_counts[index]++;
+          context.best_index = -1;
+          for (int i=0; i < configuration_count; i++) {
+            if (context.sample_counts[i] == 0) continue;
+            if (context.best_index < 0 ||
+                context.timings[i]/context.sample_counts[i] <
+                context.timings[context.best_index]/context.sample_counts[context.best_index]) {
+              context.best_index = i;
+            }
+          }
+        }
         context.tests_performed++;
       };
       if (autotune_contexts.contains(lab)) {
         auto & context = autotune_contexts[lab];
         if (context.tests_performed == AutotuneContext::total_tests) {
+          if constexpr (kokkos_debug) {
+            if (context.best_index < 0 || context.best_index >= configuration_count) {
+              Kokkos::abort("ERROR: completed autotune context has no valid configuration");
+            }
+          }
           launch_config(context.best_index,str,bounds,f);
         } else {
           int index = context.tests_performed / AutotuneContext::tests_per_config;
@@ -186,15 +204,42 @@ namespace yakl {
         if (myrank == 0) std::cout << "\n*** AUTOTUNE RESULTS ***\n";
         for (auto const & [key,c] : autotune_contexts) {
           if constexpr (kokkos_debug) {
-            if (c.best_index < 0 || c.best_index >= configuration_count ||
-                !std::isfinite(c.timings[0]) || !std::isfinite(c.timings[c.best_index]) ||
-                c.timings[c.best_index] <= 0) {
-              Kokkos::abort("ERROR: invalid autotune result");
+            if (c.tests_performed < 0 || c.tests_performed > AutotuneContext::total_tests) {
+              Kokkos::abort("ERROR: invalid autotune launch count");
+            }
+            for (int i=0; i < configuration_count; i++) {
+              if (c.sample_counts[i] < 0 || c.sample_counts[i] >= AutotuneContext::tests_per_config ||
+                  !std::isfinite(c.timings[i]) || c.timings[i] < 0) {
+                Kokkos::abort("ERROR: invalid autotune timing state");
+              }
+            }
+          }
+          if (c.best_index < 0) {
+            if (myrank == 0) {
+              std::cout << key << " : Tuning incomplete (" << c.tests_performed << "/"
+                        << AutotuneContext::total_tests << " launches); no timed samples completed" << std::endl;
+            }
+            continue;
+          }
+          if constexpr (kokkos_debug) {
+            if (c.best_index >= configuration_count || c.sample_counts[c.best_index] == 0) {
+              Kokkos::abort("ERROR: invalid autotune best configuration");
             }
           }
           auto config = get_config(c.best_index);
-          if (myrank == 0) std::cout << key << " : Config<" << std::get<0>(config) << ">{" << std::get<1>(config)
-                                            << "} , Speedup: " << c.timings[0]/c.timings[c.best_index] << std::endl;
+          double const best_time = c.timings[c.best_index]/c.sample_counts[c.best_index];
+          if (myrank == 0) {
+            std::cout << key << " : Config<" << std::get<0>(config) << ">{" << std::get<1>(config) << "} , Speedup: ";
+            if (c.sample_counts[0] > 0 && best_time > 0) {
+              std::cout << (c.timings[0]/c.sample_counts[0])/best_time;
+            } else {
+              std::cout << "unavailable";
+            }
+            if (c.tests_performed < AutotuneContext::total_tests) {
+              std::cout << " , Tuning incomplete (" << c.tests_performed << "/" << AutotuneContext::total_tests << " launches)";
+            }
+            std::cout << std::endl;
+          }
         }
       }
     }

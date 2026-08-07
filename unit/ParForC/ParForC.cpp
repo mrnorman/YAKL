@@ -148,7 +148,40 @@ int main() {
     for (bool found : foundTiles) {
       if (!found) die("ERROR: autotuner did not include every requested tile size");
     }
-    yakl::autotune::autotune_contexts.erase(tuneKey);
+    for (int index=0; index < yakl::autotune::configuration_count; index++) {
+      if (tuneContext.sample_counts[index] != yakl::autotune::AutotuneContext::tests_per_config-1 ||
+          !std::isfinite(tuneContext.timings[index]) || tuneContext.timings[index] < 0) {
+        die("ERROR: completed autotune context has incorrect sample accounting");
+      }
+    }
+
+    // Leave partial contexts alive through yakl::finalize(). This exercises warmup-only state, a measured partial
+    // configuration, a completed first configuration, and the next configuration's warmup.
+    std::array<int,4> const partialLaunchCounts = {1,2,5,6};
+    for (int partial=0; partial < static_cast<int>(partialLaunchCounts.size()); partial++) {
+      std::string const partialLabel = "unit partial autotune " + std::to_string(partial);
+      std::string const partialKey = partialLabel + ":9_iterations";
+      yakl::autotune::autotune_contexts.erase(partialKey);
+      for (int launch=0; launch < partialLaunchCounts[partial]; launch++) {
+        yakl::autotune::parallel_for( partialLabel , 9 , KOKKOS_LAMBDA (int) {} );
+      }
+      auto const &partialContext = yakl::autotune::autotune_contexts.at(partialKey);
+      if (partialContext.tests_performed != partialLaunchCounts[partial]) {
+        die("ERROR: partial autotune context has an incorrect launch count");
+      }
+      if (partialLaunchCounts[partial] == 1) {
+        if (partialContext.best_index != -1 || partialContext.sample_counts[0] != 0) {
+          die("ERROR: autotune warmup was treated as a measured result");
+        }
+      } else {
+        if (partialContext.best_index != 0 || partialContext.sample_counts[0] != std::min(partialLaunchCounts[partial]-1,4)) {
+          die("ERROR: partial autotune context did not retain its measured best configuration");
+        }
+      }
+      if (partialLaunchCounts[partial] == 6 && partialContext.sample_counts[1] != 0) {
+        die("ERROR: second-configuration warmup was treated as a measured result");
+      }
+    }
 
     yakl::timer_stop("main");
   }

@@ -3,12 +3,29 @@
 
 namespace {
 
+  using CHost2D   = yakl::Array  <double **,Kokkos::HostSpace>;
+  using FHost2D   = yakl::Array_F<double **,Kokkos::HostSpace>;
+  using CDevice2D = yakl::Array  <double **,yakl::DeviceSpace>;
+  using CStack2D  = yakl::SArray  <double,2,3>;
+  using FStack2D  = yakl::SArray_F<double,yakl::Bnds{1,2},yakl::Bnds{1,3}>;
+
+  static_assert( yakl::componentwise::compatible_array_operands<CHost2D,CHost2D>);
+  static_assert(!yakl::componentwise::compatible_array_operands<CHost2D,FHost2D>);
+  static_assert( std::is_same_v<typename CHost2D::memory_space,typename CDevice2D::memory_space> ||
+                !yakl::componentwise::compatible_array_operands<CHost2D,CDevice2D>);
+  static_assert(!yakl::componentwise::compatible_stack_operands<CStack2D,FStack2D>);
+  static_assert( yakl::intrinsics::compatible_merge_arrays<CHost2D,CHost2D>);
+  static_assert(!yakl::intrinsics::compatible_merge_arrays<CHost2D,FHost2D>);
+  static_assert( std::is_same_v<typename CHost2D::memory_space,typename CDevice2D::memory_space> ||
+                !yakl::intrinsics::compatible_merge_arrays<CHost2D,CDevice2D>);
+  static_assert(!yakl::intrinsics::compatible_merge_stack_arrays<CStack2D,FStack2D>);
+
   KOKKOS_INLINE_FUNCTION bool close_enough(double actual, double expected, double tolerance = 1.e-12) {
     return std::abs(actual-expected) <= tolerance;
   }
 
-  template <class V>
-  KOKKOS_INLINE_FUNCTION int check_stack_componentwise(V const & a, V const & b) {
+  template <class V, class W>
+  KOKKOS_INLINE_FUNCTION int check_stack_componentwise(V const & a, W const & b) {
     using namespace yakl::componentwise;
     int errors = 0;
     int constexpr i = 2;
@@ -28,9 +45,29 @@ namespace {
     errors += (a && b).data()[i] != (x && y);
     errors += (a || b).data()[i] != (x || y);
 
-    // Instantiate both mixed scalar/SArray paths in device code as well.
+    // Exercise mixed value types and both scalar/SArray operand orders in device code as well.
     errors += !close_enough((a+2.).data()[i],x+2.);
-    errors += !close_enough((2.+a).data()[i],2.+x);
+    errors += !close_enough((2.+b).data()[i],2.+y);
+    errors += !close_enough((a-2.).data()[i],x-2.);
+    errors += !close_enough((2.-b).data()[i],2.-y);
+    errors += !close_enough((a*2.).data()[i],x*2.);
+    errors += !close_enough((2.*b).data()[i],2.*y);
+    errors += !close_enough((a/2.).data()[i],x/2.);
+    errors += !close_enough((2./b).data()[i],2./y);
+    errors += (a >  0.).data()[i] != (x >  0.);
+    errors += (0. <  b).data()[i] != (0. <  y);
+    errors += (a >= 0.).data()[i] != (x >= 0.);
+    errors += (0. <= b).data()[i] != (0. <= y);
+    errors += (a <  2.).data()[i] != (x <  2.);
+    errors += (2. >  b).data()[i] != (2. >  y);
+    errors += (a <= 2.).data()[i] != (x <= 2.);
+    errors += (2. >= b).data()[i] != (2. >= y);
+    errors += (a == x ).data()[i] != true;
+    errors += (y == b ).data()[i] != true;
+    errors += (a != 0.).data()[i] != true;
+    errors += (0. != b ).data()[i] != true;
+    errors += (true && (a > 0.)).data()[i] != true;
+    errors += ((b < 0.) || false).data()[i] != false;
 
     errors += (!a).data()[i] != (!x);
     errors += !close_enough((+a).data()[i],+x);
@@ -115,11 +152,11 @@ namespace {
 
   KOKKOS_INLINE_FUNCTION int check_all_stack_routines() {
     yakl::SArray<double,4> c_a;
-    yakl::SArray<double,4> c_b;
+    yakl::SArray<float,4> c_b;
     yakl::SArray<double,4> c_sign;
     yakl::SArray<bool,4> c_mask;
     yakl::SArray_F<double,yakl::Bnds{-2,1}> f_a;
-    yakl::SArray_F<double,yakl::Bnds{-2,1}> f_b;
+    yakl::SArray_F<float,yakl::Bnds{-2,1}> f_b;
     yakl::SArray_F<double,yakl::Bnds{-2,1}> f_sign;
     yakl::SArray_F<bool,yakl::Bnds{-2,1}> f_mask;
     for (int i=0; i < 4; i++) {
@@ -155,8 +192,8 @@ namespace {
     return result;
   }
 
-  template <class V, class M>
-  void check_dynamic_routines(V const & a, V const & b, V const & sign_source, M const & mask, int dim, int lower) {
+  template <class V, class W, class M>
+  void check_dynamic_routines(V const & a, W const & b, V const & sign_source, M const & mask, int dim, int lower) {
     using namespace yakl::componentwise;
     using yakl::intrinsics::all;
     using yakl::intrinsics::allocated;
@@ -206,10 +243,22 @@ namespace {
     check_sum(a*b,4.375);
     check_sum(a/b,0.2+1./3.+3./7.+0.5);
     check_sum(a+2.,10.5);
-    check_sum(2.+a,10.5);
+    check_sum(2.+b,14.5);
+    check_sum(a-2.,-5.5);
+    check_sum(2.-b,1.5);
+    check_sum(a*2.,5.);
+    check_sum(2.*b,13.);
+    check_sum(a/2.,1.25);
+    check_sum(2./b,2./1.25+2./1.5+2./1.75+1.);
     if (count(a < b) != 4 || count(a > b) != 0 || count(a <= b) != 4 || count(a >= b) != 0 ||
         count(a == b) != 0 || count(a != b) != 4 || count(a && b) != 4 || count(a || b) != 4) {
       Kokkos::abort("dynamic Array binary componentwise operator failed");
+    }
+    if (count(a > 0.) != 4 || count(0. < b) != 4 || count(a >= 0.) != 4 || count(0. <= b) != 4 ||
+        count(a < 2.) != 4 || count(2. > b) != 3 || count(a <= 1.) != 4 || count(2. >= b) != 4 ||
+        count(a == 1.) != 1 || count(2. == b) != 1 || count(a != 0.) != 4 || count(0. != b) != 4 ||
+        count(true && (a > 0.)) != 4 || count((b < 0.) || false) != 0) {
+      Kokkos::abort("dynamic Array scalar componentwise operator failed");
     }
 
     check_sum(+a,2.5);
@@ -235,6 +284,25 @@ namespace {
     if (count(isnan(a)) != 0 || count(isinf(a)) != 0) Kokkos::abort("dynamic Array classification operation failed");
   }
 
+
+  template <class V, class W>
+  void check_mixed_dynamic_componentwise(V const & a, W const & b) {
+    using namespace yakl::componentwise;
+    using yakl::intrinsics::count;
+    using yakl::intrinsics::sum;
+    auto check_sum = [] (auto const & values, double expected) {
+      if (!close_enough(sum(values),expected)) Kokkos::abort("mixed-type componentwise result is incorrect");
+    };
+    check_sum(a+b,9.);
+    check_sum(a-b,-4.);
+    check_sum(a*b,4.375);
+    check_sum(a/b,0.2+1./3.+3./7.+0.5);
+    if (count(a < b) != 4 || count(a > b) != 0 || count(a <= b) != 4 || count(a >= b) != 0 ||
+        count(a == b) != 0 || count(a != b) != 4 || count(a && b) != 4 || count(a || b) != 4) {
+      Kokkos::abort("mixed-type componentwise comparison failed");
+    }
+  }
+
 }
 
 void test_host_device_intrinsics() {
@@ -249,26 +317,31 @@ void test_host_device_intrinsics() {
 
   yakl::Array<double *,Kokkos::HostSpace> c_a("c_a",4);
   yakl::Array<double *,Kokkos::HostSpace> c_b("c_b",4);
+  yakl::Array<float  *,Kokkos::HostSpace> c_b_mixed("c_b_mixed",4);
   yakl::Array<double *,Kokkos::HostSpace> c_sign("c_sign",4);
   yakl::Array<bool *,Kokkos::HostSpace> c_mask("c_mask",4);
   yakl::Array_F<double *,Kokkos::HostSpace> f_a("f_a",{-2,1});
   yakl::Array_F<double *,Kokkos::HostSpace> f_b("f_b",{-2,1});
+  yakl::Array_F<float  *,Kokkos::HostSpace> f_b_mixed("f_b_mixed",{-2,1});
   yakl::Array_F<double *,Kokkos::HostSpace> f_sign("f_sign",{-2,1});
   yakl::Array_F<bool *,Kokkos::HostSpace> f_mask("f_mask",{-2,1});
   for (int i=0; i < 4; i++) {
     double const value = 0.25 * (i+1);
     c_a.data()[i] = value; f_a.data()[i] = value;
     c_b.data()[i] = value+1.; f_b.data()[i] = value+1.;
+    c_b_mixed.data()[i] = value+1.; f_b_mixed.data()[i] = value+1.;
     c_sign.data()[i] = i%2 == 0 ? -1. : 1.; f_sign.data()[i] = c_sign.data()[i];
     c_mask.data()[i] = i%2 == 0; f_mask.data()[i] = c_mask.data()[i];
   }
 
   auto c_a_device = c_a.createDeviceCopy();
   auto c_b_device = c_b.createDeviceCopy();
+  auto c_b_mixed_device = c_b_mixed.createDeviceCopy();
   auto c_sign_device = c_sign.createDeviceCopy();
   auto c_mask_device = c_mask.createDeviceCopy();
   auto f_a_device = f_a.createDeviceCopy();
   auto f_b_device = f_b.createDeviceCopy();
+  auto f_b_mixed_device = f_b_mixed.createDeviceCopy();
   auto f_sign_device = f_sign.createDeviceCopy();
   auto f_mask_device = f_mask.createDeviceCopy();
 
@@ -299,4 +372,42 @@ void test_host_device_intrinsics() {
   check_dynamic_routines(c_a_device,c_b_device,c_sign_device,c_mask_device,0,0);
   check_dynamic_routines(f_a,f_b,f_sign,f_mask,1,-2);
   check_dynamic_routines(f_a_device,f_b_device,f_sign_device,f_mask_device,1,-2);
+  check_mixed_dynamic_componentwise(c_a,c_b_mixed);
+  check_mixed_dynamic_componentwise(c_a_device,c_b_mixed_device);
+  check_mixed_dynamic_componentwise(f_a,f_b_mixed);
+  check_mixed_dynamic_componentwise(f_a_device,f_b_mixed_device);
+
+  // Unequal extents challenge the linear-order assumption while confirming that each style remains valid on its own.
+  yakl::Array  <double **,Kokkos::HostSpace> c_left ("C left" ,2,3);
+  yakl::Array  <double **,Kokkos::HostSpace> c_right("C right",2,3);
+  yakl::Array  <bool   **,Kokkos::HostSpace> c_cond ("C cond" ,2,3);
+  yakl::Array_F<double **,Kokkos::HostSpace> f_left ("F left" ,2,3);
+  yakl::Array_F<double **,Kokkos::HostSpace> f_right("F right",2,3);
+  yakl::Array_F<bool   **,Kokkos::HostSpace> f_cond ("F cond" ,2,3);
+  for (int j=0; j < 2; j++) {
+    for (int i=0; i < 3; i++) {
+      double const left  = 10*j + i;
+      double const right = 100 + 10*j + i;
+      bool const cond = (j+i)%2 == 0;
+      c_left (j  ,i  ) = left;  f_left (j+1,i+1) = left;
+      c_right(j  ,i  ) = right; f_right(j+1,i+1) = right;
+      c_cond (j  ,i  ) = cond;  f_cond (j+1,i+1) = cond;
+    }
+  }
+  using yakl::componentwise::operator+;
+  auto const c_sum = c_left+c_right;
+  auto const f_sum = f_left+f_right;
+  auto const c_merged = yakl::intrinsics::merge(c_left,c_right,c_cond);
+  auto const f_merged = yakl::intrinsics::merge(f_left,f_right,f_cond);
+  for (int j=0; j < 2; j++) {
+    for (int i=0; i < 3; i++) {
+      double const left  = 10*j + i;
+      double const right = 100 + 10*j + i;
+      double const expected_merge = (j+i)%2 == 0 ? left : right;
+      if (c_sum(j,i) != left+right || f_sum(j+1,i+1) != left+right ||
+          c_merged(j,i) != expected_merge || f_merged(j+1,i+1) != expected_merge) {
+        Kokkos::abort("same-style multidimensional componentwise operation or merge failed");
+      }
+    }
+  }
 }

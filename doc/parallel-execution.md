@@ -119,7 +119,16 @@ yakl::autotune::parallel_for("stencil",bounds,KOKKOS_LAMBDA (size_t j, size_t i)
 The identity includes the label and bound dimensions. Use the same label for the same kernel body and logical workload;
 do not deliberately combine unrelated kernels. Timing uses CUDA or HIP events on those backends and fenced wall-clock time
 elsewhere. `yakl::autotune::print_best()` prints the selected `Config<threads>{tile}` and speedup; `yakl::finalize()` calls it.
-Autotune state is process-local and is not thread-safe for concurrent host calls with the same internal map.
+If a label has not completed its full tuning cycle, the report marks it as incomplete and uses the best completed timed
+sample available. A label that has only reached its discarded warmup reports that no timed sample exists. Finalization
+does not force the remaining configurations to run and does not treat partial tuning as an error.
+After printing the report, `yakl::finalize()` clears all autotuning contexts. A later `yakl::init()` therefore begins a new
+tuning interval rather than reusing complete or partial measurements from the previous lifecycle interval.
+
+Autotuning is a host-thread-confined facility. Its process-local state is shared by every autotuned label and has no
+internal synchronization. Do not call any `yakl::autotune::parallel_for`, `parallel_for_F`, or `print_best` operation
+concurrently from multiple application host threads, even when labels differ. Complete or join all such callers before
+`yakl::finalize()`. Ordinary non-autotuned YAKL launchers are not subject to this autotune-state restriction.
 
 ## Host/device and lifetime rules
 

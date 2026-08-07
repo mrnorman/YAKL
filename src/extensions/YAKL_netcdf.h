@@ -297,7 +297,7 @@ namespace yakl {
         return *this;
       }
 
-      bool isNull() { return ncid == -999; }
+      bool isNull() const { return ncid == -999; }
 
       void open( std::string fname , int mode ) {
         if (fname.empty()) Kokkos::abort("ERROR: cannot open a netCDF file with an empty name");
@@ -394,6 +394,11 @@ namespace yakl {
       NcDim addDim( std::string dimName ) {
         if (ncid == -999) Kokkos::abort("ERROR: defining a dimension in an unopened netCDF file");
         if (dimName.empty()) Kokkos::abort("ERROR: netCDF dimension name cannot be empty");
+        int num_unlimited;
+        ncwrap( nc_inq_unlimdims(ncid,&num_unlimited,nullptr) , __LINE__ );
+        if (num_unlimited != 0) {
+          throw std::runtime_error("ERROR: SimpleNetCDF supports only one unlimited dimension per file");
+        }
         int dimid;
         ncwrap( nc_def_dim(ncid , dimName.c_str() , NC_UNLIMITED , &dimid ) , __LINE__ );
         return NcDim( dimName , 0 , dimid , true );
@@ -602,7 +607,7 @@ namespace yakl {
       if (varName.empty()) Kokkos::abort("ERROR: netCDF variable name cannot be empty");
       // Make sure the variable is there and is the right dimension
       auto var = file.getVar(varName);
-      std::vector<int> dimSizes(rank);
+      std::vector<size_t> dimSizes(rank);
       if ( ! var.isNull() ) {
         int expectedType;
         if constexpr (std::is_same_v<T,bool>) expectedType = NC_INT;
@@ -622,7 +627,7 @@ namespace yakl {
         if constexpr (std::is_same_v<T,bool>) {
           auto tmp = arr.template clone_object<Kokkos::HostSpace,int>();
           var.getVar(tmp.data());
-          for (int i=0; i < arr.size(); i++) { arrHost.data()[i] = tmp.data()[i] == 1; }
+          for (size_t i=0; i < arr.size(); i++) { arrHost.data()[i] = tmp.data()[i] == 1; }
         } else {
           var.getVar(arrHost.data());
         }
@@ -632,7 +637,7 @@ namespace yakl {
         if constexpr (std::is_same_v<T,bool>) {
           auto tmp = arr.template clone_object<Kokkos::HostSpace,int>();
           var.getVar(tmp.data());
-          for (int i=0; i < arr.size(); i++) { arr.data()[i] = tmp.data()[i] == 1; }
+          for (size_t i=0; i < arr.size(); i++) { arr.data()[i] = tmp.data()[i] == 1; }
         } else {
           var.getVar(arr.data());
         }
@@ -665,6 +670,258 @@ namespace yakl {
     }
 
 
+  private:
+    template <class T>
+    void putAttributeData(int varid, std::string const & attName, T const *data, size_t count) {
+      using U = std::remove_cv_t<T>;
+      if (file.isNull()) Kokkos::abort("ERROR: writing an attribute to an unopened netCDF file");
+      if (varid < NC_GLOBAL) Kokkos::abort("ERROR: netCDF attribute variable does not exist");
+      if (attName.empty()) Kokkos::abort("ERROR: netCDF attribute name cannot be empty");
+      nc_type const xtype = std::is_same_v<U,bool> ? NC_UBYTE : getType<U>();
+      if constexpr (std::is_same_v<U,char>) {
+        ncwrap(nc_put_att_text(file.ncid,varid,attName.c_str(),count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,signed char>) {
+        ncwrap(nc_put_att_schar(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned char>) {
+        ncwrap(nc_put_att_uchar(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,short>) {
+        ncwrap(nc_put_att_short(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned short>) {
+        ncwrap(nc_put_att_ushort(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,int>) {
+        ncwrap(nc_put_att_int(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned int>) {
+        ncwrap(nc_put_att_uint(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,long>) {
+        ncwrap(nc_put_att_long(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned long>) {
+        std::vector<unsigned long long> converted(count);
+        for (size_t i=0; i < count; i++) converted[i] = static_cast<unsigned long long>(data[i]);
+        ncwrap(nc_put_att_ulonglong(file.ncid,varid,attName.c_str(),xtype,count,converted.data()),__LINE__);
+      } else if constexpr (std::is_same_v<U,long long>) {
+        ncwrap(nc_put_att_longlong(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned long long>) {
+        ncwrap(nc_put_att_ulonglong(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,float>) {
+        ncwrap(nc_put_att_float(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,double>) {
+        ncwrap(nc_put_att_double(file.ncid,varid,attName.c_str(),xtype,count,data),__LINE__);
+      } else if constexpr (std::is_same_v<U,bool>) {
+        std::vector<unsigned char> converted(count);
+        for (size_t i=0; i < count; i++) converted[i] = data[i] ? 1 : 0;
+        ncwrap(nc_put_att_uchar(file.ncid,varid,attName.c_str(),xtype,count,converted.data()),__LINE__);
+      }
+    }
+
+
+    template <class T>
+    void getAttributeData(int varid, std::string const & attName, T *data) const {
+      using U = std::remove_cv_t<T>;
+      if constexpr (std::is_same_v<U,char>) {
+        ncwrap(nc_get_att_text(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,signed char>) {
+        ncwrap(nc_get_att_schar(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned char>) {
+        ncwrap(nc_get_att_uchar(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,short>) {
+        ncwrap(nc_get_att_short(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned short>) {
+        ncwrap(nc_get_att_ushort(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,int>) {
+        ncwrap(nc_get_att_int(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned int>) {
+        ncwrap(nc_get_att_uint(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,long>) {
+        ncwrap(nc_get_att_long(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned long>) {
+        size_t count;
+        ncwrap(nc_inq_attlen(file.ncid,varid,attName.c_str(),&count),__LINE__);
+        std::vector<unsigned long long> converted(count);
+        ncwrap(nc_get_att_ulonglong(file.ncid,varid,attName.c_str(),converted.data()),__LINE__);
+        for (size_t i=0; i < count; i++) {
+          if (converted[i] > std::numeric_limits<unsigned long>::max()) {
+            Kokkos::abort("ERROR: netCDF attribute value does not fit in unsigned long");
+          }
+          data[i] = static_cast<unsigned long>(converted[i]);
+        }
+      } else if constexpr (std::is_same_v<U,long long>) {
+        ncwrap(nc_get_att_longlong(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,unsigned long long>) {
+        ncwrap(nc_get_att_ulonglong(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,float>) {
+        ncwrap(nc_get_att_float(file.ncid,varid,attName.c_str(),data),__LINE__);
+      } else if constexpr (std::is_same_v<U,double>) {
+        ncwrap(nc_get_att_double(file.ncid,varid,attName.c_str(),data),__LINE__);
+      }
+    }
+
+
+    template <class T>
+    size_t checkAttribute(int varid, std::string const & attName) const {
+      if (file.isNull()) Kokkos::abort("ERROR: accessing an attribute in an unopened netCDF file");
+      if (attName.empty()) Kokkos::abort("ERROR: netCDF attribute name cannot be empty");
+      nc_type xtype;
+      size_t count;
+      ncwrap(nc_inq_att(file.ncid,varid,attName.c_str(),&xtype,&count),__LINE__);
+      nc_type const expected = std::is_same_v<std::remove_cv_t<T>,bool> ? NC_UBYTE : getType<T>();
+      if (xtype != expected) Kokkos::abort("ERROR: netCDF attribute type differs from the requested type");
+      return count;
+    }
+
+
+  public:
+    template <class T> requires std::is_arithmetic_v<T>
+    void writeGlobalAttribute(T const &value, std::string attName) {
+      if (file.isNull()) Kokkos::abort("ERROR: writing an attribute to an unopened netCDF file");
+      if (attName.empty()) Kokkos::abort("ERROR: netCDF attribute name cannot be empty");
+      putAttributeData(NC_GLOBAL,attName,&value,1);
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void writeGlobalAttribute(std::vector<T> const &values, std::string attName) {
+      if (file.isNull()) Kokkos::abort("ERROR: writing an attribute to an unopened netCDF file");
+      if (attName.empty()) Kokkos::abort("ERROR: netCDF attribute name cannot be empty");
+      if constexpr (std::is_same_v<T,bool>) {
+        std::vector<unsigned char> converted(values.size());
+        for (size_t i=0; i < values.size(); i++) converted[i] = values[i] ? 1 : 0;
+        putAttributeData(NC_GLOBAL,attName,converted.data(),converted.size());
+      } else {
+        putAttributeData(NC_GLOBAL,attName,values.data(),values.size());
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void readGlobalAttribute(T &value, std::string attName) const {
+      if (checkAttribute<T>(NC_GLOBAL,attName) != 1) Kokkos::abort("ERROR: netCDF attribute is not scalar");
+      if constexpr (std::is_same_v<T,bool>) {
+        unsigned char converted;
+        getAttributeData(NC_GLOBAL,attName,&converted);
+        value = converted != 0;
+      } else {
+        getAttributeData(NC_GLOBAL,attName,&value);
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void readGlobalAttribute(std::vector<T> &values, std::string attName) const {
+      size_t const count = checkAttribute<T>(NC_GLOBAL,attName);
+      if constexpr (std::is_same_v<T,bool>) {
+        std::vector<unsigned char> converted(count);
+        getAttributeData(NC_GLOBAL,attName,converted.data());
+        values.assign(count,false);
+        for (size_t i=0; i < count; i++) values[i] = converted[i] != 0;
+      } else {
+        values.resize(count);
+        getAttributeData(NC_GLOBAL,attName,values.data());
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void writeVariableAttribute(T const &value, std::string varName, std::string attName) {
+      putAttributeData(file.getVar(varName).getId(),attName,&value,1);
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void writeVariableAttribute(std::vector<T> const &values, std::string varName, std::string attName) {
+      int const varid = file.getVar(varName).getId();
+      if (varid < 0) Kokkos::abort("ERROR: netCDF attribute variable does not exist");
+      if constexpr (std::is_same_v<T,bool>) {
+        std::vector<unsigned char> converted(values.size());
+        for (size_t i=0; i < values.size(); i++) converted[i] = values[i] ? 1 : 0;
+        putAttributeData(varid,attName,converted.data(),converted.size());
+      } else {
+        putAttributeData(varid,attName,values.data(),values.size());
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void readVariableAttribute(T &value, std::string varName, std::string attName) const {
+      int const varid = file.getVar(varName).getId();
+      if (varid < 0) Kokkos::abort("ERROR: netCDF attribute variable does not exist");
+      if (checkAttribute<T>(varid,attName) != 1) Kokkos::abort("ERROR: netCDF attribute is not scalar");
+      if constexpr (std::is_same_v<T,bool>) {
+        unsigned char converted;
+        getAttributeData(varid,attName,&converted);
+        value = converted != 0;
+      } else {
+        getAttributeData(varid,attName,&value);
+      }
+    }
+
+
+    template <class T> requires std::is_arithmetic_v<T>
+    void readVariableAttribute(std::vector<T> &values, std::string varName, std::string attName) const {
+      int const varid = file.getVar(varName).getId();
+      if (varid < 0) Kokkos::abort("ERROR: netCDF attribute variable does not exist");
+      size_t const count = checkAttribute<T>(varid,attName);
+      if constexpr (std::is_same_v<T,bool>) {
+        std::vector<unsigned char> converted(count);
+        getAttributeData(varid,attName,converted.data());
+        values.assign(count,false);
+        for (size_t i=0; i < count; i++) values[i] = converted[i] != 0;
+      } else {
+        values.resize(count);
+        getAttributeData(varid,attName,values.data());
+      }
+    }
+
+
+    template <class T> requires std::is_same_v<std::remove_cvref_t<T>,std::string>
+    void writeGlobalAttribute(T const &value, std::string attName) {
+      if (file.isNull()) Kokkos::abort("ERROR: writing an attribute to an unopened netCDF file");
+      if (attName.empty()) Kokkos::abort("ERROR: netCDF attribute name cannot be empty");
+      putAttributeData(NC_GLOBAL,attName,value.data(),value.size());
+    }
+
+
+    template <class T> requires std::is_same_v<std::remove_cvref_t<T>,std::string>
+    void readGlobalAttribute(T &value, std::string attName) const {
+      size_t const count = checkAttribute<char>(NC_GLOBAL,attName);
+      value.resize(count);
+      getAttributeData(NC_GLOBAL,attName,value.data());
+    }
+
+
+    template <class T> requires std::is_same_v<std::remove_cvref_t<T>,std::string>
+    void writeVariableAttribute(T const &value, std::string varName, std::string attName) {
+      int const varid = file.getVar(varName).getId();
+      if (varid < 0) Kokkos::abort("ERROR: netCDF attribute variable does not exist");
+      putAttributeData(varid,attName,value.data(),value.size());
+    }
+
+
+    template <class T> requires std::is_same_v<std::remove_cvref_t<T>,std::string>
+    void readVariableAttribute(T &value, std::string varName, std::string attName) const {
+      int const varid = file.getVar(varName).getId();
+      if (varid < 0) Kokkos::abort("ERROR: netCDF attribute variable does not exist");
+      size_t const count = checkAttribute<char>(varid,attName);
+      value.resize(count);
+      getAttributeData(varid,attName,value.data());
+    }
+
+
+    template <class T>
+    T readGlobalAttribute(std::string attName) const {
+      T value;
+      readGlobalAttribute(value,attName);
+      return value;
+    }
+
+
+    template <class T>
+    T readVariableAttribute(std::string varName, std::string attName) const {
+      T value;
+      readVariableAttribute(value,varName,attName);
+      return value;
+    }
+
+
     template <class T> int getType() const {
            if ( std::is_same_v<typename std::remove_cv_t<T>,signed        char> ) { return NC_BYTE;   }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned      char> ) { return NC_UBYTE;  }
@@ -672,7 +929,9 @@ namespace yakl {
       else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned     short> ) { return NC_USHORT; }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,               int> ) { return NC_INT;    }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned       int> ) { return NC_UINT;   }
-      else if ( std::is_same_v<typename std::remove_cv_t<T>,              long> ) { return NC_INT;    }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,              long> ) {
+        return sizeof(long) == sizeof(int) ? NC_INT : NC_INT64;
+      }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,unsigned      long> ) {
         return sizeof(unsigned long) == sizeof(unsigned int) ? NC_UINT : NC_UINT64;
       }
@@ -681,6 +940,7 @@ namespace yakl {
       else if ( std::is_same_v<typename std::remove_cv_t<T>,             float> ) { return NC_FLOAT;  }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,            double> ) { return NC_DOUBLE; }
       else if ( std::is_same_v<typename std::remove_cv_t<T>,              char> ) { return NC_CHAR;   }
+      else if ( std::is_same_v<typename std::remove_cv_t<T>,              bool> ) { return NC_UBYTE;  }
       else { Kokkos::abort("Invalid type"); }
       return -1;
     }

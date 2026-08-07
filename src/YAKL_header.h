@@ -24,6 +24,7 @@
 #include <array>
 #include <atomic>
 #include <mutex>
+#include <optional>
 #include "stdlib.h"
 #include <list>
 #include <functional>

@@ -80,7 +80,7 @@ int main() {
     }
     {
       using yakl::componentwise::operator==;
-      auto equal = array == farray;
+      auto equal = farray == farray;
       if (equal.size() != largeSize || yakl::intrinsics::count(equal) != largeSize) {
         die("ERROR: large array componentwise operation or count reduction was truncated");
       }

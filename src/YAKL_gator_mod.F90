@@ -178,7 +178,7 @@ contains
   end function gator_checked_bytes
 
 
-  function gator_checked_allocate(bytes,already_associated) result(ptr)
+  function checked_alloc(bytes,already_associated) result(ptr)
     use iso_c_binding
     integer(c_size_t), value :: bytes
     logical, value :: already_associated
@@ -186,7 +186,24 @@ contains
     if (already_associated) error stop "ERROR: gator_allocate called with an associated pointer"
     ptr = gator_allocate_c(bytes)
     if (.not. c_associated(ptr)) error stop "ERROR: gator_allocate returned a null C pointer"
-  end function gator_checked_allocate
+  end function checked_alloc
+
+
+  function checked_bounds(bytes,dims,lbounds) result(num_bytes)
+    use iso_c_binding
+    integer(c_size_t), value :: bytes
+    integer, intent(in) :: dims(:), lbounds(:)
+    integer(c_size_t) :: num_bytes
+    integer :: i
+    if (size(dims) /= size(lbounds)) error stop "ERROR: gator_allocate bounds rank mismatch"
+    do i = 1, size(dims)
+      if (dims(i) <= 0) error stop "ERROR: gator_allocate dimensions must be positive"
+      if (lbounds(i) > huge(lbounds(i))-(dims(i)-1)) then
+        error stop "ERROR: gator_allocate upper bound overflow"
+      endif
+    enddo
+    num_bytes = bytes
+  end function checked_bounds
 
 
   subroutine gator_checked_deallocate(ptr)
@@ -198,7 +215,7 @@ contains
 
 
 #define out inout
-#define gator_allocate_c(bytes) gator_checked_allocate(bytes,associated(arr))
+#define gator_allocate_c(bytes) checked_alloc(checked_bounds(bytes,dims,lbounds),associated(arr))
 #define gator_deallocate_c(ptr) gator_checked_deallocate(ptr)
 
 

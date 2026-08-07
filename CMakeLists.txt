@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.22)
 
 project(YAKL
         LANGUAGES C CXX Fortran
@@ -16,7 +16,9 @@ set_source_files_properties(${YAKL_F90_SOURCE} PROPERTIES COMPILE_OPTIONS "${YAK
 
 # Add the header-only YAKL C++ library target as well as the YAKL Fortran interface library target
 add_library(yakl STATIC ${YAKL_SOURCE})
-target_link_libraries(yakl PUBLIC Kokkos::kokkos)
+find_package(Threads REQUIRED)
+target_link_libraries(yakl PUBLIC Kokkos::kokkos Threads::Threads)
+target_compile_features(yakl PUBLIC cxx_std_20)
 target_include_directories(yakl PUBLIC src external src/extensions ${CMAKE_CURRENT_BINARY_DIR})
 
 option(YAKL_ENABLE_COVERAGE "Instrument YAKL and its consumers for gcov coverage" OFF)
@@ -31,11 +33,9 @@ if (YAKL_ENABLE_COVERAGE)
   target_link_libraries(yakl PUBLIC --coverage)
 endif()
 
-# Special treatment for MPI
+option(YAKL_HAVE_MPI "Enable MPI-aware YAKL behavior" OFF)
 if (YAKL_HAVE_MPI)
   find_package(MPI COMPONENTS C REQUIRED)
-  if(MPI_FOUND)
-    target_link_libraries(yakl INTERFACE MPI::MPI_C)
-    target_link_libraries(${YAKL_FORTRAN_INTERFACE_TARGET} MPI::MPI_C)
-  endif()
+  target_compile_definitions(yakl PUBLIC HAVE_MPI)
+  target_link_libraries(yakl PUBLIC MPI::MPI_C)
 endif()

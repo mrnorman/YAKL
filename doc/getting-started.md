@@ -40,6 +40,17 @@ int main(int argc, char **argv) {
 }
 ```
 
+`yakl::init()` and `yakl::finalize()` are single-caller lifecycle operations. Call them from the application's controlling
+host thread, outside every application-level host threaded region. `init()` must finish before entering an OpenMP region,
+starting `std::thread` workers that use YAKL, or launching other host work that can call YAKL. Before `finalize()`, leave those
+regions and join or otherwise quiesce every application host thread that can execute a YAKL operation. Kokkos may keep its
+own internal worker threads alive; the requirement is that no application work is concurrently using YAKL.
+
+This is an unconditional API precondition, not a debug-only check. Never call `init()` or `finalize()` concurrently, and do
+not overlap either call with array construction/destruction, raw allocation/deallocation, launches, timer calls, or other
+YAKL operations. The fence inside `finalize()` waits for submitted Kokkos execution but does not join application host
+threads or make a concurrent lifecycle transition safe.
+
 `yakl::init()` and allocation through `yakl::DeviceSpace` require an initialized Kokkos runtime. Allocation or
 deallocation through `DeviceSpace` outside the interval from `yakl::init()` through `yakl::finalize()` is a fatal error.
 `yakl::finalize()` fences, rejects live `DeviceSpace` allocations, prints enabled timers and autotune results, and releases
@@ -62,7 +73,7 @@ yakl::init(config);
 | --- | --- |
 | `set_pool_enabled(bool)` | Explicitly enable or disable the device pool. `false` is honored even with the default size. |
 | `set_pool_size_mb(size_t)` | Set the pool capacity in MiB. Zero means use the default/environment configuration. |
-| `set_pool_block_bytes(size_t)` | Set allocation granularity; it must be a positive multiple of Kokkos memory alignment. |
+| `set_pool_block_bytes(size_t)` | Explicitly set allocation granularity; it must be a positive multiple of Kokkos memory alignment. |
 | `get_pool_setting()` | Return `PoolSetting::Default`, `Enabled`, or `Disabled`. |
 | `get_pool_enabled()` | True only when the setting was explicitly enabled. |
 | `get_pool_size_mb()` | Return the configured size, where zero still means unspecified. |
@@ -76,8 +87,9 @@ When no explicit nonzero pool size is supplied, these environment variables are 
 | `GATOR_INITIAL_MB` | Positive pool size in MiB; the default is 4096 MiB. |
 | `GATOR_BLOCK_BYTES` | Positive block size divisible by Kokkos memory alignment; the default is 4096 bytes. |
 
-An explicit `set_pool_enabled` selection overrides `GATOR_DISABLE`. An explicit nonzero pool size causes configuration
-values, rather than the environment's size/block values, to be used.
+An explicit `set_pool_enabled` selection overrides `GATOR_DISABLE`. An explicit `set_pool_block_bytes` value always
+overrides `GATOR_BLOCK_BYTES`, even when the pool size comes from the environment or the 4096 MiB default. An explicit
+nonzero pool size overrides `GATOR_INITIAL_MB`.
 
 ## First multidimensional kernel
 
@@ -123,6 +135,7 @@ so callers should not expect to catch them as C++ exceptions.
 - `deep_copy_to(host_array)` fences because the destination is `Kokkos::HostSpace`.
 - reductions that return a host scalar synchronize through Kokkos reduction semantics.
 - timers fence at start and stop when profiling is enabled so measured intervals represent completed work.
-- `yakl::finalize()` always fences before checking allocation lifetime and freeing the pool.
+- After application host threads are quiescent, `yakl::finalize()` fences submitted Kokkos work before checking allocation
+  lifetime and freeing the pool.
 
 [API home](README.md) · Next: [Arrays and indexing](arrays.md)

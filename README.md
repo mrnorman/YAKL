@@ -18,7 +18,7 @@ YAKL is intended to be included in an application's CMake build with `add_subdir
 backend and architecture before adding Kokkos, then add YAKL and link its `yakl` target:
 
 ```cmake
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22)
 project(my_application LANGUAGES C CXX Fortran)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -66,7 +66,9 @@ int main(int argc, char **argv) {
 }
 ```
 
-Allocation and deallocation through `yakl::DeviceSpace` must occur between `yakl::init()` and `yakl::finalize()`.
+Call `yakl::init()` and `yakl::finalize()` from the controlling host thread outside application host-threaded regions.
+Quiesce or join every application host thread that can use YAKL before finalization. Allocation and deallocation through
+`yakl::DeviceSpace` must occur strictly between those lifecycle calls and must not overlap either transition.
 
 ## API documentation
 

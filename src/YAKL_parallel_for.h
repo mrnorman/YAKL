@@ -158,6 +158,7 @@ namespace yakl {
         if (iglob >= nIter) Kokkos::abort("ERROR: Bounds::unpack global index out of bounds");
       }
     }
+
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , unsigned_t & i0 ) const requires (N==1) {
       check_global_index(iglob);
       i0 = iglob        ;                        i0 += default_lbound;
@@ -299,6 +300,42 @@ namespace yakl {
       }
     }
 
+    KOKKOS_INLINE_FUNCTION signed_t index_from_coordinate(unsigned_t coordinate, int dim) const {
+      if constexpr (kokkos_debug) {
+        if (coordinate != 0 && strides[dim] > std::numeric_limits<unsigned_t>::max()/coordinate) {
+          Kokkos::abort("ERROR: Bounds index reconstruction overflow");
+        }
+      }
+      unsigned_t const delta       = coordinate*strides[dim];
+      unsigned_t constexpr max_pos = static_cast<unsigned_t>(std::numeric_limits<signed_t>::max());
+      signed_t const lower         = lbounds[dim];
+      if (lower >= 0) {
+        if constexpr (kokkos_debug) {
+          if (delta > max_pos-static_cast<unsigned_t>(lower)) {
+            Kokkos::abort("ERROR: Bounds index reconstruction overflow");
+          }
+        }
+        return lower+static_cast<signed_t>(delta);
+      }
+      unsigned_t const lower_magnitude = static_cast<unsigned_t>(-(lower+1))+1;
+      if (delta < lower_magnitude) {
+        unsigned_t const result_magnitude = lower_magnitude-delta;
+        if (result_magnitude == max_pos+1) return std::numeric_limits<signed_t>::min();
+        return -static_cast<signed_t>(result_magnitude);
+      }
+      unsigned_t const result = delta-lower_magnitude;
+      if constexpr (kokkos_debug) {
+        if (result > max_pos) Kokkos::abort("ERROR: Bounds index reconstruction overflow");
+      }
+      return static_cast<signed_t>(result);
+    }
+
+    KOKKOS_INLINE_FUNCTION signed_t unpack_dimension(unsigned_t & iglob, int dim) const {
+      unsigned_t const coordinate = dim == N-1 ? iglob : iglob/offs[dim];
+      if (dim != N-1) iglob -= offs[dim]*coordinate;
+      return index_from_coordinate(coordinate,dim);
+    }
+
     KOKKOS_INLINE_FUNCTION Bounds(LS s0) {
       static_assert(N==1,"ERROR: Creating Bounds with wrong number of bounds parameters");
       init(s0);
@@ -334,31 +371,31 @@ namespace yakl {
 
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ) const requires (N==1) {
       check_global_index(iglob);
-      i0 = iglob        ;                        i0 = i0*strides[0]+lbounds[0];
+      i0 = unpack_dimension(iglob,0);
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
                                                            signed_t & i1 ) const requires (N==2) {
       check_global_index(iglob);
-      i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-      i1 = iglob        ;                        i1 = i1*strides[1]+lbounds[1];
+      i0 = unpack_dimension(iglob,0);
+      i1 = unpack_dimension(iglob,1);
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
                                                            signed_t & i1 ,
                                                            signed_t & i2 ) const requires (N==3) {
       check_global_index(iglob);
-      i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-      i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-      i2 = iglob        ;                        i2 = i2*strides[2]+lbounds[2];
+      i0 = unpack_dimension(iglob,0);
+      i1 = unpack_dimension(iglob,1);
+      i2 = unpack_dimension(iglob,2);
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
                                                            signed_t & i1 ,
                                                            signed_t & i2 ,
                                                            signed_t & i3 ) const requires (N==4) {
       check_global_index(iglob);
-      i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-      i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-      i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-      i3 = iglob        ;                        i3 = i3*strides[3]+lbounds[3];
+      i0 = unpack_dimension(iglob,0);
+      i1 = unpack_dimension(iglob,1);
+      i2 = unpack_dimension(iglob,2);
+      i3 = unpack_dimension(iglob,3);
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
                                                            signed_t & i1 ,
@@ -366,11 +403,11 @@ namespace yakl {
                                                            signed_t & i3 ,
                                                            signed_t & i4) const requires (N==5) {
       check_global_index(iglob);
-      i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-      i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-      i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-      i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
-      i4 = iglob        ;                        i4 = i4*strides[4]+lbounds[4];
+      i0 = unpack_dimension(iglob,0);
+      i1 = unpack_dimension(iglob,1);
+      i2 = unpack_dimension(iglob,2);
+      i3 = unpack_dimension(iglob,3);
+      i4 = unpack_dimension(iglob,4);
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
                                                            signed_t & i1 ,
@@ -379,12 +416,12 @@ namespace yakl {
                                                            signed_t & i4 ,
                                                            signed_t & i5) const requires (N==6) {
       check_global_index(iglob);
-      i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-      i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-      i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-      i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
-      i4 = iglob/offs[4];  iglob -= offs[4]*i4;  i4 = i4*strides[4]+lbounds[4];
-      i5 = iglob        ;                        i5 = i5*strides[5]+lbounds[5];
+      i0 = unpack_dimension(iglob,0);
+      i1 = unpack_dimension(iglob,1);
+      i2 = unpack_dimension(iglob,2);
+      i3 = unpack_dimension(iglob,3);
+      i4 = unpack_dimension(iglob,4);
+      i5 = unpack_dimension(iglob,5);
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
                                                            signed_t & i1 ,
@@ -394,13 +431,13 @@ namespace yakl {
                                                            signed_t & i5 ,
                                                            signed_t & i6) const requires (N==7) {
       check_global_index(iglob);
-      i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-      i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-      i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-      i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
-      i4 = iglob/offs[4];  iglob -= offs[4]*i4;  i4 = i4*strides[4]+lbounds[4];
-      i5 = iglob/offs[5];  iglob -= offs[5]*i5;  i5 = i5*strides[5]+lbounds[5];
-      i6 = iglob        ;                        i6 = i6*strides[6]+lbounds[6];
+      i0 = unpack_dimension(iglob,0);
+      i1 = unpack_dimension(iglob,1);
+      i2 = unpack_dimension(iglob,2);
+      i3 = unpack_dimension(iglob,3);
+      i4 = unpack_dimension(iglob,4);
+      i5 = unpack_dimension(iglob,5);
+      i6 = unpack_dimension(iglob,6);
     }
     KOKKOS_INLINE_FUNCTION void unpack( unsigned_t iglob , signed_t & i0 ,
                                                            signed_t & i1 ,
@@ -411,14 +448,14 @@ namespace yakl {
                                                            signed_t & i6 ,
                                                            signed_t & i7) const requires (N==8) {
       check_global_index(iglob);
-      i0 = iglob/offs[0];  iglob -= offs[0]*i0;  i0 = i0*strides[0]+lbounds[0];
-      i1 = iglob/offs[1];  iglob -= offs[1]*i1;  i1 = i1*strides[1]+lbounds[1];
-      i2 = iglob/offs[2];  iglob -= offs[2]*i2;  i2 = i2*strides[2]+lbounds[2];
-      i3 = iglob/offs[3];  iglob -= offs[3]*i3;  i3 = i3*strides[3]+lbounds[3];
-      i4 = iglob/offs[4];  iglob -= offs[4]*i4;  i4 = i4*strides[4]+lbounds[4];
-      i5 = iglob/offs[5];  iglob -= offs[5]*i5;  i5 = i5*strides[5]+lbounds[5];
-      i6 = iglob/offs[6];  iglob -= offs[6]*i6;  i6 = i6*strides[6]+lbounds[6];
-      i7 = iglob        ;                        i7 = i7*strides[7]+lbounds[7];
+      i0 = unpack_dimension(iglob,0);
+      i1 = unpack_dimension(iglob,1);
+      i2 = unpack_dimension(iglob,2);
+      i3 = unpack_dimension(iglob,3);
+      i4 = unpack_dimension(iglob,4);
+      i5 = unpack_dimension(iglob,5);
+      i6 = unpack_dimension(iglob,6);
+      i7 = unpack_dimension(iglob,7);
     }
   };
 

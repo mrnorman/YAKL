@@ -8,6 +8,13 @@ namespace yakl {
     bool constexpr has_array_operand = yakl::is_Array<V1> || yakl::is_Array<V2>;
 
     template <class V1, class V2>
+    bool constexpr compatible_array_operands = V1::is_cstyle == V2::is_cstyle &&
+                                               std::is_same_v<typename V1::memory_space,typename V2::memory_space>;
+
+    template <class V1, class V2>
+    bool constexpr compatible_stack_operands = V1::is_cstyle == V2::is_cstyle;
+
+    template <class V1, class V2>
     KOKKOS_INLINE_FUNCTION bool same_shape(V1 const & a, V2 const & b) {
       if constexpr (V1::rank() != V2::rank()) {
         return false;
@@ -37,6 +44,8 @@ namespace yakl {
     }
     template <class V1, class V2, class F> requires yakl::is_SArray<V1> && yakl::is_SArray<V2>
     KOKKOS_INLINE_FUNCTION auto binary( V1 const & l , V2 const & r , F const & f ) {
+      static_assert(compatible_stack_operands<V1,V2>,
+                    "ERROR: componentwise binary operation cannot mix SArray and SArray_F operands");
       static_assert(V1::rank == V2::rank,"ERROR: componentwise binary operation requires equal ranks");
       static_assert(V1::size() == V2::size(),"ERROR: componentwise binary operation requires equal sizes");
       if constexpr (kokkos_debug) {
@@ -94,6 +103,8 @@ namespace yakl {
     inline auto binary( V1 const & l , V2 const & r , F const & f ) ->
     decltype(l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r.data()[0]))>())
     {
+      static_assert(compatible_array_operands<V1,V2>,
+                    "ERROR: componentwise binary operation requires the same Array style and memory space");
       if constexpr (kokkos_debug) {
         if (!l.is_allocated() || !r.is_allocated()) {
           Kokkos::abort("ERROR: componentwise binary operation on an unallocated Array");

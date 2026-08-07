@@ -114,10 +114,15 @@ namespace yakl {
     template <class T> requires std::is_floating_point_v<T>
     KOKKOS_INLINE_FUNCTION T gen_uniform(T lb, T ub) {
       if constexpr (kokkos_debug) {
-        if (ub < lb) Kokkos::abort("ERROR: Random::gen_uniform upper bound is less than lower bound");
+        if (!Kokkos::isfinite(lb) || !Kokkos::isfinite(ub) || ub < lb) {
+          Kokkos::abort("ERROR: Random::gen_uniform bounds must be finite with upper bound >= lower bound");
+        }
       }
       if (ub == lb) return lb;
-      T const value = gen_uniform<T>() * (ub-lb) + lb;
+      T const unit = gen_uniform<T>();
+      // Avoid forming ub-lb when opposite-signed finite endpoints can make that difference overflow.
+      T const value = lb < T{0} && ub > T{0} ? lb*(T{1}-unit) + ub*unit : lb + (ub-lb)*unit;
+      if (value < lb) return lb;
       return value < ub ? value : Kokkos::nextafter(ub,lb);
     }
 
@@ -129,7 +134,9 @@ namespace yakl {
     template <class T = float, bool CacheSpare = true> requires std::is_floating_point_v<T>
     KOKKOS_INLINE_FUNCTION T gen_normal(T mean = T{0}, T stddev = T{1}) {
       if constexpr (kokkos_debug) {
-        if (stddev < 0) Kokkos::abort("ERROR: Random::gen_normal standard deviation is negative");
+        if (!Kokkos::isfinite(mean) || !Kokkos::isfinite(stddev) || stddev < 0) {
+          Kokkos::abort("ERROR: Random::gen_normal mean and standard deviation must be finite, with standard deviation >= 0");
+        }
       }
       if (stddev == 0) return mean;
 
@@ -158,8 +165,8 @@ namespace yakl {
     /** @brief Generates true with the requested probability. */
     KOKKOS_INLINE_FUNCTION bool gen_bernoulli(double probability = 0.5) {
       if constexpr (kokkos_debug) {
-        if (probability < 0 || probability > 1) {
-          Kokkos::abort("ERROR: Random::gen_bernoulli probability is outside [0,1]");
+        if (!Kokkos::isfinite(probability) || probability < 0 || probability > 1) {
+          Kokkos::abort("ERROR: Random::gen_bernoulli probability must be finite and inside [0,1]");
         }
       }
       if (probability <= 0) return false;
@@ -171,7 +178,9 @@ namespace yakl {
     template <class T = float> requires std::is_floating_point_v<T>
     KOKKOS_INLINE_FUNCTION T gen_exponential(T rate = T{1}) {
       if constexpr (kokkos_debug) {
-        if (rate <= 0) Kokkos::abort("ERROR: Random::gen_exponential rate must be positive");
+        if (!Kokkos::isfinite(rate) || rate <= 0) {
+          Kokkos::abort("ERROR: Random::gen_exponential rate must be finite and positive");
+        }
       }
       return -std::log1p(-gen_uniform<T>()) / rate;
     }

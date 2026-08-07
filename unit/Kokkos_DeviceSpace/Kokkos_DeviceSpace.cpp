@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cstdlib>
 #include <cstring>
+#include <type_traits>
 #include <utility>
 
 // template <typename T> struct ViewArrayAnalysis {
@@ -27,6 +28,33 @@ using yakl::parallel_for;
 using yakl::parallel_for_F;
 using yakl::intrinsics::sum;
 using yakl::COLON;
+
+
+using DefaultMemorySpace = Kokkos::DefaultExecutionSpace::memory_space;
+
+#ifdef YAKL_INTERNAL_DEVICE_SPACE_IS_HOST_ACCESSIBLE
+static_assert(std::is_same_v<DefaultMemorySpace,Kokkos::HostSpace>);
+static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,yakl::DeviceSpace>::assignable);
+static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,yakl::DeviceSpace>::accessible);
+static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,yakl::DeviceSpace>::deepcopy);
+static_assert(Kokkos::Impl::MemorySpaceAccess<yakl::DeviceSpace,Kokkos::HostSpace>::assignable);
+static_assert(Kokkos::Impl::MemorySpaceAccess<yakl::DeviceSpace,Kokkos::HostSpace>::accessible);
+static_assert(Kokkos::Impl::MemorySpaceAccess<yakl::DeviceSpace,Kokkos::HostSpace>::deepcopy);
+#else
+static_assert(! std::is_same_v<DefaultMemorySpace,Kokkos::HostSpace>);
+static_assert(! Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,yakl::DeviceSpace>::assignable);
+static_assert(! Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,yakl::DeviceSpace>::accessible);
+static_assert(  Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,yakl::DeviceSpace>::deepcopy);
+static_assert(! Kokkos::Impl::MemorySpaceAccess<yakl::DeviceSpace,Kokkos::HostSpace>::assignable);
+static_assert(! Kokkos::Impl::MemorySpaceAccess<yakl::DeviceSpace,Kokkos::HostSpace>::accessible);
+static_assert(  Kokkos::Impl::MemorySpaceAccess<yakl::DeviceSpace,Kokkos::HostSpace>::deepcopy);
+static_assert(Kokkos::Impl::MemorySpaceAccess<DefaultMemorySpace,yakl::DeviceSpace>::assignable);
+static_assert(Kokkos::Impl::MemorySpaceAccess<DefaultMemorySpace,yakl::DeviceSpace>::accessible);
+static_assert(Kokkos::Impl::MemorySpaceAccess<DefaultMemorySpace,yakl::DeviceSpace>::deepcopy);
+static_assert(Kokkos::Impl::MemorySpaceAccess<yakl::DeviceSpace,DefaultMemorySpace>::assignable);
+static_assert(Kokkos::Impl::MemorySpaceAccess<yakl::DeviceSpace,DefaultMemorySpace>::accessible);
+static_assert(Kokkos::Impl::MemorySpaceAccess<yakl::DeviceSpace,DefaultMemorySpace>::deepcopy);
+#endif
 
 
 void die(std::string const &msg) {

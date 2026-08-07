@@ -33,7 +33,7 @@ foreach(SCENARIO zero negative overflow)
            COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../Validation/expect_failure.sh
                         $<TARGET_FILE:Fortran_Gator_Validation> ${SCENARIO})
 endforeach()
-foreach(SCENARIO associated_allocate disassociated_deallocate interior_deallocate zero_extent)
+foreach(SCENARIO associated_allocate disassociated_deallocate interior_deallocate zero_extent lower_bound_overflow)
   add_test(NAME Fortran_Gator_${SCENARIO}
            COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../Validation/expect_failure.sh
                         $<TARGET_FILE:Fortran_Gator_Validation> ${SCENARIO})

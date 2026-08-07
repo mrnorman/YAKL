@@ -24,6 +24,11 @@ Every nonzero allocation through `DeviceSpace` increments YAKL's live-allocation
 the active YAKL lifecycle abort. `yakl::finalize()` fences, then aborts if any such allocation remains; this structurally
 prevents pool-backed pointers from surviving release of the pool.
 
+The lifecycle boundaries themselves are host-thread quiescence points. `init()` must complete before any application host
+thread allocates or otherwise uses YAKL, and every host allocation/deallocation operation must complete before the
+controlling host thread calls `finalize()`. In particular, do not call `finalize()` while another thread might destroy its
+last `Array` or Kokkos View. The finalization fence completes device execution but does not wait for application host threads.
+
 ## Pool behavior
 
 The device pool is enabled by default and has a default capacity of 4 GiB. It obtains one backing allocation from Kokkos and
@@ -36,7 +41,9 @@ increase its size; see [`InitConfig` and environment variables](getting-started.
 
 Pool bookkeeping is protected by a recursive mutex, so concurrent host allocation/free calls do not corrupt metadata. The
 allocator does not fence device execution on each allocation or free. Users must preserve normal Kokkos lifetime ordering;
-the finalization fence only protects the final lifecycle boundary.
+the finalization fence only protects the device side of the final lifecycle boundary. Concurrent pool-backed allocation and
+deallocation are supported only during a stable initialized interval. When the pool is disabled, YAKL delegates allocation
+to `Kokkos::kokkos_malloc/free`, so host-thread concurrency also depends on the selected Kokkos backend's guarantees.
 
 ## `alloc_device` and `free_device`
 
@@ -116,16 +123,20 @@ Fortran allocations must be released before `gator_finalize`.
 finalizes only the runtimes that `gator_init` itself acquired, so it is safe for a parent application to own Kokkos. Calls
 must be paired; repeated initialization or unmatched finalization aborts.
 
+As with the C++ lifecycle API, call `gator_init` and `gator_finalize` from the controlling host thread outside application
+host-threaded regions. Quiesce or join every application host thread that can use the allocation layer before finalization.
+
 The low-level C bindings are `gatorInit`, `gatorFinalize`, `gatorAllocate(size_t)`, and `gatorDeallocate(void*)`. They use a
 registry to enforce base-pointer ownership and are intended primarily for the generated Fortran generic wrappers.
 
 ## Lifetime checklist
 
-1. Initialize Kokkos, then YAKL.
+1. On the controlling host thread, initialize Kokkos and then YAKL before entering application host-threaded regions.
 2. Create all `DeviceSpace` owners only inside that interval.
 3. Keep owners alive until every queued kernel using them or their unmanaged aliases is complete.
 4. Destroy every owner and deallocate every Fortran/raw allocation.
-5. Call `yakl::finalize()` while Kokkos is still initialized; its fence validates and closes the interval.
-6. Finalize Kokkos.
+5. Leave threaded regions and join or quiesce every application host thread that can use YAKL.
+6. Call `yakl::finalize()` while Kokkos is still initialized; its fence validates and closes the interval.
+7. Finalize Kokkos.
 
 [Previous: Random and timers](random-timers.md) · [API home](README.md) · Next: [NetCDF and PNetCDF](io.md)

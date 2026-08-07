@@ -30,6 +30,49 @@ and returns a failure status if either version fails. To limit build parallelism
 YAKL_BUILD_JOBS=8 ./test_kokkos_versions.sh
 ```
 
+### Run every thatchroof environment
+
+On thatchroof, one driver runs every `machines/thatchroof/thatchroof_*.env` environment against both supported Kokkos
+submodules:
+
+```bash
+cd unit/build
+./test_thatchroof_matrix.sh
+```
+
+The environments are discovered automatically and run sequentially. Currently this tests CUDA debug, OpenMP, and Threads
+with Kokkos 4.7.00 and 5.2.0, for six configure/build/test combinations. Each combination has an independent build tree under
+`unit/build/kokkos-matrix/thatchroof/<environment>/<version>`. The driver continues after failures and exits unsuccessfully
+after the complete matrix if any environment failed. `YAKL_BUILD_JOBS` limits build parallelism just as it does for the
+single-environment driver. To place the matrix builds elsewhere, set `YAKL_THATCHROOF_MATRIX_BUILD_ROOT`:
+
+```bash
+YAKL_BUILD_JOBS=8 \
+YAKL_THATCHROOF_MATRIX_BUILD_ROOT=/tmp/yakl-thatchroof-matrix \
+./test_thatchroof_matrix.sh
+```
+
+### Run every Frontier environment
+
+On a Frontier compute node, the corresponding driver runs every `machines/frontier/frontier_*.env` environment against both
+Kokkos submodules:
+
+```bash
+cd unit/build
+./test_frontier_matrix.sh
+```
+
+This currently runs optimized HIP, debug HIP, CPU/Serial, and OpenMP environments with Kokkos 4.7.00 and 5.2.0, for eight
+sequential configure/build/test combinations. Builds are isolated under
+`unit/build/kokkos-matrix/frontier/<environment>/<version>`. Use `YAKL_BUILD_JOBS` to limit build parallelism or
+`YAKL_FRONTIER_MATRIX_BUILD_ROOT` to relocate the build trees:
+
+```bash
+YAKL_BUILD_JOBS=16 \
+YAKL_FRONTIER_MATRIX_BUILD_ROOT="$SCRATCH/yakl-frontier-matrix" \
+./test_frontier_matrix.sh
+```
+
 For CUDA builds, the matrix can select a different toolkit for each Kokkos release through
 `YAKL_KOKKOS_4_7_CUDA_ROOT` and `YAKL_KOKKOS_5_2_CUDA_ROOT`. On thatchroof, the GPU-debug environment uses CUDA 12.2 for
 Kokkos 4.7 and CUDA 13.3 for Kokkos 5.2. Kokkos 4.7 does not compile against CUDA 13 because CUDA 13 changed APIs used by that

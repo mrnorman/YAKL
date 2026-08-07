@@ -18,6 +18,8 @@ namespace yakl {
       YAKL_Internal& operator = (const YAKL_Internal&) = delete;
 
       LinearAllocator pool;                 // Pool allocator. Constructor and destructor do not depend on ordering
+      // These values are stable throughout an initialized interval. init() and finalize() require application host-thread
+      // quiescence, so lifecycle transitions never overlap readers in allocation, deallocation, or other YAKL operations.
       bool            yakl_is_initialized;  // Determine if YAKL has been initialized
       bool            pool_enabled;         // Is the pool allocator being used?
       std::atomic<size_t> num_device_allocations; // Number of live allocations made through yakl::DeviceSpace

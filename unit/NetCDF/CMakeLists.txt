@@ -8,4 +8,6 @@ if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
 endif()
 separate_arguments(REAL_MPI_COMMAND UNIX_COMMAND ${MPI_COMMAND})
 add_test(NAME NetCDF_test COMMAND ${REAL_MPI_COMMAND} ./NetCDF)
-
+add_test(NAME NetCDF_dimension_mismatch_test
+         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../Validation/expect_failure.sh
+                      ${REAL_MPI_COMMAND} $<TARGET_FILE:NetCDF> dimension_mismatch)

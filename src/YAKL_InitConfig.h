@@ -12,10 +12,10 @@ namespace yakl {
   protected:
     PoolSetting pool_setting;
     size_t      pool_size_mb;
-    size_t      pool_block_bytes;
+    std::optional<size_t> pool_block_bytes;
 
   public:
-    InitConfig() : pool_setting(PoolSetting::Default) , pool_size_mb(0) , pool_block_bytes(4096) { }
+    InitConfig() : pool_setting(PoolSetting::Default) , pool_size_mb(0) , pool_block_bytes(std::nullopt) { }
     InitConfig set_pool_enabled    ( bool enabled      ) {
       this->pool_setting = enabled ? PoolSetting::Enabled : PoolSetting::Disabled;
       return *this;
@@ -33,7 +33,8 @@ namespace yakl {
     PoolSetting get_pool_setting    () const { return pool_setting    ; }
     bool        get_pool_enabled    () const { return pool_setting == PoolSetting::Enabled; }
     size_t      get_pool_size_mb    () const { return pool_size_mb    ; }
-    size_t      get_pool_block_bytes() const { return pool_block_bytes; }
+    size_t      get_pool_block_bytes() const { return pool_block_bytes.value_or(4096); }
+    bool        pool_block_bytes_was_set() const { return pool_block_bytes.has_value(); }
   };
 
 }

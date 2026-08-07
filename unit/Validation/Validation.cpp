@@ -67,6 +67,35 @@ int main(int argc, char **argv) {
     yakl::finalize();
     Kokkos::finalize();
     return 0;
+  } else if (scenario == "config_block_precedence") {
+    size_t constexpr alignment = yakl::LinearAllocator::requiredAlignment;
+    setenv("GATOR_INITIAL_MB","1",1);
+    std::string const environment_block = std::to_string(3*alignment);
+    setenv("GATOR_BLOCK_BYTES",environment_block.c_str(),1);
+    yakl::init(yakl::InitConfig().set_pool_block_bytes(2*alignment));
+    if (yakl::get_yakl_instance().pool.blockSize != 2*alignment) {
+      fail("explicit pool block size did not override GATOR_BLOCK_BYTES");
+    }
+    yakl::finalize();
+    Kokkos::finalize();
+    return 0;
+  } else if (scenario == "lifecycle_reset") {
+    yakl::init(yakl::InitConfig().set_pool_enabled(false));
+    yakl::autotune::autotune_contexts["lifecycle reset"] = yakl::autotune::AutotuneContext();
+    yakl::get_yakl_instance().timer.start("lifecycle reset");
+    yakl::get_yakl_instance().timer.stop ("lifecycle reset");
+    yakl::finalize();
+    if (!yakl::autotune::autotune_contexts.empty() || !yakl::get_yakl_instance().timer.timers.empty() ||
+        !yakl::get_yakl_instance().timer.active_stacks.empty()) {
+      fail("yakl::finalize did not clear process-local autotune and timer state");
+    }
+    yakl::init(yakl::InitConfig().set_pool_enabled(false));
+    if (!yakl::autotune::autotune_contexts.empty() || !yakl::get_yakl_instance().timer.timers.empty()) {
+      fail("a new YAKL lifecycle interval inherited state from the previous interval");
+    }
+    yakl::finalize();
+    Kokkos::finalize();
+    return 0;
   }
 
   yakl::init();
@@ -105,6 +134,27 @@ int main(int argc, char **argv) {
       foundFinalPair = foundFinalPair || (i == 5 && j == 19);
     }
     if (!foundFinalPair) fail("strided Bounds omitted its final valid iteration");
+
+    ptrdiff_t constexpr lowest  = std::numeric_limits<ptrdiff_t>::min();
+    ptrdiff_t constexpr highest = std::numeric_limits<ptrdiff_t>::max();
+    yakl::Bounds_F<1> extreme(yakl::LoopSpec_F(lowest,highest-1,highest));
+    ptrdiff_t expected[3] = {lowest,-1,highest-1};
+    for (size_t linear=0; linear < extreme.nIter; linear++) {
+      ptrdiff_t index;
+      extreme.unpack(linear,index);
+      if (index != expected[linear]) fail("extreme strided Bounds host unpack is incorrect");
+    }
+    Array<ptrdiff_t *,yakl::DeviceSpace> device_indices("extreme strided indices",3);
+    device_indices = 0;
+    yakl::parallel_for_F("extreme strided Bounds",extreme,KOKKOS_LAMBDA (ptrdiff_t index) {
+      if      (index == lowest   ) device_indices(0) = index;
+      else if (index == -1       ) device_indices(1) = index;
+      else if (index == highest-1) device_indices(2) = index;
+    });
+    auto host_indices = device_indices.createHostCopy();
+    for (size_t i=0; i < 3; i++) {
+      if (host_indices(i) != expected[i]) fail("extreme strided Bounds device unpack is incorrect");
+    }
   } else if (scenario == "array_slice") {
     Array<int **,Kokkos::HostSpace> arr("arr",2,3);
     auto slice = arr.slice<1>(2,yakl::COLON);
@@ -117,6 +167,10 @@ int main(int argc, char **argv) {
     Array<int *,Kokkos::HostSpace> arr("arr",6);
     auto reshaped = arr.reshape(2,4);
     (void) reshaped;
+  } else if (scenario == "array_f_bound_overflow") {
+    using Bound = Array_F<int *,Kokkos::HostSpace>::AB;
+    uintmax_t constexpr highest = std::numeric_limits<uintmax_t>::max();
+    (void) Bound(highest-1,highest);
   } else if (scenario == "component_shape") {
     using namespace yakl::componentwise;
     Array<int **,Kokkos::HostSpace> left("left",2,3);
@@ -205,21 +259,60 @@ int main(int argc, char **argv) {
     matrix(0,0) = 1.; matrix(0,1) = 0.;
     matrix(1,0) = 0.; matrix(1,1) = std::numeric_limits<double>::epsilon()/4;
     (void) yakl::intrinsics::matinv(matrix);
+  } else if (scenario == "minloc_nan_sarray") {
+    yakl::SArray<double,3> values;
+    values(0) = 2.; values(1) = std::numeric_limits<double>::quiet_NaN(); values(2) = -1.;
+    (void) yakl::intrinsics::minloc(values);
+  } else if (scenario == "maxloc_nan_sarray") {
+    SArray_F<double,Bnds{-2,0}> values;
+    values(-2) = 2.; values(-1) = std::numeric_limits<double>::quiet_NaN(); values(0) = -1.;
+    (void) yakl::intrinsics::maxloc(values);
+  } else if (scenario == "minloc_nan_array") {
+    Array<double *,Kokkos::HostSpace> host("minloc NaN",3);
+    host(0) = 2.; host(1) = std::numeric_limits<double>::quiet_NaN(); host(2) = -1.;
+    auto values = host.createDeviceCopy();
+    (void) yakl::intrinsics::minloc(values);
+  } else if (scenario == "maxloc_nan_array") {
+    Array_F<double *,Kokkos::HostSpace> host("maxloc NaN",{-2,0});
+    host(-2) = 2.; host(-1) = std::numeric_limits<double>::quiet_NaN(); host(0) = -1.;
+    auto values = host.createDeviceCopy();
+    (void) yakl::intrinsics::maxloc(values);
   } else if (scenario == "random_range") {
     yakl::Random random(1368976481,0);
     (void) random.gen_uniform<double>(2.,1.);
+  } else if (scenario == "random_uniform_nan_lower") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_uniform<double>(std::numeric_limits<double>::quiet_NaN(),1.);
+  } else if (scenario == "random_uniform_nan_upper") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_uniform<double>(0.,std::numeric_limits<double>::quiet_NaN());
   } else if (scenario == "random_normal_stddev") {
     yakl::Random random(1368976481,0);
     (void) random.gen_normal<double>(0.,-1.);
+  } else if (scenario == "random_normal_nan_mean") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_normal<double>(std::numeric_limits<double>::quiet_NaN(),1.);
+  } else if (scenario == "random_normal_nan_stddev") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_normal<double>(0.,std::numeric_limits<double>::quiet_NaN());
   } else if (scenario == "random_bernoulli_probability") {
     yakl::Random random(1368976481,0);
     (void) random.gen_bernoulli(1.01);
+  } else if (scenario == "random_bernoulli_nan") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_bernoulli(std::numeric_limits<double>::quiet_NaN());
   } else if (scenario == "random_exponential_rate") {
     yakl::Random random(1368976481,0);
     (void) random.gen_exponential<double>(0.);
+  } else if (scenario == "random_exponential_nan") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_exponential<double>(std::numeric_limits<double>::quiet_NaN());
   } else if (scenario == "random_lognormal_stddev") {
     yakl::Random random(1368976481,0);
     (void) random.gen_lognormal<double>(0.,-1.);
+  } else if (scenario == "random_lognormal_nan_stddev") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_lognormal<double>(0.,std::numeric_limits<double>::quiet_NaN());
   } else if (scenario == "timer_stop") {
     yakl::Toney timer;
     timer.stop("inactive");

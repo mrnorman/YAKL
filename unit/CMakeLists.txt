@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.22)
 project(yakl_unit)
 enable_testing()
 option(YAKL_UNIT_LARGE_MEMORY "Build tests requiring more than 4 GB of device memory" OFF)
@@ -78,6 +78,7 @@ if (YAKL_ENABLE_COVERAGE)
                       Fortran_Gator_disassociated_deallocate
                       Fortran_Gator_interior_deallocate
                       Fortran_Gator_zero_extent
+                      Fortran_Gator_lower_bound_overflow
                       Fortran_Link_test
                       Intrinsics_test
                       Kokkos_DeviceSpace_test
@@ -95,6 +96,9 @@ if (YAKL_ENABLE_COVERAGE)
                       Validation_config_disable
                       Validation_config_enable
                       Validation_config_size_default
+                      Validation_config_block_precedence
+                      Validation_lifecycle_reset
+                      Validation_array_f_bound_overflow
                       Validation_array_slice
                       Validation_array_subset
                       Validation_array_reshape
@@ -104,6 +108,8 @@ if (YAKL_ENABLE_COVERAGE)
                       Validation_merge_condition_shape
                       Validation_loop_extent
                       Validation_loop_stride
+                      Validation_loop_f_extent
+                      Validation_loop_f_stride
                       Validation_simple_bounds_negative
                       Validation_simple_bounds_overflow
                       Validation_linear_allocator
@@ -119,11 +125,22 @@ if (YAKL_ENABLE_COVERAGE)
                       Validation_linear_allocator_empty_callback
                       Validation_matinv_singular
                       Validation_matinv_near_singular
+                      Validation_minloc_nan_sarray
+                      Validation_maxloc_nan_sarray
+                      Validation_minloc_nan_array
+                      Validation_maxloc_nan_array
                       Validation_random_range
                       Validation_random_normal_stddev
                       Validation_random_bernoulli_probability
                       Validation_random_exponential_rate
                       Validation_random_lognormal_stddev
+                      Validation_random_uniform_nan_lower
+                      Validation_random_uniform_nan_upper
+                      Validation_random_normal_nan_mean
+                      Validation_random_normal_nan_stddev
+                      Validation_random_bernoulli_nan
+                      Validation_random_exponential_nan
+                      Validation_random_lognormal_nan_stddev
                       Validation_timer_stop
                       Validation_unpack_index
                       Validation_autotune_index
@@ -132,11 +149,53 @@ if (YAKL_ENABLE_COVERAGE)
                       Validation_allocate_before_init
                       Validation_free_before_init
                       Validation_finalize_with_live_allocation)
+  if (NOT Kokkos_ENABLE_DEBUG AND NOT Kokkos_ENABLE_DEBUG_BOUNDS_CHECK)
+    list(REMOVE_ITEM YAKL_UNIT_TESTS
+                     Validation_component_shape
+                     Validation_sign_shape
+                     Validation_merge_value_shape
+                     Validation_merge_condition_shape
+                     Validation_loop_extent
+                     Validation_loop_stride
+                     Validation_loop_f_extent
+                     Validation_loop_f_stride
+                     Validation_simple_bounds_negative
+                     Validation_simple_bounds_overflow
+                     Validation_array_f_bound_overflow
+                     Validation_matinv_singular
+                     Validation_matinv_near_singular
+                     Validation_minloc_nan_sarray
+                     Validation_maxloc_nan_sarray
+                     Validation_minloc_nan_array
+                     Validation_maxloc_nan_array
+                     Validation_random_range
+                     Validation_random_normal_stddev
+                     Validation_random_bernoulli_probability
+                     Validation_random_exponential_rate
+                     Validation_random_lognormal_stddev
+                     Validation_random_uniform_nan_lower
+                     Validation_random_uniform_nan_upper
+                     Validation_random_normal_nan_mean
+                     Validation_random_normal_nan_stddev
+                     Validation_random_bernoulli_nan
+                     Validation_random_exponential_nan
+                     Validation_random_lognormal_nan_stddev
+                     Validation_autotune_index
+                     Validation_config_tile_zero
+                     Validation_config_tile_negative)
+  endif()
+  if (NOT Kokkos_ENABLE_DEBUG_BOUNDS_CHECK)
+    list(REMOVE_ITEM YAKL_UNIT_TESTS
+                     Validation_array_slice
+                     Validation_array_subset
+                     Validation_linear_allocator_end_pointer
+                     Validation_unpack_index)
+  endif()
   if (YAKL_TEST_NETCDF)
-    list(APPEND YAKL_UNIT_TESTS NetCDF_test)
+    list(APPEND YAKL_UNIT_TESTS NetCDF_test NetCDF_dimension_mismatch_test)
   endif()
   if (YAKL_TEST_PNETCDF)
-    list(APPEND YAKL_UNIT_TESTS PNetCDF_test)
+    list(APPEND YAKL_UNIT_TESTS PNetCDF_test PNetCDF_dimension_mismatch_test PNetCDF_offset_overflow_test)
   endif()
   if (YAKL_UNIT_LARGE_MEMORY)
     list(APPEND YAKL_UNIT_TESTS LargeMemory_test)

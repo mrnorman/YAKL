@@ -38,6 +38,10 @@ read/write modes; `create` accepts replace/new modes and creates a NetCDF-4 file
 | `write(scalar,name)`, `read(scalar,name)` | Write/create or read a rank-zero variable of matching type. |
 | `write1(value,name,index,unlimitedName)` | Write one scalar record in an unlimited dimension. |
 | `write1(array,name,dimNames,index,unlimitedName)` | Write one array record, with the unlimited dimension first in the file. |
+| `writeGlobalAttribute(value,attribute)` | Write a scalar, vector, or string global attribute. |
+| `readGlobalAttribute(value,attribute)` | Read a global attribute into a scalar, vector, or string. |
+| `writeVariableAttribute(value,variable,attribute)` | Write a scalar, vector, or string variable attribute. |
+| `readVariableAttribute(value,variable,attribute)` | Read a variable attribute into a scalar, vector, or string. |
 
 Array writes create missing fixed dimensions and variables, but reject incompatible existing types, ranks, or extents.
 Device arrays are staged through host memory. Reads into device arrays stage on the host, deep-copy to the device, and fence
@@ -45,11 +49,24 @@ before returning. C-style file dimension order matches array dimension order. Fo
 in the file so their contiguous memory is represented without transposing values; user `dimNames` are specified in the
 array's logical order.
 
+`SimpleNetCDF` supports at most one unlimited dimension per file. This deliberate restriction preserves compatibility with
+NCO and CDO workflows whose handling of multiple unlimited dimensions can be problematic. Attempting to create a second
+unlimited dimension throws `std::runtime_error`. Do not use this wrapper to manipulate a NetCDF-4 file that already contains
+more than one unlimited dimension.
+
 Mappings are `signed char`/`unsigned char` to `NC_BYTE`/`NC_UBYTE`, short and int families to their corresponding NetCDF
-types, `long` to `NC_INT`, long long to `NC_INT64`, and float/double/char to `NC_FLOAT`/`NC_DOUBLE`/`NC_CHAR`. On LP64
+types, `long` to `NC_INT` or `NC_INT64` according to its width, long long to `NC_INT64`, and float/double/char to
+`NC_FLOAT`/`NC_DOUBLE`/`NC_CHAR`. On LP64
 systems, `unsigned long` is represented with `NC_UINT64` and converted element-by-element without reinterpreting it as
 `unsigned int`; when it has unsigned-int width it maps to `NC_UINT`. Direct Boolean writes are unsupported by the serial
-wrapper; Boolean array reads accept an `NC_INT` variable and convert values equal to one to `true`.
+wrapper; Boolean array reads accept an `NC_INT` variable and convert values equal to one to `true`. Boolean attributes are
+supported as `NC_UBYTE`.
+
+Attribute reads require the requested C++ type to match the stored NetCDF type. A scalar read requires an attribute of
+length one; vector reads resize the destination to the stored length. Text is stored as an `NC_CHAR` attribute without a
+trailing null and is available through `std::string`. Reads can also return by type, for example
+`auto units = nc.readVariableAttribute<std::string>("temperature","units")` and
+`auto levels = nc.readGlobalAttribute<std::vector<int>>("levels")`.
 
 `SimpleNetCDF` is movable but not copyable. It owns its raw file handle, and destruction closes an open file. Explicit
 `close()` is preferable when the application needs the close error reported at a controlled point.
@@ -95,7 +112,7 @@ All ranks in the wrapper's communicator must call:
 - `open`, `create`, and `close`;
 - `create_dim`, `create_var<T>`, `redef`, and `enddef`;
 - `begin_indep_data` and `end_indep_data`; and
-- `write_all` and `read_all`.
+- `write_all`, `read_all`, `writeGlobalAttribute`, and `writeVariableAttribute`.
 
 The metadata query methods and scalar/whole-variable `write` and `read` are documented for a single task and must be used
 only in a valid data mode. Calling a collective method on only some communicator ranks can deadlock.
@@ -116,15 +133,28 @@ only in a valid data mode. Calling a collective method on only some communicator
 | `write(value,name)`, `read(value,name)` | Single-task scalar I/O in data mode. |
 | `write(array,name)`, `read(array,name)` | Single-task whole-variable I/O with exact rank/type/extents. |
 | `write_all(array,name,start)`, `read_all(array,name,start)` | Collective hyperslab I/O; `start` has one nonnegative offset per array dimension. |
+| `writeGlobalAttribute(value,attribute)` | Collectively write a scalar, vector, or string global attribute. |
+| `readGlobalAttribute(value,attribute)` | Read a global attribute into a scalar, vector, or string. |
+| `writeVariableAttribute(value,variable,attribute)` | Collectively write a scalar, vector, or string variable attribute. |
+| `readVariableAttribute(value,variable,attribute)` | Read a variable attribute into a scalar, vector, or string. |
 
 Array data is staged through host memory as needed. Collective hyperslab counts come from array extents. Fixed-dimension
-hyperslabs must fit; writes may extend an unlimited dimension. The wrapper requires file dimension order to match the
-array's `extent(i)` order; unlike `SimpleNetCDF`, it does not reverse `_F` dimensions automatically.
+hyperslabs must fit; writes may extend an unlimited dimension. Every array extent must fit in PNetCDF's signed
+`MPI_Offset` type; larger extents are rejected before an I/O call. The wrapper requires file dimension order to match the
+array's storage order: file dimensions map directly to `Array` extents and in reverse to `Array_F` extents. This makes the
+file's fastest-to-slowest dimensions match each array type without transposing contiguous data.
 
 Supported PNetCDF types are `char`, signed/unsigned character, signed/unsigned short, signed/unsigned int, `long`,
 `unsigned long`, signed/unsigned long long, `float`, `double`, and `bool`. `long`/`unsigned long` use 64-bit NetCDF types in
 this interface. Boolean values are stored as `NC_UBYTE`. Conversion buffers are used where the native PNetCDF overload does
 not match the C++ representation, including `unsigned long` and `bool`, and narrowing reads are range checked.
+
+PNetCDF attribute writes enter define mode when necessary and therefore must be called collectively by all ranks in the
+wrapper communicator. Attribute reads do not change mode. Their scalar/vector/string behavior and return-by-type overloads
+match `SimpleNetCDF`; strings are `NC_CHAR` attributes without a trailing null.
+
+Like `SimpleNetCDF`, `SimplePNetCDF` intentionally supports at most one unlimited dimension per file so files remain
+straightforward to process with NCO and CDO tools.
 
 `SimplePNetCDF` is movable but not copyable. Its destructor is `noexcept`: it attempts to leave independent mode and close,
 printing errors to standard error rather than throwing or aborting. Because close is collective, applications should always

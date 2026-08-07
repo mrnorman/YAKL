@@ -45,9 +45,24 @@ int main() {
       auto copy_sum_a = sum_a;
       auto copy_sum_b = sum_b;
       auto copy_sum_c = sum_c;
+      #ifdef KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_THREADS
+      // Kokkos Threads kernels may only be launched by the master process, not by an OpenMP worker thread.
+      size_t local_sum_a = 0;
+      size_t local_sum_b = 0;
+      size_t local_sum_c = 0;
+      for (int i2=0; i2 < n2; i2++) {
+        local_sum_a += a(i2);
+        local_sum_b += b(i2);
+        local_sum_c += c(i2);
+      }
+      copy_sum_a(i1) = local_sum_a;
+      copy_sum_b(i1) = local_sum_b;
+      copy_sum_c(i1) = local_sum_c;
+      #else
       copy_sum_a(i1) = yakl::intrinsics::sum(a);
       copy_sum_b(i1) = yakl::intrinsics::sum(b);
       copy_sum_c(i1) = yakl::intrinsics::sum(c);
+      #endif
     }
     #pragma omp parallel for
     for (int i1=0; i1 < n1; i1++) {
@@ -94,9 +109,24 @@ int main() {
       auto copy_sum_a = sum_a;
       auto copy_sum_b = sum_b;
       auto copy_sum_c = sum_c;
+      #ifdef KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_THREADS
+      // Kokkos Threads kernels may only be launched by the master process, not by an OpenMP worker thread.
+      size_t local_sum_a = 0;
+      size_t local_sum_b = 0;
+      size_t local_sum_c = 0;
+      for (int i2=1; i2 <= n2; i2++) {
+        local_sum_a += a(i2);
+        local_sum_b += b(i2);
+        local_sum_c += c(i2);
+      }
+      copy_sum_a(i1) = local_sum_a;
+      copy_sum_b(i1) = local_sum_b;
+      copy_sum_c(i1) = local_sum_c;
+      #else
       copy_sum_a(i1) = yakl::intrinsics::sum(a);
       copy_sum_b(i1) = yakl::intrinsics::sum(b);
       copy_sum_c(i1) = yakl::intrinsics::sum(c);
+      #endif
     }
     #pragma omp parallel for
     for (int i1=1; i1 <= n1; i1++) {
