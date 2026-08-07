@@ -2,6 +2,9 @@
 
 program Fortran_Gator_Wrappers
   use gator_mod
+#ifdef HAVE_MPI
+  use mpi
+#endif
   implicit none
 
   integer   , pointer :: i4_1(:), i4_2(:,:), i4_3(:,:,:), i4_4(:,:,:,:), i4_5(:,:,:,:,:)
@@ -18,6 +21,9 @@ program Fortran_Gator_Wrappers
   complex(8), pointer :: c8_6(:,:,:,:,:,:), c8_7(:,:,:,:,:,:,:)
   logical   , pointer :: lg_1(:), lg_2(:,:), lg_3(:,:,:), lg_4(:,:,:,:), lg_5(:,:,:,:,:)
   logical   , pointer :: lg_6(:,:,:,:,:,:), lg_7(:,:,:,:,:,:,:)
+#ifdef HAVE_MPI
+  integer :: ierr
+#endif
 
   nullify(i4_1,i4_2,i4_3,i4_4,i4_5,i4_6,i4_7)
   nullify(i8_1,i8_2,i8_3,i8_4,i8_5,i8_6,i8_7)
@@ -27,6 +33,9 @@ program Fortran_Gator_Wrappers
   nullify(c8_1,c8_2,c8_3,c8_4,c8_5,c8_6,c8_7)
   nullify(lg_1,lg_2,lg_3,lg_4,lg_5,lg_6,lg_7)
 
+#ifdef HAVE_MPI
+  call MPI_Init(ierr)
+#endif
   call gator_init()
 
   TEST_WRAPPER(i4_1,(/2/))
@@ -80,6 +89,9 @@ program Fortran_Gator_Wrappers
   TEST_WRAPPER(lg_7,(/2,1,1,1,1,1,1/))
 
   call gator_finalize()
+#ifdef HAVE_MPI
+  call MPI_Finalize(ierr)
+#endif
 end program Fortran_Gator_Wrappers
 
 #undef TEST_WRAPPER

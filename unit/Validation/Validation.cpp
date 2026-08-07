@@ -17,6 +17,9 @@ void fail(std::string const &message) {
 int main(int argc, char **argv) {
   if (argc != 2) return 2;
   std::string const scenario = argv[1];
+  #ifdef HAVE_MPI
+    MPI_Init(&argc,&argv);
+  #endif
   Kokkos::initialize();
 
   if (scenario == "allocate_before_init") {
@@ -43,6 +46,9 @@ int main(int argc, char **argv) {
     }
     yakl::finalize();
     Kokkos::finalize();
+    #ifdef HAVE_MPI
+      MPI_Finalize();
+    #endif
     return 0;
   } else if (scenario == "config_disable") {
     unsetenv("GATOR_DISABLE");
@@ -51,6 +57,9 @@ int main(int argc, char **argv) {
     if (yakl::get_yakl_instance().use_pool()) fail("InitConfig::set_pool_enabled(false) did not disable the pool");
     yakl::finalize();
     Kokkos::finalize();
+    #ifdef HAVE_MPI
+      MPI_Finalize();
+    #endif
     return 0;
   } else if (scenario == "config_enable") {
     setenv("GATOR_DISABLE","1",1);
@@ -59,6 +68,9 @@ int main(int argc, char **argv) {
     if (! yakl::get_yakl_instance().use_pool()) fail("explicit pool enable did not override GATOR_DISABLE");
     yakl::finalize();
     Kokkos::finalize();
+    #ifdef HAVE_MPI
+      MPI_Finalize();
+    #endif
     return 0;
   } else if (scenario == "config_size_default") {
     unsetenv("GATOR_DISABLE");
@@ -66,6 +78,9 @@ int main(int argc, char **argv) {
     if (! yakl::get_yakl_instance().use_pool()) fail("setting a pool size unexpectedly disabled the pool");
     yakl::finalize();
     Kokkos::finalize();
+    #ifdef HAVE_MPI
+      MPI_Finalize();
+    #endif
     return 0;
   } else if (scenario == "config_block_precedence") {
     size_t constexpr alignment = yakl::LinearAllocator::requiredAlignment;
@@ -78,6 +93,9 @@ int main(int argc, char **argv) {
     }
     yakl::finalize();
     Kokkos::finalize();
+    #ifdef HAVE_MPI
+      MPI_Finalize();
+    #endif
     return 0;
   } else if (scenario == "lifecycle_reset") {
     yakl::init(yakl::InitConfig().set_pool_enabled(false));
@@ -95,6 +113,9 @@ int main(int argc, char **argv) {
     }
     yakl::finalize();
     Kokkos::finalize();
+    #ifdef HAVE_MPI
+      MPI_Finalize();
+    #endif
     return 0;
   }
 
@@ -335,5 +356,8 @@ int main(int argc, char **argv) {
 
   yakl::finalize();
   Kokkos::finalize();
+  #ifdef HAVE_MPI
+    MPI_Finalize();
+  #endif
   return 0;
 }

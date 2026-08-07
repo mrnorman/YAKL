@@ -121,7 +121,7 @@ namespace yakl {
       if (ub == lb) return lb;
       T const unit = gen_uniform<T>();
       // Avoid forming ub-lb when opposite-signed finite endpoints can make that difference overflow.
-      T const value = lb < T{0} && ub > T{0} ? lb*(T{1}-unit) + ub*unit : lb + (ub-lb)*unit;
+      T const value = lb < T{0} && ub > T{0} ? Kokkos::fma(lb,T{1}-unit,ub*unit) : Kokkos::fma(ub-lb,unit,lb);
       if (value < lb) return lb;
       return value < ub ? value : Kokkos::nextafter(ub,lb);
     }

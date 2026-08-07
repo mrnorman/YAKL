@@ -1,10 +1,17 @@
 program Fortran_Gator_Validation
   use iso_c_binding
   use gator_mod
+#ifdef HAVE_MPI
+  use mpi
+#endif
   implicit none
   character(len=32) :: scenario
   integer(c_size_t) :: bytes
   integer, pointer :: arr(:) => null(), arr_slice(:) => null()
+#ifdef HAVE_MPI
+  integer :: ierr
+  call MPI_Init(ierr)
+#endif
 
   call get_command_argument(1,scenario)
   select case (trim(scenario))
@@ -39,4 +46,7 @@ program Fortran_Gator_Validation
     case default
       error stop "ERROR: unknown Fortran Gator validation scenario"
   end select
+#ifdef HAVE_MPI
+  call MPI_Finalize(ierr)
+#endif
 end program Fortran_Gator_Validation

@@ -7,6 +7,9 @@ int main(int argc, char **argv) {
   if (argc != 2) return 2;
   std::string const scenario = argv[1];
 
+  #ifdef HAVE_MPI
+    MPI_Init(&argc,&argv);
+  #endif
   Kokkos::initialize();
   if (scenario == "kokkos_yakl") yakl::init(yakl::InitConfig().set_pool_enabled(false));
 
@@ -26,5 +29,8 @@ int main(int argc, char **argv) {
     Kokkos::abort("ERROR: unknown ownership scenario");
   }
   Kokkos::finalize();
+  #ifdef HAVE_MPI
+    MPI_Finalize();
+  #endif
   return 0;
 }

@@ -1,9 +1,15 @@
 
 program wrapper
   use gator_mod${YAKL_NAME_APPEND}
+#ifdef HAVE_MPI
+  use mpi
+#endif
   implicit none
   integer, parameter :: n = 1024
   real :: a(n), b(n), c(n)
+#ifdef HAVE_MPI
+  integer :: ierr
+#endif
 
   interface init
     subroutine add(a, b, c, n) bind(C,name="add")
@@ -13,6 +19,9 @@ program wrapper
     end subroutine
   end interface
 
+#ifdef HAVE_MPI
+  call MPI_Init(ierr)
+#endif
   call gator_init()
 
   call add(a,b,c,n)
@@ -23,5 +32,8 @@ program wrapper
   endif
 
   call gator_finalize()
+#ifdef HAVE_MPI
+  call MPI_Finalize(ierr)
+#endif
 
 end program wrapper

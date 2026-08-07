@@ -9,7 +9,10 @@ void fail(std::string const &message) {
   Kokkos::abort(message.c_str());
 }
 
-int main() {
+int main(int argc, char **argv) {
+  #ifdef HAVE_MPI
+    MPI_Init(&argc,&argv);
+  #endif
   Kokkos::initialize();
   yakl::init(yakl::InitConfig().set_pool_enabled(false));
 
@@ -119,5 +122,8 @@ int main() {
 
   yakl::finalize();
   Kokkos::finalize();
+  #ifdef HAVE_MPI
+    MPI_Finalize();
+  #endif
   return 0;
 }
