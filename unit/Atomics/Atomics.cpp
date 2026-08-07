@@ -15,95 +15,37 @@ void die(std::string msg) {
 }
 
 
+template <class T>
+void test_device_atomics(int n) {
+  Array<T *,yakl::DeviceSpace> data("data",n);
+  parallel_for( n , KOKKOS_LAMBDA (int i) {
+    data(i) = i - (n-1)/2.;
+  });
+
+  yakl::ScalarLiveOut<T> min(99999);
+  yakl::ScalarLiveOut<T> sum(0);
+  yakl::ScalarLiveOut<T> max(-99999);
+  parallel_for( n , KOKKOS_LAMBDA (int i) {
+    Kokkos::atomic_min(&min(),data(i));
+    Kokkos::atomic_add(&sum(),data(i));
+    Kokkos::atomic_max(&max(),data(i));
+  });
+
+  if (abs(sum.hostRead()) > 1.e-13) die("ERROR: Wrong device sum");
+  if (abs(min.hostRead()+(n-1)/2.) > 1.e-13) die("ERROR: Wrong device min");
+  if (abs(max.hostRead()-(n-1)/2.) > 1.e-13) die("ERROR: Wrong device max");
+}
+
+
 int main() {
   Kokkos::initialize();
   yakl::init();
   {
     yakl::timer_start("main");
     int constexpr n = 1024 + 1;
-    {
-      typedef float T;
-
-      Array<T *,yakl::DeviceSpace> data("data",n);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        data(i) = i - (n-1)/2.;
-      });
-
-      yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        Kokkos::atomic_min(&min(),data(i));
-      });
-
-      yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        Kokkos::atomic_add(&sum(),data(i));
-      });
-
-      yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        Kokkos::atomic_max(&max(),data(i));
-      });
-      
-      if ( abs(sum.hostRead()) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
-      if ( abs(min.hostRead() + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
-      if ( abs(max.hostRead() - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
-    }
-
-    {
-      typedef double T;
-
-      Array<T *,yakl::DeviceSpace> data("data",n);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        data(i) = i - (n-1)/2.;
-      });
-
-      yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        Kokkos::atomic_min(&min(),data(i));
-      });
-
-      yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        Kokkos::atomic_add(&sum(),data(i));
-      });
-
-      yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        Kokkos::atomic_max(&max(),data(i));
-      });
-      
-      if ( abs(sum.hostRead()) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
-      if ( abs(min.hostRead() + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
-      if ( abs(max.hostRead() - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
-    }
-
-    {
-      typedef int T;
-
-      Array<T *,yakl::DeviceSpace> data("data",n);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        data(i) = i - (n-1)/2.;
-      });
-
-      yakl::ScalarLiveOut<T> min(99999);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        Kokkos::atomic_min(&min(),data(i));
-      });
-
-      yakl::ScalarLiveOut<T> sum(0.);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        Kokkos::atomic_add(&sum(),data(i));
-      });
-
-      yakl::ScalarLiveOut<T> max(-99999);
-      parallel_for( n , KOKKOS_LAMBDA (int i) {
-        Kokkos::atomic_max(&max(),data(i));
-      });
-      
-      if ( abs(sum.hostRead()) > 1.e-13 ) { die("ERROR: Wrong device sum"); }
-      if ( abs(min.hostRead() + (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device min"); }
-      if ( abs(max.hostRead() - (n-1)/2.) > 1.e-13 ) { die("ERROR: Wrong device max"); }
-    }
+    test_device_atomics<float >(n);
+    test_device_atomics<double>(n);
+    test_device_atomics<int   >(n);
 
     {
       typedef int T;
@@ -114,17 +56,11 @@ int main() {
       }
 
       int min = 99999;
-      for (int i=0; i < n; i++) {
-        Kokkos::atomic_min(&min,data(i));
-      }
-
       int sum = 0;
-      for (int i=0; i < n; i++) {
-        Kokkos::atomic_add(&sum,data(i));
-      }
-
       int max = -99999;
       for (int i=0; i < n; i++) {
+        Kokkos::atomic_min(&min,data(i));
+        Kokkos::atomic_add(&sum,data(i));
         Kokkos::atomic_max(&max,data(i));
       }
       

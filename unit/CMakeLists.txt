@@ -9,7 +9,15 @@ enable_language(C)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(Kokkos_HOME $ENV{HOME}/kokkos)
+set(Kokkos_HOME "" CACHE PATH "Path to a Kokkos source tree")
+if (Kokkos_HOME STREQUAL "")
+  message(FATAL_ERROR "Kokkos_HOME must point to a Kokkos source tree")
+endif()
+get_filename_component(Kokkos_HOME "${Kokkos_HOME}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+if (NOT EXISTS "${Kokkos_HOME}/CMakeLists.txt")
+  message(FATAL_ERROR "Kokkos_HOME does not contain a Kokkos source tree: ${Kokkos_HOME}")
+endif()
+message(STATUS "YAKL unit tests are using Kokkos from ${Kokkos_HOME}")
 set(Kokkos_BIN  ${CMAKE_CURRENT_BINARY_DIR}/kokkos)
 add_subdirectory(${Kokkos_HOME} ${Kokkos_BIN})
 
@@ -112,9 +120,15 @@ if (YAKL_ENABLE_COVERAGE)
                       Validation_matinv_singular
                       Validation_matinv_near_singular
                       Validation_random_range
+                      Validation_random_normal_stddev
+                      Validation_random_bernoulli_probability
+                      Validation_random_exponential_rate
+                      Validation_random_lognormal_stddev
                       Validation_timer_stop
                       Validation_unpack_index
                       Validation_autotune_index
+                      Validation_config_tile_zero
+                      Validation_config_tile_negative
                       Validation_allocate_before_init
                       Validation_free_before_init
                       Validation_finalize_with_live_allocation)

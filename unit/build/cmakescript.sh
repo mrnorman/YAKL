@@ -1,6 +1,18 @@
 #!/bin/bash
 
-./cmakeclean.sh
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+UNIT_SOURCE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+YAKL_ROOT="$(cd "${UNIT_SOURCE_DIR}/.." && pwd)"
+Kokkos_HOME="${Kokkos_HOME:-${YAKL_ROOT}/external/kokkos-5.2.0}"
+
+if [[ ! -f "${Kokkos_HOME}/CMakeLists.txt" ]]; then
+  echo "ERROR: Kokkos_HOME is not a Kokkos source tree: ${Kokkos_HOME}" >&2
+  exit 1
+fi
+
+"${SCRIPT_DIR}/cmakeclean.sh"
 
 CMAKE_COMMAND=(cmake -Wno-dev)
 CMAKE_COMMAND+=(-DYAKL_UNIT_CXX_FLAGS="$YAKL_CXX_FLAGS")
@@ -10,17 +22,17 @@ CMAKE_COMMAND+=(-DYAKL_TEST_NETCDF="$YAKL_TEST_NETCDF")
 CMAKE_COMMAND+=(-DYAKL_TEST_PNETCDF="$YAKL_TEST_PNETCDF")
 CMAKE_COMMAND+=(-DYAKL_ENABLE_COVERAGE="${YAKL_ENABLE_COVERAGE:-OFF}")
 CMAKE_COMMAND+=(-DYAKL_UNIT_LARGE_MEMORY="${YAKL_UNIT_LARGE_MEMORY:-OFF}")
+CMAKE_COMMAND+=(-DKokkos_HOME="${Kokkos_HOME}")
 CMAKE_COMMAND+=(-DMPI_COMMAND="$YAKL_MPI_COMMAND")
 CMAKE_COMMAND+=(-DCMAKE_INSTALL_PREFIX="$(pwd)")
 [[ ! "$YAKL_BACKEND" == "" ]] && CMAKE_COMMAND+=(-D${YAKL_BACKEND}=ON)
 [[ ! "$YAKL_ARCH"    == "" ]] && CMAKE_COMMAND+=(-D${YAKL_ARCH}=ON)
 if [[ "$YAKL_BACKEND" == "Kokkos_ENABLE_CUDA" ]]; then
+  [[ -n "${CUDAToolkit_ROOT:-}" ]] && CMAKE_COMMAND+=(-DCUDAToolkit_ROOT="${CUDAToolkit_ROOT}")
   CMAKE_COMMAND+=(-DKokkos_ENABLE_CUDA=ON -DKokkos_ENABLE_CUDA_CONSTEXPR=ON)
-else
-  CMAKE_COMMAND+=(-DKokkos_ENABLE_CUDA=OFF -DKokkos_ENABLE_CUDA_CONSTEXPR=OFF)
 fi
 [[ "$YAKL_DEBUG" == "ON" ]] && CMAKE_COMMAND+=(-DKokkos_ENABLE_DEBUG=ON -DKokkos_ENABLE_DEBUG_BOUNDS_CHECK=ON)
-CMAKE_COMMAND+=(..)
+CMAKE_COMMAND+=("${UNIT_SOURCE_DIR}")
 
 echo "${CMAKE_COMMAND[@]}"
 

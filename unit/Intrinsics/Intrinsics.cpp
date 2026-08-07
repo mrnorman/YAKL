@@ -11,29 +11,11 @@ using yakl::Bnds;
 
 typedef double real;
 
-typedef Array  <real *  ,yakl::DeviceSpace> real_c_1d;
 typedef Array  <real ** ,yakl::DeviceSpace> real_c_2d;
-typedef Array  <real ***,yakl::DeviceSpace> real_c_3d;
 
-typedef Array_F<real *  ,yakl::DeviceSpace> real_f_1d;
 typedef Array_F<real ** ,yakl::DeviceSpace> real_f_2d;
-typedef Array_F<real ***,yakl::DeviceSpace> real_f_3d;
-
-typedef Array  <int  *  ,yakl::DeviceSpace> int_c_1d;
-typedef Array  <int  ** ,yakl::DeviceSpace> int_c_2d;
-typedef Array  <int  ***,yakl::DeviceSpace> int_c_3d;
-
-typedef Array_F<int  *  ,yakl::DeviceSpace> int_f_1d;
-typedef Array_F<int  ** ,yakl::DeviceSpace> int_f_2d;
-typedef Array_F<int  ***,yakl::DeviceSpace> int_f_3d;
 
 typedef Array  <bool *  ,yakl::DeviceSpace> bool_c_1d;
-typedef Array  <bool ** ,yakl::DeviceSpace> bool_c_2d;
-typedef Array  <bool ***,yakl::DeviceSpace> bool_c_3d;
-
-typedef Array_F<bool *  ,yakl::DeviceSpace> bool_f_1d;
-typedef Array_F<bool ** ,yakl::DeviceSpace> bool_f_2d;
-typedef Array_F<bool ***,yakl::DeviceSpace> bool_f_3d;
 
 void test_host_device_intrinsics();
 
@@ -48,245 +30,44 @@ int main() {
   yakl::init();
   {
     yakl::timer_start("main");
-    int constexpr n1 = 5;
-    int constexpr n2 = 10;
-    /////////////////////////////////////////////////////////////////////////////////////////////////
-    // size, shape, lbound, ubound, epsilon, sign, merge, abs, minval, maxval, minloc, maxloc
-    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Scalar inquiry overloads are not covered by the comprehensive host/device array tests.
     {
-      using yakl::intrinsics::size;
-      real_c_2d arr_c("arr_c",n1,n2);
-      real_f_2d arr_f("arr_c",{-1,n1-2},n2);
-      SArray  <real,n1,n2> sarr_c;
-      SArray_F<real,Bnds{-1,n1-2},Bnds{1,n2}> sarr_f;
       real scalar = 1;
-
-      if (size(arr_c ) != n1*n2) die("arr_c wrong size tot");
-      if (size(arr_f ) != n1*n2) die("arr_f wrong size tot");
-      if (size(sarr_c) != n1*n2) die("sarr_c wrong size tot");
-      if (size(sarr_f) != n1*n2) die("sarr_f wrong size tot");
-      if (size(arr_c ,0) != n1) die("arr_c wrong size 1");
-      if (size(arr_f ,1) != n1) die("arr_f wrong size 1");
-      if (size(sarr_c,0) != n1) die("sarr_c wrong size 1");
-      if (size(sarr_f,1) != n1) die("sarr_f wrong size 1");
-      if (size(arr_c ,1) != n2) die("arr_c wrong size 2");
-      if (size(arr_f ,2) != n2) die("arr_f wrong size 2");
-      if (size(sarr_c,1) != n2) die("sarr_c wrong size 2");
-      if (size(sarr_f,2) != n2) die("sarr_f wrong size 2");
-
-      using yakl::intrinsics::shape;
-      auto shp_arr_c = shape(arr_c);
-      auto shp_arr_f = shape(arr_f);
-      auto shp_sarr_c = shape(sarr_c);
-      auto shp_sarr_f = shape(sarr_f);
-      if (shp_arr_c (0) != n1) die("arr_c wrong shape 1");
-      if (shp_arr_f (1) != n1) die("arr_f wrong shape 1");
-      if (shp_sarr_c(0) != n1) die("sarr_c wrong shape 1");
-      if (shp_sarr_f(1) != n1) die("sarr_f wrong shape 1");
-      if (shp_arr_c (1) != n2) die("arr_c wrong shape 2");
-      if (shp_arr_f (2) != n2) die("arr_f wrong shape 2");
-      if (shp_sarr_c(1) != n2) die("sarr_c wrong shape 2");
-      if (shp_sarr_f(2) != n2) die("sarr_f wrong shape 2");
-
-      using yakl::intrinsics::lbound;
-      auto lb_arr_c = lbound(arr_c);
-      auto lb_arr_f = lbound(arr_f);
-      auto lb_sarr_c = lbound(sarr_c);
-      auto lb_sarr_f = lbound(sarr_f);
-      if (lb_arr_c (0) != 0) die("arr_c wrong lbound 1");
-      if (lb_arr_f (1) != -1) die("arr_f wrong lbound 1");
-      if (lb_sarr_c(0) != 0) die("sarr_c wrong lbound 1");
-      if (lb_sarr_f(1) != -1) die("sarr_f wrong lbound 1");
-      if (lb_arr_c (1) != 0) die("arr_c wrong lbound 2");
-      if (lb_arr_f (2) != 1) die("arr_f wrong lbound 2");
-      if (lb_sarr_c(1) != 0) die("sarr_c wrong lbound 2");
-      if (lb_sarr_f(2) != 1) die("sarr_f wrong lbound 2");
-      if (lb_arr_c (0) != 0) die("arr_c wrong lbound 1");
-      if (lbound(arr_f ,1) != -1) die("arr_f wrong lbound 1");
-      if (lbound(sarr_c,0) != 0) die("sarr_c wrong lbound 1");
-      if (lbound(sarr_f,1) != -1) die("sarr_f wrong lbound 1");
-      if (lbound(arr_c ,1) != 0) die("arr_c wrong lbound 2");
-      if (lbound(arr_f ,2) != 1) die("arr_f wrong lbound 2");
-      if (lbound(sarr_c,1) != 0) die("sarr_c wrong lbound 2");
-      if (lbound(sarr_f,2) != 1) die("sarr_f wrong lbound 2");
-
-      using yakl::intrinsics::ubound;
-      auto ub_arr_c = ubound(arr_c);
-      auto ub_arr_f = ubound(arr_f);
-      auto ub_sarr_c = ubound(sarr_c);
-      auto ub_sarr_f = ubound(sarr_f);
-      if (ub_arr_c (0) != n1-1) die("arr_c wrong ubound 1");
-      if (ub_arr_f (1) != n1-2) die("arr_f wrong ubound 1");
-      if (ub_sarr_c(0) != n1-1) die("sarr_c wrong ubound 1");
-      if (ub_sarr_f(1) != n1-2) die("sarr_f wrong ubound 1");
-      if (ub_arr_c (1) != n2-1) die("arr_c wrong ubound 2");
-      if (ub_arr_f (2) != n2  ) die("arr_f wrong ubound 2");
-      if (ub_sarr_c(1) != n2-1) die("sarr_c wrong ubound 2");
-      if (ub_sarr_f(2) != n2  ) die("sarr_f wrong ubound 2");
-      if (ubound(arr_c ,0) != n1-1) die("arr_c wrong ubound 1");
-      if (ubound(arr_f ,1) != n1-2) die("arr_f wrong ubound 1");
-      if (ubound(sarr_c,0) != n1-1) die("sarr_c wrong ubound 1");
-      if (ubound(sarr_f,1) != n1-2) die("sarr_f wrong ubound 1");
-      if (ubound(arr_c ,1) != n2-1) die("arr_c wrong ubound 2");
-      if (ubound(arr_f ,2) != n2  ) die("arr_f wrong ubound 2");
-      if (ubound(sarr_c,1) != n2-1) die("sarr_c wrong ubound 2");
-      if (ubound(sarr_f,2) != n2  ) die("sarr_f wrong ubound 2");
-
       using yakl::intrinsics::epsilon;
-      if (epsilon(arr_c) != std::numeric_limits<real>::epsilon()) die("arr_c wrong epsilon");
-      if (epsilon(arr_f) != std::numeric_limits<real>::epsilon()) die("arr_f wrong epsilon");
-      if (epsilon(sarr_c) != std::numeric_limits<real>::epsilon()) die("sarr_c wrong epsilon");
-      if (epsilon(sarr_f) != std::numeric_limits<real>::epsilon()) die("sarr_f wrong epsilon");
       if (epsilon(scalar) != std::numeric_limits<real>::epsilon()) die("scalar wrong epsilon");
-
       using yakl::intrinsics::tiny;
-      if (tiny(arr_c) != std::numeric_limits<real>::min()) die("arr_c wrong tiny");
-      if (tiny(arr_f) != std::numeric_limits<real>::min()) die("arr_f wrong tiny");
-      if (tiny(sarr_c) != std::numeric_limits<real>::min()) die("sarr_c wrong tiny");
-      if (tiny(sarr_f) != std::numeric_limits<real>::min()) die("sarr_f wrong tiny");
       if (tiny(scalar) != std::numeric_limits<real>::min()) die("scalar wrong tiny");
-
       using yakl::intrinsics::huge;
-      if (huge(arr_c) != std::numeric_limits<real>::max()) die("arr_c wrong huge");
-      if (huge(arr_f) != std::numeric_limits<real>::max()) die("arr_f wrong huge");
-      if (huge(sarr_c) != std::numeric_limits<real>::max()) die("sarr_c wrong huge");
-      if (huge(sarr_f) != std::numeric_limits<real>::max()) die("sarr_f wrong huge");
       if (huge(scalar) != std::numeric_limits<real>::max()) die("scalar wrong huge");
-
       if (yakl::intrinsics::sign(13.1 , -0.1 ) != -13.1) die("ERROR: sign does not work");
-
-      using yakl::intrinsics::sum;
-      using yakl::intrinsics::abs;
-      arr_c = -2;
-      arr_f = -3;
-      sarr_c = -4;
-      sarr_f = -5;
-      if (sum(abs(arr_c ))/size(arr_c ) != 2) die("ERROR: Wrong value for arr_c ");
-      if (sum(abs(arr_f ))/size(arr_f ) != 3) die("ERROR: Wrong value for arr_f ");
-      if (sum(abs(sarr_c))/size(sarr_c) != 4) die("ERROR: Wrong value for sarr_c");
-      if (sum(abs(sarr_f))/size(sarr_f) != 5) die("ERROR: Wrong value for sarr_f");
-      yakl::ScalarLiveOut<real> avg_c(0);
-      yakl::ScalarLiveOut<real> avg_f(0);
-      yakl::parallel_for( 1 , KOKKOS_LAMBDA (int i) {
-        avg_c = sum(abs(sarr_c))/size(sarr_c);
-        avg_f = sum(abs(sarr_f))/size(sarr_f);
-      });
-      if (avg_c.hostRead() != 4) die("ERROR: Wrong value for sarr_c");
-      if (avg_f.hostRead() != 5) die("ERROR: Wrong value for sarr_f");
-
-      yakl::parallel_for( size(arr_c) , KOKKOS_LAMBDA (int i) { arr_c.data()[i] = i; });
-      yakl::parallel_for( size(arr_f) , KOKKOS_LAMBDA (int i) { arr_f.data()[i] = i; });
-      for (int i=0; i < size(sarr_c); i++) { sarr_c.data()[i] = i; }
-      for (int i=0; i < size(sarr_f); i++) { sarr_f.data()[i] = i; }
     }
-    ///////////////////////////////////////////
-    // merge, minval, maxval
-    ///////////////////////////////////////////
+    // Large minval/maxval inputs complement the small comprehensive host/device cases.
     {
-      using yakl::intrinsics::sum;
-      using yakl::intrinsics::merge;
       int constexpr n = 1024;
-      Array<double *,Kokkos::HostSpace> h_a1  ("h_a1"  ,n);
-      Array<double *,Kokkos::HostSpace> h_a2  ("h_a2"  ,n);
-      Array<bool   *,Kokkos::HostSpace> h_mask("h_mask",n);
-      SArray  <double,n> sarr_a1  ;
-      SArray  <double,n> sarr_a2  ;
-      SArray  <bool  ,n> sarr_mask;
-      SArray_F<double,Bnds{1,n}> fsarr_a1  ;
-      SArray_F<double,Bnds{1,n}> fsarr_a2  ;
-      SArray_F<bool  ,Bnds{1,n}> fsarr_mask;
+      Array<double *,Kokkos::HostSpace> host("minmax host",n);
+      SArray<double,n> cStack;
+      SArray_F<double,Bnds{1,n}> fStack;
       for (int i=0; i < n; i++) {
-        h_a1.data()[i] = 2;
-        h_a2.data()[i] = 3;
-        h_mask.data()[i] = i%2 == 1;
-        sarr_a1.data()[i] = 2;
-        sarr_a2.data()[i] = 3;
-        sarr_mask.data()[i] = i%2 == 1;
-        fsarr_a1.data()[i] = 2;
-        fsarr_a2.data()[i] = 3;
-        fsarr_mask.data()[i] = i%2 == 1;
+        host  .data()[i] = n-i;
+        cStack.data()[i] = n-i;
+        fStack.data()[i] = n-i;
       }
-      auto d_a1   = h_a1  .createDeviceCopy();
-      auto d_a2   = h_a2  .createDeviceCopy();
-      auto d_mask = h_mask.createDeviceCopy();
-
-      if (std::abs(sum(merge(h_a1    ,h_a2    ,h_mask    ))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(h_)");
-      if (std::abs(sum(merge(d_a1    ,d_a2    ,d_mask    ))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(h_)");
-      if (std::abs(sum(merge(sarr_a1 ,sarr_a2 ,sarr_mask ))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(sarr_)");
-      if (std::abs(sum(merge(fsarr_a1,fsarr_a2,fsarr_mask))/n-2.5)>=1.e-10) die("ERROR: Wrong value for merge(fsarr_)");
-
-      yakl::ScalarLiveOut<real> r1(0);
-      yakl::ScalarLiveOut<real> r2(0);
-      yakl::parallel_for( 1 , KOKKOS_LAMBDA (int i) {
-        r1 = std::abs(sum(merge(sarr_a1 ,sarr_a2 ,sarr_mask ))/n-2.5);
-        r2 = std::abs(sum(merge(fsarr_a1,fsarr_a2,fsarr_mask))/n-2.5);
-      });
-      if (r1.hostRead()>=1.e-10) die("ERROR: Wrong value for merge(sarr_)");
-      if (r2.hostRead()>=1.e-10) die("ERROR: Wrong value for merge(fsarr_)");
+      auto device = host.createDeviceCopy();
 
       using yakl::intrinsics::minval;
       using yakl::intrinsics::maxval;
-      Array_F<double *,yakl::DeviceSpace> d_a1_f("d_a1_f",n);
-      Array_F<double *,Kokkos::HostSpace> h_a1_f("h_a1_f",n);
-      for (int i=0; i < n; i++) {
-        h_a1    .data()[i] = n-i;
-        sarr_a1 .data()[i] = n-i;
-        fsarr_a1.data()[i] = n-i;
-        h_a1_f  .data()[i] = n-i;
+      if (minval(host) != 1 || minval(device) != 1 || minval(cStack) != 1 || minval(fStack) != 1) {
+        die("ERROR: wrong large-input minval");
       }
-      h_a1  .deep_copy_to(d_a1  );
-      h_a1_f.deep_copy_to(d_a1_f);
-      if ( minval(h_a1    ) != 1 ) die("ERROR: wrong minval h_a1    ");
-      if ( minval(d_a1    ) != 1 ) die("ERROR: wrong minval d_a1    ");
-      if ( minval(sarr_a1 ) != 1 ) die("ERROR: wrong minval sarr_a1 ");
-      if ( minval(fsarr_a1) != 1 ) die("ERROR: wrong minval fsarr_a1");
-      if ( maxval(h_a1    ) != n ) die("ERROR: wrong maxval h_a1    ");
-      if ( maxval(d_a1    ) != n ) die("ERROR: wrong maxval d_a1    ");
-      if ( maxval(sarr_a1 ) != n ) die("ERROR: wrong maxval sarr_a1 ");
-      if ( maxval(fsarr_a1) != n ) die("ERROR: wrong maxval fsarr_a1");
+      if (maxval(host) != n || maxval(device) != n || maxval(cStack) != n || maxval(fStack) != n) {
+        die("ERROR: wrong large-input maxval");
+      }
 
-      using yakl::intrinsics::minloc;
-      using yakl::intrinsics::maxloc;
-      if ( minloc(h_a1    )(0) != n-1 ) die("ERROR: wrong minloc h_a1    ");
-      if ( minloc(d_a1    )(0) != n-1 ) die("ERROR: wrong minloc d_a1    ");
-      if ( minloc(sarr_a1 )(0) != n-1 ) die("ERROR: wrong minloc sarr_a1 ");
-      if ( minloc(fsarr_a1)(1) != n   ) die("ERROR: wrong minloc fsarr_a1");
-      if ( minloc(h_a1_f  )(1) != n   ) die("ERROR: wrong minloc h_a1_f  ");
-      if ( minloc(d_a1_f  )(1) != n   ) die("ERROR: wrong minloc d_a1_f  ");
-
-      if ( maxloc(h_a1    )(0) != 0 ) die("ERROR: maxloc(h_a1    ) != 0");
-      if ( maxloc(d_a1    )(0) != 0 ) die("ERROR: maxloc(d_a1    ) != 0");
-      if ( maxloc(sarr_a1 )(0) != 0 ) die("ERROR: maxloc(sarr_a1 ) != 0");
-      if ( maxloc(fsarr_a1)(1) != 1 ) die("ERROR: maxloc(fsarr_a1) != 1");
-      if ( maxloc(h_a1_f  )(1) != 1 ) die("ERROR: maxloc(h_a1_f  ) != 1");
-      if ( maxloc(d_a1_f  )(1) != 1 ) die("ERROR: maxloc(d_a1_f  ) != 1");
-
-      yakl::ScalarLiveOut<real> r3;
-      yakl::ScalarLiveOut<real> r4;
-      yakl::ScalarLiveOut<real> r5;
-      yakl::ScalarLiveOut<real> r6;
-      yakl::ScalarLiveOut<SArray  <unsigned int,1>> r7 ;
-      yakl::ScalarLiveOut<SArray_F<int         ,yakl::Bnds{1,1}>> r8 ;
-      yakl::ScalarLiveOut<SArray  <unsigned int,1>> r9 ;
-      yakl::ScalarLiveOut<SArray_F<int         ,yakl::Bnds{1,1}>> r10;
+      yakl::ScalarLiveOut<int> stackErrors(0);
       yakl::parallel_for( 1 , KOKKOS_LAMBDA (int i) {
-        r3  = minval(sarr_a1 );
-        r4  = minval(fsarr_a1);
-        r5  = maxval(sarr_a1 );
-        r6  = maxval(fsarr_a1);
-        r7  = minloc(sarr_a1 )(0);
-        r8  = minloc(fsarr_a1)(1);
-        r9  = maxloc(sarr_a1 )(0);
-        r10 = maxloc(fsarr_a1)(1);
+        if (minval(cStack) != 1 || minval(fStack) != 1 || maxval(cStack) != n || maxval(fStack) != n) stackErrors = 1;
       });
-      if ( r3 .hostRead()    != 1   ) die("ERROR: wrong minval sarr_a1 ");
-      if ( r4 .hostRead()    != 1   ) die("ERROR: wrong minval fsarr_a1");
-      if ( r5 .hostRead()    != n   ) die("ERROR: wrong maxval sarr_a1 ");
-      if ( r6 .hostRead()    != n   ) die("ERROR: wrong maxval fsarr_a1");
-      if ( r7 .hostRead()(0) != n-1 ) die("ERROR: wrong minloc sarr_a1 ");
-      if ( r8 .hostRead()(1) != n   ) die("ERROR: wrong minloc fsarr_a1");
-      if ( r9 .hostRead()(0) != 0   ) die("ERROR: maxloc(sarr_a1 ) != 0");
-      if ( r10.hostRead()(1) != 1   ) die("ERROR: maxloc(fsarr_a1) != 1");
+      if (stackErrors.hostRead() != 0) die("ERROR: wrong large stack-array minval or maxval on device");
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -552,25 +333,13 @@ int main() {
     }
 
     ///////////////////////////////////////
-    // allocated, associated
+    // Unallocated dynamic arrays; allocated cases are covered by the comprehensive host/device tests.
     ///////////////////////////////////////
     {
       using yakl::intrinsics::allocated;
       using yakl::intrinsics::associated;
-      real_c_2d arr_c("arr_c",n1,n2);
-      real_f_2d arr_f("arr_c",{-1,n1-2},n2);
-      SArray  <real,n1,n2> sarr_c;
-      SArray_F<real,Bnds{-1,n1-2},Bnds{1,n2}> sarr_f;
       real_c_2d arr_c_no;
       real_f_2d arr_f_no;
-      if (!allocated(arr_c )) die("arr_c error allocated");
-      if (!allocated(arr_f )) die("arr_f error allocated");
-      if (!allocated(sarr_c)) die("sarr_c error allocated");
-      if (!allocated(sarr_f)) die("sarr_f error allocated");
-      if (!associated(arr_c )) die("arr_c error associated");
-      if (!associated(arr_f )) die("arr_f error associated");
-      if (!associated(sarr_c)) die("sarr_c error associated");
-      if (!associated(sarr_f)) die("sarr_f error associated");
       if (allocated(arr_c_no)) die("arr_c_no error allocated");
       if (allocated(arr_f_no)) die("arr_f_no error allocated");
       if (associated(arr_c_no)) die("arr_c_no error associated");
@@ -579,52 +348,10 @@ int main() {
 
 
     ////////////////////////////////////////////////
-    // minloc, maxloc, minval, maxval, sum, product
-    ////////////////////////////////////////////////
-    {
-      using yakl::intrinsics::minloc;
-      using yakl::intrinsics::minval;
-      using yakl::intrinsics::maxloc;
-      using yakl::intrinsics::maxval;
-      using yakl::intrinsics::sum;
-      using yakl::intrinsics::product;
-      SArray  <real,n1> sarr_c;
-      SArray_F<real,Bnds{1,n1}> sarr_f;
-      sarr_c(0) = -1;
-      sarr_c(1) = -2;
-      sarr_c(2) = 4;
-      sarr_c(3) = 5;
-      sarr_c(4) = 1;
-      sarr_f(1) = -1;
-      sarr_f(2) = -2;
-      sarr_f(3) = 4;
-      sarr_f(4) = 5;
-      sarr_f(5) = 1;
-      if (minloc(sarr_c)(0) != 1) die("sarr_c error minloc");
-      if (maxloc(sarr_c)(0) != 3) die("sarr_c error maxloc");
-      if (minloc(sarr_f)(1) != 2) die("sarr_f error minloc");
-      if (maxloc(sarr_f)(1) != 4) die("sarr_f error maxloc");
-      if (minval(sarr_c) != -2) die("sarr_c error minval");
-      if (maxval(sarr_c) !=  5) die("sarr_c error maxval");
-      if (minval(sarr_f) != -2) die("sarr_f error minval");
-      if (maxval(sarr_f) !=  5) die("sarr_f error maxval");
-      if (sum(sarr_c) != 7) die("sarr_c error sum");
-      if (sum(sarr_f) != 7) die("sarr_f error sum");
-      // minval, maxval, and sum tested for dynamic arrays elsewhere already
-      if (product(sarr_c) != 40) die("sarr_c error product");
-      if (product(sarr_f) != 40) die("sarr_f error product");
-    }
-
-    ////////////////////////////////////////////////
     // product
     ////////////////////////////////////////////////
     {
       int constexpr n = 1024;
-      using yakl::intrinsics::minloc;
-      using yakl::intrinsics::minval;
-      using yakl::intrinsics::maxloc;
-      using yakl::intrinsics::maxval;
-      using yakl::intrinsics::sum;
       using yakl::intrinsics::product;
       Array  <double *,yakl::DeviceSpace> d_arr("d_arr",n);
       Array  <double *,Kokkos::HostSpace> h_arr("h_arr",n);
@@ -649,38 +376,11 @@ int main() {
 
 
     ////////////////////////////////////////////////
-    // any
+    // Large any/all reductions stress concurrent reducer updates and late dissenting values.
     ////////////////////////////////////////////////
     {
       using yakl::intrinsics::any;
       using yakl::intrinsics::all;
-      using yakl::componentwise::operator<;
-      using yakl::componentwise::operator>=;
-
-      real_c_1d arr_c("arr_c",5);
-      real_f_1d arr_f("arr_f",5);
-      SArray  <real,5> sarr_c;
-      SArray_F<real,Bnds{1,5}> sarr_f;
-
-      yakl::parallel_for( 5 , KOKKOS_LAMBDA (int i) {
-        arr_c (i  ) = i-2;
-        arr_f (i+1) = i-2;
-      });
-
-      for (int i=0; i < 5; i++) {
-        sarr_c (i  ) = i-2;
-        sarr_f (i+1) = i-2;
-      }
-
-      if ( any( arr_c  < -2 ) ) die("arr_c  any fail 1");
-      if ( any( arr_f  < -2 ) ) die("arr_f  any fail 1");
-      if ( any( sarr_c < -2 ) ) die("sarr_c any fail 1");
-      if ( any( sarr_f < -2 ) ) die("sarr_f any fail 1");
-
-      if ( ! all( arr_c  >= -2 ) ) die("! all( arr_c  >= -2 )");
-      if ( ! all( arr_f  >= -2 ) ) die("! all( arr_f  >= -2 )");
-      if ( ! all( sarr_c >= -2 ) ) die("! all( sarr_c >= -2 )");
-      if ( ! all( sarr_f >= -2 ) ) die("! all( sarr_f >= -2 )");
 
       // A large alternating input makes many device threads contribute both reduction outcomes. Repeating the
       // reductions increases the chance that a backend or implementation containing shared non-atomic writes fails.
@@ -713,32 +413,6 @@ int main() {
       });
       if (!any(raceValues)) die("any failed for a lone false value in the final device block");
       if ( all(raceValues)) die("all failed for a lone false value in the final device block");
-    }
-
-
-    //////////////////////////////////////////////////////////
-    // count
-    //////////////////////////////////////////////////////////
-    {
-      using yakl::intrinsics::count;
-      bool_c_1d c("c",10);
-      bool_f_1d f("f",10);
-      SArray  <bool,10> sc;
-      SArray_F<bool,Bnds{1,10}> sf;
-      
-      yakl::parallel_for( 10 , KOKKOS_LAMBDA( int i ) {
-        c(i) = i%2 == 0;
-        f(i+1) = i%2 == 0;
-      });
-      for (int i=0; i < 10; i++) {
-        sc(i) = i%2 == 0;
-        sf(i+1) = i%2 == 0;
-      }
-
-      if (count(c)  != 5) die("ERROR: incorrect count c");
-      if (count(sc) != 5) die("ERROR: incorrect count sc");
-      if (count(f)  != 5) die("ERROR: incorrect count f");
-      if (count(sf) != 5) die("ERROR: incorrect count sf");
     }
 
 

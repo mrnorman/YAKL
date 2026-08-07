@@ -8,11 +8,7 @@ using yakl::Array_F;
 using yakl::Bnds;
 using yakl::SArray_F;
 
-template <size_t Strip>
-concept ValidStripConfig = requires { typename yakl::Config<128,Strip>; };
-
-static_assert( ValidStripConfig<1>);
-static_assert(!ValidStripConfig<0>);
+static_assert(yakl::Config<128>::Thr == 128);
 
 void fail(std::string const &message) {
   Kokkos::abort(message.c_str());
@@ -145,10 +141,16 @@ int main(int argc, char **argv) {
     auto result = yakl::intrinsics::merge(trueValues,falseValues,condition);
     (void) result;
   } else if (scenario == "loop_extent") {
-    yakl::LoopSpec<> loop(-1);
+    yakl::LoopSpec loop(-1);
     (void) loop;
   } else if (scenario == "loop_stride") {
-    yakl::LoopSpec<> loop(0,10,0);
+    yakl::LoopSpec loop(0,10,0);
+    (void) loop;
+  } else if (scenario == "loop_f_extent") {
+    yakl::LoopSpec_F loop(-1);
+    (void) loop;
+  } else if (scenario == "loop_f_stride") {
+    yakl::LoopSpec_F loop(-3,7,0);
     (void) loop;
   } else if (scenario == "simple_bounds_negative") {
     yakl::SimpleBounds<1> bounds(-1);
@@ -205,7 +207,19 @@ int main(int argc, char **argv) {
     (void) yakl::intrinsics::matinv(matrix);
   } else if (scenario == "random_range") {
     yakl::Random random(1368976481,0);
-    (void) random.genFP<double>(2.,1.);
+    (void) random.gen_uniform<double>(2.,1.);
+  } else if (scenario == "random_normal_stddev") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_normal<double>(0.,-1.);
+  } else if (scenario == "random_bernoulli_probability") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_bernoulli(1.01);
+  } else if (scenario == "random_exponential_rate") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_exponential<double>(0.);
+  } else if (scenario == "random_lognormal_stddev") {
+    yakl::Random random(1368976481,0);
+    (void) random.gen_lognormal<double>(0.,-1.);
   } else if (scenario == "timer_stop") {
     yakl::Toney timer;
     timer.stop("inactive");
@@ -215,6 +229,10 @@ int main(int argc, char **argv) {
     bounds.unpack(bounds.nIter,i,j);
   } else if (scenario == "autotune_index") {
     (void) yakl::autotune::get_config(-1);
+  } else if (scenario == "config_tile_zero") {
+    (void) yakl::Config<128>(0);
+  } else if (scenario == "config_tile_negative") {
+    (void) yakl::Config<128>(-1);
   } else if (scenario == "finalize_with_live_allocation") {
     Array<int *,yakl::DeviceSpace> arr("live allocation",1);
     yakl::finalize();

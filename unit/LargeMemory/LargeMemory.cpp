@@ -41,7 +41,7 @@ int main() {
     ptrdiff_t constexpr flower = -1234;
     ptrdiff_t const fupper = flower + static_cast<ptrdiff_t>(largeSize) - 1;
     Array_F<value_t *,DeviceSpace> farray(array.data(),{flower,fupper});
-    Bounds_F<1> fbounds(yakl::LoopSpec<yakl::FStyle>(flower,fupper));
+    Bounds_F<1> fbounds(yakl::LoopSpec_F(flower,fupper));
     if (fbounds.nIter != largeSize) die("ERROR: large Bounds_F iteration count was truncated");
     ptrdiff_t lastFortranIndex;
     fbounds.unpack(largeSize-1,lastFortranIndex);
