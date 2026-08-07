@@ -1,0 +1,8 @@
+[submodule "external/kokkos-4.7.00"]
+	path = external/kokkos-4.7.00
+	url = git@github.com:kokkos/kokkos.git
+	update = none
+[submodule "external/kokkos-5.2.0"]
+	path = external/kokkos-5.2.0
+	url = git@github.com:kokkos/kokkos.git
+	update = none

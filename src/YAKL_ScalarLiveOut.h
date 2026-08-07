@@ -33,21 +33,39 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION ScalarLiveOut & operator=( ScalarLiveOut      &&rhs) { this->data = rhs.data; return *this; }
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
-    KOKKOS_INLINE_FUNCTION T &operator= (TLOC rhs) const { data(0) = rhs; return data(0); }
+    KOKKOS_INLINE_FUNCTION T &operator= (TLOC rhs) const {
+      if constexpr (kokkos_debug) {
+        if (!data.is_allocated()) Kokkos::abort("ERROR: assigning an unallocated ScalarLiveOut");
+      }
+      data(0) = rhs;
+      return data(0);
+    }
 
     KOKKOS_INLINE_FUNCTION T &operator() () const {
+      if constexpr (kokkos_debug) {
+        if (!data.is_allocated()) Kokkos::abort("ERROR: accessing an unallocated ScalarLiveOut");
+      }
       return data(0);
     }
 
     KOKKOS_INLINE_FUNCTION T get() const {
+      if constexpr (kokkos_debug) {
+        if (!data.is_allocated()) Kokkos::abort("ERROR: reading an unallocated ScalarLiveOut");
+      }
       return data(0);
     }
 
     inline T hostRead() const {
+      if constexpr (kokkos_debug) {
+        if (!data.is_allocated()) Kokkos::abort("ERROR: hostRead on an unallocated ScalarLiveOut");
+      }
       return data.createHostCopy()(0);
     }
 
     inline void hostWrite(T val) {
+      if constexpr (kokkos_debug) {
+        if (!data.is_allocated()) Kokkos::abort("ERROR: hostWrite on an unallocated ScalarLiveOut");
+      }
       // Copy data to device
       YAKL_SCOPE( myData , this->data );
       parallel_for( YAKL_AUTO_LABEL() , 1 , KOKKOS_LAMBDA (int dummy) {
@@ -58,5 +76,3 @@ namespace yakl {
 
   };
 }
-
-

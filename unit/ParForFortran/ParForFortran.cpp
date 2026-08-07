@@ -25,11 +25,23 @@ void die(std::string msg) {
 }
 
 
-int main() {
+int main(int argc, char **argv) {
+  #ifdef HAVE_MPI
+    MPI_Init(&argc,&argv);
+  #endif
   Kokkos::initialize();
   yakl::init();
   {
     yakl::timer_start("main");
+    static_assert(!yakl::LoopSpec_F::is_cstyle && yakl::LoopSpec_F::is_fstyle);
+    static_assert(!std::is_same_v<yakl::LoopSpec,yakl::LoopSpec_F>);
+    static_assert(!std::is_constructible_v<yakl::Bounds_F<1>,yakl::LoopSpec>);
+    yakl::LoopSpec_F const extentSpec(5);
+    yakl::LoopSpec_F const arbitrarySpec(-4,4,2);
+    if (extentSpec.l != 1 || extentSpec.u != 5 || extentSpec.s != 1 || extentSpec.index_range() != 5 ||
+        arbitrarySpec.l != -4 || arbitrarySpec.u != 4 || arbitrarySpec.s != 2 || arbitrarySpec.index_range() != 5) {
+      die("ERROR: Fortran-style LoopSpec_F has incorrect bounds or trip count");
+    }
     int constexpr n1 = 4;
     int constexpr n2 = 16;
     int constexpr n3 = 128;
@@ -46,11 +58,50 @@ int main() {
     if ( abs(sum(arr3d) - (double) n1*n2*n3) / (double) (n1*n2*n3) > 1.e-13) die("ERROR: Wrong sum for arr3d");
 
     arr3d = 0.;
+
+    Array_F<int *,yakl::DeviceSpace> sentinel("sentinel",1);
+    sentinel = 42;
+    parallel_for_F( "zero work" , SimpleBounds_F<2>(0,7) , KOKKOS_LAMBDA (int, int) {
+      sentinel(1) = -1;
+    });
+    if (sum(sentinel) != 42) die("ERROR: zero-work Fortran-style launch executed its kernel");
+
+    // Arbitrary and negative lower bounds, non-unit strides, and partial edge
+    // tiles must all map back to the correct Fortran indices.
+    Array_F<int ***,yakl::DeviceSpace> tiled("Fortran tiled",{-5,3},{7,13},{-2,8});
+    for (int tile : {1,2,4,8}) {
+      tiled = 0;
+      parallel_for_F( "Fortran-style tiled" ,
+                      Bounds_F<3>({-5,3,2},{7,13,3},{-2,8,5}) , KOKKOS_LAMBDA (ptrdiff_t i, ptrdiff_t j, ptrdiff_t k) {
+        Kokkos::atomic_add(&tiled(i,j,k),1);
+      }, yakl::Config<128>{tile});
+      auto tiledHost = tiled.createHostCopy();
+      for (int k=-2; k <= 8; k++) {
+        for (int j=7; j <= 13; j++) {
+          for (int i=-5; i <= 3; i++) {
+            bool const visited = (i+5)%2 == 0 && (j-7)%3 == 0 && (k+2)%5 == 0;
+            if (tiledHost(i,j,k) != (visited ? 1 : 0)) {
+              die("ERROR: Fortran-style tiled launch mapped arbitrary bounds incorrectly");
+            }
+          }
+        }
+      }
+    }
+
+    Array_F<int *,yakl::DeviceSpace> strided("strided",{-2,4});
+    strided = 0;
+    parallel_for_F( "strided inclusive endpoint" ,
+                    Bounds_F<1>(yakl::LoopSpec_F(-2,4,3)) , KOKKOS_LAMBDA (ptrdiff_t i) {
+      strided(i) = i + 3;
+    });
+    if (sum(strided) != 12) die("ERROR: Fortran-style strided launch omitted its final valid iteration");
     yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 
-  
+  #ifdef HAVE_MPI
+    MPI_Finalize();
+  #endif
+
   return 0;
 }
-

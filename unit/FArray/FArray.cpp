@@ -6,6 +6,8 @@
 
 using yakl::Array_F;
 using yakl::COLON;
+
+static_assert(std::same_as<std::remove_cv_t<decltype(COLON)>,Kokkos::ALL_t>);
 using yakl::parallel_for_F;
 using yakl::Bounds_F;
 using yakl::SimpleBounds_F;
@@ -46,7 +48,10 @@ auto construct_const_array_device() {
 }
 
 
-int main() {
+int main(int argc, char **argv) {
+  #ifdef HAVE_MPI
+    MPI_Init(&argc,&argv);
+  #endif
   Kokkos::initialize();
   yakl::init();
   {
@@ -156,6 +161,117 @@ int main() {
     if (test8d.extent(7) != d8) { die("extent: wrong value for test8d"); }
 
     ///////////////////////////////////////////////////////////
+    // Test host-side reference counting for transformed Arrays
+    ///////////////////////////////////////////////////////////
+    {
+      real2d retained;
+      {
+        real1d source("reshape owner",{-5,6});
+        source = 3;
+        if (source.use_count() != 1) die("reshape: source should begin with reference count 1");
+        retained = source.reshape({2,4},{-3,0});
+        if (source.use_count() != 2 || retained.use_count() != 2) {
+          die("reshape: transformed Array_F did not retain its source allocation");
+        }
+        if (retained.label() != source.label()) die("reshape: transformed Array_F did not retain its label");
+        if (retained.lbounds()(1) != 2 || retained.lbounds()(2) != -3) {
+          die("reshape: transformed Array_F did not retain its requested lower bounds");
+        }
+        auto copy = retained;
+        if (source.use_count() != 3 || retained.use_count() != 3 || copy.use_count() != 3) {
+          die("reshape: copying transformed Array_F produced an incorrect reference count");
+        }
+      }
+      if (retained.use_count() != 1) die("reshape: retained Array_F should be sole owner after source destruction");
+      if (yakl::intrinsics::sum(retained) != 36) die("reshape: retained Array_F became invalid after source destruction");
+    }
+    {
+      real1d retained;
+      {
+        real2d source("collapse owner",{-1,1},{4,7});
+        source = 4;
+        retained = source.collapse(-6);
+        if (source.use_count() != 2 || retained.use_count() != 2) {
+          die("collapse: transformed Array_F did not retain its source allocation");
+        }
+        if (retained.data() != source.data() || retained.lbounds()(1) != -6) {
+          die("collapse: transformed Array_F has incorrect pointer or lower bound");
+        }
+        {
+          auto flattened = source.flatten(-6);
+          auto default_lb = source.flatten();
+          if (source.use_count() != 4 || flattened.use_count() != 4 || default_lb.use_count() != 4) {
+            die("flatten: transformed Array_F has an incorrect reference count");
+          }
+          if (flattened.data() != retained.data() || flattened.lbounds()(1) != -6 || default_lb.lbounds()(1) != 1) {
+            die("flatten: result differs from collapse");
+          }
+        }
+        if (source.use_count() != 2) die("flatten: temporary Array_F aliases did not release their references");
+      }
+      if (retained.use_count() != 1) die("collapse: retained Array_F should be sole owner after source destruction");
+      if (yakl::intrinsics::sum(retained) != 48) die("collapse: retained Array_F became invalid after source destruction");
+    }
+    {
+      real1d retained;
+      {
+        real2d source("slice owner",{-1,1},{4,7});
+        source = 5;
+        retained = source.slice<1>(COLON,5);
+        if (source.use_count() != 2 || retained.use_count() != 2) {
+          die("slice: transformed Array_F did not retain its source allocation");
+        }
+        if (retained.data() != source.data()+source.stride(1) || retained.lbounds()(1) != -1) {
+          die("slice: transformed Array_F has incorrect offset or lower bound");
+        }
+        {
+          auto ignored_index = source.slice<1>(-987654,5);
+          if (source.use_count() != 3 || ignored_index.use_count() != 3) {
+            die("slice: numeric index ignored for a whole Array_F dimension has an incorrect reference count");
+          }
+          if (ignored_index.data() != retained.data() || ignored_index.lbounds()(1) != retained.lbounds()(1)) {
+            die("slice: numeric index supplied for a whole Array_F dimension was not ignored");
+          }
+        }
+        if (source.use_count() != 2) die("slice: temporary Array_F alias did not release its reference");
+      }
+      if (retained.use_count() != 1) die("slice: retained Array_F should be sole owner after source destruction");
+      if (yakl::intrinsics::sum(retained) != 15) die("slice: retained Array_F became invalid after source destruction");
+    }
+    {
+      real2d retained;
+      {
+        real2d source("subset owner",{-1,1},{4,7});
+        source = 6;
+        retained = source.subset_slowest_dimension(5,6);
+        if (source.use_count() != 2 || retained.use_count() != 2) {
+          die("subset: transformed Array_F did not retain its source allocation");
+        }
+        if (retained.data() != source.data()+source.stride(1) || retained.lbounds()(2) != 5) {
+          die("subset: transformed Array_F has incorrect offset or lower bound");
+        }
+      }
+      if (retained.use_count() != 1) die("subset: retained Array_F should be sole owner after source destruction");
+      if (yakl::intrinsics::sum(retained) != 36) die("subset: retained Array_F became invalid after source destruction");
+    }
+    {
+      real2d source("device transformations",{-1,0},{4,6});
+      Array_F<int *,yakl::DeviceSpace> result("device transformation result",1);
+      source = 2;
+      if (source.use_count() != 1) die("device transformations: source should begin with reference count 1");
+      parallel_for_F( SimpleBounds_F<1>(1) , KOKKOS_LAMBDA (int i) {
+        auto reshaped  = source.reshape({10,12},{-4,-3});
+        auto collapsed = source.collapse(-2);
+        auto sliced    = source.slice<1>(COLON,5);
+        auto subset    = source.subset_slowest_dimension(5,5);
+        result(i) = reshaped(12,-3) + collapsed(3) + sliced(-1) + subset(-1,5);
+      });
+      Kokkos::fence();
+      if (source.use_count() != 1) die("device transformations: device-local aliases changed the host reference count");
+      if (result.createHostCopy()(1) != 8) die("device transformations: a device-local transformed Array_F is invalid");
+    }
+
+    ///////////////////////////////////////////////////////////
     // Test unmanaged arrays
     ///////////////////////////////////////////////////////////
     real1d test1d_ptr(test1d.data(),d1);
@@ -166,6 +282,15 @@ int main() {
     real6d test6d_ptr(test6d.data(),d1,d2,d3,d4,d5,d6);
     real7d test7d_ptr(test7d.data(),d1,d2,d3,d4,d5,d6,d7);
     real8d test8d_ptr(test8d.data(),d1,d2,d3,d4,d5,d6,d7,d8);
+
+    auto unmanaged_reshape  = test2d_ptr.reshape(d2,d1);
+    auto unmanaged_collapse = test2d_ptr.collapse(1);
+    auto unmanaged_slice    = test2d_ptr.slice<1>(COLON,2);
+    auto unmanaged_subset   = test2d_ptr.subset_slowest_dimension(2,2);
+    if (test2d_ptr.use_count() != 0 || unmanaged_reshape.use_count() != 0 || unmanaged_collapse.use_count() != 0 ||
+        unmanaged_slice.use_count() != 0 || unmanaged_subset.use_count() != 0) {
+      die("UNMANAGED: transforming an unmanaged Array_F must not manufacture ownership");
+    }
 
     test1d_ptr = 0.f;
     test2d_ptr = 0.f;
@@ -351,16 +476,6 @@ int main() {
     if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("LOOPS: wrong sum for test7d"); }
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("LOOPS: wrong sum for test8d"); }
 
-    // auto ir_device = test8d.create_ArrayIR();
-    // auto ir_host   = test8d.createHostCopy().create_ArrayIR();
-    // if (ir_device.get_memory_type() == array_ir::MEMORY_HOST  ) die("ir_device has wrong memory type");
-    // if (ir_host  .get_memory_type() == array_ir::MEMORY_DEVICE) die("ir_host   has wrong memory type");
-    // if (ir_host.extent(1) != test8d.extent(6)) die("ir_host extent(1) is wrong");
-    // if (!ir_host.valid()) die("ir_host says it's not valid");
-
-    // Array<real,8,memHost,styleFortran> wrap(ir_host,{2,2,2,2,2,2,2,2});
-    // if (wrap.extent(1) != test8d.extent(1)) die("wrap extent is wrong");
-    // if (wrap.data() != ir_host.data()) die("wrap data pointer is wrong");
     // if (wrap.get_lbounds()(1) != 2) die("wrap wrong lbounds");
 
 
@@ -416,7 +531,9 @@ int main() {
   }
   yakl::finalize();
   Kokkos::finalize(); 
-  
+  #ifdef HAVE_MPI
+    MPI_Finalize();
+  #endif
+
   return 0;
 }
-

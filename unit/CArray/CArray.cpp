@@ -6,9 +6,19 @@
 
 using yakl::Array;
 using yakl::COLON;
+
+static_assert(std::same_as<std::remove_cv_t<decltype(COLON)>,Kokkos::ALL_t>);
 using yakl::parallel_for;
 using yakl::Bounds;
 using yakl::SimpleBounds;
+
+template <auto... DIMS>
+concept ValidSArrayDimensions = requires { typename yakl::SArray<unsigned char,DIMS...>; };
+
+using WideCountSArray = yakl::SArray<unsigned char,65536u,65536u>;
+static_assert(WideCountSArray::num_elements == size_t{65536}*65536);
+static_assert(std::same_as<decltype(WideCountSArray::size()),size_t>);
+static_assert(! ValidSArrayDimensions<std::numeric_limits<size_t>::max(),2>);
 
 typedef float real;
 
@@ -45,7 +55,10 @@ auto construct_const_array_device() {
 }
 
 
-int main() {
+int main(int argc, char **argv) {
+  #ifdef HAVE_MPI
+    MPI_Init(&argc,&argv);
+  #endif
   Kokkos::initialize();
   yakl::init();
   {
@@ -154,6 +167,107 @@ int main() {
     if (test8d.extent(7) != d8) { die("extent: wrong value for test8d"); }
 
     ///////////////////////////////////////////////////////////
+    // Test host-side reference counting for transformed Arrays
+    ///////////////////////////////////////////////////////////
+    {
+      real2d retained;
+      {
+        real1d source("reshape owner",12);
+        source = 3;
+        if (source.use_count() != 1) die("reshape: source should begin with reference count 1");
+        retained = source.reshape(3,4);
+        if (source.use_count() != 2 || retained.use_count() != 2) {
+          die("reshape: transformed Array did not retain its source allocation");
+        }
+        if (retained.label() != source.label()) die("reshape: transformed Array did not retain its label");
+        auto copy = retained;
+        if (source.use_count() != 3 || retained.use_count() != 3 || copy.use_count() != 3) {
+          die("reshape: copying transformed Array produced an incorrect reference count");
+        }
+      }
+      if (retained.use_count() != 1) die("reshape: retained Array should be sole owner after source destruction");
+      if (yakl::intrinsics::sum(retained) != 36) die("reshape: retained Array became invalid after source destruction");
+    }
+    {
+      real1d retained;
+      {
+        real2d source("collapse owner",3,4);
+        source = 4;
+        retained = source.collapse();
+        if (source.use_count() != 2 || retained.use_count() != 2) {
+          die("collapse: transformed Array did not retain its source allocation");
+        }
+        if (retained.data() != source.data()) die("collapse: transformed Array has an incorrect data pointer");
+        {
+          auto flattened = source.flatten();
+          if (source.use_count() != 3 || flattened.use_count() != 3) {
+            die("flatten: transformed Array has an incorrect reference count");
+          }
+          if (flattened.data() != retained.data() || flattened.extent(0) != retained.extent(0)) {
+            die("flatten: result differs from collapse");
+          }
+        }
+        if (source.use_count() != 2) die("flatten: temporary alias did not release its reference");
+      }
+      if (retained.use_count() != 1) die("collapse: retained Array should be sole owner after source destruction");
+      if (yakl::intrinsics::sum(retained) != 48) die("collapse: retained Array became invalid after source destruction");
+    }
+    {
+      real1d retained;
+      {
+        real2d source("slice owner",3,4);
+        source = 5;
+        retained = source.slice<1>(1,COLON);
+        if (source.use_count() != 2 || retained.use_count() != 2) {
+          die("slice: transformed Array did not retain its source allocation");
+        }
+        if (retained.data() != source.data()+source.stride(0)) die("slice: transformed Array has an incorrect offset");
+        {
+          auto ignored_index = source.slice<1>(1,-987654);
+          if (source.use_count() != 3 || ignored_index.use_count() != 3) {
+            die("slice: numeric index ignored for a whole dimension has an incorrect reference count");
+          }
+          if (ignored_index.data() != retained.data() || ignored_index.extent(0) != retained.extent(0)) {
+            die("slice: numeric index supplied for a whole dimension was not ignored");
+          }
+        }
+        if (source.use_count() != 2) die("slice: temporary alias did not release its reference");
+      }
+      if (retained.use_count() != 1) die("slice: retained Array should be sole owner after source destruction");
+      if (yakl::intrinsics::sum(retained) != 20) die("slice: retained Array became invalid after source destruction");
+    }
+    {
+      real2d retained;
+      {
+        real2d source("subset owner",3,4);
+        source = 6;
+        retained = source.subset_slowest_dimension(1,2);
+        if (source.use_count() != 2 || retained.use_count() != 2) {
+          die("subset: transformed Array did not retain its source allocation");
+        }
+        if (retained.data() != source.data()+source.stride(0)) die("subset: transformed Array has an incorrect offset");
+      }
+      if (retained.use_count() != 1) die("subset: retained Array should be sole owner after source destruction");
+      if (yakl::intrinsics::sum(retained) != 48) die("subset: retained Array became invalid after source destruction");
+    }
+    {
+      real2d source("device transformations",2,3);
+      Array<int *,yakl::DeviceSpace> result("device transformation result",1);
+      source = 2;
+      if (source.use_count() != 1) die("device transformations: source should begin with reference count 1");
+      parallel_for( SimpleBounds<1>(1) , KOKKOS_LAMBDA (int i) {
+        auto reshaped  = source.reshape(3,2);
+        auto collapsed = source.collapse();
+        auto sliced    = source.slice<1>(1,COLON);
+        auto subset    = source.subset_slowest_dimension(1,1);
+        result(i) = reshaped(2,1) + collapsed(5) + sliced(0) + subset(0,0);
+      });
+      Kokkos::fence();
+      if (source.use_count() != 1) die("device transformations: device-local aliases changed the host reference count");
+      if (result.createHostCopy()(0) != 8) die("device transformations: a device-local transformed Array is invalid");
+    }
+
+    ///////////////////////////////////////////////////////////
     // Test unmanaged arrays
     ///////////////////////////////////////////////////////////
     real1d test1d_ptr(test1d.data(),d1);
@@ -164,6 +278,15 @@ int main() {
     real6d test6d_ptr(test6d.data(),d1,d2,d3,d4,d5,d6);
     real7d test7d_ptr(test7d.data(),d1,d2,d3,d4,d5,d6,d7);
     real8d test8d_ptr(test8d.data(),d1,d2,d3,d4,d5,d6,d7,d8);
+
+    auto unmanaged_reshape  = test2d_ptr.reshape(d2,d1);
+    auto unmanaged_collapse = test2d_ptr.collapse();
+    auto unmanaged_slice    = test2d_ptr.slice<1>(1,COLON);
+    auto unmanaged_subset   = test2d_ptr.subset_slowest_dimension(1,1);
+    if (test2d_ptr.use_count() != 0 || unmanaged_reshape.use_count() != 0 || unmanaged_collapse.use_count() != 0 ||
+        unmanaged_slice.use_count() != 0 || unmanaged_subset.use_count() != 0) {
+      die("UNMANAGED: transforming an unmanaged Array must not manufacture ownership");
+    }
 
     test1d_ptr = 0.f;
     test2d_ptr = 0.f;
@@ -289,7 +412,7 @@ int main() {
     // Test non-standard loop bounds
     ///////////////////////////////////////////////////////////
     test3d = 0.;
-    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,{-1,d2-3},{0,d3,2}) , KOKKOS_LAMBDA (int i, int j, int k) {
+    parallel_for( YAKL_AUTO_LABEL() ,  Bounds<3>(d1,{-1,d2-3},{0,d3-1,2}) , KOKKOS_LAMBDA (int i, int j, int k) {
       test3d(i,j+2,k) = 1;
     });
     if (yakl::intrinsics::sum(test3d) != 8) { die("non-standard loop: wrong sum for test3d");}
@@ -340,16 +463,6 @@ int main() {
     if (yakl::intrinsics::sum(test6d) != d1*d2*d3*d4*d5*d6      ) { die("SimpleBounds: wrong sum for test6d"); }
     if (yakl::intrinsics::sum(test7d) != d1*d2*d3*d4*d5*d6*d7   ) { die("SimpleBounds: wrong sum for test7d"); }
     if (yakl::intrinsics::sum(test8d) != d1*d2*d3*d4*d5*d6*d7*d8) { die("SimpleBounds: wrong sum for test8d"); }
-
-    // auto ir_device = test8d.create_ArrayIR();
-    // auto ir_host   = test8d.createHostCopy().create_ArrayIR<real const>();
-    // if (ir_device.get_memory_type() == array_ir::MEMORY_HOST  ) die("ir_device has wrong memory type");
-    // if (ir_host  .get_memory_type() == array_ir::MEMORY_DEVICE) die("ir_host   has wrong memory type");
-    // if (ir_host.extent(1) != test8d.extent(1)) die("ir_host extent(1) is wrong");
-    // if (!ir_host.valid()) die("ir_host says it's not valid");
-    // Array<real const,8,memHost,styleC> wrap(ir_host);
-    // if (wrap.extent(1) != test8d.extent(1)) die("wrap extent is wrong");
-    // if (wrap.data() != ir_host.data()) die("wrap data pointer is wrong");
 
 
     ///////////////////////////////////////////////////////////
@@ -404,7 +517,9 @@ int main() {
   }
   yakl::finalize();
   Kokkos::finalize(); 
-  
+  #ifdef HAVE_MPI
+    MPI_Finalize();
+  #endif
+
   return 0;
 }
-

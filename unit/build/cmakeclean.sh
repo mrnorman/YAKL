@@ -5,5 +5,6 @@ rm -rf CArray  CMakeCache.txt  CMakeFiles  cmake_install.cmake  CTestTestfile.cm
        CPackSourceConfig.cmake  Lambda  Fortran_Link  Kokkos_DeviceSpace  PNetCDF  testyMcTestFace.nc  \
        OpenMP_Regions  Fortran_Gator  Intrinsics  NetCDF  ParForC  ParForFortran  performance  \
        include  install_manifest.txt  lib  yakl-variables.cmake  yakl-variables.make  \
-       yakl_verbose_output_task_0.log  cmake_packages  generated  kokkos  git-state.txt
+       yakl_verbose_output_task_0.log  cmake_packages  generated  kokkos  git-state.txt  \
+       LargeMemory  Validation  Timers  kokkos-matrix
 

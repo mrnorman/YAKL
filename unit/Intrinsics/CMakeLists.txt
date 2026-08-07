@@ -1,5 +1,5 @@
 
-set(MYSRC Intrinsics.cpp)
+set(MYSRC Intrinsics.cpp HostDevice.cpp)
 add_executable(Intrinsics ${MYSRC})
 target_link_libraries(Intrinsics yakl)
 target_compile_options(Intrinsics PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${YAKL_UNIT_CXX_FLAGS}>)
@@ -8,4 +8,3 @@ if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
 endif()
 separate_arguments(REAL_MPI_COMMAND UNIX_COMMAND ${MPI_COMMAND})
 add_test(NAME Intrinsics_test COMMAND ${REAL_MPI_COMMAND} ./Intrinsics)
-

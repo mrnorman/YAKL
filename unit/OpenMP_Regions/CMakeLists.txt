@@ -8,4 +8,4 @@ if (NOT "${YAKL_UNIT_CXX_LINK_FLAGS}" STREQUAL "")
 endif()
 separate_arguments(REAL_MPI_COMMAND UNIX_COMMAND ${MPI_COMMAND})
 add_test(NAME OpenMP_Regions_test COMMAND ${REAL_MPI_COMMAND} ./OpenMP_Regions)
-
+set_tests_properties(OpenMP_Regions_test PROPERTIES ENVIRONMENT "OMP_MAX_ACTIVE_LEVELS=2;OMP_PROC_BIND=false")

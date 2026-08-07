@@ -37,7 +37,16 @@ namespace yakl {
 }
 
 
-#ifdef KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SERIAL
+#if defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SERIAL) || \
+    defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_OPENMP) || \
+    defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_THREADS)
+  #define YAKL_INTERNAL_DEVICE_SPACE_IS_HOST_ACCESSIBLE
+#elif defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HPX)
+  #error "YAKL does not support Kokkos's HPX backend"
+#endif
+
+
+#ifdef YAKL_INTERNAL_DEVICE_SPACE_IS_HOST_ACCESSIBLE
 KOKKOS_IMPL_SHARED_ALLOCATION_SPECIALIZATION(yakl::DeviceSpace);
 #else
 KOKKOS_IMPL_HOST_INACCESSIBLE_SHARED_ALLOCATION_SPECIALIZATION(yakl::DeviceSpace);
@@ -48,7 +57,7 @@ namespace Kokkos {
   namespace Impl {
     // VerifyExecutionCanAccessMemorySpace appears to not be there anymore?
 
-    #ifdef KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SERIAL
+    #ifdef YAKL_INTERNAL_DEVICE_SPACE_IS_HOST_ACCESSIBLE
 
     template <> struct MemorySpaceAccess<HostSpace,yakl::DeviceSpace> {
       enum : bool { assignable = true };
@@ -119,7 +128,7 @@ namespace Kokkos {
       }
     };
 
-    #ifndef KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_SERIAL
+    #ifndef YAKL_INTERNAL_DEVICE_SPACE_IS_HOST_ACCESSIBLE
     template <typename ExecSpace>
     struct DeepCopy<yakl::DeviceSpace,Kokkos::DefaultExecutionSpace::memory_space,ExecSpace> {
       DeepCopy(void * dst , void const * src , size_t n) {
@@ -143,5 +152,3 @@ namespace Kokkos {
 
   }
 }
-
-

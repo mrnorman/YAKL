@@ -5,7 +5,7 @@
 namespace yakl {
 
 
-  inline int constexpr COLON = 0;
+  inline constexpr auto COLON = Kokkos::ALL;
 
 
   template <class Type> inline constexpr bool is_Array = requires { requires Type::is_Array; };
@@ -32,9 +32,53 @@ namespace yakl {
     bool static constexpr is_cstyle = true ;
     bool static constexpr on_device = std::is_same_v<yakl::DeviceSpace,MemSpace>;
 
+    private:
+
+    template <class, class> friend class Array;
+
+    template <class SourceView>
+    void retain_reference_host(SourceView const & source, size_t offset) {
+#if KOKKOS_VERSION >= 40700
+      auto handle = source.accessor().offset(source.data_handle(),offset);
+      base_t::operator=(base_t(handle,this->mapping()));
+#else
+      base_t::operator=(base_t(source.impl_track(),this->impl_map()));
+#endif
+    }
+
+    template <class SourceView>
+    void retain_subview_host(SourceView const & source) {
+      base_t::operator=(source);
+    }
+
+    template <int NewRank, size_t I, size_t Rank>
+    static auto slice_argument_host(std::array<ptrdiff_t,Rank> const & indices) {
+      if constexpr (I < Rank-NewRank) return indices[I];
+      else                            return Kokkos::ALL;
+    }
+
+    template <int NewRank, class Loc, size_t Rank, size_t... Is>
+    void retain_slice_reference_host(Loc & loc, std::array<ptrdiff_t,Rank> const & indices,
+                                     std::index_sequence<Is...>) const {
+      auto subview = Kokkos::subview(static_cast<base_t const &>(*this),
+                                     slice_argument_host<NewRank,Is>(indices)...);
+      loc.retain_subview_host(subview);
+    }
+
+    KOKKOS_INLINE_FUNCTION static ptrdiff_t slice_index(std::integral auto index) {
+      return static_cast<ptrdiff_t>(index);
+    }
+
+    KOKKOS_INLINE_FUNCTION static ptrdiff_t slice_index(Kokkos::ALL_t) { return 0; }
+
+    public:
+
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
     Array const & operator=(TLOC const & v) const {
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: assigning a scalar to an unallocated Array");
+      }
       if constexpr (yakl_auto_profile) timer_start("yakl::Array::operator=scalar");
       Kokkos::deep_copy(*this,v);
       if constexpr (yakl_auto_profile) timer_stop("yakl::Array::operator=scalar");
@@ -54,18 +98,35 @@ namespace yakl {
 
     template <std::integral auto new_rank, class... INTS> requires (new_rank <= this_t::rank()) &&
                                                                    (new_rank >= 0) &&
-                                                                   (std::is_integral_v<INTS> && ...)
+                                                                   ((std::integral<INTS> ||
+                                                                     std::same_as<INTS,Kokkos::ALL_t>) && ...)
     KOKKOS_INLINE_FUNCTION auto slice(INTS... indices) const {
       static_assert(sizeof...(indices)==this_t::rank(),"ERROR: slice calld with wrong number of indices");
       int constexpr rank      = this_t::rank();
       int constexpr nslice    = rank - new_rank;
       int constexpr remaining = new_rank;
       using new_kt = typename ViewType<typename base_t::value_type,remaining>::type;
-      std::array<size_t,rank> slice_arr = { static_cast<size_t>(indices)... };
+      using index_types = std::tuple<INTS...>;
+      static_assert([] <size_t... Is> (std::index_sequence<Is...>) {
+        return (std::integral<std::tuple_element_t<Is,index_types>> && ...);
+      } (std::make_index_sequence<nslice>{}), "ERROR: Array::slice requires an integer for each removed dimension");
+      std::array<ptrdiff_t,rank> slice_arr = { slice_index(indices)... };
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: slicing an unallocated Array");
+      }
+      if constexpr (kokkos_bounds_debug) {
+        for (int i=0; i < nslice; i++) {
+          if (slice_arr[i] < 0 || static_cast<size_t>(slice_arr[i]) >= this_t::extent(i)) {
+            Kokkos::abort("ERROR: Array::slice index out of bounds");
+          }
+        }
+      }
       size_t offset = 0;
       for (int i=0; i < nslice; i++) { offset += slice_arr[i] * this_t::stride(i); }
       return [&] <std::size_t... Ir> ( std::index_sequence<Ir...> ) {
-        return Array<new_kt,MemSpace>( this_t::data()+offset , this_t::extent(nslice + Ir)... );
+        auto loc = Array<new_kt,MemSpace>( this_t::data()+offset , this_t::extent(nslice + Ir)... );
+        KOKKOS_IF_ON_HOST(( retain_slice_reference_host<new_rank>(loc,slice_arr,std::make_index_sequence<rank>{}); ))
+        return loc;
       } ( std::make_index_sequence<remaining>{} );
     }
 
@@ -77,9 +138,20 @@ namespace yakl {
 
     KOKKOS_INLINE_FUNCTION auto subset_slowest_dimension(std::integral auto l, std::integral auto u) const {
       auto constexpr rank = this_t::rank();
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: subsetting an unallocated Array");
+      }
+      if constexpr (kokkos_bounds_debug) {
+        if ((std::is_signed_v<decltype(l)> && l < 0) || (std::is_signed_v<decltype(u)> && u < 0) ||
+            u < l || static_cast<size_t>(u) >= this_t::extent(0)) {
+          Kokkos::abort("ERROR: Array::subset_slowest_dimension bounds are invalid");
+        }
+      }
       typename this_t::value_type * offset = this_t::data()+l*this_t::stride(0);
       return [&] <std::size_t... Is> (std::index_sequence<Is...>) {
-        return this_t( offset , u-l+1 , this->extent(1+Is)... );
+        auto loc = this_t( offset , u-l+1 , this->extent(1+Is)... );
+        KOKKOS_IF_ON_HOST(( loc.retain_reference_host(*this,l*this_t::stride(0)); ))
+        return loc;
       } (std::make_index_sequence<this_t::rank()-1>{});
     }
 
@@ -87,16 +159,37 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION auto reshape(std::integral auto... newdims) const {
       int constexpr new_rank = sizeof...(newdims);
       using new_kt = typename ViewType<typename base_t::value_type,new_rank>::type;
-      if ((static_cast<size_t>(newdims) * ...) != this_t::size()) {
+      std::array<ptrdiff_t,new_rank> dims = { static_cast<ptrdiff_t>(newdims)... };
+      size_t new_size = 1;
+      for (int i=0; i < new_rank; i++) {
+        if constexpr (kokkos_debug) {
+          if (dims[i] < 0) Kokkos::abort("ERROR: Array::reshape dimensions cannot be negative");
+          if (dims[i] != 0 && new_size > std::numeric_limits<size_t>::max()/static_cast<size_t>(dims[i])) {
+            Kokkos::abort("ERROR: Array::reshape dimension product overflow");
+          }
+        }
+        new_size *= static_cast<size_t>(dims[i]);
+      }
+      if (new_size != this_t::size()) {
         Kokkos::abort("ERROR: Resizing array with different total size");
       }
-      return Array<new_kt,MemSpace>(this_t::data(),newdims...);
+      auto loc = Array<new_kt,MemSpace>(this_t::data(),newdims...);
+      KOKKOS_IF_ON_HOST(( loc.retain_reference_host(*this,0); ))
+      return loc;
     }
 
 
     KOKKOS_INLINE_FUNCTION auto collapse() const {
-      return Array<typename base_t::value_type *,MemSpace>(this_t::data(),this_t::size());
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: collapsing an unallocated Array");
+      }
+      auto loc = Array<typename base_t::value_type *,MemSpace>(this_t::data(),this_t::size());
+      KOKKOS_IF_ON_HOST(( loc.retain_reference_host(*this,0); ))
+      return loc;
     }
+
+
+    KOKKOS_INLINE_FUNCTION auto flatten() const { return this_t::collapse(); }
 
 
     template <class ViewType>
@@ -117,6 +210,9 @@ namespace yakl {
 
 
     auto createDeviceCopy() const {
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: copying an unallocated Array to the device");
+      }
       auto ret = createDeviceObject();
       if constexpr (yakl_auto_profile) timer_start("yakl::Array::createDeviceCopy deep_copy");
       Kokkos::deep_copy( ret , *this );
@@ -127,6 +223,9 @@ namespace yakl {
 
 
     auto createHostCopy() const {
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: copying an unallocated Array to the host");
+      }
       auto ret = createHostObject();
       if constexpr (yakl_auto_profile) timer_start("yakl::Array::createHostCopy deep_copy");
       Kokkos::deep_copy( ret , *this );
@@ -139,6 +238,9 @@ namespace yakl {
 
     template <class scalar_t> requires std::is_arithmetic_v<scalar_t>
     Array<typename ViewType<scalar_t,this_t::rank()>::type,MemSpace> as() const {
+      if constexpr (kokkos_debug) {
+        if (!this_t::is_allocated()) Kokkos::abort("ERROR: converting an unallocated Array");
+      }
       auto func = [&] <std::size_t... Is> (std::index_sequence<Is...>) {
         return Array<typename ViewType<scalar_t,this_t::rank()>::type,MemSpace>( this->label() , this->extent(Is)... );
       };
@@ -146,7 +248,7 @@ namespace yakl {
       YAKL_SCOPE( me , *this );
       if constexpr (yakl_auto_profile) timer_start("yakl::Array::as");
       Kokkos::parallel_for( "yakl_as_copy" ,
-                            Kokkos::RangePolicy<typename base_t::execution_space>(0,this->size()) ,
+                            Kokkos::RangePolicy<typename base_t::execution_space,Kokkos::IndexType<size_t>>(0,this->size()) ,
                             KOKKOS_LAMBDA (size_t i) {
         ret.data()[i] = me.data()[i];
       });
@@ -165,7 +267,12 @@ namespace yakl {
 
     KOKKOS_INLINE_FUNCTION auto ubounds() const {
       SArray<size_t,this_t::rank()> ret;
-      for (int i=0; i < this_t::rank(); i++) { ret(i) = this_t::extent(i)-1; }
+      for (int i=0; i < this_t::rank(); i++) {
+        if constexpr (kokkos_debug) {
+          if (this_t::extent(i) == 0) Kokkos::abort("ERROR: Array::ubounds is undefined for an empty dimension");
+        }
+        ret(i) = this_t::extent(i)-1;
+      }
       return ret;
     }
 
@@ -194,7 +301,12 @@ namespace yakl {
 
     KOKKOS_INLINE_FUNCTION auto unpack_global_index(size_t iglob) const {
       SArray<size_t,this_t::rank()> ret;
-      for (int i=0; i < this_t::rank(); i++) { ret(i) = iglob / this_t::stride(i); }
+      if constexpr (kokkos_bounds_debug) {
+        if (iglob >= this_t::size()) Kokkos::abort("ERROR: Array::unpack_global_index index out of bounds");
+      }
+      for (int i=0; i < this_t::rank(); i++) {
+        ret(i) = (iglob / this_t::stride(i)) % this_t::extent(i);
+      }
       return ret;
     }
 
@@ -204,5 +316,3 @@ namespace yakl {
   };
 
 }
-
-

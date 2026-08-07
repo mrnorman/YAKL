@@ -1,79 +1,195 @@
-
 #pragma once
 // Included by YAKL.h
 
 namespace yakl {
 
-  // Simple, low-overhead random numbers
-  // https://burtleburtle.net/bob/rand/smallprng.html
-
-  /** @brief Non-cryptographic pseudo-random number generator with a very small internal state.
-    * 
-    * Based on the algorithm here: https://burtleburtle.net/bob/rand/smallprng.html
-    * The author wrote the following statement on the website (Accessed Aug 1 2022): 
-    * > I wrote this PRNG. I place it in the public domain.
-    * > Same goes for at least the implementation of all those tests linked to above.
-    * 
-    * **IMPORTANT**: When creating a Random object inside a `parallel_for` kernel, please ensure each
-    *                thread's object has a **different and unique** initial seed.
+  /** @brief Allocation-free Philox4x32-10 pseudo-random number generator for host and device code.
+    *
+    * Philox is a counter-based generator. The seed selects an experiment, the stream ID selects a logical
+    * consumer within that experiment, and successive calls advance within that stream. Different streams do not
+    * share mutable state, so creating one Random object per kernel iteration requires no allocation, locking, or
+    * atomics. This independent implementation uses the Philox4x32-10 constants and permutation specified by
+    * Salmon et al., "Parallel Random Numbers: As Easy as 1, 2, 3," SC11.
+    *
+    * This generator is intended for simulation, not cryptography.
     */
   class Random {
   protected:
-    /** @private */
-    typedef unsigned long long u8;
-    /** @private */
-    u8 static constexpr rot(u8 x, u8 k) { return (((x)<<(k))|((x)>>(64-(k)))); }
-    /** @private */
-    struct State { u8 a, b, c, d; };
-    /** @private */
+    using u4 = uint32_t;
+    using u8 = uint64_t;
+
+    u4 static constexpr multiplier0 = 0xd2511f53U;
+    u4 static constexpr multiplier1 = 0xcd9e8d57U;
+    u4 static constexpr weyl0       = 0x9e3779b9U;
+    u4 static constexpr weyl1       = 0xbb67ae85U;
+
+    struct State {
+      u4 key0, key1;
+      u8 stream, block;
+      u8 output0, output1;
+      double normal_spare;
+      int next;
+      bool normal_spare_available;
+    };
+
     State state;
 
+    KOKKOS_INLINE_FUNCTION void generate_block() {
+      u4 counter0 = static_cast<u4>(state.block);
+      u4 counter1 = static_cast<u4>(state.block >> 32);
+      u4 counter2 = static_cast<u4>(state.stream);
+      u4 counter3 = static_cast<u4>(state.stream >> 32);
+      u4 key0 = state.key0;
+      u4 key1 = state.key1;
+
+      for (int round = 0; round < 10; round++) {
+        u8 const product0 = static_cast<u8>(multiplier0) * counter0;
+        u8 const product1 = static_cast<u8>(multiplier1) * counter2;
+        u4 const high0 = static_cast<u4>(product0 >> 32);
+        u4 const high1 = static_cast<u4>(product1 >> 32);
+        u4 const low0  = static_cast<u4>(product0);
+        u4 const low1  = static_cast<u4>(product1);
+
+        u4 const next0 = high1 ^ counter1 ^ key0;
+        u4 const next1 = low1;
+        u4 const next2 = high0 ^ counter3 ^ key1;
+        u4 const next3 = low0;
+        counter0 = next0;
+        counter1 = next1;
+        counter2 = next2;
+        counter3 = next3;
+
+        if (round != 9) {
+          key0 += weyl0;
+          key1 += weyl1;
+        }
+      }
+
+      state.output0 = (static_cast<u8>(counter0) << 32) | counter1;
+      state.output1 = (static_cast<u8>(counter2) << 32) | counter3;
+      state.block++;
+      state.next = 0;
+    }
+
   public:
+    /** @brief Creates a deterministic stream for the given experiment seed and logical stream ID. */
+    KOKKOS_INLINE_FUNCTION Random(u8 seed, u8 stream_id) { set_seed(seed,stream_id); }
+    KOKKOS_DEFAULTED_FUNCTION Random(Random const &) = default;
+    KOKKOS_DEFAULTED_FUNCTION Random(Random &&) = default;
+    KOKKOS_DEFAULTED_FUNCTION Random &operator=(Random const &) = default;
+    KOKKOS_DEFAULTED_FUNCTION Random &operator=(Random &&) = default;
 
-    /** @brief Initializes a prng object with the seed 1368976481. Warm-up of 20 iterations. */
-    KOKKOS_INLINE_FUNCTION Random()                            { set_seed(1368976481L); } // I made up this number
-    /** @brief Initializes a prng object with the specified seed. Warm-up of 20 iterations. */
-    KOKKOS_INLINE_FUNCTION Random(u8 seed)                     { set_seed(seed); }
-    /** @brief Copies a Random object */
-    KOKKOS_INLINE_FUNCTION Random(Random const            &in) { this->state = in.state; }
-    /** @brief Moves a Random object */
-    KOKKOS_INLINE_FUNCTION Random(Random                 &&in) { this->state = in.state; }
-    /** @brief Copies a Random object */
-    KOKKOS_INLINE_FUNCTION Random &operator=(Random const &in) { this->state = in.state; return *this; }
-    /** @brief Moves a Random object */
-    KOKKOS_INLINE_FUNCTION Random &operator=(Random      &&in) { this->state = in.state; return *this; }
-
-    /** @brief Assigns a seed. Warm-up of 20 iterations. */
-    KOKKOS_INLINE_FUNCTION void set_seed(u8 seed) {
-      state.a = 0xf1ea5eed;  state.b = seed;  state.c = seed;  state.d = seed;
-      for (int i=0; i<20; ++i) { gen(); }
+    /** @brief Restarts the generator at the beginning of a deterministic seed and stream pair. */
+    KOKKOS_INLINE_FUNCTION void set_seed(u8 seed, u8 stream_id) {
+      state.key0                   = static_cast<u4>(seed);
+      state.key1                   = static_cast<u4>(seed >> 32);
+      state.stream                 = stream_id;
+      state.block                  = 0;
+      state.output0                = 0;
+      state.output1                = 0;
+      state.normal_spare           = 0;
+      state.next                   = 2;
+      state.normal_spare_available = false;
     }
 
-    /** @brief Generates a random unsigned integer between zero and `std::numeric_limits<u8>::max() - 1` */
-    KOKKOS_INLINE_FUNCTION u8 gen() {
-      u8 e    = state.a - rot(state.b, 7);
-      state.a = state.b ^ rot(state.c,13);
-      state.b = state.c + rot(state.d,37);
-      state.c = state.d + e;
-      state.d = e       + state.a;
-      return state.d;
+    /** @brief Generates either a raw uint64_t or a floating-point value in [0,1). */
+    template <class T = float> requires (std::is_floating_point_v<T> || std::is_same_v<T,u8>)
+    KOKKOS_INLINE_FUNCTION T gen_uniform() {
+      if constexpr (std::is_same_v<T,u8>) {
+        if (state.next == 2) generate_block();
+        if (state.next++ == 0) return state.output0;
+        return state.output1;
+      } else {
+        int constexpr digits = std::numeric_limits<T>::digits;
+        static_assert(digits <= 64,"Random::gen_uniform supports floating-point types with at most 64 mantissa bits");
+        if constexpr (digits < 64) {
+          return static_cast<T>(gen_uniform<u8>() >> (64-digits)) / static_cast<T>(u8(1) << digits);
+        } else {
+          return static_cast<T>(gen_uniform<u8>()) * static_cast<T>(0x1p-64L);
+        }
+      }
     }
 
-    /** @brief Generates a random floating point value between `0` and `1`
-      * @param T The type of the floating point number */
-    template <class T> KOKKOS_INLINE_FUNCTION T genFP() {
-      return static_cast<T>(gen()) / static_cast<T>(std::numeric_limits<u8>::max());
+    /** @brief Generates a uniformly distributed floating-point value in [lb,ub). */
+    template <class T> requires std::is_floating_point_v<T>
+    KOKKOS_INLINE_FUNCTION T gen_uniform(T lb, T ub) {
+      if constexpr (kokkos_debug) {
+        if (!Kokkos::isfinite(lb) || !Kokkos::isfinite(ub) || ub < lb) {
+          Kokkos::abort("ERROR: Random::gen_uniform bounds must be finite with upper bound >= lower bound");
+        }
+      }
+      if (ub == lb) return lb;
+      T const unit = gen_uniform<T>();
+      // Avoid forming ub-lb when opposite-signed finite endpoints can make that difference overflow.
+      T const value = lb < T{0} && ub > T{0} ? Kokkos::fma(lb,T{1}-unit,ub*unit) : Kokkos::fma(ub-lb,unit,lb);
+      if (value < lb) return lb;
+      return value < ub ? value : Kokkos::nextafter(ub,lb);
     }
 
-    /** @brief Generates a random floating point value between `lb` and `ub`
-      * @param T  The type of the floating point number
-      * @param lb Lower bound of the random number
-      * @param ub Upper bound of the random number*/
-    template <class T> KOKKOS_INLINE_FUNCTION T genFP(T lb, T ub) {
-      return genFP<T>() * (ub-lb) + lb;
+    /** @brief Generates a normally distributed value with the requested mean and standard deviation.
+      *
+      * Box-Muller produces two values at a time. CacheSpare retains the second value by default. Setting it to false
+      * discards both an existing spare and the second value generated by this call, giving fixed two-uniform consumption.
+      */
+    template <class T = float, bool CacheSpare = true> requires std::is_floating_point_v<T>
+    KOKKOS_INLINE_FUNCTION T gen_normal(T mean = T{0}, T stddev = T{1}) {
+      if constexpr (kokkos_debug) {
+        if (!Kokkos::isfinite(mean) || !Kokkos::isfinite(stddev) || stddev < 0) {
+          Kokkos::abort("ERROR: Random::gen_normal mean and standard deviation must be finite, with standard deviation >= 0");
+        }
+      }
+      if (stddev == 0) return mean;
+
+      if constexpr (CacheSpare) {
+        if (state.normal_spare_available) {
+          state.normal_spare_available = false;
+          return mean + stddev*static_cast<T>(state.normal_spare);
+        }
+      } else {
+        state.normal_spare_available = false;
+      }
+
+      double const radial_uniform = 1.0-gen_uniform<double>();
+      double const angle_uniform  = gen_uniform<double>();
+      double constexpr two_pi = 6.283185307179586476925286766559;
+      double const radius = std::sqrt(-2.0*std::log(radial_uniform));
+      double const angle  = two_pi*angle_uniform;
+      double const normal = radius*std::cos(angle);
+      if constexpr (CacheSpare) {
+        state.normal_spare = radius*std::sin(angle);
+        state.normal_spare_available = true;
+      }
+      return mean + stddev*static_cast<T>(normal);
     }
 
+    /** @brief Generates true with the requested probability. */
+    KOKKOS_INLINE_FUNCTION bool gen_bernoulli(double probability = 0.5) {
+      if constexpr (kokkos_debug) {
+        if (!Kokkos::isfinite(probability) || probability < 0 || probability > 1) {
+          Kokkos::abort("ERROR: Random::gen_bernoulli probability must be finite and inside [0,1]");
+        }
+      }
+      if (probability <= 0) return false;
+      if (probability >= 1) return true;
+      return gen_uniform<double>() < probability;
+    }
+
+    /** @brief Generates an exponentially distributed value with the requested positive rate. */
+    template <class T = float> requires std::is_floating_point_v<T>
+    KOKKOS_INLINE_FUNCTION T gen_exponential(T rate = T{1}) {
+      if constexpr (kokkos_debug) {
+        if (!Kokkos::isfinite(rate) || rate <= 0) {
+          Kokkos::abort("ERROR: Random::gen_exponential rate must be finite and positive");
+        }
+      }
+      return -std::log1p(-gen_uniform<T>()) / rate;
+    }
+
+    /** @brief Generates a lognormally distributed value from the requested underlying normal parameters. */
+    template <class T = float, bool CacheSpare = true> requires std::is_floating_point_v<T>
+    KOKKOS_INLINE_FUNCTION T gen_lognormal(T normal_mean = T{0}, T normal_stddev = T{1}) {
+      return std::exp(gen_normal<T,CacheSpare>(normal_mean,normal_stddev));
+    }
   };
 
 }
-

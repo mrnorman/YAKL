@@ -62,10 +62,19 @@ namespace yakl {
 
 
 #define YAKL_AUTO_LABEL() (yakl::my_basename(__FILE__) + std::string(":") + std::to_string(__LINE__)).c_str()
+#ifdef KOKKOS_ENABLE_CUDA
+namespace yakl {
+  template <class T>
+  __attribute__((noinline)) T &cuda_capture_reference(T &value) {
+    return value;
+  }
+}
+#endif
+
 #if defined(KOKKOS_ENABLE_HIP)
 #define YAKL_SCOPE(a,b) auto &a = b
 #elif defined(KOKKOS_ENABLE_CUDA)
-#define YAKL_SCOPE(a,b) auto &a = b
+#define YAKL_SCOPE(a,b) auto &a = yakl::cuda_capture_reference(b)
 #else
 #define YAKL_SCOPE(a,b) auto &a = std::ref(b).get()
 #endif

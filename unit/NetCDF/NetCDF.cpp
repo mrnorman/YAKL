@@ -1,5 +1,9 @@
 
 #include <iostream>
+#include <limits>
+#include <type_traits>
+#include <utility>
+#include <vector>
 #include "YAKL.h"
 #include "YAKL_netcdf.h"
 
@@ -12,10 +16,235 @@ void die(std::string msg) {
 }
 
 
-int main() {
+template <class T>
+void write_attribute_type(yakl::SimpleNetCDF &nc, std::string const &name, T scalar, std::vector<T> const &values) {
+  nc.writeGlobalAttribute(scalar,name+"_global");
+  nc.writeVariableAttribute(values,"attribute_variable",name+"_variable");
+}
+
+
+template <class T>
+void check_attribute_type(yakl::SimpleNetCDF const &nc, std::string const &name, T scalar,
+                          std::vector<T> const &values) {
+  if (nc.template readGlobalAttribute<T>(name+"_global") != scalar) {
+    die("ERROR: incorrect netCDF global attribute for "+name);
+  }
+  if (nc.template readVariableAttribute<std::vector<T>>("attribute_variable",name+"_variable") != values) {
+    die("ERROR: incorrect netCDF variable attribute for "+name);
+  }
+}
+
+
+void test_attributes() {
+  long const wide_long = std::numeric_limits<long>::digits > 32 ? (static_cast<long>(1) << 40) : 100000L;
+  unsigned long const wide_ulong = std::numeric_limits<unsigned long>::digits > 32 ?
+                                     (static_cast<unsigned long>(1) << 40) : 100000UL;
+  {
+    yakl::SimpleNetCDF nc;
+    nc.create("netcdf_attributes.nc");
+    nc.write(0,"attribute_variable");
+    write_attribute_type(nc,"char",'Q',{'a','b','c'});
+    write_attribute_type(nc,"signed_char",static_cast<signed char>(-7),{static_cast<signed char>(-2),
+                                                                       static_cast<signed char>(3)});
+    write_attribute_type(nc,"unsigned_char",static_cast<unsigned char>(201),{static_cast<unsigned char>(1),
+                                                                              static_cast<unsigned char>(250)});
+    write_attribute_type(nc,"short",static_cast<short>(-1234),{static_cast<short>(-3),static_cast<short>(7)});
+    write_attribute_type(nc,"unsigned_short",static_cast<unsigned short>(60000),
+                         {static_cast<unsigned short>(2),static_cast<unsigned short>(50000)});
+    write_attribute_type(nc,"int",-123456,{-8,0,19});
+    write_attribute_type(nc,"unsigned_int",4000000000U,{0U,17U,3000000000U});
+    write_attribute_type(nc,"long",-wide_long,{-wide_long,0L,wide_long});
+    write_attribute_type(nc,"unsigned_long",wide_ulong,{0UL,wide_ulong,wide_ulong+5});
+    write_attribute_type(nc,"long_long",-(static_cast<long long>(1) << 50),
+                         {-(static_cast<long long>(1) << 48),0LL,static_cast<long long>(1) << 48});
+    write_attribute_type(nc,"unsigned_long_long",static_cast<unsigned long long>(1) << 60,
+                         {0ULL,static_cast<unsigned long long>(1) << 55});
+    write_attribute_type(nc,"float",1.25f,{-2.5f,0.f,7.75f});
+    write_attribute_type(nc,"double",-3.5,{-9.25,0.,11.5});
+    write_attribute_type(nc,"bool",true,{false,true,true,false});
+    nc.writeGlobalAttribute<std::string>("YAKL netCDF attributes","title");
+    nc.writeVariableAttribute<std::string>("temperature","attribute_variable","description");
+    nc.writeGlobalAttribute(std::vector<int>{2,4,8},"int_vector_global");
+    nc.writeVariableAttribute(17,"attribute_variable","int_scalar_variable");
+  }
+
+  {
+    yakl::SimpleNetCDF nc;
+    nc.open("netcdf_attributes.nc");
+    check_attribute_type(nc,"char",'Q',{'a','b','c'});
+    check_attribute_type(nc,"signed_char",static_cast<signed char>(-7),{static_cast<signed char>(-2),
+                                                                       static_cast<signed char>(3)});
+    check_attribute_type(nc,"unsigned_char",static_cast<unsigned char>(201),{static_cast<unsigned char>(1),
+                                                                              static_cast<unsigned char>(250)});
+    check_attribute_type(nc,"short",static_cast<short>(-1234),{static_cast<short>(-3),static_cast<short>(7)});
+    check_attribute_type(nc,"unsigned_short",static_cast<unsigned short>(60000),
+                         {static_cast<unsigned short>(2),static_cast<unsigned short>(50000)});
+    check_attribute_type(nc,"int",-123456,{-8,0,19});
+    check_attribute_type(nc,"unsigned_int",4000000000U,{0U,17U,3000000000U});
+    check_attribute_type(nc,"long",-wide_long,{-wide_long,0L,wide_long});
+    check_attribute_type(nc,"unsigned_long",wide_ulong,{0UL,wide_ulong,wide_ulong+5});
+    check_attribute_type(nc,"long_long",-(static_cast<long long>(1) << 50),
+                         {-(static_cast<long long>(1) << 48),0LL,static_cast<long long>(1) << 48});
+    check_attribute_type(nc,"unsigned_long_long",static_cast<unsigned long long>(1) << 60,
+                         {0ULL,static_cast<unsigned long long>(1) << 55});
+    check_attribute_type(nc,"float",1.25f,{-2.5f,0.f,7.75f});
+    check_attribute_type(nc,"double",-3.5,{-9.25,0.,11.5});
+    check_attribute_type(nc,"bool",true,{false,true,true,false});
+    if (nc.readGlobalAttribute<std::string>("title") != "YAKL netCDF attributes" ||
+        nc.readVariableAttribute<std::string>("attribute_variable","description") != "temperature") {
+      die("ERROR: incorrect netCDF string attribute");
+    }
+    std::vector<int> global_vector;
+    int variable_scalar = 0;
+    nc.readGlobalAttribute(global_vector,"int_vector_global");
+    nc.readVariableAttribute(variable_scalar,"attribute_variable","int_scalar_variable");
+    if (global_vector != std::vector<int>{2,4,8} || variable_scalar != 17) {
+      die("ERROR: incorrect netCDF output-reference attribute read");
+    }
+  }
+}
+
+
+void test_dimension_order() {
+  int constexpr fastest = 2;
+  int constexpr middle  = 3;
+  int constexpr slowest = 4;
+  Array  <int ***,Kokkos::HostSpace> c_input("C input",slowest,middle,fastest);
+  Array_F<int ***,Kokkos::HostSpace> f_input("F input",fastest,middle,slowest);
+  for (int k=0; k < slowest; k++) {
+    for (int j=0; j < middle; j++) {
+      for (int i=0; i < fastest; i++) {
+        int const value = 100*k + 10*j + i;
+        c_input(k,j,i) = value;
+        f_input(i+1,j+1,k+1) = value;
+      }
+    }
+  }
+
+  {
+    yakl::SimpleNetCDF nc;
+    nc.create("netcdf_dimension_order.nc");
+    nc.write(c_input,"from_c",{"slowest","middle","fastest"});
+    nc.write(f_input,"from_f",{"fastest","middle","slowest"});
+  }
+
+  Array  <int ***,Kokkos::HostSpace> c_from_f("C read from F",slowest,middle,fastest);
+  Array_F<int ***,Kokkos::HostSpace> f_from_c("F read from C",fastest,middle,slowest);
+  auto c_from_f_device = c_from_f.createDeviceObject();
+  auto f_from_c_device = f_from_c.createDeviceObject();
+  {
+    yakl::SimpleNetCDF nc;
+    nc.open("netcdf_dimension_order.nc");
+    nc.read(c_from_f_device,"from_f");
+    nc.read(f_from_c_device,"from_c");
+  }
+  c_from_f_device.deep_copy_to(c_from_f);
+  f_from_c_device.deep_copy_to(f_from_c);
+  for (int k=0; k < slowest; k++) {
+    for (int j=0; j < middle; j++) {
+      for (int i=0; i < fastest; i++) {
+        int const expected = 100*k + 10*j + i;
+        if (c_from_f(k,j,i) != expected || f_from_c(i+1,j+1,k+1) != expected) {
+          die("ERROR: netCDF Array/Array_F dimension order or data order is incorrect");
+        }
+      }
+    }
+  }
+}
+
+
+void test_dimension_mismatch_failure() {
+  Array<int ***,Kokkos::HostSpace> input("input",4,3,2);
+  {
+    yakl::SimpleNetCDF nc;
+    nc.create("netcdf_dimension_mismatch.nc");
+    nc.write(input,"values",{"slowest","middle","fastest"});
+  }
+  Array_F<int ***,Kokkos::HostSpace> wrong_order("wrong order",4,3,2);
+  yakl::SimpleNetCDF nc;
+  nc.open("netcdf_dimension_mismatch.nc");
+  nc.read(wrong_order,"values");
+}
+
+
+void test_second_unlimited_dimension_failure() {
+  yakl::SimpleNetCDF nc;
+  nc.create("netcdf_unlimited_dimension.nc");
+  nc.createDim("record");
+  bool exception_thrown = false;
+  try {
+    nc.createDim("second_record");
+  } catch (std::runtime_error const &) {
+    exception_thrown = true;
+  }
+  if (!exception_thrown || nc.dimExists("second_record")) {
+    die("ERROR: SimpleNetCDF accepted a second unlimited dimension");
+  }
+}
+
+
+void test_unsigned_long_and_move_ownership() {
+  static_assert(!std::is_copy_constructible_v<yakl::SimpleNetCDF>);
+  static_assert(!std::is_copy_assignable_v<yakl::SimpleNetCDF>);
+  static_assert( std::is_nothrow_move_constructible_v<yakl::SimpleNetCDF>);
+  static_assert( std::is_nothrow_move_assignable_v<yakl::SimpleNetCDF>);
+
+  std::string const fileName = "unsigned_long.nc";
+  unsigned long base = 17;
+  if constexpr (sizeof(unsigned long) > sizeof(unsigned int)) {
+    base = static_cast<unsigned long>(std::numeric_limits<unsigned int>::max()) + 37UL;
+  }
+
+  Array<unsigned long *,Kokkos::HostSpace> values("unsigned long values",4);
+  for (size_t i=0; i < values.size(); i++) values(i) = base + static_cast<unsigned long>(11*i);
+  unsigned long const scalar = base + 101UL;
+
+  {
+    yakl::SimpleNetCDF original;
+    original.create(fileName);
+    yakl::SimpleNetCDF moved(std::move(original));
+    yakl::SimpleNetCDF nc;
+    nc = std::move(moved);
+    nc.write(values,"values",{"nvalues"});
+    nc.write(scalar,"scalar");
+    nc.write1(values,"record_values",{"nvalues"},0,"record");
+    nc.write1(scalar,"record_scalar",0,"record");
+  }
+
+  {
+    yakl::SimpleNetCDF original;
+    original.open(fileName);
+    yakl::SimpleNetCDF nc(std::move(original));
+    Array<unsigned long *,Kokkos::HostSpace> valuesRead("unsigned long values read",4);
+    Array<unsigned long **,Kokkos::HostSpace> recordValues("unsigned long record values read",1,4);
+    Array<unsigned long *,Kokkos::HostSpace> recordScalar("unsigned long record scalar read",1);
+    unsigned long scalarRead = 0;
+    nc.read(valuesRead,"values");
+    nc.read(scalarRead,"scalar");
+    nc.read(recordValues,"record_values");
+    nc.read(recordScalar,"record_scalar");
+    for (size_t i=0; i < values.size(); i++) {
+      if (valuesRead(i) != values(i) || recordValues(0,i) != values(i)) {
+        die("ERROR: unsigned long netCDF array data was corrupted");
+      }
+    }
+    if (scalarRead != scalar || recordScalar(0) != scalar) {
+      die("ERROR: unsigned long netCDF scalar data was corrupted");
+    }
+  }
+}
+
+
+int main(int argc, char **argv) {
+  #ifdef HAVE_MPI
+    MPI_Init(&argc,&argv);
+  #endif
   Kokkos::initialize();
   yakl::init();
   {
+    if (argc > 1 && std::string(argv[1]) == "dimension_mismatch") {
+      test_dimension_mismatch_failure();
+    }
     yakl::timer_start("main");
     // Write so that d1 is always the fastest varying and ordered from there
     int constexpr d1 = 2;
@@ -233,11 +462,18 @@ int main() {
       if ( text(2,0) != 'm' || text(2,1) != 'o' ) die("ERROR: text is incorrect");
     }
 
+    test_unsigned_long_and_move_ownership();
+    test_dimension_order();
+    test_attributes();
+    test_second_unlimited_dimension_failure();
+
     yakl::timer_stop("main");
   }
   yakl::finalize();
   Kokkos::finalize(); 
-  
+  #ifdef HAVE_MPI
+    MPI_Finalize();
+  #endif
+
   return 0;
 }
-
