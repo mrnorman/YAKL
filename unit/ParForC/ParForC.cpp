@@ -73,15 +73,15 @@ int main(int argc, char **argv) {
       die("ERROR: zero-work autotuned launch executed or created tuning state");
     }
 
-    // Exercise runtime Cartesian tiles with partial edge tiles and dimensions
-    // both smaller and larger than the tile size. Atomic increments detect
-    // duplicate visits as well as missing points.
+    // Exercise independent runtime tiles with partial edges and dimensions both smaller and larger than their tile.
+    // Atomic increments detect duplicate visits as well as missing points.
     Array<int ***,yakl::DeviceSpace> tiled("tiled",3,5,10);
-    for (int tile : {1,2,4,8}) {
+    std::array<std::array<int,3>,4> const tileConfigs = {{{1,1,1},{1,2,4},{2,4,8},{8,3,2}}};
+    for (auto const & tiles : tileConfigs) {
       tiled = 0;
       parallel_for( "C-style tiled" , SimpleBounds<3>(3,5,10) , KOKKOS_LAMBDA (int k, int j, int i) {
         Kokkos::atomic_add(&tiled(k,j,i),1);
-      }, yakl::Config<128>{tile});
+      }, yakl::Config<128>{tiles[0],tiles[1],tiles[2]});
       auto tiledHost = tiled.createHostCopy();
       for (int k=0; k < 3; k++) {
         for (int j=0; j < 5; j++) {
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
                   KOKKOS_LAMBDA (int, int i1, int, int i3, int, int i5, int, int i7) {
       int const linear = ((i1*2+i3)*2+i5)*2+i7;
       Kokkos::atomic_add(&rankEight(linear),1);
-    }, yakl::Config<128>{8});
+    }, yakl::Config<128>{8,1,4,2,8,3,2,5});
     auto rankEightHost = rankEight.createHostCopy();
     for (int i=0; i < 16; i++) {
       if (rankEightHost(i) != 1) die("ERROR: rank-eight tiled launch did not visit every point exactly once");
@@ -114,8 +114,7 @@ int main(int argc, char **argv) {
     });
     if (sum(strided) != 9) die("ERROR: C-style strided launch omitted its final valid iteration");
 
-    // Drive every launch-bound / tile-size combination through the autotuner,
-    // including partial multidimensional edge tiles and the selected-config path.
+    // Drive every launch bound through the untiled autotuner, including its selected-configuration path.
     std::string const tuneLabel = "unit autotune";
     std::string const tuneKey = tuneLabel + ":3x5x7_iterations";
     yakl::autotune::autotune_contexts.erase(tuneKey);
@@ -135,21 +134,19 @@ int main(int argc, char **argv) {
       for (int j=0; j < 5; j++) {
         for (int i=0; i < 7; i++) {
           if (tunedHost(k,j,i) != yakl::autotune::AutotuneContext::total_tests+1) {
-            die("ERROR: autotuned tiled launch did not visit every point exactly once");
+            die("ERROR: autotuned launch did not visit every point exactly once");
           }
         }
       }
     }
-    std::array<bool,4> foundTiles = {false,false,false,false};
-    for (int index=0; index < yakl::autotune::configuration_count; index++) {
-      auto const [threads,tile] = yakl::autotune::get_config(index);
-      (void) threads;
-      for (int i=0; i < 4; i++) {
-        foundTiles[i] = foundTiles[i] || tile == static_cast<int>(yakl::autotune::tile_sizes[i]);
-      }
+    std::array<int,5> constexpr expectedThreads = {64,128,256,512,1024};
+    if (yakl::autotune::configuration_count != static_cast<int>(expectedThreads.size())) {
+      die("ERROR: autotuner has an incorrect configuration count");
     }
-    for (bool found : foundTiles) {
-      if (!found) die("ERROR: autotuner did not include every requested tile size");
+    for (int index=0; index < yakl::autotune::configuration_count; index++) {
+      if (yakl::autotune::get_config(index) != expectedThreads[index]) {
+        die("ERROR: autotuner has an incorrect max-threads configuration");
+      }
     }
     for (int index=0; index < yakl::autotune::configuration_count; index++) {
       if (tuneContext.sample_counts[index] != yakl::autotune::AutotuneContext::tests_per_config-1 ||

@@ -5,7 +5,10 @@
 // Fortran-facing routines
 
 namespace {
-  std::mutex                gator_mutex;
+  // Init and finalize change the lifetime of every wrapper resource, while ordinary calls only need that lifetime to remain
+  // stable. Allocation ownership is independent metadata and is locked only while the set itself is accessed.
+  std::shared_mutex         gator_lifecycle_mutex;
+  std::mutex                gator_allocations_mutex;
   std::unordered_set<void*> gator_allocations;
   bool                      gator_initialized = false;
   bool                      gator_owns_kokkos  = false;
@@ -14,7 +17,7 @@ namespace {
 
 /** @brief Fortran YAKL initialization call */
 extern "C" void gatorInit() {
-  std::lock_guard<std::mutex> lock(gator_mutex);
+  std::unique_lock<std::shared_mutex> lock(gator_lifecycle_mutex);
   if (gator_initialized) Kokkos::abort("ERROR: gatorInit called more than once without gatorFinalize");
   gator_owns_kokkos = ! Kokkos::is_initialized();
   if (gator_owns_kokkos) Kokkos::initialize();
@@ -25,7 +28,7 @@ extern "C" void gatorInit() {
 
 /** @brief Fortran YAKL finalization call */
 extern "C" void gatorFinalize() {
-  std::lock_guard<std::mutex> lock(gator_mutex);
+  std::unique_lock<std::shared_mutex> lock(gator_lifecycle_mutex);
   if (!gator_initialized) Kokkos::abort("ERROR: gatorFinalize called without a matching gatorInit");
   if (!gator_allocations.empty()) Kokkos::abort("ERROR: gatorFinalize called with live Fortran allocations");
   if (gator_owns_yakl) yakl::finalize();
@@ -38,26 +41,32 @@ extern "C" void gatorFinalize() {
 /** @brief Fortran YAKL device allocation call */
 extern "C" void* gatorAllocate( size_t bytes ) {
   if (bytes == 0) Kokkos::abort("ERROR: gatorAllocate received a zero byte count");
-  std::lock_guard<std::mutex> lock(gator_mutex);
+  std::shared_lock<std::shared_mutex> lifecycleLock(gator_lifecycle_mutex);
   if (!Kokkos::is_initialized() || !yakl::get_yakl_instance().is_initialized()) {
     Kokkos::abort("ERROR: gatorAllocate called before initialization");
   }
   void *ptr = yakl::alloc_device( bytes , "gatorAllocate");
-  if (!gator_allocations.insert(ptr).second) Kokkos::abort("ERROR: gatorAllocate returned a duplicate pointer");
+  {
+    std::lock_guard<std::mutex> allocationsLock(gator_allocations_mutex);
+    if (!gator_allocations.insert(ptr).second) Kokkos::abort("ERROR: gatorAllocate returned a duplicate pointer");
+  }
   return ptr;
 }
 
 /** @brief Fortran YAKL device free call */
 extern "C" void gatorDeallocate( void *ptr ) {
   if (ptr == nullptr) Kokkos::abort("ERROR: gatorDeallocate received a null pointer");
-  std::lock_guard<std::mutex> lock(gator_mutex);
+  std::shared_lock<std::shared_mutex> lifecycleLock(gator_lifecycle_mutex);
   if (!Kokkos::is_initialized() || !yakl::get_yakl_instance().is_initialized()) {
     Kokkos::abort("ERROR: gatorDeallocate called before initialization");
   }
-  auto const allocation = gator_allocations.find(ptr);
-  if (allocation == gator_allocations.end()) {
-    Kokkos::abort("ERROR: gatorDeallocate requires the base pointer returned by gatorAllocate");
+  {
+    std::lock_guard<std::mutex> allocationsLock(gator_allocations_mutex);
+    auto const allocation = gator_allocations.find(ptr);
+    if (allocation == gator_allocations.end()) {
+      Kokkos::abort("ERROR: gatorDeallocate requires the base pointer returned by gatorAllocate");
+    }
+    gator_allocations.erase(allocation);
   }
   yakl::free_device( ptr , "gatorDeallocate");
-  gator_allocations.erase(allocation);
 }

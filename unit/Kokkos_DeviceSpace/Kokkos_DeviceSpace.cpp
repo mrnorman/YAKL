@@ -249,6 +249,7 @@ int main(int argc, char **argv) {
       int constexpr numCycles  = 2000;
       std::atomic<int> ready(0);
       std::atomic<bool> go(false);
+      std::atomic<bool> badQuery(false);
       std::vector<std::thread> threads;
       for (int thread=0; thread < numThreads; thread++) {
         threads.emplace_back([&,thread] {
@@ -256,6 +257,11 @@ int main(int argc, char **argv) {
           while (!go.load(std::memory_order_acquire)) std::this_thread::yield();
           for (int cycle=0; cycle < numCycles; cycle++) {
             void *ptr = allocator.allocate(static_cast<size_t>((cycle+thread)%alignment)+1,"concurrent allocation");
+            if (! allocator.initialized() || allocator.poolSize() != 64*alignment ||
+                ! allocator.thisIsMyPointer(ptr) || allocator.numAllocs() == 0) {
+              badQuery.store(true,std::memory_order_relaxed);
+            }
+            allocator.iGotRoom(1);
             if ((cycle+thread)%7 == 0) std::this_thread::yield();
             allocator.free(ptr,"concurrent allocation");
           }
@@ -264,7 +270,9 @@ int main(int argc, char **argv) {
       while (ready.load(std::memory_order_acquire) != numThreads) std::this_thread::yield();
       go.store(true,std::memory_order_release);
       for (auto &thread : threads) thread.join();
-      if (allocator.numAllocs() != 0) die("ERROR: concurrent LinearAllocator operations left live allocations");
+      if (badQuery.load() || allocator.numAllocs() != 0) {
+        die("ERROR: concurrent LinearAllocator operations or read-only queries corrupted allocator state");
+      }
     }
 
     // Exercise the same synchronization through YAKL's global pool and live-allocation accounting.

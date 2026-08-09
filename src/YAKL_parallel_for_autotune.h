@@ -4,9 +4,8 @@
 namespace yakl {
   namespace autotune {
 
-    using ConfigListType = std::tuple<Config<0>,Config<64>,Config<128>,Config<256>,Config<512>>;
-    inline constexpr std::array<size_t,4> tile_sizes = {1,2,4,8};
-    inline constexpr int configuration_count = std::tuple_size_v<ConfigListType>*tile_sizes.size();
+    using ConfigListType = std::tuple<Config<64>,Config<128>,Config<256>,Config<512>,Config<1024>>;
+    inline constexpr int configuration_count = std::tuple_size_v<ConfigListType>;
 
     struct AutotuneContext {
       int static constexpr tests_per_config = 5;
@@ -50,11 +49,9 @@ namespace yakl {
         }
       }
       if constexpr (I < std::tuple_size_v<ConfigListType>) {
-        int const configIndex = index/static_cast<int>(tile_sizes.size());
-        int const tileIndex   = index%static_cast<int>(tile_sizes.size());
-        if (configIndex == I) {
+        if (index == I) {
           using ConfigType = std::tuple_element_t<I,ConfigListType>;
-          yakl::parallel_for( str , bounds , f , ConfigType(tile_sizes[tileIndex]) );
+          yakl::parallel_for( str , bounds , f , ConfigType() );
         } else {
           launch_config( index , str , bounds , f , CurrInd<I+1>{} );
         }
@@ -73,7 +70,7 @@ namespace yakl {
       }
       auto lab = str+std::string(":");
       for (int d=0; d < N; d++) {
-        size_t const dim = d == 0 ? bounds.nIter/bounds.offs[0] : bounds.offs[d-1]/bounds.offs[d];
+        uindex_t const dim = d == 0 ? bounds.nIter/bounds.offs[0] : bounds.offs[d-1]/bounds.offs[d];
         lab += std::to_string(dim);
         if (d != N-1) lab += "x";
       }
@@ -176,19 +173,16 @@ namespace yakl {
 
 
     template <int I=0>
-    inline std::pair<int,int> get_config(int index) {
+    inline int get_config(int index) {
       if constexpr (kokkos_debug) {
         if (index < 0 || index >= configuration_count) {
           Kokkos::abort("ERROR: autotune configuration index out of bounds");
         }
       }
       if constexpr (I < std::tuple_size_v<ConfigListType>) {
-        int const configIndex = index/static_cast<int>(tile_sizes.size());
-        int const tileIndex   = index%static_cast<int>(tile_sizes.size());
-        if (configIndex == I) return std::make_pair(std::tuple_element_t<I,ConfigListType>::Thr,
-                                                    static_cast<int>(tile_sizes[tileIndex]));
-        else                  return get_config<I+1>(index);
-      } else { return std::make_pair(0,0); }
+        if (index == I) return std::tuple_element_t<I,ConfigListType>::Thr;
+        else            return get_config<I+1>(index);
+      } else { return 0; }
     }
 
 
@@ -226,10 +220,10 @@ namespace yakl {
               Kokkos::abort("ERROR: invalid autotune best configuration");
             }
           }
-          auto config = get_config(c.best_index);
+          int const maxThreads = get_config(c.best_index);
           double const best_time = c.timings[c.best_index]/c.sample_counts[c.best_index];
           if (myrank == 0) {
-            std::cout << key << " : Config<" << std::get<0>(config) << ">{" << std::get<1>(config) << "} , Speedup: ";
+            std::cout << key << " : Config<" << maxThreads << "> , Speedup: ";
             if (c.sample_counts[0] > 0 && best_time > 0) {
               std::cout << (c.timings[0]/c.sample_counts[0])/best_time;
             } else {

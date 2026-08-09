@@ -26,6 +26,7 @@ fi
 echo "${MACHINE_TITLE} test matrix"
 echo "  Environments: ${#ENVIRONMENT_FILES[@]}"
 echo "  Kokkos versions: 4.7.00 5.2.0"
+echo "  Index widths: 64 32"
 echo "  Build root: ${MATRIX_BUILD_ROOT}"
 
 for ENVIRONMENT_FILE in "${ENVIRONMENT_FILES[@]}"; do
@@ -56,4 +57,4 @@ if (( ${#FAILED_ENVIRONMENTS[@]} != 0 )); then
   exit 1
 fi
 
-echo "All ${MACHINE_NAME} environments passed with Kokkos 4.7.00 and 5.2.0"
+echo "All ${MACHINE_NAME} environments passed with both Kokkos versions and index widths"

@@ -21,6 +21,13 @@ target_link_libraries(yakl PUBLIC Kokkos::kokkos Threads::Threads)
 target_compile_features(yakl PUBLIC cxx_std_20)
 target_include_directories(yakl PUBLIC src external src/extensions ${CMAKE_CURRENT_BINARY_DIR})
 
+set(YAKL_INDEX_BITS "64" CACHE STRING "Width of YAKL logical indices and loop bounds")
+set_property(CACHE YAKL_INDEX_BITS PROPERTY STRINGS 32 64)
+if (NOT YAKL_INDEX_BITS STREQUAL "32" AND NOT YAKL_INDEX_BITS STREQUAL "64")
+  message(FATAL_ERROR "YAKL_INDEX_BITS must be 32 or 64")
+endif()
+target_compile_definitions(yakl PUBLIC YAKL_INDEX_BITS=${YAKL_INDEX_BITS})
+
 option(YAKL_ENABLE_COVERAGE "Instrument YAKL and its consumers for gcov coverage" OFF)
 if (YAKL_ENABLE_COVERAGE)
   if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR NOT CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")

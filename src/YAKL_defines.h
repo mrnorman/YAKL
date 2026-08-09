@@ -51,6 +51,22 @@ namespace yakl {
     inline constexpr bool have_mpi = false;
   #endif
 
+  template <std::integral T>
+  KOKKOS_INLINE_FUNCTION uindex_t checked_uindex(T value, char const *message) {
+    if constexpr (index_bits == 32 || kokkos_debug) {
+      if (!std::in_range<uindex_t>(value)) Kokkos::abort(message);
+    }
+    return static_cast<uindex_t>(value);
+  }
+
+  template <std::integral T>
+  KOKKOS_INLINE_FUNCTION index_t checked_index(T value, char const *message) {
+    if constexpr (index_bits == 32 || kokkos_debug) {
+      if (!std::in_range<index_t>(value)) Kokkos::abort(message);
+    }
+    return static_cast<index_t>(value);
+  }
+
   inline std::string my_basename(const std::string& path) {
       size_t last_slash = path.find_last_of("/\\");
       if (std::string::npos == last_slash) {

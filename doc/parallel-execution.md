@@ -85,30 +85,32 @@ misresolved as `Kokkos::parallel_for` through argument-dependent lookup when an 
 
 ## Launch configuration
 
-`Config<MaxThreadsPerBlock>` combines a compile-time Kokkos launch bound with a runtime, same-size-in-every-dimension tile:
+`Config<MaxThreadsPerBlock>` combines a compile-time Kokkos launch bound with independent runtime tiles for each dimension:
 
 ```cpp
-yakl::Config<> default_config;       // no thread limit, tile 1
-yakl::Config<256> tiled(4);          // at most 256 threads/block, 4 x 4 x ... tile
+yakl::Config<> default_config;       // no thread limit and no tiling
+yakl::Config<256> tiled(2,4);        // at most 256 threads/block, with a 2 x 4 tile
 
 yakl::parallel_for("tiled",bounds,KOKKOS_LAMBDA (size_t j, size_t i) {
   // body
 },tiled);
 ```
 
-Tile one takes the ordinary untiled path and introduces no tiling loop. Tiles greater than one create a multidimensional
-Cartesian tiling. Each Kokkos policy iteration processes one tile and runs all valid points in that tile serially within the
-policy work item. Edge tiles are shortened and every logical point runs exactly once. The runtime tile must be positive.
+Tile one in every dimension takes the ordinary untiled path and introduces no tiling loop. Any dimension greater than one
+creates a multidimensional Cartesian tiling. Each Kokkos policy iteration processes one tile and runs all valid points in
+that tile serially within the policy work item. Edge tiles are shortened and every logical point runs exactly once. Runtime
+tiles must be positive. Up to eight tile dimensions may be supplied; omitted trailing dimensions default to one.
 
 `MaxThreadsPerBlock == 0` leaves the backend unconstrained. A nonzero value is passed as a Kokkos `LaunchBounds` maximum; it
-does not itself choose a team size. `Config::Thr` exposes the compile-time value and `config.tile` exposes the runtime tile.
+does not itself choose a team size. `Config::Thr` exposes the compile-time value and `config.tiles[d]` exposes each runtime
+tile.
 
 ## Autotuning
 
 `yakl::autotune::parallel_for` and `parallel_for_F` require an explicit stable string label. For each label and shape,
-autotuning considers launch bounds `0`, `64`, `128`, `256`, and `512`, crossed with runtime tiles `1`, `2`, `4`, and `8`.
-Each configuration is visited five times; the first timing is discarded and later timings are accumulated. Once all
-configurations have been visited, subsequent calls use the best measured configuration.
+autotuning considers untiled launch bounds `64`, `128`, `256`, `512`, and `1024`. Each configuration is visited five times;
+the first timing is discarded and later timings are accumulated. Once all configurations have been visited, subsequent
+calls use the best measured configuration.
 
 ```cpp
 yakl::autotune::parallel_for("stencil",bounds,KOKKOS_LAMBDA (size_t j, size_t i) {
@@ -118,7 +120,7 @@ yakl::autotune::parallel_for("stencil",bounds,KOKKOS_LAMBDA (size_t j, size_t i)
 
 The identity includes the label and bound dimensions. Use the same label for the same kernel body and logical workload;
 do not deliberately combine unrelated kernels. Timing uses CUDA or HIP events on those backends and fenced wall-clock time
-elsewhere. `yakl::autotune::print_best()` prints the selected `Config<threads>{tile}` and speedup; `yakl::finalize()` calls it.
+elsewhere. `yakl::autotune::print_best()` prints the selected `Config<threads>` and speedup; `yakl::finalize()` calls it.
 If a label has not completed its full tuning cycle, the report marks it as incomplete and uses the best completed timed
 sample available. A label that has only reached its discarded warmup reports that no timed sample exists. Finalization
 does not force the remaining configurations to run and does not treat partial tuning as an error.

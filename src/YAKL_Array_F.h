@@ -16,7 +16,7 @@ namespace yakl {
     bool static constexpr is_cstyle = false;
     bool static constexpr on_device = std::is_same_v<yakl::DeviceSpace,MemSpace>;
 
-    std::array<ptrdiff_t,this_t::rank()> lb = {};
+    std::array<index_t,this_t::rank()> lb = {};
 
     private:
 
@@ -38,73 +38,70 @@ namespace yakl {
     }
 
     template <int NewRank, size_t I, size_t Rank>
-    auto slice_argument_host(std::array<ptrdiff_t,Rank> const & indices) const {
+    auto slice_argument_host(std::array<index_t,Rank> const & indices) const {
       if constexpr (I < NewRank) return Kokkos::ALL;
       else                       return indices[I]-lb[I];
     }
 
     template <int NewRank, class Loc, size_t Rank, size_t... Is>
-    void retain_slice_reference_host(Loc & loc, std::array<ptrdiff_t,Rank> const & indices,
+    void retain_slice_reference_host(Loc & loc, std::array<index_t,Rank> const & indices,
                                      std::index_sequence<Is...>) const {
       auto subview = Kokkos::subview(static_cast<base_t const &>(*this),
                                      slice_argument_host<NewRank,Is>(indices)...);
       loc.retain_subview_host(subview);
     }
 
-    KOKKOS_INLINE_FUNCTION static ptrdiff_t slice_index(std::integral auto index) {
+    KOKKOS_INLINE_FUNCTION static index_t slice_index(std::integral auto index) {
       return checked_bound(index);
     }
 
-    KOKKOS_INLINE_FUNCTION static ptrdiff_t slice_index(Kokkos::ALL_t) { return 0; }
+    KOKKOS_INLINE_FUNCTION static index_t slice_index(Kokkos::ALL_t) { return 0; }
 
     public:
 
 
     // AB: ArrayBounds
     struct AB {
-      ptrdiff_t l, u;
+      index_t l, u;
       KOKKOS_INLINE_FUNCTION AB(std::integral auto u) : l(1) , u(checked_bound(u)) { }
       KOKKOS_INLINE_FUNCTION AB(std::integral auto l, std::integral auto u) :
         l(checked_bound(l)) , u(checked_bound(u)) { }
     };
 
-    KOKKOS_INLINE_FUNCTION static ptrdiff_t checked_bound(std::integral auto bound) {
-      if constexpr (kokkos_debug) {
-        if (!std::in_range<ptrdiff_t>(bound)) Kokkos::abort("ERROR: Array_F bound is not representable by ptrdiff_t");
-      }
-      return static_cast<ptrdiff_t>(bound);
+    KOKKOS_INLINE_FUNCTION static index_t checked_bound(std::integral auto bound) {
+      return checked_index(bound,"ERROR: Array_F bound is not representable by index_t");
     }
 
-    KOKKOS_INLINE_FUNCTION static ptrdiff_t checked_upper_bound(ptrdiff_t lower, size_t extent) {
-      using unsigned_bound_t = std::make_unsigned_t<ptrdiff_t>;
-      if constexpr (kokkos_debug) {
+    KOKKOS_INLINE_FUNCTION static index_t checked_upper_bound(index_t lower, size_t extent) {
+      using unsigned_bound_t = uindex_t;
+      if constexpr (index_bits == 32 || kokkos_debug) {
         if (extent == 0) Kokkos::abort("ERROR: Array_F upper bound is undefined for an empty extent");
-        auto const max_increment = static_cast<unsigned_bound_t>(std::numeric_limits<ptrdiff_t>::max()) -
+        auto const max_increment = static_cast<unsigned_bound_t>(std::numeric_limits<index_t>::max()) -
                                    static_cast<unsigned_bound_t>(lower);
         if (extent-1 > max_increment) Kokkos::abort("ERROR: Array_F upper-bound overflow");
       }
       auto const increment = static_cast<unsigned_bound_t>(extent-1);
-      if (lower >= 0) return lower + static_cast<ptrdiff_t>(increment);
+      if (lower >= 0) return lower + static_cast<index_t>(increment);
       auto const magnitude = unsigned_bound_t{0} - static_cast<unsigned_bound_t>(lower);
-      if (increment >= magnitude) return static_cast<ptrdiff_t>(increment-magnitude);
+      if (increment >= magnitude) return static_cast<index_t>(increment-magnitude);
       auto const remaining = magnitude-increment;
-      if (remaining == static_cast<unsigned_bound_t>(std::numeric_limits<ptrdiff_t>::max())+1) {
-        return std::numeric_limits<ptrdiff_t>::min();
+      if (remaining == static_cast<unsigned_bound_t>(std::numeric_limits<index_t>::max())+1) {
+        return std::numeric_limits<index_t>::min();
       }
-      return -static_cast<ptrdiff_t>(remaining);
+      return -static_cast<index_t>(remaining);
     }
 
-    KOKKOS_INLINE_FUNCTION static size_t checked_extent(AB bnd) {
-      using unsigned_bound_t = std::make_unsigned_t<ptrdiff_t>;
-      if constexpr (kokkos_debug) {
+    KOKKOS_INLINE_FUNCTION static uindex_t checked_extent(AB bnd) {
+      using unsigned_bound_t = uindex_t;
+      if constexpr (index_bits == 32 || kokkos_debug) {
         if (bnd.u < bnd.l) Kokkos::abort("ERROR: Array_F upper bound is less than its lower bound");
         auto const difference = static_cast<unsigned_bound_t>(bnd.u) - static_cast<unsigned_bound_t>(bnd.l);
-        if (difference > std::numeric_limits<size_t>::max()-1) {
+        if (difference == std::numeric_limits<uindex_t>::max()) {
           Kokkos::abort("ERROR: Array_F extent overflow");
         }
       }
       auto const difference = static_cast<unsigned_bound_t>(bnd.u) - static_cast<unsigned_bound_t>(bnd.l);
-      return static_cast<size_t>(difference) + 1;
+      return difference + 1;
     }
 
     KOKKOS_INLINE_FUNCTION static typename this_t::value_type * checked_pointer(typename this_t::value_type * ptr) {
@@ -339,14 +336,14 @@ namespace yakl {
       static_assert([] <size_t... Is> (std::index_sequence<Is...>) {
         return (std::integral<std::tuple_element_t<remaining+Is,index_types>> && ...);
       } (std::make_index_sequence<nslice>{}), "ERROR: Array_F::slice requires an integer for each removed dimension");
-      std::array<ptrdiff_t,rank> slice_arr = { slice_index(indices)... };
+      std::array<index_t,rank> slice_arr = { slice_index(indices)... };
       if constexpr (kokkos_debug) {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: slicing an unallocated Array_F");
       }
       if constexpr (kokkos_bounds_debug) {
         for (int i=0; i < nslice; i++) {
           int const dim = rank-1-i;
-          ptrdiff_t const ub = checked_upper_bound(lb[dim],this_t::extent(dim));
+          index_t const ub = checked_upper_bound(lb[dim],this_t::extent(dim));
           if (slice_arr[dim] < lb[dim] || slice_arr[dim] > ub) {
             Kokkos::abort("ERROR: Array_F::slice index out of bounds");
           }
@@ -377,7 +374,7 @@ namespace yakl {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: subsetting an unallocated Array_F");
       }
       if constexpr (kokkos_bounds_debug) {
-        ptrdiff_t const upper = checked_upper_bound(lb[rank-1],this_t::extent(rank-1));
+        index_t const upper = checked_upper_bound(lb[rank-1],this_t::extent(rank-1));
         if (l < lb[rank-1] || u < l || u > upper) {
           Kokkos::abort("ERROR: Array_F::subset_slowest_dimension bounds are invalid");
         }
@@ -424,7 +421,7 @@ namespace yakl {
 
 
     KOKKOS_INLINE_FUNCTION auto collapse(std::integral auto lb = 1) const {
-      ptrdiff_t const lower = checked_bound(lb);
+      index_t const lower = checked_bound(lb);
       if constexpr (kokkos_debug) {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: collapsing an unallocated Array_F");
       }
@@ -497,8 +494,9 @@ namespace yakl {
       YAKL_SCOPE( me , *this );
       if constexpr (yakl_auto_profile) timer_start("yakl::Array_F::as");
       Kokkos::parallel_for( "yakl_as_copy" ,
-                            Kokkos::RangePolicy<typename base_t::execution_space,Kokkos::IndexType<size_t>>(0,this->size()) ,
-                            KOKKOS_LAMBDA (size_t i) {
+                            Kokkos::RangePolicy<typename base_t::execution_space,Kokkos::IndexType<uindex_t>>(
+                              0,checked_uindex(this->size(),"ERROR: Array_F size exceeds the configured index range")) ,
+                            KOKKOS_LAMBDA (uindex_t i) {
         ret.data()[i] = me.data()[i];
       });
       if constexpr (yakl_auto_profile) timer_stop("yakl::Array_F::as");
@@ -509,21 +507,23 @@ namespace yakl {
 
 
     KOKKOS_INLINE_FUNCTION auto extents() const {
-      SArray_F<size_t,Bnds{1,static_cast<int>(this_t::rank())}> ret;
-      for (int i=1; i <= this_t::rank(); i++) { ret(i) = this_t::extent(i-1); }
+      SArray_F<uindex_t,Bnds{1,static_cast<int>(this_t::rank())}> ret;
+      for (int i=1; i <= this_t::rank(); i++) {
+        ret(i) = checked_uindex(this_t::extent(i-1),"ERROR: Array_F extent exceeds the configured index range");
+      }
       return ret;
     }
 
 
     KOKKOS_INLINE_FUNCTION auto ubounds() const {
-      SArray_F<ptrdiff_t,Bnds{1,static_cast<int>(this_t::rank())}> ret;
+      SArray_F<index_t,Bnds{1,static_cast<int>(this_t::rank())}> ret;
       for (int i=1; i <= this_t::rank(); i++) { ret(i) = checked_upper_bound(lb[i-1],this_t::extent(i-1)); }
       return ret;
     }
 
 
     KOKKOS_INLINE_FUNCTION auto lbounds() const {
-      SArray_F<ptrdiff_t,Bnds{1,static_cast<int>(this_t::rank())}> ret;
+      SArray_F<index_t,Bnds{1,static_cast<int>(this_t::rank())}> ret;
       for (int i=1; i <= this_t::rank(); i++) { ret(i) = lb[i-1]; }
       return ret;
     }
@@ -544,13 +544,13 @@ namespace yakl {
     }
 
 
-    KOKKOS_INLINE_FUNCTION auto unpack_global_index(size_t iglob) const {
-      SArray_F<ptrdiff_t,Bnds{1,this_t::rank()}> ret;
+    KOKKOS_INLINE_FUNCTION auto unpack_global_index(uindex_t iglob) const {
+      SArray_F<index_t,Bnds{1,this_t::rank()}> ret;
       if constexpr (kokkos_bounds_debug) {
         if (iglob >= this_t::size()) Kokkos::abort("ERROR: Array_F::unpack_global_index index out of bounds");
       }
       for (int i=1; i <= this_t::rank(); i++) {
-        ret(i) = static_cast<ptrdiff_t>((iglob / this_t::stride(i-1)) % this_t::extent(i-1)) + lb[i-1];
+        ret(i) = static_cast<index_t>((iglob / this_t::stride(i-1)) % this_t::extent(i-1)) + lb[i-1];
       }
       return ret;
     }
