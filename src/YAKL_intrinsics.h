@@ -43,8 +43,9 @@ namespace yakl {
       auto ret = in.clone_object();
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::abs");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                            Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                            KOKKOS_LAMBDA (size_t i) {
+                            Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                              0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                            KOKKOS_LAMBDA (uindex_t i) {
         ret.data()[i] = std::abs(in.data()[i]);
       } );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::abs");
@@ -77,8 +78,9 @@ namespace yakl {
       auto ret = a.clone_object();
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::sign");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                            Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,a.size()) ,
-                            KOKKOS_LAMBDA (size_t i) {
+                            Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                              0,checked_uindex(a.size(),"ERROR: Array size exceeds the configured index range")) ,
+                            KOKKOS_LAMBDA (uindex_t i) {
         ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
       });
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::sign");
@@ -118,8 +120,9 @@ namespace yakl {
       auto ret = t.clone_object();
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::merge");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
-                            Kokkos::RangePolicy<typename V1::execution_space,Kokkos::IndexType<size_t>>(0,cond.size()) ,
-                            KOKKOS_LAMBDA (size_t i) {
+                            Kokkos::RangePolicy<typename V1::execution_space,Kokkos::IndexType<uindex_t>>(
+                              0,checked_uindex(cond.size(),"ERROR: Array size exceeds the configured index range")) ,
+                            KOKKOS_LAMBDA (uindex_t i) {
         ret.data()[i] = cond.data()[i] ? t.data()[i] : f.data()[i];
       });
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::merge");
@@ -336,8 +339,9 @@ namespace yakl {
       bool any_true;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::any");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
-                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                               KOKKOS_LAMBDA (size_t i , bool & lany) {
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                                 0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                               KOKKOS_LAMBDA (uindex_t i , bool & lany) {
         lany = lany || in.data()[i];
       } , Kokkos::LOr<bool>(any_true) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::any");
@@ -360,8 +364,9 @@ namespace yakl {
       bool all_true;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::all");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
-                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                               KOKKOS_LAMBDA (size_t i , bool & lall) {
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                                 0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                               KOKKOS_LAMBDA (uindex_t i , bool & lall) {
         lall = lall && in.data()[i];
       } , Kokkos::LAnd<bool>(all_true) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::all");
@@ -386,8 +391,9 @@ namespace yakl {
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::sum");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
-                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                               KOKKOS_LAMBDA (size_t i , scalar_t & lsum ) {
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                                 0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                               KOKKOS_LAMBDA (uindex_t i , scalar_t & lsum ) {
         lsum += in.data()[i];
       } , Kokkos::Sum<scalar_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::sum");
@@ -399,21 +405,22 @@ namespace yakl {
 
     // COUNT
     template <class ViewType> requires yakl::is_SArray<ViewType>
-    KOKKOS_INLINE_FUNCTION size_t count(ViewType const & in) {
-      size_t result = 0;
+    KOKKOS_INLINE_FUNCTION uindex_t count(ViewType const & in) {
+      uindex_t result = 0;
       for (int i=0; i < in.size(); i++) { if (in.data()[i]) result++; }
       return result;
     }
     template <class ViewType> requires yakl::is_Array<ViewType>
-    inline size_t count(ViewType const & in) {
+    inline uindex_t count(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: count on unallocated Array");
-      size_t result;
+      uindex_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::count");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
-                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                               KOKKOS_LAMBDA (size_t i , size_t & lcount) {
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                                 0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                               KOKKOS_LAMBDA (uindex_t i , uindex_t & lcount) {
         if (in.data()[i]) lcount++;
-      } , Kokkos::Sum<size_t>(result) );
+      } , Kokkos::Sum<uindex_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::count");
       if constexpr (yakl_auto_fence) Kokkos::fence();
       return result;
@@ -436,8 +443,9 @@ namespace yakl {
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::product");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
-                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                               KOKKOS_LAMBDA (size_t i , scalar_t & lprod ) {
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                                 0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                               KOKKOS_LAMBDA (uindex_t i , scalar_t & lprod ) {
         lprod *= in.data()[i];
       } , Kokkos::Prod<scalar_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::product");
@@ -463,8 +471,9 @@ namespace yakl {
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::minval");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
-                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                               KOKKOS_LAMBDA (size_t i , scalar_t & lmin ) {
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                                 0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                               KOKKOS_LAMBDA (uindex_t i , scalar_t & lmin ) {
         lmin = std::min(lmin,in.data()[i]);
       } , Kokkos::Min<scalar_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::minval");
@@ -491,8 +500,9 @@ namespace yakl {
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::maxval");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
-                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                               KOKKOS_LAMBDA (size_t i , scalar_t & lmax ) {
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                                 0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                               KOKKOS_LAMBDA (uindex_t i , scalar_t & lmax ) {
         lmax = std::max(lmax,in.data()[i]);
       } , Kokkos::Max<scalar_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::maxval");
@@ -511,7 +521,7 @@ namespace yakl {
         }
       }
       auto const mn = minval(in);
-      size_t iglob = 0;
+      uindex_t iglob = 0;
       for (int i=0; i < in.size(); i++) {
         if (in.data()[i] == mn) {
           iglob = i;
@@ -525,17 +535,18 @@ namespace yakl {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: minloc on unallocated Array");
       if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: minloc on an empty Array");
       auto const mn = minval(in);
-      size_t iglob;
+      uindex_t iglob;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::minloc");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
-                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                               KOKKOS_LAMBDA (size_t i , size_t & lmin ) {
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                                 0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                               KOKKOS_LAMBDA (uindex_t i , uindex_t & lmin ) {
         auto &inloc = in;
         if constexpr (kokkos_debug) {
           if (is_nan(inloc.data()[i])) Kokkos::abort("ERROR: minloc input contains NaN");
         }
         if (inloc.data()[i] == mn) lmin = std::min(lmin,i);
-      } , Kokkos::Min<size_t>(iglob) );
+      } , Kokkos::Min<uindex_t>(iglob) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::minloc");
       if constexpr (yakl_auto_fence) Kokkos::fence();
       return in.unpack_global_index(iglob);
@@ -553,7 +564,7 @@ namespace yakl {
         }
       }
       auto const mx = maxval(in);
-      size_t iglob = 0;
+      uindex_t iglob = 0;
       for (int i=0; i < in.size(); i++) {
         if (in.data()[i] == mx) {
           iglob = i;
@@ -567,17 +578,18 @@ namespace yakl {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: maxloc on unallocated Array");
       if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: maxloc on an empty Array");
       auto const mx = maxval(in);
-      size_t iglob;
+      uindex_t iglob;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::maxloc");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
-                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<size_t>>(0,in.size()) ,
-                               KOKKOS_LAMBDA (size_t i , size_t & lmin ) {
+                               Kokkos::RangePolicy<typename ViewType::execution_space,Kokkos::IndexType<uindex_t>>(
+                                 0,checked_uindex(in.size(),"ERROR: Array size exceeds the configured index range")) ,
+                               KOKKOS_LAMBDA (uindex_t i , uindex_t & lmin ) {
         auto &inloc = in;
         if constexpr (kokkos_debug) {
           if (is_nan(inloc.data()[i])) Kokkos::abort("ERROR: maxloc input contains NaN");
         }
         if (inloc.data()[i] == mx) lmin = std::min(lmin,i);
-      } , Kokkos::Min<size_t>(iglob) );
+      } , Kokkos::Min<uindex_t>(iglob) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::maxloc");
       if constexpr (yakl_auto_fence) Kokkos::fence();
       return in.unpack_global_index(iglob);

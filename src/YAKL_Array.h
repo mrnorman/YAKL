@@ -52,24 +52,24 @@ namespace yakl {
     }
 
     template <int NewRank, size_t I, size_t Rank>
-    static auto slice_argument_host(std::array<ptrdiff_t,Rank> const & indices) {
+    static auto slice_argument_host(std::array<index_t,Rank> const & indices) {
       if constexpr (I < Rank-NewRank) return indices[I];
       else                            return Kokkos::ALL;
     }
 
     template <int NewRank, class Loc, size_t Rank, size_t... Is>
-    void retain_slice_reference_host(Loc & loc, std::array<ptrdiff_t,Rank> const & indices,
+    void retain_slice_reference_host(Loc & loc, std::array<index_t,Rank> const & indices,
                                      std::index_sequence<Is...>) const {
       auto subview = Kokkos::subview(static_cast<base_t const &>(*this),
                                      slice_argument_host<NewRank,Is>(indices)...);
       loc.retain_subview_host(subview);
     }
 
-    KOKKOS_INLINE_FUNCTION static ptrdiff_t slice_index(std::integral auto index) {
-      return static_cast<ptrdiff_t>(index);
+    KOKKOS_INLINE_FUNCTION static index_t slice_index(std::integral auto index) {
+      return checked_index(index,"ERROR: Array slice index is not representable by index_t");
     }
 
-    KOKKOS_INLINE_FUNCTION static ptrdiff_t slice_index(Kokkos::ALL_t) { return 0; }
+    KOKKOS_INLINE_FUNCTION static index_t slice_index(Kokkos::ALL_t) { return 0; }
 
     public:
 
@@ -110,7 +110,7 @@ namespace yakl {
       static_assert([] <size_t... Is> (std::index_sequence<Is...>) {
         return (std::integral<std::tuple_element_t<Is,index_types>> && ...);
       } (std::make_index_sequence<nslice>{}), "ERROR: Array::slice requires an integer for each removed dimension");
-      std::array<ptrdiff_t,rank> slice_arr = { slice_index(indices)... };
+      std::array<index_t,rank> slice_arr = { slice_index(indices)... };
       if constexpr (kokkos_debug) {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: slicing an unallocated Array");
       }
@@ -159,7 +159,9 @@ namespace yakl {
     KOKKOS_INLINE_FUNCTION auto reshape(std::integral auto... newdims) const {
       int constexpr new_rank = sizeof...(newdims);
       using new_kt = typename ViewType<typename base_t::value_type,new_rank>::type;
-      std::array<ptrdiff_t,new_rank> dims = { static_cast<ptrdiff_t>(newdims)... };
+      std::array<index_t,new_rank> dims = {
+        checked_index(newdims,"ERROR: Array reshape dimension is not representable by index_t")...
+      };
       size_t new_size = 1;
       for (int i=0; i < new_rank; i++) {
         if constexpr (kokkos_debug) {
@@ -248,8 +250,9 @@ namespace yakl {
       YAKL_SCOPE( me , *this );
       if constexpr (yakl_auto_profile) timer_start("yakl::Array::as");
       Kokkos::parallel_for( "yakl_as_copy" ,
-                            Kokkos::RangePolicy<typename base_t::execution_space,Kokkos::IndexType<size_t>>(0,this->size()) ,
-                            KOKKOS_LAMBDA (size_t i) {
+                            Kokkos::RangePolicy<typename base_t::execution_space,Kokkos::IndexType<uindex_t>>(
+                              0,checked_uindex(this->size(),"ERROR: Array size exceeds the configured index range")) ,
+                            KOKKOS_LAMBDA (uindex_t i) {
         ret.data()[i] = me.data()[i];
       });
       if constexpr (yakl_auto_profile) timer_stop("yakl::Array::as");
@@ -259,26 +262,28 @@ namespace yakl {
 
 
     KOKKOS_INLINE_FUNCTION auto extents() const {
-      SArray<size_t,this_t::rank()> ret;
-      for (int i=0; i < this_t::rank(); i++) { ret(i) = this_t::extent(i); }
+      SArray<uindex_t,this_t::rank()> ret;
+      for (int i=0; i < this_t::rank(); i++) {
+        ret(i) = checked_uindex(this_t::extent(i),"ERROR: Array extent exceeds the configured index range");
+      }
       return ret;
     }
 
 
     KOKKOS_INLINE_FUNCTION auto ubounds() const {
-      SArray<size_t,this_t::rank()> ret;
+      SArray<uindex_t,this_t::rank()> ret;
       for (int i=0; i < this_t::rank(); i++) {
         if constexpr (kokkos_debug) {
           if (this_t::extent(i) == 0) Kokkos::abort("ERROR: Array::ubounds is undefined for an empty dimension");
         }
-        ret(i) = this_t::extent(i)-1;
+        ret(i) = checked_uindex(this_t::extent(i),"ERROR: Array extent exceeds the configured index range")-1;
       }
       return ret;
     }
 
 
     KOKKOS_INLINE_FUNCTION auto lbounds() const {
-      SArray<size_t,this_t::rank()> ret;
+      SArray<uindex_t,this_t::rank()> ret;
       for (int i=0; i < this_t::rank(); i++) { ret(i) = 0; }
       return ret;
     }
@@ -299,8 +304,8 @@ namespace yakl {
     }
 
 
-    KOKKOS_INLINE_FUNCTION auto unpack_global_index(size_t iglob) const {
-      SArray<size_t,this_t::rank()> ret;
+    KOKKOS_INLINE_FUNCTION auto unpack_global_index(uindex_t iglob) const {
+      SArray<uindex_t,this_t::rank()> ret;
       if constexpr (kokkos_bounds_debug) {
         if (iglob >= this_t::size()) Kokkos::abort("ERROR: Array::unpack_global_index index out of bounds");
       }

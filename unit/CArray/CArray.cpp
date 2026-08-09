@@ -15,10 +15,16 @@ using yakl::SimpleBounds;
 template <auto... DIMS>
 concept ValidSArrayDimensions = requires { typename yakl::SArray<unsigned char,DIMS...>; };
 
+#if YAKL_INDEX_BITS == 64
 using WideCountSArray = yakl::SArray<unsigned char,65536u,65536u>;
-static_assert(WideCountSArray::num_elements == size_t{65536}*65536);
-static_assert(std::same_as<decltype(WideCountSArray::size()),size_t>);
-static_assert(! ValidSArrayDimensions<std::numeric_limits<size_t>::max(),2>);
+static_assert(WideCountSArray::num_elements == yakl::uindex_t{65536}*65536);
+#else
+using WideCountSArray = yakl::SArray<unsigned char,1024u,1024u>;
+static_assert(WideCountSArray::num_elements == yakl::uindex_t{1024}*1024);
+static_assert(! ValidSArrayDimensions<65536u,65536u>);
+#endif
+static_assert(std::same_as<decltype(WideCountSArray::size()),yakl::uindex_t>);
+static_assert(! ValidSArrayDimensions<std::numeric_limits<yakl::uindex_t>::max(),2>);
 
 typedef float real;
 

@@ -14,34 +14,34 @@ namespace yakl {
 
   namespace parallel_for_detail {
 
-    KOKKOS_INLINE_FUNCTION ptrdiff_t checked_loop_bound(std::integral auto value) {
-      if constexpr (kokkos_debug) {
-        if (!std::in_range<ptrdiff_t>(value)) Kokkos::abort("ERROR: loop bound is not representable by ptrdiff_t");
+    KOKKOS_INLINE_FUNCTION index_t checked_loop_bound(std::integral auto value) {
+      if constexpr (index_bits == 32 || kokkos_debug) {
+        if (!std::in_range<index_t>(value)) Kokkos::abort("ERROR: loop bound is not representable by yakl::index_t");
       }
-      return static_cast<ptrdiff_t>(value);
+      return static_cast<index_t>(value);
     }
 
-    KOKKOS_INLINE_FUNCTION ptrdiff_t checked_loop_stride(std::integral auto value) {
-      ptrdiff_t const stride = checked_loop_bound(value);
-      if constexpr (kokkos_debug) {
+    KOKKOS_INLINE_FUNCTION index_t checked_loop_stride(std::integral auto value) {
+      index_t const stride = checked_loop_bound(value);
+      if constexpr (index_bits == 32 || kokkos_debug) {
         if (stride < 1) Kokkos::abort("ERROR: non-positive strides not supported.");
       }
       return stride;
     }
 
-    KOKKOS_INLINE_FUNCTION size_t loop_index_range(ptrdiff_t l, ptrdiff_t u, ptrdiff_t s) {
-      if constexpr (kokkos_debug) {
+    KOKKOS_INLINE_FUNCTION uindex_t loop_index_range(index_t l, index_t u, index_t s) {
+      if constexpr (index_bits == 32 || kokkos_debug) {
         if (s <= 0 || u < l) Kokkos::abort("ERROR: requesting the range of an invalid LoopSpec");
       }
-      using unsigned_bound_t = std::make_unsigned_t<ptrdiff_t>;
+      using unsigned_bound_t = uindex_t;
       auto const difference = static_cast<unsigned_bound_t>(u)-static_cast<unsigned_bound_t>(l);
       auto const quotient = difference/static_cast<unsigned_bound_t>(s);
-      if constexpr (kokkos_debug) {
+      if constexpr (index_bits == 32 || kokkos_debug) {
         if (quotient == std::numeric_limits<unsigned_bound_t>::max()) {
           Kokkos::abort("ERROR: LoopSpec range overflow");
         }
       }
-      return static_cast<size_t>(quotient+1);
+      return static_cast<uindex_t>(quotient+1);
     }
 
   }
@@ -52,29 +52,33 @@ namespace yakl {
   public:
     bool      static constexpr is_cstyle = true;
     bool      static constexpr is_fstyle = false;
-    ptrdiff_t static constexpr default_lbound = 0;
-    ptrdiff_t l, u, s;
+    index_t static constexpr default_lbound = 0;
+    index_t l, u, s;
     KOKKOS_INLINE_FUNCTION LoopSpec() : l(-1),u(-1),s(-1) { }
     KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto u) : l(default_lbound),u(default_lbound-1),s(1) {
-      if constexpr (kokkos_debug) {
+      if constexpr (index_bits == 32 || kokkos_debug) {
         if ((std::is_signed_v<decltype(u)> && u < 0) ||
-            static_cast<size_t>(u) > static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max())) {
-          Kokkos::abort("ERROR: loop extent must be nonnegative and representable by ptrdiff_t");
+            !std::in_range<index_t>(u)) {
+          Kokkos::abort("ERROR: loop extent must be nonnegative and representable by yakl::index_t");
         }
       }
-      this->u = static_cast<ptrdiff_t>(u)-1+default_lbound;
+      this->u = static_cast<index_t>(u)-1+default_lbound;
     }
     KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto l, std::integral auto u) :
         l(parallel_for_detail::checked_loop_bound(l)),u(parallel_for_detail::checked_loop_bound(u)),s(1) {
-      if constexpr (kokkos_debug) { if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
+      if constexpr (index_bits == 32 || kokkos_debug) {
+        if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound");
+      }
     }
     KOKKOS_INLINE_FUNCTION LoopSpec(std::integral auto l, std::integral auto u, std::integral auto s) :
         l(parallel_for_detail::checked_loop_bound(l)),u(parallel_for_detail::checked_loop_bound(u)),
         s(parallel_for_detail::checked_loop_stride(s)) {
-      if constexpr (kokkos_debug) { if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
+      if constexpr (index_bits == 32 || kokkos_debug) {
+        if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound");
+      }
     }
     KOKKOS_INLINE_FUNCTION bool   valid      () const { return this->s > 0; }
-    KOKKOS_INLINE_FUNCTION size_t index_range() const {
+    KOKKOS_INLINE_FUNCTION uindex_t index_range() const {
       return parallel_for_detail::loop_index_range(l,u,s);
     }
   };
@@ -85,29 +89,33 @@ namespace yakl {
   public:
     bool      static constexpr is_cstyle = false;
     bool      static constexpr is_fstyle = true;
-    ptrdiff_t static constexpr default_lbound = 1;
-    ptrdiff_t l, u, s;
+    index_t static constexpr default_lbound = 1;
+    index_t l, u, s;
     KOKKOS_INLINE_FUNCTION LoopSpec_F() : l(-1),u(-1),s(-1) { }
     KOKKOS_INLINE_FUNCTION LoopSpec_F(std::integral auto u) : l(default_lbound),u(default_lbound-1),s(1) {
-      if constexpr (kokkos_debug) {
+      if constexpr (index_bits == 32 || kokkos_debug) {
         if ((std::is_signed_v<decltype(u)> && u < 0) ||
-            static_cast<size_t>(u) > static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max())) {
-          Kokkos::abort("ERROR: loop extent must be nonnegative and representable by ptrdiff_t");
+            !std::in_range<index_t>(u)) {
+          Kokkos::abort("ERROR: loop extent must be nonnegative and representable by yakl::index_t");
         }
       }
-      this->u = static_cast<ptrdiff_t>(u)-1+default_lbound;
+      this->u = static_cast<index_t>(u)-1+default_lbound;
     }
     KOKKOS_INLINE_FUNCTION LoopSpec_F(std::integral auto l, std::integral auto u) :
         l(parallel_for_detail::checked_loop_bound(l)),u(parallel_for_detail::checked_loop_bound(u)),s(1) {
-      if constexpr (kokkos_debug) { if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
+      if constexpr (index_bits == 32 || kokkos_debug) {
+        if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound");
+      }
     }
     KOKKOS_INLINE_FUNCTION LoopSpec_F(std::integral auto l, std::integral auto u, std::integral auto s) :
         l(parallel_for_detail::checked_loop_bound(l)),u(parallel_for_detail::checked_loop_bound(u)),
         s(parallel_for_detail::checked_loop_stride(s)) {
-      if constexpr (kokkos_debug) { if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound"); }
+      if constexpr (index_bits == 32 || kokkos_debug) {
+        if (this->u < this->l) Kokkos::abort("ERROR: cannot specify an upper bound < lower bound");
+      }
     }
     KOKKOS_INLINE_FUNCTION bool   valid      () const { return this->s > 0; }
-    KOKKOS_INLINE_FUNCTION size_t index_range() const {
+    KOKKOS_INLINE_FUNCTION uindex_t index_range() const {
       return parallel_for_detail::loop_index_range(l,u,s);
     }
   };
@@ -119,15 +127,17 @@ namespace yakl {
 
   template<int N, class Style> class Bounds<N,Style,true> {
     public:
-    using unsigned_t = size_t;
+    using unsigned_t = uindex_t;
     bool       static constexpr is_cstyle      = is_CStyle<Style>;
     bool       static constexpr is_fstyle      = is_FStyle<Style>;
     unsigned_t static constexpr default_lbound = is_cstyle ? 0 : 1;
     unsigned_t nIter;
     std::array<unsigned_t,N> offs;
     KOKKOS_INLINE_FUNCTION static unsigned_t checked_extent(std::integral auto size) {
-      if constexpr (kokkos_debug) {
-        if (!std::in_range<unsigned_t>(size)) Kokkos::abort("ERROR: Bounds dimensions cannot be negative or overflow size_t");
+      if constexpr (index_bits == 32 || kokkos_debug) {
+        if (!std::in_range<unsigned_t>(size)) {
+          Kokkos::abort("ERROR: Bounds dimension is not representable by yakl::uindex_t");
+        }
       }
       return static_cast<unsigned_t>(size);
     }
@@ -136,7 +146,7 @@ namespace yakl {
       std::array<unsigned_t,N> dims = { checked_extent(sizes)... };
       nIter = 1;
       for (int i=0; i < N; i++) {
-        if constexpr (kokkos_debug) {
+        if constexpr (index_bits == 32 || kokkos_debug) {
           if (dims[i] != 0 && nIter > std::numeric_limits<unsigned_t>::max()/dims[i]) {
             Kokkos::abort("ERROR: Bounds iteration-count overflow");
           }
@@ -144,7 +154,7 @@ namespace yakl {
         nIter *= dims[i];
         offs[i] = 1;
         for (int j=i+1; j < N; j++) {
-          if constexpr (kokkos_debug) {
+          if constexpr (index_bits == 32 || kokkos_debug) {
             if (dims[j] != 0 && offs[i] > std::numeric_limits<unsigned_t>::max()/dims[j]) {
               Kokkos::abort("ERROR: Bounds offset overflow");
             }
@@ -252,8 +262,8 @@ namespace yakl {
 
   template<int N, class Style> class Bounds<N,Style,false> {
     public:
-    using unsigned_t = size_t;
-    using signed_t   = ptrdiff_t;
+    using unsigned_t = uindex_t;
+    using signed_t   = index_t;
     bool   static constexpr is_cstyle = is_CStyle<Style>;
     bool   static constexpr is_fstyle = is_FStyle<Style>;
     using LS = std::conditional_t<is_cstyle,LoopSpec,LoopSpec_F>;
@@ -266,7 +276,7 @@ namespace yakl {
     template <class... BNDS> requires (std::is_same_v<BNDS,LS> && ...)
     KOKKOS_INLINE_FUNCTION void init( BNDS... bnds ) {
       static_assert(sizeof...(bnds) == N,"Error: Bounds::init called with wrong number of bounds parameters");
-      if constexpr (kokkos_debug) {
+      if constexpr (index_bits == 32 || kokkos_debug) {
         if (((!bnds.valid() || bnds.u < bnds.l) || ...)) {
           Kokkos::abort("ERROR: Bounds created from an invalid LoopSpec");
         }
@@ -276,7 +286,7 @@ namespace yakl {
       strides                       = { static_cast<unsigned_t>(bnds.s)... };
       nIter = 1;
       for (int i=0; i < N; i++) {
-        if constexpr (kokkos_debug) {
+        if constexpr (index_bits == 32 || kokkos_debug) {
           if (dims[i] != 0 && nIter > std::numeric_limits<unsigned_t>::max()/dims[i]) {
             Kokkos::abort("ERROR: Bounds iteration-count overflow");
           }
@@ -284,7 +294,7 @@ namespace yakl {
         nIter *= dims[i];
         offs[i] = 1;
         for (int j=i+1; j < N; j++) {
-          if constexpr (kokkos_debug) {
+          if constexpr (index_bits == 32 || kokkos_debug) {
             if (dims[j] != 0 && offs[i] > std::numeric_limits<unsigned_t>::max()/dims[j]) {
               Kokkos::abort("ERROR: Bounds offset overflow");
             }
@@ -469,15 +479,21 @@ namespace yakl {
 
   template <int MaxThreadsPerBlock=0> requires (MaxThreadsPerBlock >= 0) struct Config {
     int static constexpr Thr = MaxThreadsPerBlock;
-    size_t tile;
+    int static constexpr max_dimensions = 8;
+    std::array<uindex_t,max_dimensions> tiles;
 
-    KOKKOS_INLINE_FUNCTION Config() : tile(1) {}
+    Config() { tiles.fill(1); }
 
-    template <std::integral T>
-    KOKKOS_INLINE_FUNCTION explicit Config(T tile) : tile(static_cast<size_t>(tile)) {
-      if constexpr (kokkos_debug) {
-        if (!std::in_range<size_t>(tile) || tile == 0) Kokkos::abort("ERROR: Config tile size must be positive");
+    template <std::integral... T> requires (sizeof...(T) > 0 && sizeof...(T) <= max_dimensions)
+    explicit Config(T... tile_dims) : Config() {
+      std::array<bool,sizeof...(T)> const validTiles = {
+        ((std::is_unsigned_v<T> || tile_dims > 0) && std::in_range<uindex_t>(tile_dims))...
+      };
+      for (bool valid : validTiles) {
+        if (!valid) Kokkos::abort("ERROR: Config tile sizes must be positive");
       }
+      std::array<uindex_t,sizeof...(T)> const inputTiles = { static_cast<uindex_t>(tile_dims)... };
+      for (int d=0; d < static_cast<int>(inputTiles.size()); d++) tiles[d] = inputTiles[d];
     }
   };
 
@@ -486,42 +502,42 @@ namespace yakl {
   template <class F, int N, bool simple, class Style>
   KOKKOS_FORCEINLINE_FUNCTION void call_parallel_for_functor( Bounds<N,Style,simple> const & bounds ,
                                                                F                      const & f      ,
-                                                               size_t                         iglob  ) {
+                                                               uindex_t                       iglob  ) {
     if constexpr (simple) {
       if constexpr (N==1) {
-        size_t i0; bounds.unpack(iglob,i0); f(i0);
+        uindex_t i0; bounds.unpack(iglob,i0); f(i0);
       } else if constexpr (N==2) {
-        size_t i0,i1; bounds.unpack(iglob,i0,i1); f(i0,i1);
+        uindex_t i0,i1; bounds.unpack(iglob,i0,i1); f(i0,i1);
       } else if constexpr (N==3) {
-        size_t i0,i1,i2; bounds.unpack(iglob,i0,i1,i2); f(i0,i1,i2);
+        uindex_t i0,i1,i2; bounds.unpack(iglob,i0,i1,i2); f(i0,i1,i2);
       } else if constexpr (N==4) {
-        size_t i0,i1,i2,i3; bounds.unpack(iglob,i0,i1,i2,i3); f(i0,i1,i2,i3);
+        uindex_t i0,i1,i2,i3; bounds.unpack(iglob,i0,i1,i2,i3); f(i0,i1,i2,i3);
       } else if constexpr (N==5) {
-        size_t i0,i1,i2,i3,i4; bounds.unpack(iglob,i0,i1,i2,i3,i4); f(i0,i1,i2,i3,i4);
+        uindex_t i0,i1,i2,i3,i4; bounds.unpack(iglob,i0,i1,i2,i3,i4); f(i0,i1,i2,i3,i4);
       } else if constexpr (N==6) {
-        size_t i0,i1,i2,i3,i4,i5; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5); f(i0,i1,i2,i3,i4,i5);
+        uindex_t i0,i1,i2,i3,i4,i5; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5); f(i0,i1,i2,i3,i4,i5);
       } else if constexpr (N==7) {
-        size_t i0,i1,i2,i3,i4,i5,i6; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); f(i0,i1,i2,i3,i4,i5,i6);
+        uindex_t i0,i1,i2,i3,i4,i5,i6; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); f(i0,i1,i2,i3,i4,i5,i6);
       } else if constexpr (N==8) {
-        size_t i0,i1,i2,i3,i4,i5,i6,i7; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); f(i0,i1,i2,i3,i4,i5,i6,i7);
+        uindex_t i0,i1,i2,i3,i4,i5,i6,i7; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); f(i0,i1,i2,i3,i4,i5,i6,i7);
       }
     } else {
       if constexpr (N==1) {
-        ptrdiff_t i0; bounds.unpack(iglob,i0); f(i0);
+        index_t i0; bounds.unpack(iglob,i0); f(i0);
       } else if constexpr (N==2) {
-        ptrdiff_t i0,i1; bounds.unpack(iglob,i0,i1); f(i0,i1);
+        index_t i0,i1; bounds.unpack(iglob,i0,i1); f(i0,i1);
       } else if constexpr (N==3) {
-        ptrdiff_t i0,i1,i2; bounds.unpack(iglob,i0,i1,i2); f(i0,i1,i2);
+        index_t i0,i1,i2; bounds.unpack(iglob,i0,i1,i2); f(i0,i1,i2);
       } else if constexpr (N==4) {
-        ptrdiff_t i0,i1,i2,i3; bounds.unpack(iglob,i0,i1,i2,i3); f(i0,i1,i2,i3);
+        index_t i0,i1,i2,i3; bounds.unpack(iglob,i0,i1,i2,i3); f(i0,i1,i2,i3);
       } else if constexpr (N==5) {
-        ptrdiff_t i0,i1,i2,i3,i4; bounds.unpack(iglob,i0,i1,i2,i3,i4); f(i0,i1,i2,i3,i4);
+        index_t i0,i1,i2,i3,i4; bounds.unpack(iglob,i0,i1,i2,i3,i4); f(i0,i1,i2,i3,i4);
       } else if constexpr (N==6) {
-        ptrdiff_t i0,i1,i2,i3,i4,i5; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5); f(i0,i1,i2,i3,i4,i5);
+        index_t i0,i1,i2,i3,i4,i5; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5); f(i0,i1,i2,i3,i4,i5);
       } else if constexpr (N==7) {
-        ptrdiff_t i0,i1,i2,i3,i4,i5,i6; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); f(i0,i1,i2,i3,i4,i5,i6);
+        index_t i0,i1,i2,i3,i4,i5,i6; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6); f(i0,i1,i2,i3,i4,i5,i6);
       } else if constexpr (N==8) {
-        ptrdiff_t i0,i1,i2,i3,i4,i5,i6,i7; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); f(i0,i1,i2,i3,i4,i5,i6,i7);
+        index_t i0,i1,i2,i3,i4,i5,i6,i7; bounds.unpack(iglob,i0,i1,i2,i3,i4,i5,i6,i7); f(i0,i1,i2,i3,i4,i5,i6,i7);
       }
     }
   }
@@ -532,8 +548,8 @@ namespace yakl {
   inline void launch_parallel_for_untiled( std::string                    str    ,
                                            Bounds<N,Style,simple> const & bounds ,
                                            F                      const & f      ) {
-    using Policy = Kokkos::RangePolicy<Kokkos::LaunchBounds<MaxThreadsPerBlock,0>,Kokkos::IndexType<size_t>>;
-    Kokkos::parallel_for( str , Policy(0,bounds.nIter) , KOKKOS_LAMBDA (size_t iglob) {
+    using Policy = Kokkos::RangePolicy<Kokkos::LaunchBounds<MaxThreadsPerBlock,0>,Kokkos::IndexType<uindex_t>>;
+    Kokkos::parallel_for( str , Policy(0,bounds.nIter) , KOKKOS_LAMBDA (uindex_t iglob) {
       call_parallel_for_functor(bounds,f,iglob);
     });
   }
@@ -544,43 +560,46 @@ namespace yakl {
   inline void launch_parallel_for_tiled( std::string                    str    ,
                                          Bounds<N,Style,simple> const & bounds ,
                                          F                      const & f      ,
-                                         size_t                         tile   ) {
-    std::array<size_t,N> boundDims;
-    std::array<size_t,N> tileOffs;
+                                         std::array<uindex_t,N>  const & tiles  ) {
+    std::array<uindex_t,N> boundDims;
+    std::array<uindex_t,N> tileCounts;
+    std::array<uindex_t,N> tileOffs;
     boundDims[0] = bounds.nIter/bounds.offs[0];
     for (int d=1; d < N; d++) boundDims[d] = bounds.offs[d-1]/bounds.offs[d];
-    size_t nTiles = 1;
+    uindex_t nTiles = 1;
     for (int d=0; d < N; d++) {
-      size_t const tileCount = (boundDims[d]-1)/tile+1;
-      if constexpr (kokkos_debug) {
-        if (tileCount != 0 && nTiles > std::numeric_limits<size_t>::max()/tileCount) {
+      tileCounts[d] = (boundDims[d]-1)/tiles[d]+1;
+      if constexpr (index_bits == 32 || kokkos_debug) {
+        if (tileCounts[d] != 0 && nTiles > std::numeric_limits<uindex_t>::max()/tileCounts[d]) {
           Kokkos::abort("ERROR: tiled parallel_for iteration-count overflow");
         }
       }
-      nTiles *= tileCount;
+      nTiles *= tileCounts[d];
+    }
+    for (int d=0; d < N; d++) {
       tileOffs[d] = 1;
-      for (int j=d+1; j < N; j++) tileOffs[d] *= (boundDims[j]-1)/tile+1;
+      for (int j=d+1; j < N; j++) tileOffs[d] *= tileCounts[j];
     }
 
-    using Policy = Kokkos::RangePolicy<Kokkos::LaunchBounds<MaxThreadsPerBlock,0>,Kokkos::IndexType<size_t>>;
-    Kokkos::parallel_for( str , Policy(0,nTiles) , KOKKOS_LAMBDA (size_t tileIndex) {
-      std::array<size_t,N> starts;
-      std::array<size_t,N> localDims;
-      size_t remainder = tileIndex;
-      size_t localIterations = 1;
+    using Policy = Kokkos::RangePolicy<Kokkos::LaunchBounds<MaxThreadsPerBlock,0>,Kokkos::IndexType<uindex_t>>;
+    Kokkos::parallel_for( str , Policy(0,nTiles) , KOKKOS_LAMBDA (uindex_t tileIndex) {
+      std::array<uindex_t,N> starts;
+      std::array<uindex_t,N> localDims;
+      uindex_t remainder = tileIndex;
+      uindex_t localIterations = 1;
       for (int d=0; d < N; d++) {
-        size_t const tileCoord = remainder/tileOffs[d];
+        uindex_t const tileCoord = remainder/tileOffs[d];
         remainder -= tileCoord*tileOffs[d];
-        starts[d] = tileCoord*tile;
-        size_t const remaining = boundDims[d]-starts[d];
-        localDims[d] = remaining < tile ? remaining : tile;
+        starts[d] = tileCoord*tiles[d];
+        uindex_t const remaining = boundDims[d]-starts[d];
+        localDims[d] = remaining < tiles[d] ? remaining : tiles[d];
         localIterations *= localDims[d];
       }
-      for (size_t localIndex=0; localIndex < localIterations; localIndex++) {
+      for (uindex_t localIndex=0; localIndex < localIterations; localIndex++) {
         remainder = localIndex;
-        size_t iglob = 0;
+        uindex_t iglob = 0;
         for (int d=N-1; d >= 0; d--) {
-          size_t const coord = remainder%localDims[d];
+          uindex_t const coord = remainder%localDims[d];
           remainder /= localDims[d];
           iglob += (starts[d]+coord)*bounds.offs[d];
         }
@@ -609,13 +628,24 @@ namespace yakl {
                             Bounds<N,Style,simple> const & bounds ,
                             F                      const & f      ,
                             Config<MaxThreadsPerBlock>             config ) {
+    static_assert(N <= Config<MaxThreadsPerBlock>::max_dimensions,"ERROR: Config supports at most eight tile dimensions");
     if (bounds.nIter == 0) return;
-    if constexpr (kokkos_debug) {
-      if (config.tile == 0) Kokkos::abort("ERROR: Config tile size must be positive");
+    bool tiled = false;
+    for (int d=0; d < N; d++) {
+      if constexpr (kokkos_debug) {
+        if (config.tiles[d] == 0) Kokkos::abort("ERROR: Config tile sizes must be positive");
+      }
+      tiled = tiled || config.tiles[d] != 1;
     }
     if constexpr (yakl_auto_profile) timer_start(str);
-    if (config.tile == 1) launch_parallel_for_untiled<MaxThreadsPerBlock>(str,bounds,f);
-    else                  launch_parallel_for_tiled  <MaxThreadsPerBlock>(str,bounds,f,config.tile);
+    if (tiled) {
+      std::array<uindex_t,N> tiles;
+      for (int d=0; d < N; d++) tiles[d] = config.tiles[d];
+      launch_parallel_for_tiled<MaxThreadsPerBlock,F,N,simple,Style>(str,bounds,f,tiles);
+    } else {
+      // Keep the all-ones case identical to the ordinary RangePolicy kernel: no tile state enters the device lambda.
+      launch_parallel_for_untiled<MaxThreadsPerBlock>(str,bounds,f);
+    }
     if constexpr (yakl_auto_profile) timer_stop(str);
     if constexpr (yakl_auto_fence) Kokkos::fence();
   }

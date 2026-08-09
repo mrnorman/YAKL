@@ -94,12 +94,19 @@ These are CMake variables rather than C/C++ preprocessor definitions:
 | --- | --- |
 | `YAKL_ENABLE_COVERAGE` | Build YAKL and consumers with GNU gcov instrumentation. |
 | `YAKL_HAVE_MPI` | Find and link MPI and publicly define `HAVE_MPI` on the `yakl` target. |
+| `YAKL_INDEX_BITS` | Logical index, loop-bound, and flattened-iteration width: `32` or `64` (default). |
 | `YAKL_TEST_NETCDF` | Opt the unit suite into NetCDF tests when dependencies are available. |
 | `YAKL_TEST_PNETCDF` | Opt the unit suite into PNetCDF tests when dependencies are available. |
-| `YAKL_UNIT_LARGE_MEMORY` | Build tests requiring more than 4 GiB of device memory. |
+| `YAKL_UNIT_LARGE_MEMORY` | Build tests requiring more than 4 GiB of device memory; forced off for 32-bit indices. |
 
 Machine environment files may translate environment variables into these CMake options, but environment variables are not
 automatically preprocessor definitions. The runtime pool environment variables are documented in
 [getting started](getting-started.md#initconfig).
+
+Configure with `-DYAKL_INDEX_BITS=32` when every logical array extent, flattened iteration count, loop bound, and index fits
+in 32 bits. YAKL then exposes `yakl::index_t` as `std::int32_t` and `yakl::uindex_t` as `std::uint32_t`; the default 64-bit
+configuration exposes the corresponding 64-bit types. Allocation sizes and byte offsets remain `size_t`. The setting is a
+public compile definition on the `yakl` target, so linked C++ consumers receive the same choice and must be rebuilt when it
+changes.
 
 [API home](README.md) · [Getting started](getting-started.md) · [Memory](memory.md)

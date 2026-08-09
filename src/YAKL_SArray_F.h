@@ -4,18 +4,17 @@
 
 namespace yakl {
 
-  struct Bnds { ptrdiff_t l, u; };
+  struct Bnds { index_t l, u; };
 
-  KOKKOS_INLINE_FUNCTION constexpr size_t bnds_extent(Bnds bnd) {
-    using unsigned_bound_t = std::make_unsigned_t<ptrdiff_t>;
-    return static_cast<size_t>(static_cast<unsigned_bound_t>(bnd.u)-static_cast<unsigned_bound_t>(bnd.l)) + 1;
+  KOKKOS_INLINE_FUNCTION constexpr uindex_t bnds_extent(Bnds bnd) {
+    return static_cast<uindex_t>(static_cast<uindex_t>(bnd.u)-static_cast<uindex_t>(bnd.l)) + 1;
   }
 
   template <Bnds... DIMS>
   consteval bool valid_bnds_product() {
-    size_t product = 1;
-    for (size_t extent : {bnds_extent(DIMS)...}) {
-      if (extent == 0 || product > std::numeric_limits<size_t>::max()/extent) return false;
+    uindex_t product = 1;
+    for (uindex_t extent : {bnds_extent(DIMS)...}) {
+      if (extent == 0 || product > std::numeric_limits<uindex_t>::max()/extent) return false;
       product *= extent;
     }
     return true;
@@ -31,7 +30,7 @@ namespace yakl {
     public:
     bool         static constexpr is_SArray    = true;
     unsigned int static constexpr rank         = sizeof...(DIMS);
-    size_t       static constexpr num_elements = (bnds_extent(DIMS) * ...);
+    uindex_t     static constexpr num_elements = (bnds_extent(DIMS) * ...);
     bool         static constexpr is_cstyle    = false;
     bool         static constexpr is_fstyle    = true;
     using value_type           = T;
@@ -41,14 +40,14 @@ namespace yakl {
     T mutable my_data[num_elements];
 
     template <class TLOC> requires std::is_arithmetic_v<TLOC>
-    KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (size_t i=0; i < size(); i++) { my_data[i] = val; } }
+    KOKKOS_INLINE_FUNCTION void operator= (TLOC val) { for (uindex_t i=0; i < size(); i++) { my_data[i] = val; } }
 
     KOKKOS_INLINE_FUNCTION T & operator()(std::integral auto... indices) const {
-      ptrdiff_t constexpr lb  [rank] = {DIMS.l...};
-      ptrdiff_t constexpr ub  [rank] = {DIMS.u...};
-      size_t    constexpr dims[rank] = {bnds_extent(DIMS)...};
-      std::array<size_t,rank> constexpr offsets = [=] {
-        std::array<size_t,rank> result = {};
+      index_t  constexpr lb  [rank] = {DIMS.l...};
+      index_t  constexpr ub  [rank] = {DIMS.u...};
+      uindex_t constexpr dims[rank] = {bnds_extent(DIMS)...};
+      std::array<uindex_t,rank> constexpr offsets = [=] {
+        std::array<uindex_t,rank> result = {};
         for (int i=static_cast<int>(rank)-1; i >= 0; i--) {
           result[i] = 1;
           for (int j = i-1; j >= 0; j--) result[i] *= dims[j];
@@ -56,25 +55,25 @@ namespace yakl {
         return result;
       }();
       static_assert( sizeof...(indices) == rank , "ERROR: Indexing SArray_F with the wrong number of indices" );
-      ptrdiff_t idx[rank] = {static_cast<ptrdiff_t>(indices)...};
+      index_t idx[rank] = {checked_index(indices,"ERROR: SArray_F index is not representable by index_t")...};
       if constexpr (kokkos_bounds_debug) {
         for (int i = 0; i < rank; i++) {
           if (idx[i] > ub[i] || idx[i] < lb[i]) Kokkos::abort("ERROR: SArray_F index out of bounds");
         }
       }
-      size_t offset = 0;
-      for (int i = 0; i < rank; i++) offset += static_cast<size_t>(idx[i]-lb[i]) * offsets[i];
+      uindex_t offset = 0;
+      for (int i = 0; i < rank; i++) offset += static_cast<uindex_t>(idx[i]-lb[i]) * offsets[i];
       return my_data[offset];
     }
 
     KOKKOS_INLINE_FUNCTION T * data () const { return my_data; }
     KOKKOS_INLINE_FUNCTION T * begin() const { return my_data; }
     KOKKOS_INLINE_FUNCTION T * end  () const { return my_data + size(); }
-    KOKKOS_INLINE_FUNCTION size_t       static constexpr size() { return num_elements; }
+    KOKKOS_INLINE_FUNCTION uindex_t     static constexpr size() { return num_elements; }
     KOKKOS_INLINE_FUNCTION bool         static constexpr span_is_contiguous() { return true; }
     KOKKOS_INLINE_FUNCTION bool         static constexpr is_allocated() { return true; }
-    KOKKOS_INLINE_FUNCTION size_t       static           extent(std::integral auto i) {
-      size_t constexpr dims[rank] = {bnds_extent(DIMS)...};
+    KOKKOS_INLINE_FUNCTION uindex_t     static           extent(std::integral auto i) {
+      uindex_t constexpr dims[rank] = {bnds_extent(DIMS)...};
       if constexpr (kokkos_debug) {
         if ((std::is_signed_v<decltype(i)> && i < 0) || static_cast<unsigned int>(i) >= rank) {
           Kokkos::abort("ERROR: calling SArray_F extent() with out of bounds index"); 
@@ -83,8 +82,8 @@ namespace yakl {
       return dims[i];
     }
     template <std::integral auto I> requires (I >=0 ) && (I < rank)
-    KOKKOS_INLINE_FUNCTION size_t       static constexpr extent() {
-      size_t constexpr dims[rank] = {bnds_extent(DIMS)...};
+    KOKKOS_INLINE_FUNCTION uindex_t     static constexpr extent() {
+      uindex_t constexpr dims[rank] = {bnds_extent(DIMS)...};
       return dims[I];
     }
 
@@ -96,45 +95,45 @@ namespace yakl {
     }
 
     KOKKOS_INLINE_FUNCTION auto extents() const {
-      size_t constexpr dims[rank] = {bnds_extent(DIMS)...};
-      SArray_F<size_t,Bnds{1,rank}> ret;
+      uindex_t constexpr dims[rank] = {bnds_extent(DIMS)...};
+      SArray_F<uindex_t,Bnds{1,rank}> ret;
       for (int i=1; i <= rank; i++) { ret(i) = dims[i-1]; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto lbounds() const {
-      ptrdiff_t constexpr lb[rank] = {DIMS.l...};
-      SArray_F<ptrdiff_t,Bnds{1,rank}> ret;
+      index_t constexpr lb[rank] = {DIMS.l...};
+      SArray_F<index_t,Bnds{1,rank}> ret;
       for (int i=1; i <= rank; i++) { ret(i) = lb[i-1]; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto ubounds() const {
-      ptrdiff_t constexpr ub[rank] = {DIMS.u...};
-      SArray_F<ptrdiff_t,Bnds{1,rank}> ret;
+      index_t constexpr ub[rank] = {DIMS.u...};
+      SArray_F<index_t,Bnds{1,rank}> ret;
       for (int i=1; i <= rank; i++) { ret(i) = ub[i-1]; }
       return ret;
     }
 
     KOKKOS_INLINE_FUNCTION auto unpack_global_index(std::integral auto iglob) const {
-      ptrdiff_t constexpr lb[rank] = {DIMS.l...};
-      size_t constexpr dims[rank] = {bnds_extent(DIMS)...};
-      std::array<size_t,rank> constexpr offsets = [=] {
-        std::array<size_t,rank> result = {};
+      index_t constexpr lb[rank] = {DIMS.l...};
+      uindex_t constexpr dims[rank] = {bnds_extent(DIMS)...};
+      std::array<uindex_t,rank> constexpr offsets = [=] {
+        std::array<uindex_t,rank> result = {};
         for (int i=static_cast<int>(rank)-1; i >= 0; i--) {
           result[i] = 1;
           for (int j = i-1; j >= 0; j--) result[i] *= dims[j];
         }
         return result;
       }();
-      SArray_F<ptrdiff_t,Bnds{1,rank}> ret;
+      SArray_F<index_t,Bnds{1,rank}> ret;
       if constexpr (kokkos_bounds_debug) {
-        if ((std::is_signed_v<decltype(iglob)> && iglob < 0) || static_cast<size_t>(iglob) >= size()) {
+        if ((std::is_signed_v<decltype(iglob)> && iglob < 0) || static_cast<uindex_t>(iglob) >= size()) {
           Kokkos::abort("ERROR: SArray_F::unpack_global_index index out of bounds");
         }
       }
       for (int i=1; i <= rank; i++) {
-        ret(i) = static_cast<ptrdiff_t>((static_cast<size_t>(iglob) / offsets[i-1]) % dims[i-1]) + lb[i-1];
+        ret(i) = static_cast<index_t>((static_cast<uindex_t>(iglob) / offsets[i-1]) % dims[i-1]) + lb[i-1];
       }
       return ret;
     }

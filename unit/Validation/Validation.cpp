@@ -9,6 +9,10 @@ using yakl::Bnds;
 using yakl::SArray_F;
 
 static_assert(yakl::Config<128>::Thr == 128);
+static_assert(sizeof(yakl::index_t)*8 == yakl::index_bits);
+static_assert(sizeof(yakl::uindex_t)*8 == yakl::index_bits);
+static_assert(std::is_signed_v<yakl::index_t>);
+static_assert(std::is_unsigned_v<yakl::uindex_t>);
 
 void fail(std::string const &message) {
   Kokkos::abort(message.c_str());
@@ -134,20 +138,22 @@ int main(int argc, char **argv) {
       }
     }
 
+    #if YAKL_INDEX_BITS == 64
     SArray_F<int,Bnds{-10000000000LL,-9999999998LL},Bnds{-7,-4}> stack;
-    for (size_t linear=0; linear < stack.size(); linear++) {
+    for (yakl::uindex_t linear=0; linear < stack.size(); linear++) {
       stack.data()[linear] = static_cast<int>(linear);
       auto index = stack.unpack_global_index(linear);
       if (stack(index(1),index(2)) != stack.data()[linear]) {
         fail("SArray_F large negative lower-bound validation failed");
       }
     }
+    #endif
 
     yakl::Bounds_F<2> bounds({-7,5,3},{11,20,4});
     if (bounds.nIter != 15) fail("strided Bounds iteration count is incorrect");
     bool foundFinalPair = false;
-    for (size_t linear=0; linear < bounds.nIter; linear++) {
-      ptrdiff_t i, j;
+    for (yakl::uindex_t linear=0; linear < bounds.nIter; linear++) {
+      yakl::index_t i, j;
       bounds.unpack(linear,i,j);
       if (i < -7 || i > 5 || (i+7)%3 != 0 || j < 11 || j > 20 || (j-11)%4 != 0) {
         fail("strided Bounds unpack returned an invalid index");
@@ -156,18 +162,18 @@ int main(int argc, char **argv) {
     }
     if (!foundFinalPair) fail("strided Bounds omitted its final valid iteration");
 
-    ptrdiff_t constexpr lowest  = std::numeric_limits<ptrdiff_t>::min();
-    ptrdiff_t constexpr highest = std::numeric_limits<ptrdiff_t>::max();
+    yakl::index_t constexpr lowest  = std::numeric_limits<yakl::index_t>::min();
+    yakl::index_t constexpr highest = std::numeric_limits<yakl::index_t>::max();
     yakl::Bounds_F<1> extreme(yakl::LoopSpec_F(lowest,highest-1,highest));
-    ptrdiff_t expected[3] = {lowest,-1,highest-1};
-    for (size_t linear=0; linear < extreme.nIter; linear++) {
-      ptrdiff_t index;
+    yakl::index_t expected[3] = {lowest,-1,highest-1};
+    for (yakl::uindex_t linear=0; linear < extreme.nIter; linear++) {
+      yakl::index_t index;
       extreme.unpack(linear,index);
       if (index != expected[linear]) fail("extreme strided Bounds host unpack is incorrect");
     }
-    Array<ptrdiff_t *,yakl::DeviceSpace> device_indices("extreme strided indices",3);
+    Array<yakl::index_t *,yakl::DeviceSpace> device_indices("extreme strided indices",3);
     device_indices = 0;
-    yakl::parallel_for_F("extreme strided Bounds",extreme,KOKKOS_LAMBDA (ptrdiff_t index) {
+    yakl::parallel_for_F("extreme strided Bounds",extreme,KOKKOS_LAMBDA (yakl::index_t index) {
       if      (index == lowest   ) device_indices(0) = index;
       else if (index == -1       ) device_indices(1) = index;
       else if (index == highest-1) device_indices(2) = index;
@@ -233,6 +239,9 @@ int main(int argc, char **argv) {
   } else if (scenario == "simple_bounds_overflow") {
     yakl::SimpleBounds<2> bounds(std::numeric_limits<size_t>::max(),2);
     (void) bounds;
+  } else if (scenario == "index_width_overflow") {
+    yakl::LoopSpec loop(std::numeric_limits<uint64_t>::max());
+    (void) loop;
   } else if (scenario == "linear_allocator") {
     yakl::LinearAllocator allocator(1024,0);
     (void) allocator;
@@ -339,7 +348,7 @@ int main(int argc, char **argv) {
     timer.stop("inactive");
   } else if (scenario == "unpack_index") {
     yakl::SimpleBounds<2> bounds(2,3);
-    size_t i, j;
+    yakl::uindex_t i, j;
     bounds.unpack(bounds.nIter,i,j);
   } else if (scenario == "autotune_index") {
     (void) yakl::autotune::get_config(-1);
