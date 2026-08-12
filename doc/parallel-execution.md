@@ -108,9 +108,9 @@ tile.
 ## Autotuning
 
 `yakl::autotune::parallel_for` and `parallel_for_F` require an explicit stable string label. For each label and shape,
-autotuning considers untiled launch bounds `64`, `128`, `256`, `512`, and `1024`. Each configuration is visited five times;
-the first timing is discarded and later timings are accumulated. Once all configurations have been visited, subsequent
-calls use the best measured configuration.
+autotuning considers the untiled Kokkos-default configuration followed by launch bounds `64`, `128`, `256`, `512`, and
+`1024`. Each configuration is visited five times; the first timing is discarded and later timings are accumulated. Once
+all configurations have been visited, subsequent calls use the best measured configuration.
 
 ```cpp
 yakl::autotune::parallel_for("stencil",bounds,KOKKOS_LAMBDA (size_t j, size_t i) {
@@ -120,7 +120,8 @@ yakl::autotune::parallel_for("stencil",bounds,KOKKOS_LAMBDA (size_t j, size_t i)
 
 The identity includes the label and bound dimensions. Use the same label for the same kernel body and logical workload;
 do not deliberately combine unrelated kernels. Timing uses CUDA or HIP events on those backends and fenced wall-clock time
-elsewhere. `yakl::autotune::print_best()` prints the selected `Config<threads>` and speedup; `yakl::finalize()` calls it.
+elsewhere. `yakl::autotune::print_best()` prints the selected `Config<threads>` and its speedup relative to the leading
+Kokkos-default configuration; `yakl::finalize()` calls it.
 If a label has not completed its full tuning cycle, the report marks it as incomplete and uses the best completed timed
 sample available. A label that has only reached its discarded warmup reports that no timed sample exists. Finalization
 does not force the remaining configurations to run and does not treat partial tuning as an error.
