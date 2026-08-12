@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
         }
       }
     }
-    std::array<int,5> constexpr expectedThreads = {64,128,256,512,1024};
+    std::array<int,6> constexpr expectedThreads = {0,64,128,256,512,1024};
     if (yakl::autotune::configuration_count != static_cast<int>(expectedThreads.size())) {
       die("ERROR: autotuner has an incorrect configuration count");
     }

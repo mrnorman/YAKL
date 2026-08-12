@@ -4,7 +4,7 @@
 namespace yakl {
   namespace autotune {
 
-    using ConfigListType = std::tuple<Config<64>,Config<128>,Config<256>,Config<512>,Config<1024>>;
+    using ConfigListType = std::tuple<Config<0>,Config<64>,Config<128>,Config<256>,Config<512>,Config<1024>>;
     inline constexpr int configuration_count = std::tuple_size_v<ConfigListType>;
 
     struct AutotuneContext {
@@ -221,11 +221,12 @@ namespace yakl {
             }
           }
           int const maxThreads = get_config(c.best_index);
-          double const best_time = c.timings[c.best_index]/c.sample_counts[c.best_index];
+          double const default_time = c.sample_counts[0] > 0 ? c.timings[0]/c.sample_counts[0] : 0;
+          double const best_time    = c.timings[c.best_index]/c.sample_counts[c.best_index];
           if (myrank == 0) {
             std::cout << key << " : Config<" << maxThreads << "> , Speedup: ";
             if (c.sample_counts[0] > 0 && best_time > 0) {
-              std::cout << (c.timings[0]/c.sample_counts[0])/best_time;
+              std::cout << default_time/best_time;
             } else {
               std::cout << "unavailable";
             }
