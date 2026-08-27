@@ -17,10 +17,11 @@ target_compile_definitions(my_application PRIVATE YAKL_PROFILE YAKL_AUTO_FENCE)
 | `YAKL_PROFILE` | off | Enables explicit timer collection and timer queries. Timer start/stop fences the Kokkos runtime. |
 | `YAKL_AUTO_PROFILE` | off | Enables YAKL's internal operation timers and automatically defines `YAKL_PROFILE`. |
 | `YAKL_AUTO_FENCE` | off | Adds a `Kokkos::fence()` after YAKL launches and selected asynchronous operations. |
+| `YAKL_AUTO_PRINTF` | off | Writes a flushed, per-process trace of YAKL operations for crash diagnosis. |
 | `HAVE_MPI` | off | Includes MPI integration used by rank-aware output/autotuning and MPI-enabled build paths. |
 
 The headers expose corresponding `inline constexpr bool` values: `yakl::yakl_profile`, `yakl::yakl_auto_profile`,
-`yakl::yakl_auto_fence`, and `yakl::have_mpi`.
+`yakl::yakl_auto_fence`, `yakl::yakl_auto_printf`, and `yakl::have_mpi`.
 
 `yakl::yakl_mainproc()` returns true on every process without MPI support and only on rank zero of its communicator with
 MPI support; its MPI overload accepts a communicator and defaults to `MPI_COMM_WORLD`. `yakl::my_basename(path)` returns the
@@ -44,6 +45,18 @@ YAKL normally preserves Kokkos asynchronous execution. This definition fences af
 componentwise operations, which can make asynchronous failures easier to localize. It can seriously reduce performance and
 should not be needed for correctness in code with valid dependency and lifetime management. Operations that must return
 host-visible results, timer boundaries, and `yakl::finalize()` synchronize regardless of this definition.
+
+### `YAKL_AUTO_PRINTF`
+
+This creates `yakl_auto_printf.<rank>.out` during `yakl::init()`, truncating a file from a previous run. Each asynchronous
+operation is fenced before its flushed `BEGIN` record and after completion before its flushed `END` record. Array `ALLOC`
+and final-owner `FREE` records include shape, element count, byte count, and memory space. The trace also includes process
+and backend metadata at startup and a `NORMAL_END` marker from successful finalization. A missing `END` or `NORMAL_END`
+therefore helps localize failures when a usable core dump or stack trace is unavailable. Stream failures are reported to
+`std::cerr`; trace output uses `std::endl` but does not provide filesystem durability guarantees such as `fsync()`.
+
+With MPI initialized, the rank is the `MPI_COMM_WORLD` rank and each process writes a distinct file. Without initialized
+MPI, the rank is zero. This diagnostic mode adds fences and synchronous file I/O and is not intended for production runs.
 
 ### `HAVE_MPI`
 

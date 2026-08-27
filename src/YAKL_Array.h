@@ -32,6 +32,31 @@ namespace yakl {
     bool static constexpr is_cstyle = true ;
     bool static constexpr on_device = std::is_same_v<yakl::DeviceSpace,MemSpace>;
 
+    #ifdef YAKL_AUTO_PRINTF
+      Array() = default;
+      Array(Array const &) = default;
+      Array(Array &&) = default;
+      Array & operator=(Array const &) = default;
+      Array & operator=(Array &&) = default;
+
+      KOKKOS_INLINE_FUNCTION ~Array() {
+        KOKKOS_IF_ON_HOST((
+          // Kokkos Views are shallow copies, so only the final managed handle represents the underlying free.
+          if (this->use_count() == 1 && get_yakl_instance().is_initialized()) {
+            auto_fence_and_printf("FREE yakl::Array",{this->label()},auto_array_metadata(*this));
+          }
+        ))
+      }
+
+      template <class First, class... Args>
+        requires (!std::is_pointer_v<std::remove_reference_t<First>>) &&
+                 (!yakl::is_Array<std::remove_cvref_t<First>>) &&
+                 std::constructible_from<base_t,First,Args...>
+      Array(First && first, Args &&... args) : base_t(std::forward<First>(first),std::forward<Args>(args)...) {
+        auto_fence_and_printf("ALLOC yakl::Array",{this->label()},auto_array_metadata(*this));
+      }
+    #endif
+
     private:
 
     template <class, class> friend class Array;
@@ -79,10 +104,13 @@ namespace yakl {
       if constexpr (kokkos_debug) {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: assigning a scalar to an unallocated Array");
       }
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::Array::operator=scalar",{this->label()});
       if constexpr (yakl_auto_profile) timer_start("yakl::Array::operator=scalar");
       Kokkos::deep_copy(*this,v);
       if constexpr (yakl_auto_profile) timer_stop("yakl::Array::operator=scalar");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::Array::operator=scalar",{this->label()});
+      }
       return *this;
     }
 
@@ -197,10 +225,13 @@ namespace yakl {
     template <class ViewType>
     void deep_copy_to(ViewType const & them) const {
       if (them.size() != this->size()) Kokkos::abort("ERROR: calling deep_copy_to between differently sized arrays");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::Array::deep_copy_to",{this->label(),them.label()});
       if constexpr (yakl_auto_profile) timer_start("yakl::Array::deep_copy_to");
       Kokkos::deep_copy(them,*this);
       if constexpr (yakl_auto_profile) timer_stop("yakl::Array::deep_copy_to");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::Array::deep_copy_to",{this->label(),them.label()});
+      }
       if constexpr (std::is_same_v<typename ViewType::memory_space,Kokkos::HostSpace>) Kokkos::fence();
     }
 
@@ -215,11 +246,14 @@ namespace yakl {
       if constexpr (kokkos_debug) {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: copying an unallocated Array to the device");
       }
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::Array::createDeviceCopy",{this->label()});
       auto ret = createDeviceObject();
       if constexpr (yakl_auto_profile) timer_start("yakl::Array::createDeviceCopy deep_copy");
       Kokkos::deep_copy( ret , *this );
       if constexpr (yakl_auto_profile) timer_stop("yakl::Array::createDeviceCopy deep_copy");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::Array::createDeviceCopy",{this->label(),ret.label()});
+      }
       return ret;
     }
 
@@ -228,11 +262,14 @@ namespace yakl {
       if constexpr (kokkos_debug) {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: copying an unallocated Array to the host");
       }
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::Array::createHostCopy",{this->label()});
       auto ret = createHostObject();
       if constexpr (yakl_auto_profile) timer_start("yakl::Array::createHostCopy deep_copy");
       Kokkos::deep_copy( ret , *this );
       if constexpr (yakl_auto_profile) timer_stop("yakl::Array::createHostCopy deep_copy");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::Array::createHostCopy",{this->label(),ret.label()});
+      }
       Kokkos::fence();
       return ret;
     }
@@ -243,6 +280,7 @@ namespace yakl {
       if constexpr (kokkos_debug) {
         if (!this_t::is_allocated()) Kokkos::abort("ERROR: converting an unallocated Array");
       }
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::Array::as",{this->label()});
       auto func = [&] <std::size_t... Is> (std::index_sequence<Is...>) {
         return Array<typename ViewType<scalar_t,this_t::rank()>::type,MemSpace>( this->label() , this->extent(Is)... );
       };
@@ -256,7 +294,9 @@ namespace yakl {
         ret.data()[i] = me.data()[i];
       });
       if constexpr (yakl_auto_profile) timer_stop("yakl::Array::as");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::Array::as",{this->label(),ret.label()});
+      }
       return ret;
     }
 

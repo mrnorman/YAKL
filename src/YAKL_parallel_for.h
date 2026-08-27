@@ -614,11 +614,28 @@ namespace yakl {
   inline void parallel_for( std::string                    str    ,
                             Bounds<N,Style,simple> const & bounds ,
                             F                      const & f      ) {
-    if (bounds.nIter == 0) return;
+    std::string metadata;
+    if constexpr (yakl_auto_printf) {
+      metadata = "rank="+std::to_string(N);
+      if (bounds.nIter > 0) {
+        metadata += " extents=";
+        for (int d=0; d < N; d++) {
+          auto const extent = d == 0 ? bounds.nIter/bounds.offs[0] : bounds.offs[d-1]/bounds.offs[d];
+          metadata += (d == 0 ? "" : "x")+std::to_string(extent);
+        }
+      }
+      metadata += " iterations="+std::to_string(bounds.nIter)+
+                  " style="+(Bounds<N,Style,simple>::is_cstyle ? "C" : "Fortran")+" launch=untiled";
+      auto_begin_printf("yakl::parallel_for",{str},metadata);
+    }
+    if (bounds.nIter == 0) {
+      if constexpr (yakl_auto_printf) auto_end_printf("yakl::parallel_for",{str},metadata);
+      return;
+    }
     if constexpr (yakl_auto_profile) timer_start(str);
     launch_parallel_for_untiled<0>(str,bounds,f);
     if constexpr (yakl_auto_profile) timer_stop(str);
-    if constexpr (yakl_auto_fence) Kokkos::fence();
+    if constexpr (yakl_auto_fence || yakl_auto_printf) auto_end_printf("yakl::parallel_for",{str},metadata);
   }
 
 
@@ -629,13 +646,36 @@ namespace yakl {
                             F                      const & f      ,
                             Config<MaxThreadsPerBlock>             config ) {
     static_assert(N <= Config<MaxThreadsPerBlock>::max_dimensions,"ERROR: Config supports at most eight tile dimensions");
-    if (bounds.nIter == 0) return;
     bool tiled = false;
     for (int d=0; d < N; d++) {
       if constexpr (kokkos_debug) {
         if (config.tiles[d] == 0) Kokkos::abort("ERROR: Config tile sizes must be positive");
       }
       tiled = tiled || config.tiles[d] != 1;
+    }
+    std::string metadata;
+    if constexpr (yakl_auto_printf) {
+      metadata = "rank="+std::to_string(N);
+      if (bounds.nIter > 0) {
+        metadata += " extents=";
+        for (int d=0; d < N; d++) {
+          auto const extent = d == 0 ? bounds.nIter/bounds.offs[0] : bounds.offs[d-1]/bounds.offs[d];
+          metadata += (d == 0 ? "" : "x")+std::to_string(extent);
+        }
+      }
+      metadata += " iterations="+std::to_string(bounds.nIter)+
+                  " style="+(Bounds<N,Style,simple>::is_cstyle ? "C" : "Fortran")+
+                  " launch="+(tiled ? "tiled" : "untiled")+
+                  " max_threads_per_block="+std::to_string(MaxThreadsPerBlock);
+      if (tiled) {
+        metadata += " tiles=";
+        for (int d=0; d < N; d++) metadata += (d == 0 ? "" : "x")+std::to_string(config.tiles[d]);
+      }
+      auto_begin_printf("yakl::parallel_for",{str},metadata);
+    }
+    if (bounds.nIter == 0) {
+      if constexpr (yakl_auto_printf) auto_end_printf("yakl::parallel_for",{str},metadata);
+      return;
     }
     if constexpr (yakl_auto_profile) timer_start(str);
     if (tiled) {
@@ -647,7 +687,7 @@ namespace yakl {
       launch_parallel_for_untiled<MaxThreadsPerBlock>(str,bounds,f);
     }
     if constexpr (yakl_auto_profile) timer_stop(str);
-    if constexpr (yakl_auto_fence) Kokkos::fence();
+    if constexpr (yakl_auto_fence || yakl_auto_printf) auto_end_printf("yakl::parallel_for",{str},metadata);
   }
 
 

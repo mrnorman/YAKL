@@ -31,6 +31,7 @@ add_subdirectory(${YAKL_HOME} ${YAKL_BIN})
 
 # Unit test directories
 add_subdirectory(Atomics)
+add_subdirectory(AutoPrintf)
 add_subdirectory(CArray)
 add_subdirectory(FArray)
 add_subdirectory(Fortran_Gator)
@@ -67,6 +68,8 @@ if (YAKL_ENABLE_COVERAGE)
   endif()
 
   set(YAKL_UNIT_TESTS Atomics_test
+                      AutoPrintf_disabled_test
+                      AutoPrintf_enabled_test
                       CArray_test
                       FArray_test
                       Fortran_Gator_test

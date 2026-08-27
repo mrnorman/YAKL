@@ -33,6 +33,12 @@ namespace yakl {
     inline constexpr bool yakl_auto_fence = false;
   #endif
 
+  #ifdef YAKL_AUTO_PRINTF
+    inline constexpr bool yakl_auto_printf = true;
+  #else
+    inline constexpr bool yakl_auto_printf = false;
+  #endif
+
   #ifdef YAKL_PROFILE
     inline constexpr bool yakl_profile = true;
   #else

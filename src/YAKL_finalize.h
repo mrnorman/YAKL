@@ -24,6 +24,10 @@ namespace yakl {
       get_yakl_instance().pool_enabled = false;
       autotune::print_best();
       autotune::autotune_contexts.clear();
+      if constexpr (yakl_auto_printf) {
+        auto_printf("NORMAL_END");
+        get_yakl_instance().auto_printf_stream.close();
+      }
     } else {
       if constexpr (kokkos_debug) {
         std::cerr << "WARNING: Calling yakl::finalize() when YAKL is not initialized. ";

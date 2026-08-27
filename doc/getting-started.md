@@ -120,6 +120,7 @@ See [Compile-time configuration](configuration.md) for the complete reference an
 | `KOKKOS_ENABLE_DEBUG` | Enables general precondition and overflow checks exposed as `yakl::kokkos_debug`. |
 | `KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK` | Enables index/bounds checks exposed as `yakl::kokkos_bounds_debug`; also enables Kokkos debug. |
 | `YAKL_AUTO_FENCE` | Fences after YAKL launches and selected asynchronous operations. Useful for debugging, costly for production. |
+| `YAKL_AUTO_PRINTF` | Writes flushed per-process `BEGIN`/`END`, allocation, and lifecycle trace records. |
 | `YAKL_PROFILE` | Enables the explicit `timer_*` API. |
 | `YAKL_AUTO_PROFILE` | Times selected YAKL operations automatically and implies `YAKL_PROFILE`. |
 | `HAVE_MPI` | Enables MPI-aware rank handling where compiled into YAKL. |
@@ -129,8 +130,8 @@ so callers should not expect to catch them as C++ exceptions.
 
 ## Synchronization rules
 
-- `parallel_for`, scalar array assignment, type conversion, and device-side copies only fence automatically with
-  `YAKL_AUTO_FENCE`.
+- `parallel_for`, scalar array assignment, type conversion, and device-side copies fence automatically with
+  `YAKL_AUTO_FENCE` or `YAKL_AUTO_PRINTF`.
 - `createHostCopy()` always fences before returning host-readable data.
 - `deep_copy_to(host_array)` fences because the destination is `Kokkos::HostSpace`.
 - reductions that return a host scalar synchronize through Kokkos reduction semantics.

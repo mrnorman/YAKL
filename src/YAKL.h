@@ -9,6 +9,7 @@
 #include "YAKL_LinearAllocator.h"
 #include "YAKL_Toney.h"
 #include "YAKL_Internal.h"
+#include "YAKL_auto_printf.h"
 #include "YAKL_timers.h"
 #include "YAKL_allocators.h"
 #include "YAKL_Kokkos_DeviceSpace.h"
@@ -25,4 +26,3 @@
 #include "YAKL_ScalarLiveOut.h"
 #include "YAKL_componentwise.h"
 #include "YAKL_intrinsics.h"
-

@@ -7,12 +7,14 @@
 #include <cerrno>
 #include <cstdint>
 #include <string>
+#include <unistd.h>
 #include <type_traits>
 #include <utility>
 #include <unordered_map>
 #include <thread>
 #include <iostream>
 #include <fstream>
+#include <initializer_list>
 #include <iomanip>
 #include <time.h>
 #include <algorithm>

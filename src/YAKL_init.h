@@ -73,6 +73,31 @@ namespace yakl {
       get_yakl_instance().yakl_is_initialized = true;
       get_yakl_instance().pool_enabled = pool_enabled;
 
+      if constexpr (yakl_auto_printf) {
+        int rank = 0;
+        int size = 1;
+        #ifdef HAVE_MPI
+          int mpi_initialized;
+          MPI_Initialized(&mpi_initialized);
+          if (mpi_initialized) {
+            MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+            MPI_Comm_size(MPI_COMM_WORLD,&size);
+          }
+        #endif
+        auto & stream = get_yakl_instance().auto_printf_stream;
+        stream.open("yakl_auto_printf."+std::to_string(rank)+".out",std::ios::out | std::ios::trunc);
+        if (!stream.is_open()) Kokkos::abort("ERROR: YAKL_AUTO_PRINTF could not open its output file");
+        char hostname[256] = "unknown";
+        if (gethostname(hostname,sizeof(hostname)) != 0) std::strcpy(hostname,"unknown");
+        hostname[sizeof(hostname)-1] = '\0';
+        auto const now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        std::ostringstream metadata;
+        metadata << "rank=" << rank << " size=" << size << " pid=" << getpid() << " host=" << hostname
+                 << " backend=" << Kokkos::DefaultExecutionSpace::name() << " index_bits=" << index_bits
+                 << " time=" << std::put_time(std::localtime(&now),"%Y-%m-%dT%H:%M:%S%z");
+        auto_printf("START",{},metadata.str());
+      }
+
       if (get_yakl_instance().use_pool()) {
         auto alloc   = [] (size_t bytes) -> void * { return Kokkos::kokkos_malloc( "YAKL Pool allocation" , bytes ); };
         auto dealloc = [] (void *ptr) { Kokkos::kokkos_free( ptr ); };
@@ -86,6 +111,9 @@ namespace yakl {
       if constexpr (yakl_auto_fence) {
         if (yakl_mainproc()) std::cout << "INFORM: Automatically inserting fence() after every yakl parallel_for"
                                        << std::endl;
+      }
+      if constexpr (yakl_auto_printf) {
+        if (yakl_mainproc()) std::cout << "INFORM: Automatically printing fenced YAKL operations by process" << std::endl;
       }
     } else {
       if constexpr (kokkos_debug) {

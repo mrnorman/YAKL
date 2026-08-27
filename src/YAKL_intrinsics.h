@@ -40,6 +40,7 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline ViewType abs(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: abs on unallocated Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::abs",{in.label()},auto_array_metadata(in));
       auto ret = in.clone_object();
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::abs");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -49,7 +50,9 @@ namespace yakl {
         ret.data()[i] = std::abs(in.data()[i]);
       } );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::abs");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::abs",{in.label()},auto_array_metadata(in));
+      }
       return ret;
     }
 
@@ -75,6 +78,8 @@ namespace yakl {
       if constexpr (kokkos_debug) {
         if (!same_shape(a,b)) Kokkos::abort("ERROR: sign requires arrays with identical shapes");
       }
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::sign",{a.label(),b.label()},
+                                                        auto_array_metadata(a));
       auto ret = a.clone_object();
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::sign");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -84,7 +89,9 @@ namespace yakl {
         ret.data()[i] = b.data()[i] >= 0 ? std::abs(a.data()[i]) : -std::abs(a.data()[i]);
       });
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::sign");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::sign",{a.label(),b.label()},auto_array_metadata(a));
+      }
       return ret;
     }
 
@@ -117,6 +124,8 @@ namespace yakl {
           Kokkos::abort("ERROR: merge requires arrays with identical shapes");
         }
       }
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::merge",{t.label(),f.label(),cond.label()},
+                                                        auto_array_metadata(t));
       auto ret = t.clone_object();
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::merge");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -126,7 +135,10 @@ namespace yakl {
         ret.data()[i] = cond.data()[i] ? t.data()[i] : f.data()[i];
       });
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::merge");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::merge",{t.label(),f.label(),cond.label()},
+                        auto_array_metadata(t));
+      }
       return ret;
     }
 
@@ -336,6 +348,7 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline bool any(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: any on unallocated Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::any",{in.label()},auto_array_metadata(in));
       bool any_true;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::any");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
@@ -345,7 +358,9 @@ namespace yakl {
         lany = lany || in.data()[i];
       } , Kokkos::LOr<bool>(any_true) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::any");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::any",{in.label()},auto_array_metadata(in));
+      }
       return any_true;
     }
 
@@ -361,6 +376,7 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline bool all(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: all on unallocated Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::all",{in.label()},auto_array_metadata(in));
       bool all_true;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::all");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
@@ -370,7 +386,9 @@ namespace yakl {
         lall = lall && in.data()[i];
       } , Kokkos::LAnd<bool>(all_true) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::all");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::all",{in.label()},auto_array_metadata(in));
+      }
       return all_true;
     }
 
@@ -387,6 +405,7 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline typename ViewType::non_const_value_type sum(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: sum on unallocated Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::sum",{in.label()},auto_array_metadata(in));
       using scalar_t = typename ViewType::non_const_value_type;
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::sum");
@@ -397,7 +416,9 @@ namespace yakl {
         lsum += in.data()[i];
       } , Kokkos::Sum<scalar_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::sum");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::sum",{in.label()},auto_array_metadata(in));
+      }
       return result;
     }
 
@@ -413,6 +434,7 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline uindex_t count(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: count on unallocated Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::count",{in.label()},auto_array_metadata(in));
       uindex_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::count");
       Kokkos::parallel_reduce( YAKL_AUTO_LABEL() ,
@@ -422,7 +444,9 @@ namespace yakl {
         if (in.data()[i]) lcount++;
       } , Kokkos::Sum<uindex_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::count");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::count",{in.label()},auto_array_metadata(in));
+      }
       return result;
     }
 
@@ -439,6 +463,8 @@ namespace yakl {
     template <class ViewType> requires yakl::is_Array<ViewType>
     inline typename ViewType::non_const_value_type product(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: product on unallocated Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::product",{in.label()},
+                                                        auto_array_metadata(in));
       using scalar_t = typename ViewType::non_const_value_type;
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::product");
@@ -449,7 +475,9 @@ namespace yakl {
         lprod *= in.data()[i];
       } , Kokkos::Prod<scalar_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::product");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::product",{in.label()},auto_array_metadata(in));
+      }
       return result;
     }
 
@@ -467,6 +495,8 @@ namespace yakl {
     inline typename ViewType::non_const_value_type minval(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: minval on unallocated Array");
       if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: minval on an empty Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::minval",{in.label()},
+                                                        auto_array_metadata(in));
       using scalar_t = typename ViewType::non_const_value_type;
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::minval");
@@ -477,7 +507,9 @@ namespace yakl {
         lmin = std::min(lmin,in.data()[i]);
       } , Kokkos::Min<scalar_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::minval");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::minval",{in.label()},auto_array_metadata(in));
+      }
       return result;
     }
 
@@ -496,6 +528,8 @@ namespace yakl {
     inline typename ViewType::non_const_value_type maxval(ViewType const & in) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: maxval on unallocated Array");
       if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: maxval on an empty Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::maxval",{in.label()},
+                                                        auto_array_metadata(in));
       using scalar_t = typename ViewType::non_const_value_type;
       scalar_t result;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::maxval");
@@ -506,7 +540,9 @@ namespace yakl {
         lmax = std::max(lmax,in.data()[i]);
       } , Kokkos::Max<scalar_t>(result) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::maxval");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::maxval",{in.label()},auto_array_metadata(in));
+      }
       return result;
     }
 
@@ -534,6 +570,8 @@ namespace yakl {
     inline auto minloc(ViewType const & in) -> decltype(in.unpack_global_index(0)) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: minloc on unallocated Array");
       if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: minloc on an empty Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::minloc",{in.label()},
+                                                        auto_array_metadata(in));
       auto const mn = minval(in);
       uindex_t iglob;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::minloc");
@@ -548,7 +586,9 @@ namespace yakl {
         if (inloc.data()[i] == mn) lmin = std::min(lmin,i);
       } , Kokkos::Min<uindex_t>(iglob) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::minloc");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::minloc",{in.label()},auto_array_metadata(in));
+      }
       return in.unpack_global_index(iglob);
     }
 
@@ -577,6 +617,8 @@ namespace yakl {
     inline auto maxloc(ViewType const & in) -> decltype(in.unpack_global_index(0)) {
       if constexpr (kokkos_debug) if (!in.is_allocated()) Kokkos::abort("ERROR: maxloc on unallocated Array");
       if constexpr (kokkos_debug) if (in.size() == 0) Kokkos::abort("ERROR: maxloc on an empty Array");
+      if constexpr (yakl_auto_printf) auto_begin_printf("yakl::intrinsics::maxloc",{in.label()},
+                                                        auto_array_metadata(in));
       auto const mx = maxval(in);
       uindex_t iglob;
       if constexpr (yakl_auto_profile) timer_start("yakl::intrinsics::maxloc");
@@ -591,7 +633,9 @@ namespace yakl {
         if (inloc.data()[i] == mx) lmin = std::min(lmin,i);
       } , Kokkos::Min<uindex_t>(iglob) );
       if constexpr (yakl_auto_profile) timer_stop("yakl::intrinsics::maxloc");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::intrinsics::maxloc",{in.label()},auto_array_metadata(in));
+      }
       return in.unpack_global_index(iglob);
     }
 

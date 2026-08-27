@@ -66,6 +66,11 @@ namespace yakl {
       if constexpr (kokkos_debug) {
         if (!l.is_allocated()) Kokkos::abort("ERROR: componentwise binary operation on an unallocated Array");
       }
+      std::string metadata;
+      if constexpr (yakl_auto_printf) {
+        metadata = auto_array_metadata(l);
+        auto_begin_printf("yakl::componentwise::binary",{l.label()},metadata);
+      }
       auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::binary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -77,7 +82,9 @@ namespace yakl {
         ret.data()[i] = f(lloc.data()[i],rloc);
       } );
       if constexpr (yakl_auto_profile) timer_stop("yakl::componentwise::binary");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::componentwise::binary",{l.label()},metadata);
+      }
       return ret;
     }
     template <class V1, class V2, class F> requires std::is_arithmetic_v<V1> && yakl::is_Array<V2>
@@ -86,6 +93,11 @@ namespace yakl {
     {
       if constexpr (kokkos_debug) {
         if (!r.is_allocated()) Kokkos::abort("ERROR: componentwise binary operation on an unallocated Array");
+      }
+      std::string metadata;
+      if constexpr (yakl_auto_printf) {
+        metadata = auto_array_metadata(r);
+        auto_begin_printf("yakl::componentwise::binary",{r.label()},metadata);
       }
       auto ret = r.template clone_object<typename V2::memory_space,decltype(f(l,r.data()[0]))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::binary");
@@ -98,7 +110,9 @@ namespace yakl {
         ret.data()[i] = f(lloc,rloc.data()[i]);
       } );
       if constexpr (yakl_auto_profile) timer_stop("yakl::componentwise::binary");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::componentwise::binary",{r.label()},metadata);
+      }
       return ret;
     }
     template <class V1, class V2, class F> requires yakl::is_Array<V1> && yakl::is_Array<V2>
@@ -115,6 +129,11 @@ namespace yakl {
           Kokkos::abort("ERROR: componentwise binary operation requires arrays with identical shapes");
         }
       }
+      std::string metadata;
+      if constexpr (yakl_auto_printf) {
+        metadata = auto_array_metadata(l);
+        auto_begin_printf("yakl::componentwise::binary",{l.label(),r.label()},metadata);
+      }
       auto ret = l.template clone_object<typename V1::memory_space,decltype(f(l.data()[0],r.data()[0]))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::binary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -126,7 +145,9 @@ namespace yakl {
         ret.data()[i] = f(lloc.data()[i],rloc.data()[i]);
       } );
       if constexpr (yakl_auto_profile) timer_stop("yakl::componentwise::binary");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::componentwise::binary",{l.label(),r.label()},metadata);
+      }
       return ret;
     }
 
@@ -271,6 +292,11 @@ namespace yakl {
       if constexpr (kokkos_debug) {
         if (!v.is_allocated()) Kokkos::abort("ERROR: componentwise unary operation on an unallocated Array");
       }
+      std::string metadata;
+      if constexpr (yakl_auto_printf) {
+        metadata = auto_array_metadata(v);
+        auto_begin_printf("yakl::componentwise::unary",{v.label()},metadata);
+      }
       auto ret = v.template clone_object<typename V::memory_space,decltype(f(v.data()[0]))>();
       if constexpr (yakl_auto_profile) timer_start("yakl::componentwise::unary");
       Kokkos::parallel_for( YAKL_AUTO_LABEL() ,
@@ -280,7 +306,9 @@ namespace yakl {
         ret.data()[i] = f(v.data()[i]);
       } );
       if constexpr (yakl_auto_profile) timer_stop("yakl::componentwise::unary");
-      if constexpr (yakl_auto_fence) Kokkos::fence();
+      if constexpr (yakl_auto_fence || yakl_auto_printf) {
+        auto_end_printf("yakl::componentwise::unary",{v.label()},metadata);
+      }
       return ret;
     }
 

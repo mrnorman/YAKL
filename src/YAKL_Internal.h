@@ -24,6 +24,7 @@ namespace yakl {
       bool            pool_enabled;         // Is the pool allocator being used?
       std::atomic<size_t> num_device_allocations; // Number of live allocations made through yakl::DeviceSpace
       Toney           timer;
+      std::ofstream   auto_printf_stream;
 
       bool use_pool      () const { return pool_enabled; }
       bool get_pool      () const { return pool_enabled; }
