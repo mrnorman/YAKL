@@ -35,10 +35,26 @@ for VERSION in "${VERSIONS[@]}"; do
       if [[ "${INDEX_BITS}" == "32" ]]; then export YAKL_UNIT_LARGE_MEMORY=OFF; fi
       if [[ "${YAKL_BACKEND:-}" == "Kokkos_ENABLE_CUDA" ]]; then
         VERSION_CUDA_ROOT=""
+        VERSION_OMPI_CXX=""
+        VERSION_GCOV_EXECUTABLE=""
         case "${VERSION}" in
-          4.7.00) VERSION_CUDA_ROOT="${YAKL_KOKKOS_4_7_CUDA_ROOT:-}" ;;
-          5.2.0)  VERSION_CUDA_ROOT="${YAKL_KOKKOS_5_2_CUDA_ROOT:-}" ;;
+          4.7.00)
+            VERSION_CUDA_ROOT="${YAKL_KOKKOS_4_7_CUDA_ROOT:-}"
+            VERSION_OMPI_CXX="${YAKL_KOKKOS_4_7_OMPI_CXX:-}"
+            VERSION_GCOV_EXECUTABLE="${YAKL_KOKKOS_4_7_GCOV_EXECUTABLE:-}"
+            ;;
+          5.2.0) VERSION_CUDA_ROOT="${YAKL_KOKKOS_5_2_CUDA_ROOT:-}" ;;
         esac
+        if [[ -n "${VERSION_OMPI_CXX}" ]]; then
+          export OMPI_CXX="${VERSION_OMPI_CXX}"
+        else
+          unset OMPI_CXX
+        fi
+        if [[ -n "${VERSION_GCOV_EXECUTABLE}" ]]; then
+          export YAKL_GCOV_EXECUTABLE="${VERSION_GCOV_EXECUTABLE}"
+        else
+          unset YAKL_GCOV_EXECUTABLE
+        fi
         if [[ -n "${VERSION_CUDA_ROOT}" ]]; then
           export CUDAToolkit_ROOT="${VERSION_CUDA_ROOT}"
           export CUDA_ROOT="${VERSION_CUDA_ROOT}"
