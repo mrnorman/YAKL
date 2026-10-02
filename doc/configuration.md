@@ -69,7 +69,7 @@ Kokkos backend, architecture, compiler, and tuning definitions retain their norm
 Debug macros control whether many checks execute, not whether the preconditions exist. Release builds may not diagnose:
 
 - negative or unrepresentable extents and indices;
-- invalid bounds, strides, or tile sizes;
+- invalid bounds or strides;
 - mismatched componentwise shapes;
 - unallocated arrays passed to algorithms;
 - dimension-product overflow;

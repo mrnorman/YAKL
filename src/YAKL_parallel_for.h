@@ -477,24 +477,12 @@ namespace yakl {
 
 
 
-  template <int MaxThreadsPerBlock=0> requires (MaxThreadsPerBlock >= 0) struct Config {
+  template <int MaxThreadsPerBlock=0, int MinBlocksPerSM=0>
+    requires (MaxThreadsPerBlock >= 0 && MinBlocksPerSM >= 0 &&
+              (MaxThreadsPerBlock > 0 || MinBlocksPerSM == 0))
+  struct Config {
     int static constexpr Thr = MaxThreadsPerBlock;
-    int static constexpr max_dimensions = 8;
-    std::array<uindex_t,max_dimensions> tiles;
-
-    Config() { tiles.fill(1); }
-
-    template <std::integral... T> requires (sizeof...(T) > 0 && sizeof...(T) <= max_dimensions)
-    explicit Config(T... tile_dims) : Config() {
-      std::array<bool,sizeof...(T)> const validTiles = {
-        ((std::is_unsigned_v<T> || tile_dims > 0) && std::in_range<uindex_t>(tile_dims))...
-      };
-      for (bool valid : validTiles) {
-        if (!valid) Kokkos::abort("ERROR: Config tile sizes must be positive");
-      }
-      std::array<uindex_t,sizeof...(T)> const inputTiles = { static_cast<uindex_t>(tile_dims)... };
-      for (int d=0; d < static_cast<int>(inputTiles.size()); d++) tiles[d] = inputTiles[d];
-    }
+    int static constexpr Blocks = MinBlocksPerSM;
   };
 
 
@@ -544,67 +532,13 @@ namespace yakl {
 
 
 
-  template <int MaxThreadsPerBlock, class F, int N, bool simple, class Style>
-  inline void launch_parallel_for_untiled( std::string                    str    ,
+  template <int MaxThreadsPerBlock, int MinBlocksPerSM, class F, int N, bool simple, class Style>
+  inline void launch_parallel_for( std::string                    str    ,
                                            Bounds<N,Style,simple> const & bounds ,
                                            F                      const & f      ) {
-    using Policy = Kokkos::RangePolicy<Kokkos::LaunchBounds<MaxThreadsPerBlock,0>,Kokkos::IndexType<uindex_t>>;
+    using Policy = Kokkos::RangePolicy<Kokkos::LaunchBounds<MaxThreadsPerBlock,MinBlocksPerSM>,Kokkos::IndexType<uindex_t>>;
     Kokkos::parallel_for( str , Policy(0,bounds.nIter) , KOKKOS_LAMBDA (uindex_t iglob) {
       call_parallel_for_functor(bounds,f,iglob);
-    });
-  }
-
-
-
-  template <int MaxThreadsPerBlock, class F, int N, bool simple, class Style>
-  inline void launch_parallel_for_tiled( std::string                    str    ,
-                                         Bounds<N,Style,simple> const & bounds ,
-                                         F                      const & f      ,
-                                         std::array<uindex_t,N>  const & tiles  ) {
-    std::array<uindex_t,N> boundDims;
-    std::array<uindex_t,N> tileCounts;
-    std::array<uindex_t,N> tileOffs;
-    boundDims[0] = bounds.nIter/bounds.offs[0];
-    for (int d=1; d < N; d++) boundDims[d] = bounds.offs[d-1]/bounds.offs[d];
-    uindex_t nTiles = 1;
-    for (int d=0; d < N; d++) {
-      tileCounts[d] = (boundDims[d]-1)/tiles[d]+1;
-      if constexpr (index_bits == 32 || kokkos_debug) {
-        if (tileCounts[d] != 0 && nTiles > std::numeric_limits<uindex_t>::max()/tileCounts[d]) {
-          Kokkos::abort("ERROR: tiled parallel_for iteration-count overflow");
-        }
-      }
-      nTiles *= tileCounts[d];
-    }
-    for (int d=0; d < N; d++) {
-      tileOffs[d] = 1;
-      for (int j=d+1; j < N; j++) tileOffs[d] *= tileCounts[j];
-    }
-
-    using Policy = Kokkos::RangePolicy<Kokkos::LaunchBounds<MaxThreadsPerBlock,0>,Kokkos::IndexType<uindex_t>>;
-    Kokkos::parallel_for( str , Policy(0,nTiles) , KOKKOS_LAMBDA (uindex_t tileIndex) {
-      std::array<uindex_t,N> starts;
-      std::array<uindex_t,N> localDims;
-      uindex_t remainder = tileIndex;
-      uindex_t localIterations = 1;
-      for (int d=0; d < N; d++) {
-        uindex_t const tileCoord = remainder/tileOffs[d];
-        remainder -= tileCoord*tileOffs[d];
-        starts[d] = tileCoord*tiles[d];
-        uindex_t const remaining = boundDims[d]-starts[d];
-        localDims[d] = remaining < tiles[d] ? remaining : tiles[d];
-        localIterations *= localDims[d];
-      }
-      for (uindex_t localIndex=0; localIndex < localIterations; localIndex++) {
-        remainder = localIndex;
-        uindex_t iglob = 0;
-        for (int d=N-1; d >= 0; d--) {
-          uindex_t const coord = remainder%localDims[d];
-          remainder /= localDims[d];
-          iglob += (starts[d]+coord)*bounds.offs[d];
-        }
-        call_parallel_for_functor(bounds,f,iglob);
-      }
     });
   }
 
@@ -616,36 +550,21 @@ namespace yakl {
                             F                      const & f      ) {
     if (bounds.nIter == 0) return;
     if constexpr (yakl_auto_profile) timer_start(str);
-    launch_parallel_for_untiled<0>(str,bounds,f);
+    launch_parallel_for<0,0>(str,bounds,f);
     if constexpr (yakl_auto_profile) timer_stop(str);
     if constexpr (yakl_auto_fence) Kokkos::fence();
   }
 
 
 
-  template <class F, int N, bool simple, class Style, int MaxThreadsPerBlock>
+  template <class F, int N, bool simple, class Style, int MaxThreadsPerBlock, int MinBlocksPerSM>
   inline void parallel_for( std::string                    str    ,
                             Bounds<N,Style,simple> const & bounds ,
                             F                      const & f      ,
-                            Config<MaxThreadsPerBlock>             config ) {
-    static_assert(N <= Config<MaxThreadsPerBlock>::max_dimensions,"ERROR: Config supports at most eight tile dimensions");
+                            Config<MaxThreadsPerBlock,MinBlocksPerSM> ) {
     if (bounds.nIter == 0) return;
-    bool tiled = false;
-    for (int d=0; d < N; d++) {
-      if constexpr (kokkos_debug) {
-        if (config.tiles[d] == 0) Kokkos::abort("ERROR: Config tile sizes must be positive");
-      }
-      tiled = tiled || config.tiles[d] != 1;
-    }
     if constexpr (yakl_auto_profile) timer_start(str);
-    if (tiled) {
-      std::array<uindex_t,N> tiles;
-      for (int d=0; d < N; d++) tiles[d] = config.tiles[d];
-      launch_parallel_for_tiled<MaxThreadsPerBlock,F,N,simple,Style>(str,bounds,f,tiles);
-    } else {
-      // Keep the all-ones case identical to the ordinary RangePolicy kernel: no tile state enters the device lambda.
-      launch_parallel_for_untiled<MaxThreadsPerBlock>(str,bounds,f);
-    }
+    launch_parallel_for<MaxThreadsPerBlock,MinBlocksPerSM>(str,bounds,f);
     if constexpr (yakl_auto_profile) timer_stop(str);
     if constexpr (yakl_auto_fence) Kokkos::fence();
   }
@@ -657,8 +576,8 @@ namespace yakl {
     parallel_for( YAKL_AUTO_LABEL() , bounds , f );
   }
 
-  template <class F, int N, bool simple, class Style, int MaxThreadsPerBlock>
-  inline void parallel_for( Bounds<N,Style,simple> const & bounds , F const & f , Config<MaxThreadsPerBlock> config ) {
+  template <class F, int N, bool simple, class Style, int MaxThreadsPerBlock, int MinBlocksPerSM>
+  inline void parallel_for( Bounds<N,Style,simple> const & bounds , F const & f , Config<MaxThreadsPerBlock,MinBlocksPerSM> config ) {
     parallel_for( YAKL_AUTO_LABEL() , bounds , f , config );
   }
 
@@ -667,8 +586,8 @@ namespace yakl {
     parallel_for( YAKL_AUTO_LABEL() , Bounds<1,CStyle,true>(bnd) , f );
   }
 
-  template <class F, int MaxThreadsPerBlock>
-  inline void parallel_for( std::integral auto bnd , F const & f , Config<MaxThreadsPerBlock> config ) {
+  template <class F, int MaxThreadsPerBlock, int MinBlocksPerSM>
+  inline void parallel_for( std::integral auto bnd , F const & f , Config<MaxThreadsPerBlock,MinBlocksPerSM> config ) {
     parallel_for( YAKL_AUTO_LABEL() , Bounds<1,CStyle,true>(bnd) , f , config );
   }
 
@@ -677,8 +596,8 @@ namespace yakl {
     parallel_for( str , Bounds<1,CStyle,true>(bnd) , f );
   }
 
-  template <class F, int MaxThreadsPerBlock>
-  inline void parallel_for( std::string str , std::integral auto bnd , F const & f , Config<MaxThreadsPerBlock> config ) {
+  template <class F, int MaxThreadsPerBlock, int MinBlocksPerSM>
+  inline void parallel_for( std::string str , std::integral auto bnd , F const & f , Config<MaxThreadsPerBlock,MinBlocksPerSM> config ) {
     parallel_for( str , Bounds<1,CStyle,true>(bnd) , f , config );
   }
 
@@ -689,9 +608,9 @@ namespace yakl {
     parallel_for<F,N,simple,FStyle>( str , bounds , f );
   }
 
-  template <class F, int N, bool simple, int MaxThreadsPerBlock>
+  template <class F, int N, bool simple, int MaxThreadsPerBlock, int MinBlocksPerSM>
   inline void parallel_for_F( std::string str , Bounds<N,FStyle,simple> const & bounds , F const & f ,
-                              Config<MaxThreadsPerBlock> config ) {
+                              Config<MaxThreadsPerBlock,MinBlocksPerSM> config ) {
     parallel_for<F,N,simple,FStyle>( str , bounds , f , config );
   }
 
@@ -700,8 +619,8 @@ namespace yakl {
     parallel_for<F,N,simple,FStyle>( YAKL_AUTO_LABEL() , bounds , f );
   }
 
-  template <class F, int N, bool simple, int MaxThreadsPerBlock>
-  inline void parallel_for_F( Bounds<N,FStyle,simple> const & bounds , F const & f , Config<MaxThreadsPerBlock> config ) {
+  template <class F, int N, bool simple, int MaxThreadsPerBlock, int MinBlocksPerSM>
+  inline void parallel_for_F( Bounds<N,FStyle,simple> const & bounds , F const & f , Config<MaxThreadsPerBlock,MinBlocksPerSM> config ) {
     parallel_for<F,N,simple,FStyle>( YAKL_AUTO_LABEL() , bounds , f , config );
   }
 
@@ -710,8 +629,8 @@ namespace yakl {
     parallel_for<F,1,true,FStyle>( YAKL_AUTO_LABEL() , Bounds<1,FStyle,true>(bnd) , f );
   }
 
-  template <class F, int MaxThreadsPerBlock>
-  inline void parallel_for_F( std::integral auto bnd , F const & f , Config<MaxThreadsPerBlock> config ) {
+  template <class F, int MaxThreadsPerBlock, int MinBlocksPerSM>
+  inline void parallel_for_F( std::integral auto bnd , F const & f , Config<MaxThreadsPerBlock,MinBlocksPerSM> config ) {
     parallel_for<F,1,true,FStyle>( YAKL_AUTO_LABEL() , Bounds<1,FStyle,true>(bnd) , f , config );
   }
 
@@ -720,8 +639,8 @@ namespace yakl {
     parallel_for<F,1,true,FStyle>( str , Bounds<1,FStyle,true>(bnd) , f );
   }
 
-  template <class F, int MaxThreadsPerBlock>
-  inline void parallel_for_F( std::string str , std::integral auto bnd , F const & f , Config<MaxThreadsPerBlock> config ) {
+  template <class F, int MaxThreadsPerBlock, int MinBlocksPerSM>
+  inline void parallel_for_F( std::string str , std::integral auto bnd , F const & f , Config<MaxThreadsPerBlock,MinBlocksPerSM> config ) {
     parallel_for<F,1,true,FStyle>( str , Bounds<1,FStyle,true>(bnd) , f , config );
   }
 

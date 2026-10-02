@@ -36,7 +36,7 @@ The NetCDF and PNetCDF wrappers use separate extension headers and optional depe
 | `yakl::LoopSpec`, `yakl::LoopSpec_F` | C-style and Fortran-style inclusive loop intervals | [Loop specifications](parallel-execution.md#loop-specifications) |
 | `yakl::Bounds`, `yakl::Bounds_F` | Multidimensional general bounds | [Bounds](parallel-execution.md#bounds) |
 | `yakl::SimpleBounds`, `yakl::SimpleBounds_F` | Multidimensional extent-only bounds | [Bounds](parallel-execution.md#bounds) |
-| `yakl::Config` | Runtime tile and compile-time launch bound | [Launch configuration](parallel-execution.md#launch-configuration) |
+| `yakl::Config` | Compile-time launch bound | [Launch configuration](parallel-execution.md#launch-configuration) |
 | `yakl::parallel_for`, `yakl::parallel_for_F` | C-style and Fortran-style kernel launchers | [Launchers](parallel-execution.md#parallel_for) |
 | `yakl::autotune::parallel_for[_F]` | Runtime launch-configuration search | [Autotuning](parallel-execution.md#autotuning) |
 | `yakl::intrinsics::*` | Array inquiries, reductions, selection, and small matrices | [Intrinsics](algorithms.md#intrinsics) |

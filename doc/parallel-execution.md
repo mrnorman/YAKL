@@ -85,25 +85,21 @@ misresolved as `Kokkos::parallel_for` through argument-dependent lookup when an 
 
 ## Launch configuration
 
-`Config<MaxThreadsPerBlock>` combines a compile-time Kokkos launch bound with independent runtime tiles for each dimension:
+`Config<MaxThreadsPerBlock, MinBlocksPerSM=0>` provides compile-time Kokkos launch bounds:
 
 ```cpp
-yakl::Config<> default_config;       // no thread limit and no tiling
-yakl::Config<256> tiled(2,4);        // at most 256 threads/block, with a 2 x 4 tile
+yakl::Config<> default_config;       // no thread limit
+yakl::Config<256> bounded_config;    // at most 256 threads/block
+yakl::Config<256,2> occupancy_config;
 
-yakl::parallel_for("tiled",bounds,KOKKOS_LAMBDA (size_t j, size_t i) {
+yakl::parallel_for("bounded",bounds,KOKKOS_LAMBDA (size_t j, size_t i) {
   // body
-},tiled);
+},bounded_config);
 ```
 
-Tile one in every dimension takes the ordinary untiled path and introduces no tiling loop. Any dimension greater than one
-creates a multidimensional Cartesian tiling. Each Kokkos policy iteration processes one tile and runs all valid points in
-that tile serially within the policy work item. Edge tiles are shortened and every logical point runs exactly once. Runtime
-tiles must be positive. Up to eight tile dimensions may be supplied; omitted trailing dimensions default to one.
-
-`MaxThreadsPerBlock == 0` leaves the backend unconstrained. A nonzero value is passed as a Kokkos `LaunchBounds` maximum; it
-does not itself choose a team size. `Config::Thr` exposes the compile-time value and `config.tiles[d]` exposes each runtime
-tile.
+`MaxThreadsPerBlock == 0` leaves the maximum unconstrained, and `MinBlocksPerSM == 0` leaves the minimum unconstrained.
+Both values are passed to Kokkos `LaunchBounds`; they do not themselves request a specific team size. `Config::Thr` and
+`Config::Blocks` expose the compile-time values.
 
 ## Autotuning
 

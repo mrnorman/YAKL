@@ -73,37 +73,18 @@ int main(int argc, char **argv) {
       die("ERROR: zero-work autotuned launch executed or created tuning state");
     }
 
-    // Exercise independent runtime tiles with partial edges and dimensions both smaller and larger than their tile.
-    // Atomic increments detect duplicate visits as well as missing points.
-    Array<int ***,yakl::DeviceSpace> tiled("tiled",3,5,10);
-    std::array<std::array<int,3>,4> const tileConfigs = {{{1,1,1},{1,2,4},{2,4,8},{8,3,2}}};
-    for (auto const & tiles : tileConfigs) {
-      tiled = 0;
-      parallel_for( "C-style tiled" , SimpleBounds<3>(3,5,10) , KOKKOS_LAMBDA (int k, int j, int i) {
-        Kokkos::atomic_add(&tiled(k,j,i),1);
-      }, yakl::Config<128>{tiles[0],tiles[1],tiles[2]});
-      auto tiledHost = tiled.createHostCopy();
-      for (int k=0; k < 3; k++) {
-        for (int j=0; j < 5; j++) {
-          for (int i=0; i < 10; i++) {
-            if (tiledHost(k,j,i) != 1) die("ERROR: C-style tiled launch did not visit every point exactly once");
-          }
+    Array<int ***,yakl::DeviceSpace> configured("configured",3,5,10);
+    configured = 0;
+    parallel_for( "C-style configured" , SimpleBounds<3>(3,5,10) , KOKKOS_LAMBDA (int k, int j, int i) {
+      Kokkos::atomic_add(&configured(k,j,i),1);
+    }, yakl::Config<128>{});
+    auto configuredHost = configured.createHostCopy();
+    for (int k=0; k < 3; k++) {
+      for (int j=0; j < 5; j++) {
+        for (int i=0; i < 10; i++) {
+          if (configuredHost(k,j,i) != 1) die("ERROR: configured C-style launch did not visit every point exactly once");
         }
       }
-    }
-
-    // A large tile on rank-eight bounds must iterate only valid points rather
-    // than all tile^rank padded positions.
-    Array<int *,yakl::DeviceSpace> rankEight("rank eight tiled",16);
-    rankEight = 0;
-    parallel_for( "rank eight tiled" , SimpleBounds<8>(1,2,1,2,1,2,1,2) ,
-                  KOKKOS_LAMBDA (int, int i1, int, int i3, int, int i5, int, int i7) {
-      int const linear = ((i1*2+i3)*2+i5)*2+i7;
-      Kokkos::atomic_add(&rankEight(linear),1);
-    }, yakl::Config<128>{8,1,4,2,8,3,2,5});
-    auto rankEightHost = rankEight.createHostCopy();
-    for (int i=0; i < 16; i++) {
-      if (rankEightHost(i) != 1) die("ERROR: rank-eight tiled launch did not visit every point exactly once");
     }
 
     Array<int *,yakl::DeviceSpace> strided("strided",5);
