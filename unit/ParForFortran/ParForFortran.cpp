@@ -66,24 +66,19 @@ int main(int argc, char **argv) {
     });
     if (sum(sentinel) != 42) die("ERROR: zero-work Fortran-style launch executed its kernel");
 
-    // Arbitrary and negative lower bounds, non-unit strides, and independent partial edge tiles must all map back to the
-    // correct Fortran indices.
-    Array_F<int ***,yakl::DeviceSpace> tiled("Fortran tiled",{-5,3},{7,13},{-2,8});
-    std::array<std::array<int,3>,4> const tileConfigs = {{{1,1,1},{1,2,4},{2,4,8},{8,3,2}}};
-    for (auto const & tiles : tileConfigs) {
-      tiled = 0;
-      parallel_for_F( "Fortran-style tiled" ,
-                      Bounds_F<3>({-5,3,2},{7,13,3},{-2,8,5}) , KOKKOS_LAMBDA (ptrdiff_t i, ptrdiff_t j, ptrdiff_t k) {
-        Kokkos::atomic_add(&tiled(i,j,k),1);
-      }, yakl::Config<128>{tiles[0],tiles[1],tiles[2]});
-      auto tiledHost = tiled.createHostCopy();
-      for (int k=-2; k <= 8; k++) {
-        for (int j=7; j <= 13; j++) {
-          for (int i=-5; i <= 3; i++) {
-            bool const visited = (i+5)%2 == 0 && (j-7)%3 == 0 && (k+2)%5 == 0;
-            if (tiledHost(i,j,k) != (visited ? 1 : 0)) {
-              die("ERROR: Fortran-style tiled launch mapped arbitrary bounds incorrectly");
-            }
+    Array_F<int ***,yakl::DeviceSpace> configured("Fortran configured",{-5,3},{7,13},{-2,8});
+    configured = 0;
+    parallel_for_F( "Fortran-style configured" ,
+                    Bounds_F<3>({-5,3,2},{7,13,3},{-2,8,5}) , KOKKOS_LAMBDA (ptrdiff_t i, ptrdiff_t j, ptrdiff_t k) {
+      Kokkos::atomic_add(&configured(i,j,k),1);
+    }, yakl::Config<128>{});
+    auto configuredHost = configured.createHostCopy();
+    for (int k=-2; k <= 8; k++) {
+      for (int j=7; j <= 13; j++) {
+        for (int i=-5; i <= 3; i++) {
+          bool const visited = (i+5)%2 == 0 && (j-7)%3 == 0 && (k+2)%5 == 0;
+          if (configuredHost(i,j,k) != (visited ? 1 : 0)) {
+            die("ERROR: configured Fortran-style launch mapped arbitrary bounds incorrectly");
           }
         }
       }

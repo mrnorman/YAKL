@@ -4,7 +4,12 @@
 namespace yakl {
   namespace autotune {
 
-    using ConfigListType = std::tuple<Config<0>,Config<64>,Config<128>,Config<256>,Config<512>,Config<1024>>;
+    using ConfigListType = std::tuple<Config<0,0>,
+                                      Config<64,0>,
+                                      Config<128,0>,
+                                      Config<256,0>,
+                                      Config<512,0>,
+                                      Config<1024,0>>;
     inline constexpr int configuration_count = std::tuple_size_v<ConfigListType>;
 
     struct AutotuneContext {

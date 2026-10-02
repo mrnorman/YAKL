@@ -352,10 +352,6 @@ int main(int argc, char **argv) {
     bounds.unpack(bounds.nIter,i,j);
   } else if (scenario == "autotune_index") {
     (void) yakl::autotune::get_config(-1);
-  } else if (scenario == "config_tile_zero") {
-    (void) yakl::Config<128>(0);
-  } else if (scenario == "config_tile_negative") {
-    (void) yakl::Config<128>(-1);
   } else if (scenario == "finalize_with_live_allocation") {
     Array<int *,yakl::DeviceSpace> arr("live allocation",1);
     yakl::finalize();

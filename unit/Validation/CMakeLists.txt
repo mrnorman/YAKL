@@ -28,7 +28,7 @@ set(YAKL_DEBUG_FAILURE_SCENARIOS
                  random_exponential_rate random_lognormal_stddev
                  random_uniform_nan_lower random_uniform_nan_upper random_normal_nan_mean random_normal_nan_stddev
                  random_bernoulli_nan random_exponential_nan random_lognormal_nan_stddev
-                 autotune_index config_tile_zero config_tile_negative)
+                 autotune_index)
 
 set(YAKL_BOUNDS_DEBUG_FAILURE_SCENARIOS array_slice array_subset linear_allocator_end_pointer unpack_index)
 

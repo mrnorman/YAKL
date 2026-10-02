@@ -148,8 +148,6 @@ if (YAKL_ENABLE_COVERAGE)
                       Validation_timer_stop
                       Validation_unpack_index
                       Validation_autotune_index
-                      Validation_config_tile_zero
-                      Validation_config_tile_negative
                       Validation_allocate_before_init
                       Validation_free_before_init
                       Validation_finalize_with_live_allocation)
@@ -184,9 +182,7 @@ if (YAKL_ENABLE_COVERAGE)
                      Validation_random_bernoulli_nan
                      Validation_random_exponential_nan
                      Validation_random_lognormal_nan_stddev
-                     Validation_autotune_index
-                     Validation_config_tile_zero
-                     Validation_config_tile_negative)
+                     Validation_autotune_index)
   endif()
   if (NOT Kokkos_ENABLE_DEBUG_BOUNDS_CHECK)
     list(REMOVE_ITEM YAKL_UNIT_TESTS
