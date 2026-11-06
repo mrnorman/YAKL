@@ -6,6 +6,13 @@ project(YAKL
         VERSION 0.1
         DESCRIPTION "A Simple C++ Framework for Performance Portability and Fortran Code Porting")
 
+# Use an installed Kokkos package when requested; otherwise use a Kokkos target
+# provided by the parent project (such as the unit build's Kokkos source tree).
+option(YAKL_USE_INSTALLED_KOKKOS "Use an installed Kokkos package" OFF)
+if (YAKL_USE_INSTALLED_KOKKOS AND NOT TARGET Kokkos::kokkos)
+  find_package(Kokkos CONFIG REQUIRED)
+endif()
+
 set(YAKL_F90_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/YAKL_gator_mod.F90)
 set(YAKL_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/YAKL_fortran_interfaces.cpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/YAKL.cpp
