@@ -11,6 +11,11 @@ project(YAKL
 option(YAKL_USE_INSTALLED_KOKKOS "Use an installed Kokkos package" OFF)
 if (YAKL_USE_INSTALLED_KOKKOS AND NOT TARGET Kokkos::kokkos)
   find_package(Kokkos CONFIG REQUIRED)
+  if (Kokkos_ENABLE_CUDA AND NOT Kokkos_ENABLE_CUDA_CONSTEXPR)
+    message(FATAL_ERROR
+      "YAKL requires installed Kokkos with CUDA_CONSTEXPR enabled when using the CUDA backend. "
+      "Reconfigure Kokkos with -DKokkos_ENABLE_CUDA_CONSTEXPR=ON.")
+  endif()
 endif()
 
 set(YAKL_F90_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/src/YAKL_gator_mod.F90)
